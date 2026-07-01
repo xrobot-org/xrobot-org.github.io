@@ -7,15 +7,14 @@ sidebar_position: 1
 # Topic Design
 
 For the basic usage, see the `Topic`, `SyncSubscriber`, `ASyncSubscriber`, and `QueuedSubscriber`
-pages in the message system section. This page explains why the mechanism is split into these roles.
+pages in the message system section. This page covers why the mechanism is split into these roles.
 
 ## What `Topic` is solving
 
-`Topic` is not trying to be a message bus that carries everything. Its goal is to unify the most
-common in-process handoff patterns with as little overhead as possible: publishers write data,
-subscribers consume it in different ways, and multi-publisher protection can be enabled when
-needed. It does not pull in Linux shared memory, process-to-process synchronization, or complex
-durable queue semantics because those are outside the boundary of this lightweight path.
+`Topic` unifies the most common in-process handoff patterns with as little overhead as possible:
+publishers write data, subscribers consume it in different ways, and multi-publisher protection can
+be enabled when needed. It does not cover Linux shared memory, process-to-process synchronization,
+or durable queue semantics, which are beyond the scope of this lightweight component.
 
 ## The role of `Block`
 
@@ -23,22 +22,21 @@ At the source level, `Block` is the central structure inside `Topic`. It stores 
 contract, the topic-name CRC32 key, the subscriber lists, and the state used to coordinate
 concurrent access. By default it optimizes the single-publisher path: if `multi_publisher` is not
 explicitly enabled, it only uses a lightweight atomic `busy` state for serialization. Only when
-multi-publisher mode is enabled does it fall back to `Mutex`. That boundary matters, because it
-shows `Topic` is designed for the common single-publisher case first instead of dragging every
-publish through a heavier synchronization primitive.
+multi-publisher mode is enabled does it fall back to `Mutex`. This means `Topic` optimizes for the
+common single-publisher case rather than forcing every publish onto a locked path.
 
 ## Why there is no built-in latest cache anymore
 
-In current mainline, `Topic` has been pushed back to a stricter publish-and-dispatch role and no
-longer stores a latest payload copy inside `Block`. That keeps the boundary cleaner:
+In current mainline, `Topic` has a stricter publish-and-dispatch role and no longer stores a latest
+payload copy inside `Block`. Responsibilities are split as follows:
 
-- `Topic` is responsible for fan-out of one publish to different subscriber forms;
-- latest-value semantics, when actually needed, are maintained explicitly by the upper layer;
+- `Topic` handles fan-out of one publish to different subscriber forms;
+- latest-value semantics, when needed, are maintained explicitly by the upper layer;
 - packet packing works directly from the payload the caller already holds instead of routing through
-  topic-owned cache.
+  a topic-owned cache.
 
-This reduces the semantic overlap that used to exist when `Topic` tried to be both a dispatch path
-and a cache container.
+This removes the overlap that existed when `Topic` acted as both a dispatch path and a cache
+container.
 
 ## Why subscribers are split by type
 
@@ -51,24 +49,21 @@ either degenerate into the most conservative common subset or push too many bran
 
 ## Why it is not a strict message queue
 
-From a concurrency point of view, `Topic` is better read as a framework that dispatches published
-data into different consumption forms rather than as a strict message queue. The synchronous path
-uses `Semaphore`, the asynchronous path uses small state blocks, the queue path uses `SPSCQueue`,
-and callback subscribers are linked through `LockFreeList`. That makes it a good fit for in-process
-module handoff, log fan-out, or state broadcast. If the requirement is shared large payloads across
-processes, explicit queue-full policy, or zero-copy shared slots, then the right move is to switch
-to `LinuxSharedTopic<T>` instead of pushing system-level semantics back into `Topic`.
+From a concurrency point of view, `Topic` dispatches published data into different consumption
+forms rather than acting as a strict message queue. The synchronous path uses `Semaphore`, the
+asynchronous path uses small state blocks, the queue path uses `SPSCQueue`, and callback subscribers
+are linked through `LockFreeList`. This fits in-process module handoff, log fan-out, or state
+broadcast. For shared large payloads across processes, explicit queue-full policy, or zero-copy
+shared slots, switch to `LinuxSharedTopic<T>` rather than adding system-level semantics to `Topic`.
 
 ## `WaitTopic` and domain
 
-Another point that is easy to miss is `WaitTopic` and domain. `Topic` is not named on a single
-global flat plane. It can be organized by domain, and `WaitTopic` is not about "get the object
-immediately". It means waiting for a topic to appear in the matching domain. This solves module
-organization when initialization order is not completely fixed. It is lightweight in-process
-discovery and binding, not a service registry and not a cross-process directory.
+`Topic` is not named on a single global flat plane. It can be organized by domain, and `WaitTopic`
+does not fetch an object immediately: it waits for a topic to appear in the matching domain. This
+handles module organization when initialization order is not completely fixed. It provides
+lightweight in-process discovery and binding, not a service registry or a cross-process directory.
 
 ## Positioning
 
-In one sentence, `Topic` is an in-process publish-subscribe path with relatively low semantic
-burden and multiple consumption forms. It is best at letting modules exchange data without exposing
-too much of each other's lifecycle. It is not trying to solve every message-system problem at once.
+`Topic` is an in-process publish-subscribe path with low overhead and multiple consumption forms,
+used to let modules exchange data without exposing too much of each other's lifecycle.

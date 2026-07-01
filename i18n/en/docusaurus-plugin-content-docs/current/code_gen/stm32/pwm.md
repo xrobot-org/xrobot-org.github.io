@@ -23,5 +23,3 @@ In current `GeneratorCodeSTM32.py`, the PWM generation path mainly does the foll
 - iterate over PWM-enabled channels under each TIM peripheral in the CubeMX project;
 - generate an object name such as `pwm_tim1_ch1` from the channel name;
 - if the channel configuration contains `Complementary = true`, emit `true` as the third constructor argument; otherwise emit `false`.
-
-So the current generator’s contract here is “generate one PWM object per channel”, not “define a more complex runtime grouping or scheduling model in the docs”.

@@ -104,10 +104,6 @@ if (status == LibXR::ReadOperation::OperationPollingStatus::DONE) {
 }
 ```
 
----
-
-`Operation` is the foundation of LibXR's I/O operation mechanism, suitable for serial, network, timer, and other modules. It provides a unified way to manage completion behavior, ensuring safe use in both thread and interrupt contexts.
-
 ## Additional current-mainline role: `AsyncBlockWait`
 
 Besides `Operation<T>`, `operation.hpp` also defines an internal helper currently used by synchronous driver paths:
@@ -116,7 +112,7 @@ Besides `Operation<T>`, `operation.hpp` also defines an internal helper currentl
 class AsyncBlockWait;
 ```
 
-Its purpose is not to replace `Operation`, but to provide a shared BLOCK waiter handoff:
+It does not replace `Operation`; it provides a shared BLOCK waiter handoff:
 
 - `Start(Semaphore&)`
 - `Wait(timeout)`

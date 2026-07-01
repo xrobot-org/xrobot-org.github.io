@@ -64,6 +64,4 @@ ASSERT(buffer != nullptr);
 ASSERT_FROM_CALLBACK(buffer != nullptr, in_isr);
 ```
 
----
-
-This module forms the foundation for all debugging and safety mechanisms in LibXR. It is strongly recommended to integrate and enable assertions and validations early in system development.
+It is recommended to enable assertions and validations early in development.

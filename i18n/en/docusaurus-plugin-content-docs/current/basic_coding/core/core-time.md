@@ -83,7 +83,3 @@ void ConfigureTimebaseWrapRange(uint64_t max_valid_us,
 These interfaces / internal storages define the "maximum valid timebase value" (microseconds/milliseconds), so wrap-around difference calculations and validity checks can be performed correctly.
 
 In other words, current mainline no longer exposes this configuration group as the older external global variables.
-
----
-
-This module forms the basis of time handling in LibXR and can be used with IO, schedulers, timers, and other modules to ensure precision and portability in time-related operations.

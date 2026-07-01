@@ -37,7 +37,7 @@ The current script directly does all of the following:
 - links official ESP-IDF targets such as `idf::freertos`, `idf::driver`, `idf::hal`, `idf::usb`, `idf::esp_timer`, `idf::esp_event`, `idf::esp_netif`, `idf::esp_wifi`, `idf::esp_adc`, and `idf::nvs_flash`
 - automatically links split driver targets such as `idf::esp_driver_gpio` and `idf::esp_driver_ledc` when the current IDF version exposes them
 
-It also explicitly checks for `idf::freertos` and fails immediately when that target is missing. In other words, this script is not intended for a plain standalone CMake project outside the ESP-IDF build model.
+It also explicitly checks for `idf::freertos` and fails immediately when that target is missing. This script is not intended for a plain standalone CMake project outside the ESP-IDF build model.
 
 ## Current Environment Note
 

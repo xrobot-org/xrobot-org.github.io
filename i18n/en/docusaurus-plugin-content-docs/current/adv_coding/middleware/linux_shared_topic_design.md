@@ -7,10 +7,10 @@ sidebar_position: 2
 # LinuxSharedTopic Design
 
 For the basic API, see the "Shared-Memory Topic (Linux)" page in the basic message-system section.
-This page focuses on the boundary between `LinuxSharedTopic<T>` and ordinary `Topic`, and on the
+The material below covers the boundary between `LinuxSharedTopic<T>` and ordinary `Topic`, and the
 tradeoffs behind the current implementation.
 
-## 1. Why it is not folded back into `Topic`
+## 1. Why it is kept separate from `Topic`
 
 `LinuxSharedTopic<T>` solves Linux / Webots inter-process communication, large-payload sharing,
 zero-copy reads, and per-subscriber queue policy. The original `Topic` is closer to in-process
@@ -21,14 +21,11 @@ lets `Topic` stay light while Linux IPC evolves along its own model.
 
 ## 2. Separating data plane and control plane
 
-`LinuxSharedTopic<T>` is not built around one simple queue. It uses two layers:
+`LinuxSharedTopic<T>` uses two layers rather than a single queue. The payload slot holds the real
+data in shared memory. The descriptor queue carries only "which slot is readable" to each
+subscriber, which is what publish pushes.
 
-1. payload slot
-   - the real data lives in shared-memory slots
-2. descriptor queue
-   - publish only pushes "which slot is readable" to each subscriber
-
-The direct consequences are:
+This has three consequences:
 
 - the payload itself is not copied again between publisher and subscriber
 - each subscriber only consumes descriptors
@@ -38,40 +35,24 @@ That is the basis for zero-copy behavior.
 
 ## 3. Why the hot path uses `atomic + futex`
 
-The key constraints of the implementation are:
+The implementation works under these constraints:
 
 - no mutex on the hot path
-- publish and consume side should advance state mostly with atomics
-- only the waiting path should sleep with futex
+- the publish and consume sides advance state mostly with atomics
+- only the waiting path sleeps with futex
 
-So the target is not "absolutely no waiting". It is "take mutex out of the publish/consume hot path
-and compress real waiting into futex sleep".
+The goal is not to eliminate waiting entirely, but to keep mutex off the publish/consume hot path
+and compress real waiting into futex sleep.
 
 ## 4. Why slot reclaim is refcount-based instead of overwrite
 
-One of the most dangerous problems in a shared-memory queue is:
+A dangerous case in a shared-memory queue is when the publisher wants to keep writing while a
+subscriber is still reading the old payload.
 
-- publisher wants to keep writing
-- but a subscriber is still reading the old payload
-
-The chosen model is:
-
-- refcounted slot reclamation
-- backpressure on publisher when slots are exhausted
-
-instead of:
-
-- overwrite while in use
-
-The cost is:
-
-- under high pressure, publisher may fail because slots are exhausted
-
-The upside is:
-
-- payload will not be overwritten while a subscriber still holds it
-
-That is an explicit safety-first boundary.
+The chosen model is refcounted slot reclamation with backpressure on the publisher when slots are
+exhausted, rather than overwrite while in use. The cost is that under high pressure the publisher
+may fail because slots are exhausted. In exchange, a payload is never overwritten while a subscriber
+still holds it. This prioritizes safety over publish availability.
 
 ## 5. What the three subscription policies trade off
 
@@ -81,50 +62,31 @@ The subscription modes are:
 - `BROADCAST_DROP_OLD`
 - `BALANCE_RR`
 
-They are not merely "different features". They optimize for different goals.
+They optimize for different goals.
 
 ### `BROADCAST_FULL`
 
-Goal:
-
-- preserve every published item
-
-Cost:
-
-- one slow subscriber with a full queue reduces overall publish success
+Preserves every published item. The cost is that one slow subscriber with a full queue reduces
+overall publish success.
 
 ### `BROADCAST_DROP_OLD`
 
-Goal:
-
-- preserve publisher throughput as much as possible
-- let slow subscribers bias toward newer data
-
-Cost:
-
-- old samples are dropped
+Preserves publisher throughput as much as possible and lets slow subscribers bias toward newer data.
+The cost is that old samples are dropped.
 
 ### `BALANCE_RR`
 
-Goal:
-
-- distribute load across multiple workers
-
-Cost:
-
-- the same message is not broadcast to every worker
-
-So it is really a shared-load mode, not a broadcast mode.
+Distributes load across multiple workers. The same message is not broadcast to every worker, so this
+is a shared-load mode rather than a broadcast mode.
 
 ## 6. The practical difference between `FULL` and `DROP_OLD`
 
-This is not only a conceptual distinction. Under a slow-subscriber overload:
+Under a slow-subscriber overload, the two modes behave differently:
 
 - with `FULL`, the slow subscriber's full queue directly turns into publisher backpressure
 - with `DROP_OLD`, the slow subscriber loses history but keeps tracking newer data
 
-The choice is really about whether the system values complete delivery more than freshness and
-throughput.
+The choice is about whether the system values complete delivery more than freshness and throughput.
 
 ## 7. Positioning
 

@@ -6,9 +6,9 @@ sidebar_position: 1
 
 # UART Performance Testing
 
-One common question often asked about this framework is: **"Will LibXR's abstraction over low-level drivers cause significant performance loss?"**
+A common question about this framework is whether its abstraction over low-level drivers causes significant performance loss.
 
-The answer is: **there's absolutely no need to worry**. While using LibXR instead of vendor SDKs (e.g., HAL, ESP-IDF) and managing DMA directly may result in slight overhead, this loss is minimal and can be safely ignored. The following sections include test results for your own analysis.
+Using LibXR instead of vendor SDKs (e.g., HAL, ESP-IDF) and managing DMA directly can add slight overhead, but the loss is minimal. The following sections include test results for your own analysis.
 
 ## Test Environment
 
@@ -192,4 +192,4 @@ At higher baud rates, the transmit and receive threads are alternately woken up.
 
 ## Summary
 
-After abstracting low-level UART drivers, LibXR introduces **minimal performance overhead**. On the STM32F103 (72MHz, no FPU or Cache), it achieves up to **~4 Mbps** real throughput with **0 errors**, even under multithreaded FreeRTOS conditions. This demonstrates that the framework maintains **high efficiency and reliability**, even on resource-constrained MCUs—suitable for real-time and high-bandwidth embedded applications.
+After abstracting low-level UART drivers, LibXR introduces minimal performance overhead. On the STM32F103 (72MHz, no FPU or Cache), it achieves up to **~4 Mbps** real throughput with **0 errors**, even under multithreaded FreeRTOS conditions.

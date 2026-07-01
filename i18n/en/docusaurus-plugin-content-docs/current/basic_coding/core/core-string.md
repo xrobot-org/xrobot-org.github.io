@@ -62,7 +62,7 @@ name.Reformat(7U);
 
 `RuntimeStringView<Source, Args...>` is the other public string capability in current mainline, defined in `libxr_string.hpp`.
 
-Its main purpose is not “small fixed-capacity value strings”, but rather:
+Its main purpose is:
 
 - retaining one runtime-generated NUL-terminated text value
 - exposing it repeatedly through `View()` / `CStr()`

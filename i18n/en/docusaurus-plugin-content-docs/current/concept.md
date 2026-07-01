@@ -8,7 +8,7 @@ sidebar_position: 2
 
 ## `Lock-free Data Structures and ISR-Driven Data Flow`
 
-In LibXR, all I/O is built on lock-free queues and ring buffers, with no reliance on mutexes or interrupt-masking critical sections during runtime, thereby ensuring deterministic transfer paths and controllable latency. Device events are driven entirely by hardware interrupts; the ISR is limited to necessary tasks such as double-buffer switching and state machine transitions, without additional logic. As a result, data flow is strictly paced by hardware rather than operating system scheduling. In this way, I/O can be viewed as an interrupt-driven lock-free pipeline: lightweight and real-time.
+In LibXR, all I/O is built on lock-free queues and ring buffers, with no reliance on mutexes or interrupt-masking critical sections during runtime, thereby ensuring deterministic transfer paths and controllable latency. Device events are driven entirely by hardware interrupts; the ISR is limited to necessary tasks such as double-buffer switching and state machine transitions, without additional logic. As a result, data flow is strictly paced by hardware rather than operating system scheduling.
 
 To prevent callbacks from recursively re-entering and growing the stack when events trigger each other and form a loop (for example A → B → C → A), the callback mechanism includes a reentrancy guard: if the same callback is already executing, re-triggering it does not create a new nested stack frame, but is instead merged/deferred so the call depth stays bounded. This keeps stack usage stable and makes worst-case latency analysis easier.
 
@@ -16,7 +16,7 @@ To prevent callbacks from recursively re-entering and growing the stack when eve
 
 In embedded systems, runtime memory allocation should be regarded as a design flaw. All resources in the system should be allocated and configured as much as possible during the construction or initialization phase. This not only improves system predictability and stability, but also makes memory usage analysis and resource planning easier.
 
-It is important to note that this principle does not mean banning dynamic memory allocation (such as `malloc`, `new`), but rather emphasizes that **the timing of dynamic memory allocation** must be during the system's initialization phase. After entering the main loop or starting task scheduling, no new memory allocation operations should occur. Otherwise, it introduces:
+This principle does not mean banning dynamic memory allocation (such as `malloc`, `new`), but rather emphasizes that **the timing of dynamic memory allocation** must be during the system's initialization phase. After entering the main loop or starting task scheduling, no new memory allocation operations should occur. Otherwise, it introduces:
 
 - Unknown delays (such as fragmentation, etc.)
 - Hard-to-track memory leaks or boundary errors

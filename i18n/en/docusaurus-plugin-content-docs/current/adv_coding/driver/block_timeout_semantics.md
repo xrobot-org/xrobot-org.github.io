@@ -136,4 +136,4 @@ To check whether a `BLOCK` driver path is sound, ask four things:
 - does late completion stay silent after detach
 - does the final result match the actual caller-visible buffer contents
 
-If all four hold, the `BLOCK` semantics are usually on solid ground.
+If all four hold, the `BLOCK` semantics are usually sound.

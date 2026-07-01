@@ -42,7 +42,7 @@ FDCAN:
 - 从 `CAN.<instance>.queue_size` 或 `FDCAN.<instance>.queue_size` 读取配置；
 - 生成 `STM32CAN` / `STM32CANFD` 的实例构造代码。
 
-也就是说，当前 generator 在这一页对应的核心契约是“实例名 + 队列大小”，而不是统一替你生成一套跨芯片一致的过滤器/FIFO 拓扑。
+它只处理实例名和队列大小，不生成跨芯片一致的过滤器 / FIFO 拓扑。
 
 可直接修改该配置文件。如需应用更改，请执行以下命令重新生成代码：  
 `xr_cubemx_cfg -d .`  

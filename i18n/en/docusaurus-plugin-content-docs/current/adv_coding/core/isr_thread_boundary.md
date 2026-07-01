@@ -77,8 +77,8 @@ allowed", "overflow / drop counters must be exposed".
 
 ## Where `ASync` fits
 
-`ASync` should also be read in terms of this boundary. It is not a bucket that makes any long task
-safe by throwing it elsewhere. It is closer to a unified submission surface: do the short handoff in
+`ASync` should also be read in terms of this boundary. It does not make a long task safe simply by
+moving it elsewhere. It is closer to a unified submission surface: do the short handoff in
 callback or ISR, and move the rest to a thread when the system has one. The practical caveat is that
 on no-thread implementations, `ASync` currently degenerates into a synchronous direct call wrapper.
 It unifies submission semantics, but it does not guarantee a real background thread exists.

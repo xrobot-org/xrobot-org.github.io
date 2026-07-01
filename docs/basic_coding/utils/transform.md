@@ -104,7 +104,7 @@ using DefaultScalar = LIBXR_DEFAULT_SCALAR;
 
 ## 2. 与 Eigen 的关系
 
-这一组类型的当前设计并不是“把 Eigen 封死”，而是在 Eigen 之上补一层更贴近机器人 / 嵌入式用法的轻量封装。
+这一组类型是在 Eigen 之上补一层更贴近机器人 / 嵌入式用法的轻量封装，并不会把 Eigen 封死。
 
 因此它们具有两个明显特点：
 

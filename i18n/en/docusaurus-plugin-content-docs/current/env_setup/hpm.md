@@ -40,7 +40,7 @@ The preconditions are:
 - the project already wires in HPM SDK headers, startup files, linker scripts, and board initialization
 - LibXR is added on top of that baseline to provide `driver/hpm` plus the common runtime/middleware layers
 
-In other words, LibXR does not replace the HPM SDK project skeleton. It is integrated after the HPM project itself is already valid.
+LibXR does not replace the HPM SDK project skeleton. It is integrated after the HPM project itself is already valid.
 
 ## Practical Entry Order
 

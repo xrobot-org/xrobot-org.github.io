@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Event System
 
-The `Event` class is a core middleware in LibXR designed for event-driven mechanisms. It supports event registration, triggering, interrupt-safe invocation, and event bridging — making it an essential tool for embedded task collaboration.
+The `Event` class is a core middleware in LibXR designed for event-driven mechanisms. It supports event registration, triggering, interrupt-safe invocation, and event bridging.
 
 ## Module Features
 

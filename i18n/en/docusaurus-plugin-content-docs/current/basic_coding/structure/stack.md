@@ -58,7 +58,7 @@ s.Pop(value);  // value == 2
 - This stack uses a mutex for protection, making it suitable for multithreaded use but not for interrupt contexts.
 - For ultra-high performance needs, consider using a lock-free structure instead.
 - Index-based access still requires careful bounds handling; the current `operator[](int32_t index)` negative-index rule is “offset downward from the current top”, not “index from the storage tail”.
-- The current header does not add an explicit destructor around the internal `new Data[depth]` allocation, so the docs should not over-describe it as a richer ownership framework than the code actually exposes.
+- The current header does not add an explicit destructor around the internal `new Data[depth]` allocation, so do not assume richer ownership or cleanup behavior than the code provides.
 
 ## Typical Applications
 

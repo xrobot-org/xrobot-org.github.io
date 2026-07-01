@@ -52,4 +52,4 @@ Do not treat `MPMCQueue` as the default replacement for every queue. The current
 - exactly one producer and one consumer: prefer `SPSCQueue`;
 - actual multiple producers or consumers: use `MPMCQueue`.
 
-That keeps the semantics explicit and closer to the real runtime shape.
+This keeps the producer/consumer topology explicit.

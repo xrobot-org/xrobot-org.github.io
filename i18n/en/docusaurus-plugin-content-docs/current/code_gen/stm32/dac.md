@@ -8,7 +8,7 @@ sidebar_position: 6
 
 In current mainline, the generator’s DAC responsibility is straightforward: it reads the DAC channels enabled in CubeMX, generates matching `STM32DAC` instances, and injects the initial output value plus reference voltage from `libxr_config.yaml` into the constructor arguments.
 
-This path currently does not generate DMA-related DAC setup, and does not add a more complex data path during code generation.
+This path currently does not generate DMA-related DAC setup.
 
 ## Example
 

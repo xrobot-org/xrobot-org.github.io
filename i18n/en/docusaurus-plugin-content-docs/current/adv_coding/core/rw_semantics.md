@@ -165,4 +165,4 @@ It manages:
 - who is still allowed to speak after timeout
 - whether late completion should wake someone or stay silent
 
-With that view in mind, the state names in `libxr_rw.*` become much easier to read.
+The state names in `libxr_rw.*` follow from this view.

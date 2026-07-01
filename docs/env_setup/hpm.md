@@ -40,7 +40,7 @@ add_subdirectory(path_to_libxr)
 - 工程已经把 HPM SDK 的头文件、启动文件、链接脚本和板级初始化接好；
 - LibXR 只是在这个基础上接入 `driver/hpm` 与通用 runtime/middleware。
 
-也就是说，LibXR 不代替 HPM SDK 的项目骨架，它是在 HPM 工程已经成立之后接进去的。
+LibXR 不代替 HPM SDK 的项目骨架，它是在 HPM 工程已经成立之后接进去的。
 
 ## 当前文档建议的实际入口
 

@@ -105,7 +105,3 @@ ISR=0 context=42 msg=Hello
 - **ISR-friendly**: Every interface explicitly carries `in_isr`, making it safe to run inside interrupts.
 - **Type-safe encapsulation**: Templates and type deduction perform binding and invocation in a type-safe manner.
 - **Lightweight & embeddable**: Minimal structure suitable for IO, timers, event buses, and other callback-based modules.
-
----
-
-This module serves as the foundation of LibXR's asynchronous mechanism and callback interface. It's suitable for use in IO, timers, event dispatch, and other callback-based modules.

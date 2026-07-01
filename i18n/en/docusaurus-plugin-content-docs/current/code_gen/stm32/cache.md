@@ -6,7 +6,7 @@ sidebar_position: 13
 
 # Cache (High Performance Cache)
 
-On STM32 H7/F7 parts with cache support, LibXR already handles the cache-coherency side needed by its current driver paths. In practice, users mainly need to enable I-Cache and D-Cache in CubeMX. From the current generator's point of view, the real configuration handle on this page is mostly **`dma_section`**: placing DMA buffers into the section you choose, rather than generating a complete MPU/cache policy for you.
+On STM32 H7/F7 parts with cache support, LibXR already handles the cache-coherency side needed by its current driver paths. In practice, users mainly need to enable I-Cache and D-Cache in CubeMX. The generator's only configuration option on this page is **`dma_section`**, which places DMA buffers into the section you choose. It does not generate an MPU/cache policy for you.
 
 ## Cache Basics
 
@@ -89,8 +89,7 @@ ADC:
 Current generator-side behavior:
 
 - `GeneratorCodeSTM32.py` reads the per-instance `dma_section` field for the relevant peripheral class;
-- if the user leaves it empty, the current generator falls back to its built-in default section-selection logic;
-- the main purpose of this page is therefore “make generated buffer declarations land in the right section”, not “generate the whole cache/MPU architecture for you”.
+- if the user leaves it empty, the current generator falls back to its built-in default section-selection logic.
 
 ## Generated Result
 

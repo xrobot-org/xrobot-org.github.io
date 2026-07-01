@@ -8,7 +8,7 @@ sidebar_position: 12
 
 `LibXR::Watchdog` provides a general-purpose abstract interface for watchdog functionality. It supports configuring the overflow timeout, auto-feed interval, and provides control methods like start, stop, and manual feeding. It is suitable for multi-threaded environments or timer-based task scheduling systems.
 
-One current-mainline boundary is worth making explicit: hardware configuration and auto-feed scheduling are split into two layers:
+In current mainline, hardware configuration and auto-feed scheduling are split into two layers:
 
 - `SetConfig(...)` only passes `timeout_ms / feed_ms` into the concrete platform implementation;
 - whether `ThreadFun()` / `TaskFun()` actually perform automatic feeding still depends on the public runtime members `auto_feed_` and `auto_feed_interval_ms`.

@@ -49,8 +49,6 @@ On successful acquisition, the pool returns a move-only `Handle` instead of a ra
 - `Index()` returns the owned slot index
 - `Reset()` returns the slot early if needed
 
-That is the RAII part of the design.
-
 ---
 
 ## 2. Construction forms in current mainline

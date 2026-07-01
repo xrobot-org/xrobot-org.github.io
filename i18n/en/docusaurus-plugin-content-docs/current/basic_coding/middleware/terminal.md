@@ -105,4 +105,4 @@ Timer::Start(terminal_task);
 
 ---
 
-This module serves as a key interactive component in embedded systems and can be used over UART, TCP, remote debugging, and more.
+It can be used over UART, TCP, remote debugging, and more.

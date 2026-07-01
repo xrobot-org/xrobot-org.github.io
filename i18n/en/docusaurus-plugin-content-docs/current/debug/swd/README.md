@@ -15,5 +15,3 @@ In current mainline, these two layers map directly to the real source layering:
 
 - the `Swd` base class owns link control, the single-transfer `Transfer()` primitive, the WAIT-retry wrapper, and DP/AP helper APIs;
 - `SwdGeneralGPIO` is one concrete backend that implements that abstraction over GPIO bit-banging.
-
-So the directory split here is not only a documentation convenience; it follows the actual abstraction layer and implementation layer in the code.

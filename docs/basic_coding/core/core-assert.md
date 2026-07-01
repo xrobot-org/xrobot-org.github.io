@@ -67,4 +67,4 @@ ASSERT_FROM_CALLBACK(buffer != nullptr, in_isr);
 
 ---
 
-本模块为 LibXR 所有调试和安全机制的核心基础，建议在系统开发初期即集成并启用断言与校验逻辑。
+断言与校验逻辑建议在系统开发初期即集成并启用。

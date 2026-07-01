@@ -42,8 +42,6 @@ In current `GeneratorCodeSTM32.py`, the generation logic here mainly does two th
 - read `CAN.<instance>.queue_size` or `FDCAN.<instance>.queue_size` from the config;
 - emit the corresponding `STM32CAN` / `STM32CANFD` constructor code.
 
-In other words, the current generator contract on this page is primarily “instance name + queue size”, not a chip-independent filter/FIFO topology generator.
-
 You can edit the config file directly. To apply the changes, rerun:
 `xr_cubemx_cfg -d .`
 or

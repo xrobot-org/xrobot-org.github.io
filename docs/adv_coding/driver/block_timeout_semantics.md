@@ -87,7 +87,7 @@ sidebar_position: 3
 - 但最终仍要继续等那次已经归属当前 waiter 的完成
 - 返回的是最终 `block_result_`，不是 `TIMEOUT`
 
-所以 `BLOCK timeout` 不是简单的“超时就一定失败”，而是要看这次完成最后归谁所有。
+所以 `BLOCK timeout` 的结果要看这次完成最后归谁所有，超时返回并不一定等于失败。
 
 ---
 

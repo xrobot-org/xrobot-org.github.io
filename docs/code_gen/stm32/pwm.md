@@ -23,5 +23,3 @@ STM32PWM pwm_timX_chX(&htimX, TIM_CHANNEL_X, false);
 - 遍历 CubeMX 工程里每个 TIM 外设下配置为 PWM 的通道；
 - 根据通道名生成对象名，例如 `pwm_tim1_ch1`；
 - 若通道配置含 `Complementary = true`，则第三个构造参数生成为 `true`；否则为 `false`。
-
-当前 generator 的核心契约是“按通道生成 PWM 对象”，而不是在这一页额外约定一套更复杂的运行时调度或分组初始化机制。

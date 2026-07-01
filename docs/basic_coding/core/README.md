@@ -22,5 +22,3 @@ sidebar_position: 1
 - [`libxr_rw`](./core-rw.md)：通用读写接口与操作封装
 - [`Operation`](./core-op.md)：异步完成反馈模型
 - [`Pipe`](./core-pipe.md)：基于共享字节队列的单向管道
-
-各模块将在后续页面中展开详细介绍。

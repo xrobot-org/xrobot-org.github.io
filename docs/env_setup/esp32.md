@@ -36,7 +36,7 @@ include(path_to_libxr/cmake/esp32.cmake)
 * 链接官方 `idf::freertos`、`idf::driver`、`idf::hal`、`idf::usb`、`idf::esp_timer`、`idf::esp_event`、`idf::esp_netif`、`idf::esp_wifi`、`idf::esp_adc`、`idf::nvs_flash`
 * 在新版本 IDF 存在时，自动补上拆分后的 `idf::esp_driver_gpio`、`idf::esp_driver_ledc`
 
-它还会显式检查 `idf::freertos` 是否存在；如果没有，直接报错。也就是说，这份脚本不是给脱离 `idf.py` 的普通 CMake 工程用的。
+它还会显式检查 `idf::freertos` 是否存在；如果没有，直接报错。因此这份脚本不适用于脱离 `idf.py` 的普通 CMake 工程。
 
 ## 当前环境信息
 

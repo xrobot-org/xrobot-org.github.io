@@ -12,7 +12,7 @@ sidebar_position: 9
 namespace LibXR::Print
 ```
 
-Its role is not “one device driver”, but a shared compile-time formatting surface that can be reused by:
+It is a shared compile-time formatting surface that can be reused by:
 
 - I/O paths such as `STDIO::Printf`
 - `RuntimeStringView::Reformat / Reprintf`

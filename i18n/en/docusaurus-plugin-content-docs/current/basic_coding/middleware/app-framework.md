@@ -61,7 +61,7 @@ Features:
 
 The XRobot system's auto-generation tools will automatically generate registration code for each module, uniformly invoking `HardwareContainer` and `ApplicationManager` to construct device registration and main loop scheduling.
 
-This enables all modules to be plugged in modularly, supporting rapid extension and platform-independent operation.
+This lets all modules be registered modularly and run independently of the platform.
 
 ---
 

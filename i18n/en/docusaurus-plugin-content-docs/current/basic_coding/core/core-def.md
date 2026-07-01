@@ -106,7 +106,3 @@ constexpr auto LibXR::min(T1 a, T2 b) -> common_type<T1, T2>::type;
 ```
 
 Used to compute the maximum/minimum of any numeric types, including integers and floats.
-
----
-
-This file provides foundational capabilities for all LibXR modules. It is strongly recommended to make full use of its utilities and conventions during development.

@@ -72,5 +72,4 @@ Across platforms, the priorities stay the same:
 - on transmit, keep the next block prepared while the current one is still being sent
 - keep completion short so the next transfer can start quickly
 
-If those three conditions hold, the driver is usually in good shape. If they do not, a cleaner API
-surface alone will not save the hot path.
+If those three conditions hold, the driver is usually in good shape.
