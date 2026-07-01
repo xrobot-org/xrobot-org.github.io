@@ -26,7 +26,7 @@ UART 驱动对上统一暴露 `SetConfig(...)`、`Write(...)` 和 `Read(...)`。
 
 `ESP32UART` 仍然沿用同一套端口抽象，但内部会按芯片能力选择后端。有 GDMA 时走 DMA 路径，没有则退回 FIFO + UART 中断。无论底层是哪条后端，发送侧都保留 active/pending 双槽，接收侧都以“先把字节推入端口队列，再处理挂起读请求”为准。
 
-`ESP32CDCJtag` 也值得单独提一下。它对上同样继承 `LibXR::UART`，但底层不是传统 UART 外设，而是 `USB Serial/JTAG` 控制器。它保留了 UART 抽象，却不属于 XRUSB 的通用 `DeviceCore`。从驱动设计角度看，这条线依然遵循相同原则：发送侧准备下一块，接收侧把字节推进 `ReadPort`，只不过底层搬运方式从 UART DMA/FIFO 变成了 USB Serial/JTAG FIFO。
+`ESP32CDCJtag` 也值得单独提一下。它对上同样继承 `LibXR::UART`，但底层不是传统 UART 外设，而是 `USB Serial/JTAG` 控制器。它保留了 UART 抽象，却不属于 XRUSB 的通用 `DeviceCore`。从驱动设计角度看，它依然遵循相同原则：发送侧准备下一块，接收侧把字节推进 `ReadPort`，只不过底层搬运方式从 UART DMA/FIFO 变成了 USB Serial/JTAG FIFO。
 
 ## Linux 路径
 

@@ -118,9 +118,9 @@ struct ReadWriteInfo {
 - 提供全双工传输接口，并暴露 `GetRxBuffer()` / `GetTxBuffer()`、`SwitchBuffer()`、`SetActiveLength()` 等双缓冲辅助接口；
 - 通用操作模型（`OperationRW = WriteOperation`），支持同步、回调、轮询等模式；
 
-## 语义边界
+## 说明
 
-- `ReadAndWrite(...)`、`Transfer(...)`、`MemRead(...)`、`MemWrite(...)` 都是平台实现需要提供的抽象行为；本页不假定所有平台都共享相同的寄存器协议或 DMA 组织方式。
+- `ReadAndWrite(...)`、`Transfer(...)`、`MemRead(...)`、`MemWrite(...)` 都是平台实现需要提供的抽象行为；各平台的寄存器协议和 DMA 组织方式不一定相同。
 - 当前 `GetRxBuffer()` / `GetTxBuffer()` 在双缓冲关闭时返回构造时传入的 `rx_buffer_ / tx_buffer_`；双缓冲开启时返回当前 active 半区。
 - `SwitchBuffer()` 只在 `double_buffer == true` 时切换内部 `DoubleBuffer` 状态；否则不做任何操作。
 - `SetActiveLength()` / `GetActiveLength()` 当前只作用在发送侧 `double_buffer_tx_` 的辅助长度字段上，不表示一条独立的统一“传输长度元信息协议”。

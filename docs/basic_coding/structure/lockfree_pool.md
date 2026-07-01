@@ -52,7 +52,7 @@ sidebar_position: 8
 > - `ErrorCode::FULL`：无可写槽
 > - `ErrorCode::EMPTY`：无可读槽
 
-## 当前接口边界
+## 说明
 
 - 当前 `Put(const Data&, uint32_t& start_index)` / `Get(Data&, uint32_t& start_index)` 都只从给定起始槽位向后线性扫描；若想重新从头找，需要调用方自己把 `start_index` 重新置回 `0`。
 - `RecycleSlot(index)` 当前只在槽状态为 `READY` 时成功；如果槽位已经被 `Get*()` 取走并进入 `RECYCLE`，再次调用 `RecycleSlot()` 不会成功。

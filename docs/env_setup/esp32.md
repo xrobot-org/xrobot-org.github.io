@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # ESP32 环境配置
 
-ESP32 这条线直接使用官方 `ESP-IDF` 工作流。
+ESP32 使用官方 `ESP-IDF` 工作流。
 
 官方入口：
 
@@ -41,7 +41,3 @@ include(path_to_libxr/cmake/esp32.cmake)
 ## 当前环境信息
 
 当前 `docker-image-esp32` 里预装的是 `ESP-IDF v5.4.1`。如果你本地使用的是更新的 `5.x` 稳定版本，整体接入方式仍然成立，但实际组件拆分和目录结构仍然以你当前安装的官方 IDF 为准。
-
-## 说明
-
-ESP32 这条线按官方 `ESP-IDF + CMake + idf.py` 方式接，不再单独维护一套旁路环境说明。
