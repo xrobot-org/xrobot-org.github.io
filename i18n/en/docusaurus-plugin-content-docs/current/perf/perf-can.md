@@ -63,7 +63,7 @@ Bit stuffing is estimated at 5%.
 
 ### Standard Frame (8-byte data)
 
-8917 packets/s, 108 bits per frame, data segment rate = 0.57 Mbps, bus load ≈ 100%
+8917 packets/s, 108 bits per frame, data segment rate[^1] = 0.57 Mbps, bus load ≈ 100%
 
 Ideal case: `64 / 108 * 1Mbps / 105% = 0.564 Mbps`
 
@@ -81,11 +81,13 @@ Ideal case: `64 / 108 * 1Mbps / 105% = 0.564 Mbps`
 
 ### FD Standard Frame (64-byte data)
 
-3929 packets/s, data segment rate = 2.01 Mbps, bus load ≈ 100%
+3929 packets/s, data segment rate[^1] = 2.01 Mbps, bus load ≈ 100%
 
 ### FD Extended Frame (64-byte data)
 
-3617 packets/s, data segment rate = 1.85 Mbps, bus load ≈ 100%
+3617 packets/s, data segment rate[^1] = 1.85 Mbps, bus load ≈ 100%
+
+[^1]: Here, “data segment rate” means effective payload throughput, calculated as `packets/s × payload bytes per packet × 8`. It is not the physical CAN FD data-phase bit rate configured in the controller; according to the test conditions above, the physical FD data-phase bit rate is 2.5 Mbps.
 
 ## Summary
 
