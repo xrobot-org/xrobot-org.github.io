@@ -31,7 +31,7 @@ XRobot can combine multiple `index.yaml` files through `sources.yaml`. Official 
 
 ## 1. Quick Start: Using the Official Module Source
 
-No configuration needed—uses the default source: [xrobot-modules/index.yaml](https://xrobot-org.github.io/xrobot-modules/index.yaml)
+No configuration needed—uses the default source: [xrobot-modules/index.yaml](https://xrobot.work/xrobot-modules/index.yaml)
 
 ### Create a sources.yaml Template
 
@@ -49,7 +49,7 @@ Sample output:
 
 ```bash
 Available modules:
-  xrobot-org/BlinkLED   source: https://xrobot-org.github.io/xrobot-modules/index.yaml (actual namespace: xrobot-org)
+  xrobot-org/BlinkLED   source: https://xrobot.work/xrobot-modules/index.yaml (actual namespace: xrobot-org)
 ```
 
 ---
@@ -68,7 +68,7 @@ Then edit it like this:
 
 ```yaml
 sources:
-  - url: https://xrobot-org.github.io/xrobot-modules/index.yaml
+  - url: https://xrobot.work/xrobot-modules/index.yaml
     priority: 0
   - url: https://your-domain.com/private-index.yaml
     priority: 1

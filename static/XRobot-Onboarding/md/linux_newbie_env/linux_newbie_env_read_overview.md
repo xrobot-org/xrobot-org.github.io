@@ -1,6 +1,6 @@
 ## 相关文档（可选阅读，仅作参考）
-- 环境配置总览：https://xrobot-org.github.io/docs/env_setup
-- Linux 环境配置：https://xrobot-org.github.io/docs/env_setup/env-setup-linux
+- 环境配置总览：https://xrobot.work/docs/env_setup
+- Linux 环境配置：https://xrobot.work/docs/env_setup/env-setup-linux
 - LibXR 仓库 README（库本体说明）：https://github.com/Jiu-xiao/libxr/blob/master/README.zh-CN.md
 以上文档内容较完整，本任务不要求全部看懂，只作为需要时查细节的“说明书”。
 

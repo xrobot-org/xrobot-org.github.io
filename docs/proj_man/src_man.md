@@ -31,7 +31,7 @@ XRobot 的模块仓库可以通过 `sources.yaml` 组合多个 `index.yaml`。�
 
 ## 一、快速上手：使用官方模块源
 
-无需配置，默认使用官方源：[xrobot-modules/index.yaml](https://xrobot-org.github.io/xrobot-modules/index.yaml)。
+无需配置，默认使用官方源：[xrobot-modules/index.yaml](https://xrobot.work/xrobot-modules/index.yaml)。
 
 ### 创建 sources.yaml 模板
 
@@ -49,7 +49,7 @@ xrobot_src_man list
 
 ```bash
 Available modules:
-  xrobot-org/BlinkLED   source: https://xrobot-org.github.io/xrobot-modules/index.yaml (actual namespace: xrobot-org)
+  xrobot-org/BlinkLED   source: https://xrobot.work/xrobot-modules/index.yaml (actual namespace: xrobot-org)
 ```
 
 ---
@@ -68,7 +68,7 @@ xrobot_src_man create-sources --output Modules/sources.yaml
 
 ```yaml
 sources:
-  - url: https://xrobot-org.github.io/xrobot-modules/index.yaml
+  - url: https://xrobot.work/xrobot-modules/index.yaml
     priority: 0
   - url: https://your-domain.com/private-index.yaml
     priority: 1

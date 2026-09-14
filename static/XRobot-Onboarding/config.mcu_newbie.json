@@ -13,35 +13,35 @@
         {
           "id": "mcu_newbie_env_read_overview",
           "title": "【重要】LibXR / CodeGenerator / XRobot 的分层与职责",
-          "link": "https://xrobot-org.github.io/docs/intro",
+          "link": "https://xrobot.work/docs/intro",
           "estimateMinutes": 15,
           "descMd": "md/mcu_newbie_env/mcu_newbie_env_read_overview.md"
         },
         {
           "id": "mcu_newbie_env_python_setup",
           "title": "安装 Python 工具：libxr / xrobot（可配合视频）",
-          "link": "https://xrobot-org.github.io/docs/env_setup",
+          "link": "https://xrobot.work/docs/env_setup",
           "estimateMinutes": 10,
           "descMd": "md/mcu_newbie_env/mcu_newbie_env_python_setup.md"
         },
         {
           "id": "mcu_newbie_env_board_debugger",
           "title": "准备并连接 STM32 开发板与调试器",
-          "link": "https://xrobot-org.github.io/docs/debug",
+          "link": "https://xrobot.work/docs/debug",
           "estimateMinutes": 10,
           "descMd": "md/mcu_newbie_env/mcu_newbie_env_board_debugger.md"
         },
         {
           "id": "mcu_newbie_env_stm32_vscode_gcc",
           "title": "在 Windows 上配置 STM32 + VS Code 开发环境",
-          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-stm32",
+          "link": "https://xrobot.work/docs/env_setup/env-setup-stm32",
           "estimateMinutes": 20,
           "descMd": "md/mcu_newbie_env/mcu_newbie_env_stm32_vscode_gcc.md"
         },
         {
           "id": "mcu_newbie_code_gen_stm32",
           "title": "使用 xr_cubemx_cfg 生成 STM32 初始化代码",
-          "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
+          "link": "https://xrobot.work/docs/code_gen/stm32",
           "estimateMinutes": 15,
           "descMd": "md/mcu_newbie_env/mcu_newbie_code_gen_stm32.md"
         }
@@ -62,35 +62,35 @@
         {
           "id": "mcu_newbie_basics_read_app_main",
           "title": "认识生成后的 LibXR 工程并接入 app_main()",
-          "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
+          "link": "https://xrobot.work/docs/code_gen/stm32",
           "estimateMinutes": 15,
           "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_read_app_main.md"
         },
         {
           "id": "mcu_newbie_basics_blink_led",
           "title": "在 app_main() 中用 LibXR GPIO 实现第一个 LED 闪烁",
-          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio",
+          "link": "https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-gpio",
           "estimateMinutes": 20,
           "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_blink_led.md"
         },
         {
           "id": "mcu_newbie_basics_button_exti_pwm",
           "title": "按键输入 → 外部中断 → PWM：在同一工程上逐步扩展",
-          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio",
+          "link": "https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-gpio",
           "estimateMinutes": 30,
           "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_button_exti_pwm.md"
         },
         {
           "id": "mcu_newbie_basics_uart_hw",
           "title": "硬件串口：用 LibXR 发送简单文本（初识 I/O 操作模型）",
-          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart",
+          "link": "https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-uart",
           "estimateMinutes": 30,
           "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_uart_hw.md"
         },
         {
           "id": "mcu_newbie_basics_review",
           "title": "小结：从 CubeMX 到 app_main 的完整链路和学习方法",
-          "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
+          "link": "https://xrobot.work/docs/code_gen/stm32",
           "estimateMinutes": 10,
           "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_review.md"
         }
@@ -114,28 +114,28 @@
         {
           "id": "mcu_newbie_periph_overview",
           "title": "其他外设与基础中间件：能力与文档入口",
-          "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
+          "link": "https://xrobot.work/docs/code_gen/stm32",
           "estimateMinutes": 60,
           "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_overview.md"
         },
         {
           "id": "mcu_newbie_periph_usb_terminal",
           "title": "USB 串口与终端：通过配置启用 Terminal + RamFS 命令行",
-          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart",
+          "link": "https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-uart",
           "estimateMinutes": 25,
           "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_usb_terminal.md"
         },
         {
           "id": "mcu_newbie_periph_flash_db",
           "title": "使用 Flash 数据库存储简单配置参数",
-          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-flash",
+          "link": "https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-flash",
           "estimateMinutes": 25,
           "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_flash_db.md"
         },
         {
           "id": "mcu_newbie_periph_review",
           "title": "小结：外设封装 / USB 串口 / 终端 / Flash 数据库 的整体图",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/middleware",
+          "link": "https://xrobot.work/docs/basic_coding/middleware",
           "estimateMinutes": 10,
           "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_review.md"
         }

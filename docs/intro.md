@@ -20,6 +20,6 @@ sidebar_position: 1
 
 ## 学习路线与任务引导
 
-[XRobot Onboarding](https://xrobot-org.github.io/XRobot-Onboarding/)
+[XRobot Onboarding](https://xrobot.work/XRobot-Onboarding/)
 
 ![XRobot Logo](/img/XRobot.png)

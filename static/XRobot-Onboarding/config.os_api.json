@@ -15,42 +15,42 @@
         {
           "id": "os_api_intro",
           "title": "运行环境入门：裸机 / RTOS / Linux 是啥",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/system",
+          "link": "https://xrobot.work/docs/basic_coding/system",
           "estimateMinutes": 10,
           "descMd": "md/os_api_basics/os_api_intro.md"
         },
         {
           "id": "os_thread_basic",
           "title": "线程入门：在 RTOS / Linux 跑出第一个 LibXR::Thread",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/system/thread",
+          "link": "https://xrobot.work/docs/basic_coding/system/thread",
           "estimateMinutes": 20,
           "descMd": "md/os_api_basics/os_thread_basic.md"
         },
         {
           "id": "os_mutex_basic",
           "title": "互斥锁入门：用 LibXR::Mutex 保护共享计数器",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/system/mutex",
+          "link": "https://xrobot.work/docs/basic_coding/system/mutex",
           "estimateMinutes": 20,
           "descMd": "md/os_api_basics/os_mutex_basic.md"
         },
         {
           "id": "os_semaphore_basic",
           "title": "信号量 + 回调入门：用 LibXR::Semaphore 和 Callback 通知线程",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/system/semaphore",
+          "link": "https://xrobot.work/docs/basic_coding/system/semaphore",
           "estimateMinutes": 30,
           "descMd": "md/os_api_basics/os_semaphore_basic.md"
         },
         {
           "id": "os_timer_basic",
           "title": "定时器入门：用 LibXR::Timer 跑出周期任务",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/system/timer",
+          "link": "https://xrobot.work/docs/basic_coding/system/timer",
           "estimateMinutes": 20,
           "descMd": "md/os_api_basics/os_timer_basic.md"
         },
         {
           "id": "os_async_basic",
           "title": "异步任务入门：用 LibXR::ASync 把耗时操作丢到后台跑",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/system/async",
+          "link": "https://xrobot.work/docs/basic_coding/system/async",
           "estimateMinutes": 20,
           "descMd": "md/os_api_basics/os_async_basic.md"
         }

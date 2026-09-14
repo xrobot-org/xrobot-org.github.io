@@ -89,4 +89,4 @@ int main()
 - 保留好这份工程，后面的 Mutex 练习会在这个示例上直接加入互斥锁来保护 `counter`。
 
 ## 相关文档
-- [Thread（线程）文档](https://xrobot-org.github.io/docs/basic_coding/system/thread)
+- [Thread（线程）文档](https://xrobot.work/docs/basic_coding/system/thread)

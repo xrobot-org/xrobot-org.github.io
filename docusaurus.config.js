@@ -3,7 +3,7 @@ const { themes: prismThemes } = require('prism-react-renderer');
 module.exports = {
   title: 'XRobot Docs',
   tagline: 'Want to be the best embedded framework',
-  url: 'https://xrobot-org.github.io',
+  url: 'https://xrobot.work',
   baseUrl: '/',
   trailingSlash: false,
   onBrokenLinks: 'throw',

@@ -1,8 +1,8 @@
 ## 参考资料
 - STM32 Flash 数据库代码生成说明（重点看 flash_map.hpp 和使用示例）：
-  https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-flash
+  https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-flash
 - Database 闪存数据库中间件文档：
-  https://xrobot-org.github.io/docs/basic_coding/middleware/database
+  https://xrobot.work/docs/basic_coding/middleware/database
 - LibXR C++ API 索引（查 STM32Flash / Database / Key 等类的具体接口）：
   https://jiu-xiao.github.io/libxr/
 - 视频（可选）：【LibXR STM32 C++ 代码生成工具 第四节-Flash数据库】

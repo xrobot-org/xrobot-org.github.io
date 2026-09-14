@@ -1,10 +1,10 @@
 ## 参考资料（本节只用“硬件串口”，先不管 USB / 终端）
-- STM32 硬件串口代码生成（CodeGenerator）：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart
-- LibXR UART 驱动文档（概念与接口）：https://xrobot-org.github.io/docs/basic_coding/driver/uart
-- I/O 操作模型概念（为什么每次 I/O 都要绑定完成行为）：https://xrobot-org.github.io/docs/concept
-- Operation 抽象（Operation / ReadOperation / WriteOperation）：https://xrobot-org.github.io/docs/basic_coding/core/core-op
-- ReadPort / WritePort 抽象：https://xrobot-org.github.io/docs/basic_coding/core/core-rw
-- 原始数据封装 RawData / ConstRawData：https://xrobot-org.github.io/docs/basic_coding/core/core-rawdata
+- STM32 硬件串口代码生成（CodeGenerator）：https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-uart
+- LibXR UART 驱动文档（概念与接口）：https://xrobot.work/docs/basic_coding/driver/uart
+- I/O 操作模型概念（为什么每次 I/O 都要绑定完成行为）：https://xrobot.work/docs/concept
+- Operation 抽象（Operation / ReadOperation / WriteOperation）：https://xrobot.work/docs/basic_coding/core/core-op
+- ReadPort / WritePort 抽象：https://xrobot.work/docs/basic_coding/core/core-rw
+- 原始数据封装 RawData / ConstRawData：https://xrobot.work/docs/basic_coding/core/core-rawdata
 - LibXR C++ API 参考文档（查某个类 / 函数的具体接口定义时使用）：https://jiu-xiao.github.io/libxr/
 本节只做“硬件串口 + 简单文本输出”，先不启用 USB CDC、终端和 STDIO::Printf。
 ## 本任务目标

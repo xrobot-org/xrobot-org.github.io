@@ -1,8 +1,8 @@
 ## 参考资料
-- STM32 GPIO 代码生成（CodeGenerator）：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio
-- STM32 PWM 代码生成（CodeGenerator）：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-pwm
-- LibXR GPIO 驱动文档：https://xrobot-org.github.io/docs/basic_coding/driver/gpio
-- LibXR PWM 驱动文档：https://xrobot-org.github.io/docs/basic_coding/driver/pwm
+- STM32 GPIO 代码生成（CodeGenerator）：https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-gpio
+- STM32 PWM 代码生成（CodeGenerator）：https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-pwm
+- LibXR GPIO 驱动文档：https://xrobot.work/docs/basic_coding/driver/gpio
+- LibXR PWM 驱动文档：https://xrobot.work/docs/basic_coding/driver/pwm
 - 视频（可选）：【STM32 + VS Code】花式点灯（GPIO、外部中断与 PWM）- XRobot 官方教程 1.1 节
   https://www.bilibili.com/video/BV1kaWhzNE2t
 ## 本任务目标
