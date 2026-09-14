@@ -224,7 +224,8 @@ IN 发送完成后会触发 `OnDataInComplete(in_isr, data)`，典型用途：
 ```cpp
 #include "hid_mouse.hpp"
 
-LibXR::USB::HIDMouse hid_mouse;
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::HIDMouse hid_mouse(EP::EP1);
 
 // usb_dev class list: {{&hid_mouse}}
 // usb_dev.Init();
@@ -240,7 +241,8 @@ hid_mouse.Release();
 #include "hid_keyboard.hpp"
 
 // enable_out_endpoint=true 可启用 OUT 中断端点接收 LED（可选）
-LibXR::USB::HIDKeyboard hid_kbd(true);
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::HIDKeyboard hid_kbd(EP::EP1, EP::EP1, true);
 
 // 发送：Shift + A
 hid_kbd.PressKey({LibXR::USB::HIDKeyboard::KeyCode::A},
@@ -264,10 +266,11 @@ hid_kbd.SetOnLedChangeCallback(
 ```cpp
 #include "hid_gamepad.hpp"
 
-LibXR::USB::HIDGamepad gamepad;
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::HIDGamepad gamepad(EP::EP1);
 gamepad.Send(1024, 1024, 1024, 1024, LibXR::USB::HIDGamepad::BTN1);
 
-LibXR::USB::HIDGamepadBipolar bipolar_gamepad;
+LibXR::USB::HIDGamepadBipolar bipolar_gamepad(EP::EP2);
 bipolar_gamepad.SendAxes(0, -512, 512, 0);
 ```
 

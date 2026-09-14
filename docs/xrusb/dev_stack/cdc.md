@@ -66,7 +66,7 @@ virtual void OnDataInComplete(bool in_isr, ConstRawData& data) = 0;
 注意事项：
 
 - 构造函数会进行动态内存分配（为 RX/TX 临时缓存申请堆内存）。
-- 被桥接 UART 的写队列容量需要满足 `rx_buffer_size`（代码内有 `ASSERT(uart_.write_port_->queue_data_->MaxSize() >= rx_buffer_size)`）。
+- 被桥接 UART 的写队列容量需要满足 `rx_buffer_size`（代码内有 `ASSERT(uart_.write_port_->Capacity() >= rx_buffer_size)`）。
 - 该类在构造结束时会各自挂起一次 CDC 读与 UART 读（`Read({nullptr,0}, ...)`）以进入回调链。
 
 ### `LibXR::USB::CDCWriteTest` / `LibXR::USB::CDCReadTest`
@@ -107,7 +107,7 @@ CDC ACM 设备以 **两接口（Communication + Data）** 的方式呈现，并�
 
 Comm IN 端点最大包大小固定为 16 字节；Serial State 通知本身为 10 字节结构（见下文）。
 
-端点号可在构造 `CDCBase` / `CDCUart` / `CDCToUart` / 测试类时指定；默认使用 `Endpoint::EPNumber::EP_AUTO` 由端点池自动分配。
+Data IN、Data OUT 和 Comm IN 的端点号在构造 `CDCBase` / `CDCUart` / `CDCToUart` / 测试类时显式指定；当前接口不再自动分配端点号。
 
 ### 速度与最大包大小
 
@@ -239,16 +239,9 @@ struct SerialStateNotification
 - 将端点归还给 `EndpointPool`
 - 置端点指针为空
 
-派生类或上层适配类在 `UnbindEndpoints()` 时应确保：
+`CDCUart::UnbindEndpoints()` 还会清除 ZLP 状态以及 RX 背压/暂存状态（`recv_pause_`、`pending_data_`）。当前实现**不会**遍历 `WritePort` 中所有请求并统一以 `INIT_ERR` 完成，也不会把“USB 断开”自动转换成端口级取消。
 
-- 终止所有依赖端点对象的异步操作
-- 对外完成或失败掉未完成的读写请求，避免上层永久等待
-
-`CDCUart` 在 `UnbindEndpoints()` 中额外做了队列清理与失败回收：
-
-- 清空 TX data 队列、重置 dequeue helper
-- 逐个 pop TX info，并以 `ErrorCode::INIT_ERR` 调用 `Finish()`，避免上层卡死
-- 清除 ZLP 状态与 RX 背压（`recv_pause_`/`pending_data_`），重置 write port 状态
+因此，需要跨断开/重连工作的上层应自己管理连接状态与等待时长，并在销毁相关对象前确保不再有回调链继续使用它们。
 
 ---
 
@@ -259,7 +252,9 @@ struct SerialStateNotification
 ```cpp
 #include "cdc_uart.hpp"
 
-LibXR::USB::CDCUart cdc_uart(/*rx*/256, /*tx*/256, /*tx_queue*/8);
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCUart cdc_uart(EP::EP1, EP::EP1, EP::EP2,
+                              /*rx*/256, /*tx*/256, /*tx_queue*/8);
 
 // 设备构造时把 &cdc_uart 放入 class 列表：{{&cdc_uart}}
 // usb_dev.Init();
@@ -298,7 +293,9 @@ cdc_uart.SetOnSetControlLineStateCallback(
 
 extern LibXR::UART& uart1;  // 你的硬件/外设 UART 实例
 
+using EP = LibXR::USB::Endpoint::EPNumber;
 LibXR::USB::CDCToUart cdc_to_uart(
+  EP::EP1, EP::EP1, EP::EP2,
   uart1,
   /*rx_buffer_size*/ 128,
   /*tx_buffer_size*/ 128,
@@ -316,14 +313,16 @@ LibXR::USB::CDCToUart cdc_to_uart(
 
 ```cpp
 #include "cdc_test.hpp"
-LibXR::USB::CDCWriteTest cdc_write_test;
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCWriteTest cdc_write_test(EP::EP1, EP::EP1, EP::EP2);
 ```
 
 读测试：
 
 ```cpp
 #include "cdc_test.hpp"
-LibXR::USB::CDCReadTest cdc_read_test;
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCReadTest cdc_read_test(EP::EP1, EP::EP1, EP::EP2);
 ```
 
 同样通过 USB Device 的 class 列表传入即可。

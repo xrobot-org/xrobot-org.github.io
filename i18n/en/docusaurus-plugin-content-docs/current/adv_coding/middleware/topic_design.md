@@ -21,9 +21,10 @@ or durable queue semantics, which are beyond the scope of this lightweight compo
 At the source level, `Block` is the central structure inside `Topic`. It stores the payload type
 contract, the topic-name CRC32 key, the subscriber lists, and the state used to coordinate
 concurrent access. By default it optimizes the single-publisher path: if `multi_publisher` is not
-explicitly enabled, it only uses a lightweight atomic `busy` state for serialization. Only when
-multi-publisher mode is enabled does it fall back to `Mutex`. This means `Topic` optimizes for the
-common single-publisher case rather than forcing every publish onto a locked path.
+explicitly enabled, a lightweight atomic `busy` state checks exclusive publication. Only when
+multi-publisher mode is enabled does it fall back to `Mutex`. That mode is for ordinary task-context
+`Publish()` calls and does not use `PublishFromCallback()`. This keeps the common single-publisher
+path lightweight instead of forcing every publish onto a lock.
 
 ## Why there is no built-in latest cache anymore
 
@@ -42,10 +43,11 @@ container.
 
 The subscriber types are split into synchronous, asynchronous, queued, and callback variants because
 they represent four genuinely different consumption semantics. `SyncSubscriber` means "wake me when
-new data arrives". `ASyncSubscriber` is closer to "I will fetch the latest result later".
-`QueuedSubscriber` means "enqueue every publish". Callback subscription means "invoke me immediately
-at publish time". If all of that were collapsed into one subscriber interface, the result would
-either degenerate into the most conservative common subset or push too many branches into runtime.
+new data arrives". `ASyncSubscriber` means "arm once, then come back and take that one accepted
+result". `QueuedSubscriber` means "enqueue every publish". Callback subscription means "invoke me
+immediately at publish time". If all of that were collapsed into one subscriber interface, the
+result would either degenerate into the most conservative common subset or push too many branches
+into runtime.
 
 ## Why it is not a strict message queue
 

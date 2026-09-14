@@ -18,8 +18,6 @@ and the three currently exported aliases are:
 - `LibXR::SPSCObjectPool<Data, IndexType>`: backed by `SPSCQueue<IndexType>`
 - `LibXR::MPMCObjectPool<Data, IndexType>`: backed by `MPMCQueue<IndexType>`
 
-Unlike [LockFreePool](./lockfree_pool.md), this family focuses on:
-
 - acquiring one exclusive slot through `Acquire()`
 - returning that slot automatically through a move-only `Handle`
 - modifying user objects in place inside the slot
@@ -161,10 +159,3 @@ handle.Reset();
 ```
 
 ---
-
-## 6. Difference from LockFreePool
-
-- The `ObjectPool` family is centered on “exclusive slot ownership + RAII return”. It fits object reuse, temporary buffer leasing, and work-slot borrowing.
-- `LockFreePool` is centered on “slot state machine + unordered Put/Get”. It fits high-concurrency caching and delivery patterns without strict acquire/return pairing.
-
-If your scenario is “borrow one slot, modify it exclusively, and return it automatically when done”, the `ObjectPool` family is usually the better match.

@@ -13,7 +13,7 @@ This class targets CMSIS-DAP v1 host toolchains that still use **HID Report** tr
 Supported capabilities:
 
 - **CMSIS-DAP v1 HID transport**
-- **SWD-only** (`DAP_Connect` supports SWD only; JTAG is not implemented)
+- **SWD with optional JTAG**: direct `daplink_v1.hpp` builds JTAG support; JTAG is advertised/used after `SetJtag()` binds a backend. `daplink_v1_profile_swd.hpp` builds an SWD-only profile.
 - **Optional nRESET control** (inject via `GPIO* nreset_gpio`)
 - **HID IN/OUT + Feature Report** transport path
 - **DAP_Transfer / DAP_TransferBlock** (including AP posted-read pipeline)
@@ -31,10 +31,10 @@ Constructor:
 ```cpp
 template <typename SwdPort>
 explicit DapLinkV1Class(
+    Endpoint::EPNumber in_ep_num,
+    Endpoint::EPNumber out_ep_num,
     SwdPort& swd_link,
-    LibXR::GPIO* nreset_gpio = nullptr,
-    Endpoint::EPNumber in_ep_num = Endpoint::EPNumber::EP_AUTO,
-    Endpoint::EPNumber out_ep_num = Endpoint::EPNumber::EP_AUTO);
+    LibXR::GPIO* nreset_gpio = nullptr);
 ```
 
 Parameters:
@@ -124,7 +124,7 @@ The unbind stage mainly does the following:
 
 Current implementation behavior for key `DAP_Info` fields:
 
-- `CAPABILITIES`: `DAP_CAP_SWD`
+- `CAPABILITIES`: always includes SWD; adds JTAG when JTAG is compiled and a backend is bound
 - `PACKET_COUNT`: `1`
 - `PACKET_SIZE`: `64`
 - `TIMESTAMP_CLOCK`: `1,000,000`
@@ -158,7 +158,7 @@ Current mainline covers a command family broadly similar to DAPLinkV2, but on a 
 
 Implementation boundary:
 
-- current mainline is still **SWD-only**; JTAG is not implemented
+- JTAG commands are available in a JTAG-enabled profile after `SetJtag()` binds a backend; the SWD-only profile excludes them
 - `PACKET_COUNT` is fixed at `1`, so there is no DAPLinkV2-style host-visible multi-packet response depth
 
 ---
@@ -190,7 +190,8 @@ The request path is roughly:
 MySwdBackend swd(/* ... init ... */);
 MyGpio nreset(/* ... optional ... */);
 
-LibXR::USB::DapLinkV1Class<MySwdBackend> dap(swd, &nreset);
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::DapLinkV1Class<MySwdBackend> dap(EP::EP1, EP::EP1, swd, &nreset);
 
 LibXR::USB::DapLinkV1Class<MySwdBackend>::InfoStrings info;
 info.vendor = "XRobot";
@@ -209,7 +210,7 @@ dap.SetInfoStrings(info);
 ## 8. Difference from DAPLinkV2
 
 - `DapLinkV1Class`: **HID transport**, `PACKET_SIZE=64`, `PACKET_COUNT=1`
-- `DapLinkV2Class`: **Bulk transport**, current mainline default `PACKET_SIZE=512`, `PACKET_COUNT=4`
+- `DapLinkV2Class`: **Bulk transport**, current mainline default host-visible `PACKET_SIZE=1024`, `PACKET_COUNT=4`
 
 If the host toolchain supports CMSIS-DAP v2 Bulk, `DapLinkV2Class` is generally preferred.
 If compatibility with older host-side HID report paths is required, `DapLinkV1Class` is the appropriate class.

@@ -37,7 +37,7 @@ struct Configuration {
 template <typename ReadPortType = ReadPort, typename WritePortType = WritePort>
 UART(ReadPortType* read_port, WritePortType* write_port);
 
-virtual ErrorCode SetConfig(Configuration config) = 0;
+virtual ErrorCode SetConfig(Configuration config, bool in_isr = false) = 0;
 ```
 
 The constructor takes read/write port pointers (derived types of `ReadPort` / `WritePort` are allowed). Internally it stores:

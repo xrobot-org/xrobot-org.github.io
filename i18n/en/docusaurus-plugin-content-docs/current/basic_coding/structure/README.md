@@ -24,7 +24,6 @@ This module summarizes the general-purpose data structures used in LibXR for tas
 - [List](./list.md)
 - [LockFreeList](./lockfree_list.md)
 - [ObjectPool](./object_pool.md)
-- [LockFreePool](./lockfree_pool.md)
 - [RBTree](./rbt.md)
 - [DoubleBuffer](./double_buffer.md)
 

@@ -12,7 +12,7 @@ sidebar_position: 9
 
 ## 示例
 
-最后一个参数表示启用 DMA 传输的最小字节数，低于该值将不启用 DMA。
+最后一个参数是 DMA 切换阈值，判断条件为传输长度**严格大于**该值。阈值为 `3` 时，3 字节不进入 DMA 分支，4 字节才满足条件。
 
 ```cpp
 STM32I2C i2c1(&hi2c1, i2c1_buf, 3);
@@ -32,7 +32,7 @@ I2C:
 
 - `buffer_size`：I2C 传输/接收缓冲区大小  
 - `dma_section`：缓冲区所在的内存区域
-- `dma_enable_min_size`：启用 DMA 的最小传输字节数
+- `dma_enable_min_size`：DMA 切换阈值；传输长度严格大于该值时才进入相应 DMA 分支
 
 当前生成逻辑要点：
 

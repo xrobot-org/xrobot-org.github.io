@@ -22,7 +22,7 @@ static constexpr auto USB_FS_LANG_PACK =
 支持能力：
 
 - **CMSIS-DAP v2 Bulk transport**
-- **SWD-only**（`DAP_Connect` 仅支持 SWD；JTAG 未实现）
+- **SWD + 可选 JTAG**：直接包含 `daplink_v2.hpp` 时编译 JTAG 支持；调用 `SetJtag()` 绑定后端后启用 JTAG capability。`daplink_v2_profile_swd.hpp` 可构建纯 SWD 版本。
 - **可选 nRESET 控制**（通过 `GPIO* nreset_gpio` 注入，缺省为不支持）
 - **SWJ_Pins shadow 语义**（SWDIO/SWCLK 以 shadow 状态对主机表现；nRESET 若连线可返回真实电平）
 - **WinUSB（MS OS 2.0）BOS 平台能力**（CompatibleID="WINUSB" + DeviceInterfaceGUIDs）
@@ -39,19 +39,20 @@ static constexpr auto USB_FS_LANG_PACK =
 构造函数：
 
 ```cpp
-template <typename SwdPort>
+template <typename SwdPort, /* packet/queue template parameters... */>
 explicit DapLinkV2Class(
+    Endpoint::EPNumber data_in_ep_num,
+    Endpoint::EPNumber data_out_ep_num,
     SwdPort& swd_link,
     LibXR::GPIO* nreset_gpio = nullptr,
-    Endpoint::EPNumber data_in_ep_num  = Endpoint::EPNumber::EP_AUTO,
-    Endpoint::EPNumber data_out_ep_num = Endpoint::EPNumber::EP_AUTO);
+    const char* interface_string = DEFAULT_INTERFACE_STRING);
 ```
 
 参数说明：
 
 - `swd_link`：SWD 链路对象引用（`SwdPort` 实例）。
 - `nreset_gpio`：可选 nRESET GPIO；若为空则 reset 相关命令以 best-effort 方式处理。
-- `data_in_ep_num` / `data_out_ep_num`：Bulk IN/OUT 端点号；支持自动分配（`EP_AUTO`）。
+- `data_in_ep_num` / `data_out_ep_num`：显式指定 Bulk IN/OUT 端点号。
 
 常用接口：
 
@@ -165,7 +166,7 @@ struct InfoStrings {
 
 内部状态结构 `LibXR::USB::DapLinkV2Def::State` 关键字段包括：
 
-- `debug_port`：默认 DISABLED；CONNECT 后为 SWD
+- `debug_port`：默认 DISABLED；CONNECT 成功后按主机选择进入 SWD 或 JTAG
 - `transfer_abort`：TransferAbort 标志
 - `transfer_cfg`：TransferConfigure 解析后的策略（idle_cycles / retry_count / match_retry）
 
@@ -196,8 +197,8 @@ struct InfoStrings {
 | ----------------------- | -------------------: | ---------------------------------------------------------------------------------------- |
 | `DAP_Info`              |               `INFO` | 返回字符串/数值信息（含 CAPABILITIES / PACKET_COUNT / PACKET_SIZE / TIMESTAMP_CLOCK 等） |
 | `DAP_HostStatus`        |        `HOST_STATUS` | 返回 OK                                                                                  |
-| `DAP_Connect`           |            `CONNECT` | 仅支持 SWD；成功返回端口 SWD                                                             |
-| `DAP_Disconnect`        |         `DISCONNECT` | 关闭 SWD 并回到 DISABLED                                                                 |
+| `DAP_Connect`           |            `CONNECT` | 支持 SWD；JTAG profile 已启用并绑定后端时也可连接 JTAG                                                             |
+| `DAP_Disconnect`        |         `DISCONNECT` | 关闭当前调试链路并回到 DISABLED                                                                 |
 | `DAP_TransferConfigure` | `TRANSFER_CONFIGURE` | 设置 idle_cycles / retry / match_retry，并映射到 SWD policy                              |
 | `DAP_Transfer`          |           `TRANSFER` | DP/AP 读写；支持 match / timestamp；AP posted-read pipeline                              |
 | `DAP_TransferBlock`     |     `TRANSFER_BLOCK` | DP/AP block 读写；AP read 使用 posted pipeline；不支持 match/timestamp                   |
@@ -210,16 +211,16 @@ struct InfoStrings {
 | `DAP_SWJ_Sequence`      |       `SWJ_SEQUENCE` | 写入 SWJ bit 序列（LSB-first），并更新 shadow（SWDIO=last bit, SWCLK=0）                 |
 | `DAP_SWD_Configure`     |      `SWD_CONFIGURE` | best-effort 解析，返回 OK                                                                |
 | `DAP_SWD_Sequence`      |       `SWD_SEQUENCE` | 多段输入/输出序列；输入数据追加在响应尾部（LSB-first）                                   |
-| `DAP_QueueCommands`     |     `QUEUE_COMMANDS` | 返回 `<CMD, DAP_ERROR>`                                                                  |
-| `DAP_ExecuteCommands`   |   `EXECUTE_COMMANDS` | 返回 `<CMD, DAP_ERROR>`                                                                  |
+| `DAP_QueueCommands`     |     `QUEUE_COMMANDS` | 校验并把一组打包命令加入内部请求缓冲，等待 ExecuteCommands                                              |
+| `DAP_ExecuteCommands`   |   `EXECUTE_COMMANDS` | 执行此前 QueueCommands 保存的命令流并返回组合响应                                                        |
 
 注：具体数值 ID 取决于 `DapLinkV2Def::CommandId` 的定义；本文以枚举名表示。
 
 ### 7.2 `DAP_Info` 关键字段
 
-- `CAPABILITIES`：`DAP_CAP_SWD`
+- `CAPABILITIES`：始终包含 SWD；JTAG 编译启用且已经 `SetJtag()` 时附加 JTAG capability
 - `PACKET_COUNT`：默认返回 `4`。虽然类模板默认的声明值是 `8`，但当前实现会把实际对主机暴露的数量钳制到 `4`。
-- `PACKET_SIZE`：返回 IN 端点的 `MaxTransferSize()`
+- `PACKET_SIZE`：由 DAP 模板参数计算。默认模板对主机返回 `1024` 字节；USB 端点 `MaxTransferSize()` 只决定是否需要 Bulk 分段/重组
 - `TIMESTAMP_CLOCK`：`1,000,000`（与微秒时间基准匹配）
 
 ---
@@ -236,7 +237,8 @@ struct InfoStrings {
 MySwdBackend swd(/* ... init ... */);   // 具体的 SWD 后端实现 Concrete SWD backend
 MyGpio nreset(/* ... optional ... */);  // 具体的 GPIO 实现 Concrete GPIO implementation
 
-LibXR::USB::DapLinkV2Class<MySwdBackend> dap(swd, &nreset);
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::DapLinkV2Class<MySwdBackend> dap(EP::EP1, EP::EP2, swd, &nreset);
 
 // 可选：覆盖 DAP_Info 字符串
 LibXR::USB::DapLinkV2Class<MySwdBackend>::InfoStrings info;

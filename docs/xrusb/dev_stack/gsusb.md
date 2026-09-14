@@ -29,9 +29,9 @@ sidebar_position: 4
 ### 1.1 Classic CAN 构造
 
 ```cpp
-GsUsbClass(std::initializer_list<LibXR::CAN*> cans,
-           Endpoint::EPNumber data_in_ep_num  = EP1,
-           Endpoint::EPNumber data_out_ep_num = EP2,
+GsUsbClass(Endpoint::EPNumber data_in_ep_num,
+           Endpoint::EPNumber data_out_ep_num,
+           std::initializer_list<LibXR::CAN*> cans,
            size_t rx_queue_size = 32,
            size_t echo_queue_size = 32,
            LibXR::GPIO* identify_gpio = nullptr,
@@ -48,9 +48,9 @@ GsUsbClass(std::initializer_list<LibXR::CAN*> cans,
 ### 1.2 FDCAN 构造（启用 FD）
 
 ```cpp
-GsUsbClass(std::initializer_list<LibXR::FDCAN*> fd_cans,
-           Endpoint::EPNumber data_in_ep_num  = EP_AUTO,
-           Endpoint::EPNumber data_out_ep_num = EP_AUTO,
+GsUsbClass(Endpoint::EPNumber data_in_ep_num,
+           Endpoint::EPNumber data_out_ep_num,
+           std::initializer_list<LibXR::FDCAN*> fd_cans,
            size_t rx_queue_size = 32,
            size_t echo_queue_size = 32,
            LibXR::GPIO* identify_gpio = nullptr,
@@ -61,7 +61,7 @@ GsUsbClass(std::initializer_list<LibXR::FDCAN*> fd_cans,
 要点：
 
 - `fd_cans`：FDCAN 指针列表，数量必须等于 `CanChNum`
-- 若驱动对端点号没有限制，可用 `EP_AUTO` 让端点自动分配
+- IN/OUT 端点号必须显式指定
 - FD 能力是否真正可用，取决于设备端是否启用 FD 支持、以及主机侧是否通过控制面将对应通道置为 FD 模式
 
 ---
@@ -221,9 +221,9 @@ Classic CAN 的错误包可转换为主机可识别的 SocketCAN 错误帧（`CA
 ```cpp
 using Dev = LibXR::USB::GsUsbClass<2>;
 
-Dev gsusb({&can1, &can2},
-          /*in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
+Dev gsusb(/*in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
           /*out_ep*/LibXR::USB::Endpoint::EPNumber::EP2,
+          {&can1, &can2},
           /*rx_queue*/64,
           /*echo_queue*/64,
           /*identify*/&led_gpio,
@@ -240,9 +240,9 @@ Dev gsusb({&can1, &can2},
 ```cpp
 using Dev = LibXR::USB::GsUsbClass<1>;
 
-Dev gsusb({&fdcan1},
-          /*in_ep*/LibXR::USB::Endpoint::EPNumber::EP_AUTO,
-          /*out_ep*/LibXR::USB::Endpoint::EPNumber::EP_AUTO);
+Dev gsusb(/*in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
+          /*out_ep*/LibXR::USB::Endpoint::EPNumber::EP2,
+          {&fdcan1});
 ```
 
 主机侧（Linux）一般通过 `gs_usb` 驱动枚举为 SocketCAN 设备（如 `can0`），随后使用 `ip link set can0 up type can bitrate ...` 或 `cansend/candump` 等工具进行收发。

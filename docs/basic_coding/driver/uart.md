@@ -37,7 +37,7 @@ struct Configuration {
 template <typename ReadPortType = ReadPort, typename WritePortType = WritePort>
 UART(ReadPortType* read_port, WritePortType* write_port);
 
-virtual ErrorCode SetConfig(Configuration config) = 0;
+virtual ErrorCode SetConfig(Configuration config, bool in_isr = false) = 0;
 ```
 
 构造时传入读写端口指针（允许传入 `ReadPort/WritePort` 的派生类型）。对象内部会保存：

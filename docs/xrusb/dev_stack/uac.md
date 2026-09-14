@@ -47,7 +47,7 @@ sidebar_position: 3
 - `interval`：Iso IN 端点 `bInterval`
   - Full-Speed：**必须为 1**（代码中强制）
   - High-Speed：允许 1..16（规范含义为微帧指数调度）
-- `iso_in_ep_num`：Iso IN 端点号（默认自动分配）
+- `iso_in_ep_num`：Iso IN 端点号，构造时显式指定
 
 初始化后关键状态：
 
@@ -282,6 +282,8 @@ rem_bytes_per_service  = bytes_per_sec_ % service_hz_
 - `GET_CUR (wLength=2)`：读出 `vol_cur_`
 - `GET_MIN / GET_MAX / GET_RES (wLength=2)`：返回构造参数 `vol_min_ / vol_max_ / vol_res_`
 
+当前类保存并返回 Mute / Volume 控制值，但发送路径不会自动修改 PCM 样本；需要实际静音或增益时，由上游采集/处理层应用这些控制值。
+
 ---
 
 ## 10. 使用示例
@@ -291,7 +293,9 @@ rem_bytes_per_service  = bytes_per_sec_ % service_hz_
 
 using Mic = LibXR::USB::UAC1MicrophoneQ<2, 16>; // 2ch, 16-bit
 
-Mic mic(/*sample_rate*/48000,
+using EP = LibXR::USB::Endpoint::EPNumber;
+Mic mic(EP::EP1,
+        /*sample_rate*/48000,
         /*vol_min*/-90*256, /*vol_max*/0, /*vol_res*/256,
         /*speed*/LibXR::USB::Speed::FULL,
         /*queue_bytes*/2048,

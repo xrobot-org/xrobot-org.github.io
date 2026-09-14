@@ -13,7 +13,7 @@ sidebar_position: 12
 ## 特性概览
 
 - **零额外拷贝**：写端写入 → 直接进入共享队列 → 读端从同一队列取出。
-- **ISR 友好**：读端推进通过 `ProcessPendingReads(in_isr)`，可在 ISR 或任务上下文中触发。
+- **ISR 友好**：写端发布数据时直接通知读端推进挂起请求，并继续传递 `in_isr` 上下文。
 - **语义与 `ReadPort`/`WritePort` 一致**：阻塞/回调/轮询等完成方式统一由 `Operation` 控制。
 
 ---
@@ -38,9 +38,9 @@ public:
 ```
 
 - `buffer_size`：共享队列总容量（字节），用于承载写入的数据。创建后不可更改。
-- 当前实现内部实际构造成 `ReadPort(0)` 与 `WritePort(1, buffer_size)`：
-  - 读端自身不持有独立数据队列容量；
-  - 写端元信息队列固定为 `1` 槽，数据字节队列容量为 `buffer_size`。
+- 当前实现内部实际构造成 `ReadPort(0)` 与 `WritePort(0, buffer_size)`：
+  - 读端不分配自己的队列，而是借用写端的字节队列；
+  - 写端没有请求元信息队列，写完成发生在字节成功入队之后。
 - `Pipe` 不直接暴露 `Size()/Reset()` 等方法——请通过 `GetReadPort()` / `GetWritePort()` 使用对应端口接口。
 
 ---
@@ -61,9 +61,7 @@ LibXR::ReadOperation rop(status_or_cb_or_sem);
 LibXR::WriteOperation wop(status_or_cb_or_sem);
 
 r({buf, sizeof(buf)}, rop);           // 可能挂起
-w({some_data, some_len}, wop);        // 写入后会推进 r.ProcessPendingReads(...)
+w({some_data, some_len}, wop);        // 写入后直接通知读端检查共享队列
 ```
 
-> 备注：`Pipe` 的读侧是“被动推进”的：需要写侧触发（或外部主动调用 `ProcessPendingReads`）才能完成挂起读请求；这一点与 `ReadPort` 的模型保持一致。
-
-> 另一个当前实现边界是：`WriteFun` 会从写端的 `queue_info_` 中弹出一个 `WriteInfoBlock`，若弹出失败当前实现会断言并返回 `ErrorCode::EMPTY`。这说明 `Pipe` 依赖的并不是“任意写端回调协议”，而是当前 `WritePort` 的既有入队/完成语义。
+> `Pipe` 的写完成表示字节已经进入共享队列，不等待读端消费。空间不足时返回 `FULL`，不会通过阻塞写等待读端腾出空间。

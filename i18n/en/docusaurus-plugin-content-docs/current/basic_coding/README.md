@@ -10,6 +10,8 @@ This chapter briefly introduces LibXR's CMake configuration and basic API usage,
 
 ## Contents
 
+- [CMake Configuration](./cmake.md)
+
 - [Core Components](/docs/basic_coding/core)
 - [Data Structures](/docs/basic_coding/structure)
 - [Middleware](/docs/basic_coding/middleware)

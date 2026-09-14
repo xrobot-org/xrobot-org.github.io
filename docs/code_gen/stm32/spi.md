@@ -12,7 +12,7 @@ sidebar_position: 8
 
 ## 示例
 
-最后一个参数决定了开启dma传输的最小字节数，小于该值的数据不会开启dma传输。
+最后一个参数是 DMA 切换阈值，相关判断使用**严格大于**。阈值为 `3` 时，等于 3 字节并不会进入该 DMA 分支。
 
 ```cpp
 STM32SPI spi1(&hspi1, spi1_rx_buf, spi1_tx_buf, 3);

@@ -25,13 +25,13 @@ sidebar_position: 6
 ```cpp
 class ASync {
 public:
-  enum class Status : uint8_t { READY, BUSY, DONE };
+  enum class Status : uint32_t { READY = 0, BUSY = 1, DONE = UINT32_MAX };
 
   ASync(size_t stack_depth, Thread::Priority priority);
 
   using Job = LibXR::Callback<ASync*>;
   ErrorCode AssignJob(Job job);                       // Submit from task context
-  void       AssignJobFromCallback(Job job, bool isr);// Submit from ISR/callback context
+  ErrorCode  AssignJobFromCallback(Job job, bool in_isr);// Submit from ISR/callback context
   Status     GetStatus();                             // Query status and auto-reset
 };
 ```
@@ -84,6 +84,6 @@ void Loop()
 | Task wakeup    | `Semaphore::Post/Wait`         |
 | ISR-compatible | `Semaphore::PostFromCallback()`|
 
-In bare-metal mode, `async.cpp` can be modified for **synchronous direct calls**: if the system lacks thread support, `AssignJob()` directly invokes `job.Run()`, making `ASync` a lightweight function call wrapper.
+In bare-metal mode, `AssignJob()` marks the job pending and the software `Timer` executes it on a later refresh. There is no independent worker thread, so a long job occupies the Timer refresh context.
 
 Although `Callback` design forbids blocking or delay, its interface and structure are reused here and renamed as `Job` to avoid confusion.

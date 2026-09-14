@@ -6,4 +6,4 @@ sidebar_position: 3
 
 # About Performance
 
-This chapter will analyze the performance of different modules/devices in extreme performance testing, and also serve as a reference for high-performance development.
+This chapter records performance tests for LibXR modules and peripherals. Results apply to the hardware, configuration, and test code stated on each page; rerun the same test conditions when comparing newer revisions.

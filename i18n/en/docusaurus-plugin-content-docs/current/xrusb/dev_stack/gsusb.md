@@ -29,9 +29,9 @@ This class supports both Classic CAN and FDCAN (with FD capability enabled) via 
 ### 1.1 Classic CAN constructor
 
 ```cpp
-GsUsbClass(std::initializer_list<LibXR::CAN*> cans,
-           Endpoint::EPNumber data_in_ep_num  = EP1,
-           Endpoint::EPNumber data_out_ep_num = EP2,
+GsUsbClass(Endpoint::EPNumber data_in_ep_num,
+           Endpoint::EPNumber data_out_ep_num,
+           std::initializer_list<LibXR::CAN*> cans,
            size_t rx_queue_size = 32,
            size_t echo_queue_size = 32,
            LibXR::GPIO* identify_gpio = nullptr,
@@ -48,9 +48,9 @@ Notes:
 ### 1.2 FDCAN constructor (FD enabled)
 
 ```cpp
-GsUsbClass(std::initializer_list<LibXR::FDCAN*> fd_cans,
-           Endpoint::EPNumber data_in_ep_num  = EP_AUTO,
-           Endpoint::EPNumber data_out_ep_num = EP_AUTO,
+GsUsbClass(Endpoint::EPNumber data_in_ep_num,
+           Endpoint::EPNumber data_out_ep_num,
+           std::initializer_list<LibXR::FDCAN*> fd_cans,
            size_t rx_queue_size = 32,
            size_t echo_queue_size = 32,
            LibXR::GPIO* identify_gpio = nullptr,
@@ -61,7 +61,7 @@ GsUsbClass(std::initializer_list<LibXR::FDCAN*> fd_cans,
 Notes:
 
 - `fd_cans`: list of FDCAN pointers; the count must equal `CanChNum`
-- If the driver does not restrict endpoint numbers, `EP_AUTO` can be used for automatic endpoint allocation
+- If the driver does not restrict endpoint numbers, IN/OUT endpoint numbers must be specified explicitly
 - Whether FD is truly usable depends on both device-side FD support and whether the host enables FD mode for the channel via the control plane
 
 ---
@@ -221,9 +221,9 @@ When timestamps are enabled for a channel, the device appends `timestamp_us` to 
 ```cpp
 using Dev = LibXR::USB::GsUsbClass<2>;
 
-Dev gsusb({&can1, &can2},
-          /*in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
+Dev gsusb(/*in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
           /*out_ep*/LibXR::USB::Endpoint::EPNumber::EP2,
+          {&can1, &can2},
           /*rx_queue*/64,
           /*echo_queue*/64,
           /*identify*/&led_gpio,
@@ -240,9 +240,9 @@ Dev gsusb({&can1, &can2},
 ```cpp
 using Dev = LibXR::USB::GsUsbClass<1>;
 
-Dev gsusb({&fdcan1},
-          /*in_ep*/LibXR::USB::Endpoint::EPNumber::EP_AUTO,
-          /*out_ep*/LibXR::USB::Endpoint::EPNumber::EP_AUTO);
+Dev gsusb(/*in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
+          /*out_ep*/LibXR::USB::Endpoint::EPNumber::EP2,
+          {&fdcan1});
 ```
 
 On Linux, the device is typically enumerated by the `gs_usb` driver as a SocketCAN interface (e.g., `can0`). You can then use `ip link set can0 up type can bitrate ...` or tools like `cansend`/`candump` for transmit/receive.

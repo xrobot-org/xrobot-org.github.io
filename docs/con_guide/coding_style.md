@@ -220,7 +220,7 @@ extern "C" __attribute__((weak)) void vApplicationStackOverflowHook(...);
 - CI 使用 `clang-format 21.1.8`，检查入口是：
 
 ```bash
-tools/format_driver_src.sh --check
+tools/format_cpp_files.sh --check
 ```
 
-- 当前脚本只检查 `driver/` 和 `src/` 下的 `C/C++` 源文件。
+- 默认检查 `driver/`、`src/`、`system/` 和 `test/` 下的 C/C++ 文件；也可以传入具体文件。

@@ -107,7 +107,7 @@ Notes:
 
 The Comm IN endpoint max packet size is fixed at 16 bytes; the Serial State notification itself is a 10-byte structure (see below).
 
-Endpoint numbers can be specified when constructing `CDCBase` / `CDCUart` / `CDCToUart` / the test classes; the default is `Endpoint::EPNumber::EP_AUTO`, which lets the endpoint pool auto-assign numbers.
+Data IN, Data OUT, and Comm IN endpoint numbers are explicit constructor arguments for `CDCBase`, `CDCUart`, `CDCToUart`, and the test classes. The current interface no longer auto-assigns endpoint numbers.
 
 ### Speed and Max Packet Size
 
@@ -259,7 +259,9 @@ Derived classes or upper-layer adapters should ensure in `UnbindEndpoints()`:
 ```cpp
 #include "cdc_uart.hpp"
 
-LibXR::USB::CDCUart cdc_uart(/*rx*/256, /*tx*/256, /*tx_queue*/8);
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCUart cdc_uart(EP::EP1, EP::EP1, EP::EP2,
+                              /*rx*/256, /*tx*/256, /*tx_queue*/8);
 
 // When constructing the USB device, put &cdc_uart into the class list: {{&cdc_uart}}
 // usb_dev.Init();
@@ -299,7 +301,9 @@ cdc_uart.SetOnSetControlLineStateCallback(
 
 extern LibXR::UART& uart1;  // your hardware/peripheral UART instance
 
+using EP = LibXR::USB::Endpoint::EPNumber;
 LibXR::USB::CDCToUart cdc_to_uart(
+  EP::EP1, EP::EP1, EP::EP2,
   uart1,
   /*rx_buffer_size*/ 128,
   /*tx_buffer_size*/ 128,
@@ -317,14 +321,16 @@ Write test:
 
 ```cpp
 #include "cdc_test.hpp"
-LibXR::USB::CDCWriteTest cdc_write_test;
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCWriteTest cdc_write_test(EP::EP1, EP::EP1, EP::EP2);
 ```
 
 Read test:
 
 ```cpp
 #include "cdc_test.hpp"
-LibXR::USB::CDCReadTest cdc_read_test;
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCReadTest cdc_read_test(EP::EP1, EP::EP1, EP::EP2);
 ```
 
 Pass them into the USB Device class list in the same way.

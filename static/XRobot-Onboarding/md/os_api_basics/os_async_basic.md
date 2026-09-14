@@ -120,7 +120,7 @@ LibXR::ASync::Job g_async_job = LibXR::ASync::Job::Create(HeavyCalc, &g_arg);
 void SensorISR()
 {
     // 在中断/回调上下文提交任务，isr = true
-    g_async_worker.AssignJobFromCallback(g_async_job, true);
+    g_async_worker.AssignJobFromCallback(g_async_job, false);
 }
 
 int main()
@@ -185,7 +185,7 @@ int main()
 1. 至少创建一个 `LibXR::ASync` 实例，并正确构造一个 `Job`：`LibXR::ASync::Job::Create(HeavyCalc, &ctx)`。
 2. 能从任务上下文或模拟 ISR 中成功提交 Job：
    - `AssignJob()` 在 READY 状态下返回 `ErrorCode::OK`；
-   - `AssignJobFromCallback()` 能在“伪 ISR”中被调用而不导致异常。
+   - `AssignJobFromCallback()` 需要传入真实调用上下文；普通回调/函数中传 `false`，真实 ISR 中传 `true`。
 3. 主循环中能通过 `GetStatus()` 观察到从 `BUSY` -> `DONE` -> `READY` 的状态变化。
 
 ### 理解到位

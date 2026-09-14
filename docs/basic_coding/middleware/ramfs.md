@@ -86,8 +86,8 @@ dir.Add(custom);
 
 // 多次运行 exec 文件，修改计数值
 for (int i = 1; i <= 5; ++i) {
-  exec_file->Run(0, nullptr);
-  ASSERT(data_file->GetData<int>() == i);
+  exec_file.Run(0, nullptr);
+  ASSERT(data_file.Data<int>() == i);
 }
 ```
 
@@ -112,7 +112,7 @@ for (int i = 1; i <= 5; ++i) {
 | 方法 | 功能 |
 |------|------|
 | `Run(argc, argv)` | 运行可执行文件（仅 EXEC 类型） |
-| `GetData<T>()` | 获取类型安全数据引用 |
+| `Data<T>()` | 获取类型安全数据引用 |
 
 ### Dir 接口
 

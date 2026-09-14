@@ -280,8 +280,8 @@ Example: subscribe to standard data frames with IDs in `[0x100, 0x1FF]`:
 LibXR::CAN &can = ...;
 
 can.Register(
-    LibXR::CAN::Callback(
-        [](bool in_isr, const LibXR::CAN::ClassicPack &pack) {
+    LibXR::CAN::Callback::Create(
+        [](bool in_isr, int, const LibXR::CAN::ClassicPack &pack) {
           (void)in_isr;
           // Fast processing, no blocking
         }),
@@ -294,8 +294,8 @@ Example: subscribe to all virtual error frames:
 
 ```cpp
 can.Register(
-    LibXR::CAN::Callback(
-        [](bool in_isr, const LibXR::CAN::ClassicPack &pack) {
+    LibXR::CAN::Callback::Create(
+        [](bool in_isr, int, const LibXR::CAN::ClassicPack &pack) {
           (void)in_isr;
           if (!LibXR::CAN::IsErrorId(pack.id)) {
             return;
@@ -445,7 +445,7 @@ cb.Run(in_isr, pack);
 User callbacks should therefore follow:
 
 ```cpp
-[](bool in_isr, const LibXR::FDCAN::FDPack &pack) { ... }
+[](bool in_isr, int, const LibXR::FDCAN::FDPack &pack) { ... }
 ```
 
 #### `FDCAN::Filter`
@@ -517,4 +517,3 @@ protected:
 
 - Called by the driver on FD frame reception.
 - Internally dispatches to matching FD filters and invokes callbacks as `cb.Run(in_isr, pack)`.
-

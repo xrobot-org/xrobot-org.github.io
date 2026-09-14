@@ -20,5 +20,9 @@ This module summarizes the lightweight state utilities and geometry / kinematics
 - [Transform](./transform.md)
 - [Inertia](./inertia.md)
 - [Kinematic](./kinematic.md)
+- [SerializedService](./serialized_service.md)
+- [PID Controller](./pid.md)
+- [Cyclic Angles and Value Encoding](./value_encoding.md)
+- [CRC](./crc.md)
 
 See the individual pages for details.

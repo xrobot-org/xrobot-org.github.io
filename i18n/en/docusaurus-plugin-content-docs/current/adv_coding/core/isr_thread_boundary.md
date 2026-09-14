@@ -79,9 +79,9 @@ allowed", "overflow / drop counters must be exposed".
 
 `ASync` should also be read in terms of this boundary. It does not make a long task safe simply by
 moving it elsewhere. It is closer to a unified submission surface: do the short handoff in
-callback or ISR, and move the rest to a thread when the system has one. The practical caveat is that
-on no-thread implementations, `ASync` currently degenerates into a synchronous direct call wrapper.
-It unifies submission semantics, but it does not guarantee a real background thread exists.
+callback or ISR, then defer the rest. Threaded systems run the job on a worker thread; no-thread
+implementations run it from a later software-`Timer` refresh. The submission semantics stay the
+same, but bare metal does not gain an independent background thread.
 
 ## A practical rule of thumb
 

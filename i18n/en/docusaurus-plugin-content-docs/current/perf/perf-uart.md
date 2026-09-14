@@ -6,6 +6,8 @@ sidebar_position: 1
 
 # UART Performance Testing
 
+> This page retains the original UART board benchmark records. The results apply to the listed STM32F103C8, CH32V307VC, STM32F407IG setup and the test code below; they are not a universal performance result for current master on other platforms.
+
 A common question about this framework is whether its abstraction over low-level drivers causes significant performance loss.
 
 Using LibXR instead of vendor SDKs (e.g., HAL, ESP-IDF) and managing DMA directly can add slight overhead, but the loss is minimal. The following sections include test results for your own analysis.

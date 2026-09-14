@@ -20,5 +20,9 @@ sidebar_position: 6
 - [Transform（坐标与姿态变换）](./transform.md)
 - [Inertia（惯性与质心）](./inertia.md)
 - [Kinematic（运动学链）](./kinematic.md)
+- [SerializedService（串行服务）](./serialized_service.md)
+- [PID 控制器](./pid.md)
+- [周期角度与数值编码](./value_encoding.md)
+- [CRC 校验](./crc.md)
 
 更多接口说明见各页面。

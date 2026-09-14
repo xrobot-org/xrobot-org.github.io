@@ -22,7 +22,7 @@ static constexpr auto USB_FS_LANG_PACK =
 Supported features:
 
 - **CMSIS-DAP v2 Bulk transport**
-- **SWD-only** (`DAP_Connect` supports SWD only; JTAG is not implemented)
+- **SWD with optional JTAG**: direct `daplink_v2.hpp` builds JTAG support; `SetJtag()` enables JTAG capability after binding a backend. `daplink_v2_profile_swd.hpp` builds an SWD-only profile.
 - **Optional nRESET control** (inject via `GPIO* nreset_gpio`; disabled by default)
 - **SWJ_Pins shadow semantics** (SWDIO/SWCLK are exposed via shadow state; if wired, nRESET can report the physical level)
 - **WinUSB (MS OS 2.0) BOS platform capability** (CompatibleID="WINUSB" + DeviceInterfaceGUIDs)
@@ -39,19 +39,20 @@ This is a template class. The SWD backend type is specified by the template para
 Constructor:
 
 ```cpp
-template <typename SwdPort>
+template <typename SwdPort, /* packet/queue template parameters... */>
 explicit DapLinkV2Class(
+    Endpoint::EPNumber data_in_ep_num,
+    Endpoint::EPNumber data_out_ep_num,
     SwdPort& swd_link,
     LibXR::GPIO* nreset_gpio = nullptr,
-    Endpoint::EPNumber data_in_ep_num  = Endpoint::EPNumber::EP_AUTO,
-    Endpoint::EPNumber data_out_ep_num = Endpoint::EPNumber::EP_AUTO);
+    const char* interface_string = DEFAULT_INTERFACE_STRING);
 ```
 
 Parameters:
 
 - `swd_link`: SWD link object (`SwdPort` instance).
 - `nreset_gpio`: optional nRESET GPIO. If null, reset-related commands are handled best-effort.
-- `data_in_ep_num` / `data_out_ep_num`: Bulk IN/OUT endpoint numbers; `EP_AUTO` enables auto allocation.
+- `data_in_ep_num` / `data_out_ep_num`: explicit Bulk IN/OUT endpoint numbers.
 
 Common APIs:
 
@@ -165,7 +166,7 @@ Key points:
 
 The internal state structure `LibXR::USB::DapLinkV2Def::State` includes:
 
-- `debug_port`: default DISABLED; becomes SWD after CONNECT
+- `debug_port`: default DISABLED; becomes SWD or JTAG after a successful CONNECT according to the selected port
 - `transfer_abort`: TransferAbort flag
 - `transfer_cfg`: parsed TransferConfigure settings (`idle_cycles / retry_count / match_retry`)
 
@@ -196,8 +197,8 @@ Command dispatch is implemented in `ProcessOneCommand()`. The first byte `CMD` s
 | ----------------------- | -------------------: | ----------------------------------------------------------------------------------------------- |
 | `DAP_Info`              |               `INFO` | Returns string/numeric info (CAPABILITIES / PACKET_COUNT / PACKET_SIZE / TIMESTAMP_CLOCK, etc.) |
 | `DAP_HostStatus`        |        `HOST_STATUS` | Returns OK                                                                                      |
-| `DAP_Connect`           |            `CONNECT` | SWD-only; returns SWD port on success                                                           |
-| `DAP_Disconnect`        |         `DISCONNECT` | Closes SWD and returns to DISABLED                                                              |
+| `DAP_Connect`           |            `CONNECT` | Supports SWD; JTAG is also available when the JTAG-enabled profile has a bound backend                                                           |
+| `DAP_Disconnect`        |         `DISCONNECT` | Closes the active debug link and returns to DISABLED                                                              |
 | `DAP_TransferConfigure` | `TRANSFER_CONFIGURE` | Sets idle_cycles / retry / match_retry and maps to SWD policy                                   |
 | `DAP_Transfer`          |           `TRANSFER` | DP/AP read/write; supports match / timestamp; AP posted-read pipeline                           |
 | `DAP_TransferBlock`     |     `TRANSFER_BLOCK` | DP/AP block read/write; AP read uses posted pipeline; no match/timestamp                        |
@@ -210,16 +211,16 @@ Command dispatch is implemented in `ProcessOneCommand()`. The first byte `CMD` s
 | `DAP_SWJ_Sequence`      |       `SWJ_SEQUENCE` | Writes SWJ bit sequence (LSB-first) and updates shadow (SWDIO=last bit, SWCLK=0)                |
 | `DAP_SWD_Configure`     |      `SWD_CONFIGURE` | Best-effort parse; returns OK                                                                   |
 | `DAP_SWD_Sequence`      |       `SWD_SEQUENCE` | Multi-segment in/out sequences; input data appended to response (LSB-first)                     |
-| `DAP_QueueCommands`     |     `QUEUE_COMMANDS` | Returns `<CMD, DAP_ERROR>`                                                                      |
-| `DAP_ExecuteCommands`   |   `EXECUTE_COMMANDS` | Returns `<CMD, DAP_ERROR>`                                                                      |
+| `DAP_QueueCommands`     |     `QUEUE_COMMANDS` | Queues a validated packed command stream for later execution                                                                      |
+| `DAP_ExecuteCommands`   |   `EXECUTE_COMMANDS` | Executes the stream previously saved by QueueCommands and returns the combined response                                                                      |
 
 Note: The numeric values depend on `DapLinkV2Def::CommandId`; this document uses enum names.
 
 ### 7.2 Key `DAP_Info` Fields
 
-- `CAPABILITIES`: `DAP_CAP_SWD`
+- `CAPABILITIES`: always includes SWD; adds JTAG when compiled and a backend has been supplied through `SetJtag()`
 - `PACKET_COUNT`: `4` by default. The class advertises `8` as its template default packet-count input, but the current implementation clamps the effective host-visible count to `4`.
-- `PACKET_SIZE`: returns `MaxTransferSize()` of the IN endpoint
+- `PACKET_SIZE`: is computed from DAP template configuration. With default template parameters the host-visible size is `1024`; endpoint `MaxTransferSize()` only determines whether Bulk segmentation/reassembly is needed
 - `TIMESTAMP_CLOCK`: `1,000,000` (matches a microsecond time base)
 
 ---
@@ -236,7 +237,8 @@ Note: The numeric values depend on `DapLinkV2Def::CommandId`; this document uses
 MySwdBackend swd(/* ... init ... */);   // concrete SWD backend implementation
 MyGpio nreset(/* ... optional ... */);  // concrete GPIO implementation
 
-LibXR::USB::DapLinkV2Class<MySwdBackend> dap(swd, &nreset);
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::DapLinkV2Class<MySwdBackend> dap(EP::EP1, EP::EP2, swd, &nreset);
 
 // Optional: override DAP_Info strings
 LibXR::USB::DapLinkV2Class<MySwdBackend>::InfoStrings info;

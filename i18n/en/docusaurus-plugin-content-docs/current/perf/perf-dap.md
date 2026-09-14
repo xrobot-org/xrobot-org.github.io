@@ -6,6 +6,8 @@ sidebar_position: 4
 
 # DAPLink (CMSIS-DAP v2 / SWD) Performance Test
 
+> This page retains the original CH32V307 → STM32F401RC benchmark results. USB class construction in the excerpt has been updated to the current explicit-endpoint API; the original performance numbers were not rerun.
+
 ## Test Setup
 
 - Probe: custom DAPLink (CMSIS-DAP v2)
@@ -28,11 +30,12 @@ static constexpr auto USB_OTG_HS_LANG_PACK =
           LibXR::USB::DescriptorStrings::Language::EN_US,
           "XRobot", "CMSIS-DAP", "XROBOT-XRDAP-");
 
-LibXR::USB::CDCUart cdc(128, 128, 3);
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCUart cdc(EP::EP3, EP::EP4, EP::EP5, 128, 128, 3);
 
 LibXR::Debug::SwdGeneralGPIO<decltype(PA0), decltype(PA4)> swd(PA0, PA4, 0);
 
-LibXR::USB::DapLinkV2Class<decltype(swd)> dap(swd);
+LibXR::USB::DapLinkV2Class<decltype(swd)> dap(EP::EP1, EP::EP2, swd);
 
 LibXR::CH32USBOtgHS usb_dev_hs(
     ...

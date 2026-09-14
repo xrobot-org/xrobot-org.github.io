@@ -13,6 +13,8 @@ LibXR provides two primary double-buffering mechanisms:
 1. Driver-embedded double buffering for low-speed interfaces, used primarily in UART. Data reads and writes go through a FIFO, resulting in two copies.
 2. Double buffering for high-speed interfaces, used mainly for USB and SPI. Users can access the underlying buffers directly, enabling zero-copy transmission.
 
+On UART transmit paths, port completion and DMA completion are separate. A `WriteOperation` may finish once the backend has copied the entire request into stable active/pending storage, while DMA and wire transmission continue. The transfer-complete ISR still switches buffers and keeps the hardware stream moving.
+
 ## 基本原理
 
 Take UART as an example (actual reception may use circular DMA; not discussed here):

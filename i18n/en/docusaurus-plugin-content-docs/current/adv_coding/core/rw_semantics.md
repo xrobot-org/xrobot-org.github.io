@@ -6,163 +6,116 @@ sidebar_position: 1
 
 # I/O Completion Semantics and Port State Machines
 
-For the basic APIs, see [I/O Read/Write Abstraction](/en/docs/basic_coding/core/core-rw) and
-[Operation Model](/en/docs/basic_coding/core/core-op). This page focuses on why the completion
-model is organized this way.
+For the basic API, see [I/O read/write abstraction](/en/docs/basic_coding/core/core-rw) and the [Operation model](/en/docs/basic_coding/core/core-op). This page focuses on why completion is organized this way.
 
-The current LibXR I/O completion model has three layers: `Operation` describes how completion is
-reported, `ReadPort / WritePort` own the queueing, busy state, and completion handoff, and the
-concrete driver only has to move hardware to the boundaries of "request accepted" or "request
-completed". The more complex state machine lives in the port, not in `Operation`, and that is
-intentional.
+The model still has three layers. `Operation` describes how completion is reported. `ReadPort / WritePort` own request state, queues, and completion handoff. Concrete drivers move hardware data into a port or consume released data from it. Timeout, waiter ownership, and late-completion state stay in the port or driver that owns the request instead of being packed into `Operation` itself.
 
-`Operation` is deliberately kept small and trivially copyable. It only carries the completion mode
-itself: `CALLBACK`, `BLOCK`, `POLLING`, or `NONE`, plus the small payload required by that mode.
-This keeps lifecycle, waiter ownership, and timeout handoff state out of `Operation` itself. Once
-`Operation` turns into a heavy object, copy cost goes up and the boundary between driver and port
-starts to blur.
-
-This matters most for `BLOCK`. In `BLOCK` mode, `Operation::UpdateStatus()` only does
-`sem->PostFromCallback(in_isr)`. It does not store the final `ErrorCode` in semaphore semantics.
-The final result is still handed off through the port-side `block_result_`. In other words, the
-semaphore means "wake up and re-check ownership", not "this operation has definitely completed
-legally". That distinction exists to block the most dangerous case: a waiter times out and returns,
-then a late completion posts the same semaphore again, leaving stale tokens that a later call can
-misread as its own completion.
+`Operation` is intentionally small: it carries `CALLBACK`, `BLOCK`, `POLLING`, or `NONE` plus the corresponding notification target. In `BLOCK` mode the semaphore wakes the waiter; the final result remains in the port or driver. That lets the layer that owns request state also decide what a timeout or late completion is still allowed to touch.
 
 ## 1. `ReadPort` state machine
 
-The core `ReadPort` states are:
+`ReadPort` stores a phase and a "data was published, recheck" hint in one atomic state word. The phases are:
 
 | State | Meaning |
 | ---- | ---- |
-| `IDLE` | No pending read and no completion waiting to be handed off |
-| `PENDING` | Request has been handed to the backend and is waiting for queue-side completion |
-| `BLOCK_CLAIMED` | The wakeup for the current `BLOCK` waiter now belongs to this waiter |
-| `BLOCK_DETACHED` | Timeout or reset detached the waiter; completion must stay silent |
-| `EVENT` | Data arrived before a waiter was attached; the next call must re-check the queue |
+| `IDLE` | A new read may be admitted |
+| `CLAIMED` | One path owns request processing or dequeue |
+| `PENDING` | A request is waiting for enough data |
+| `CLAIMED_WITH_WAITER` | A timeout path waits for safe processing handoff |
+| `BLOCK_CLAIMED` | Completion has claimed a BLOCK request |
 
-The easiest one to misread is `EVENT`.
+A separate `EVENT_BIT` can coexist with any phase. It does not mean "read complete". It records that the producer published data across a handoff point and the queue must be checked again after current processing ownership is released. Keeping it orthogonal to the phase prevents a producer/consumer race from losing the fact that new data arrived.
 
-It does not mean "read completed". It means:
+A positive-length read copies into the caller buffer only when the full requested length is available. A zero-length read waits only for nonempty data and consumes nothing. Before a completion path touches a BLOCK destination it claims completion ownership, which makes the buffer owner explicit when timeout and completion race.
 
-- data has already entered the software queue
-- but there was no claimable pending read at that moment
+There is also an important ordering rule on non-BLOCK callbacks: request-processing ownership is released before the user callback runs. That callback can therefore submit the next non-BLOCK read without recursively finding the previous phase still occupied.
 
-So the next caller has to re-check `queue_data_`, instead of blindly issuing another backend read.
+---
 
 ## 2. `WritePort` state machine
 
-`WritePort` differs from `ReadPort` because the write path also has to manage queue modification
-ownership.
-
-Its core states are:
+The write side must track both producer ownership and how many requests have actually been released to the backend consumer. The low three bits hold the phase; the remaining bits count released requests.
 
 | State | Meaning |
 | ---- | ---- |
-| `IDLE` | No active submitter and no pending `BLOCK` waiter |
-| `LOCKED` | The current submit path owns queue mutation rights |
-| `BLOCK_WAITING` | A `BLOCK` waiter is attached but completion has not been claimed yet |
-| `BLOCK_CLAIMED` | Completion has been claimed by the current waiter |
-| `BLOCK_DETACHED` | Timeout or reset detached the waiter; completion must not post again |
+| `IDLE` | A new writer may be admitted |
+| `LOCKED` | A producer is preparing a request or Stream batch |
+| `BLOCK_WAITING` | A submitted BLOCK caller awaits completion |
+| `BLOCK_CLAIMED` | The backend has claimed BLOCK completion |
+| `BLOCK_DETACHED` | The call timed out while its request remains queued |
+| `BLOCK_RETIRE_WAITING` | A later BLOCK caller waits for the old request to retire |
 
-The key point is:
+Separating released-request count from producer phase matters: while a producer prepares a later request, the backend may continue consuming earlier requests that are already released. Bytes in a `Stream` batch are not a new request until `Commit()` releases them.
 
-- thread-safe multi-writer behavior does not come for free from the queue alone
-- the outer safety boundary is the atomic `busy_` gate
+There is one backend consumer. `GetWriteQueue()`, dequeue, settlement when that interface is destroyed, and any completion callback triggered by settlement belong to one serialized consumption path. The port manages publication and request settlement; the driver's DMA buffers, registers, and active/pending state remain driver-owned.
 
-Multiple threads do not race directly into driver `WriteFun()`. Only the path that acquires
-`LOCKED` owns queue mutation and kickoff rights for that submission.
+---
 
-## 3. What "success" means to the port
+## 3. What "complete" means to a port
 
-The most important contract at the port layer is:
+Older revisions used a driver-returned `PENDING` / non-`PENDING` result to distinguish background work. The current `WritePort` no longer uses that protocol. `WriteFun(WritePort&, bool)` is a **void progress notification**; a backend consumes released front requests through `GetWriteQueue()`.
 
-- driver returns `PENDING`: the backend accepted the request and completion will be handed off later
-- driver returns anything other than `PENDING`: this call is already terminal
+The actual write-completion boundary is: **all bytes of that request have been consumed by the backend into storage it can retain after the dequeue call returns.** When `WriteQueue` settlement observes that the full request has been consumed, it triggers the request's `Operation` completion.
 
-That is the meaning of "non-`PENDING` is terminal".
+That creates an important distinction:
 
-It has two direct consequences:
+- port completion: the backend accepted the whole request;
+- DMA completion: one DMA block finished moving;
+- UART wire completion: the final stop bit left the transmitter.
 
-1. if the driver says it never entered `PENDING`, the port will not maintain later completion
-   semantics for it
-2. if the driver returns non-`PENDING` but hardware keeps running in the background, semantics drift
+These can happen at different times. An STM32 UART may copy a request into active/pending DMA buffers and complete the port request while DMA and wire transmission continue. Operations such as RS485 direction switching that depend on "the wire is empty" must use the corresponding hardware completion event rather than `WriteOperation` completion.
 
-So the driver must be explicit about when hardware has really accepted the request, versus when it
-is only temporarily busy and has not actually taken ownership yet. Once the `PENDING` / non-
-`PENDING` boundary is wrong, the port believes the call is over while the backend keeps advancing in
-the background. Then `BUSY`, `TIMEOUT`, and late completion all get tangled together.
+Read completion has a different boundary. A positive-length `ReadPort` completes only after the full requested data has been copied into the caller's destination. `Operation` unifies notification style; it does not redefine every hardware action as one generic "done" instant.
 
-## 4. `BLOCK` timeout is not cancellation
+## 4. `BLOCK` timeout is not one universal cancel
 
-The `timeout` in `ReadOperation(sem, timeout)` / `WriteOperation(sem, timeout)` is:
+The timeout in `ReadOperation(sem, timeout)` / `WriteOperation(sem, timeout)` is a relative wait duration, but what remains after timeout depends on the port.
 
-- a relative wait duration
-- passed to `Semaphore::Wait(timeout)`
+A read port can cancel an unfinished software read. The important rule is not "immediately set IDLE" but **do not return while an old completion path can still access the caller's destination**. If completion already claimed that buffer, the timeout path waits for the handoff to finish. The call may therefore return after the requested timeout and return the completion result instead.
 
-It is not an absolute deadline, and it does not automatically cancel the backend.
+Writes are different. Once admitted, source bytes have already been copied into the port queue. Timeout stops the synchronous caller from waiting; it does not withdraw those queued bytes. The backend may still transmit them. `BLOCK_DETACHED` and `BLOCK_RETIRE_WAITING` separate an old request that is still retiring from a later BLOCK caller that wants to enter.
 
-So the real meaning of `BLOCK timeout` is only that the synchronous waiting window is bounded. If
-the backend has already started, late completion can still happen. The important work after timeout
-is not "stop the hardware immediately", but "fix ownership of completion". States such as
-`BLOCK_DETACHED` exist to tell the completion path that the waiter no longer belongs to the original
-caller and must only be cleaned up silently.
+That is why a non-idempotent command should not simply be retransmitted after timeout under the assumption that the first attempt did nothing. Sequence numbers, acknowledgement, or de-duplication belong at the protocol layer.
 
-## 5. Why `Reset()` also follows detach semantics
+## 5. Queue clearing, reconfiguration, and reset are separate concerns
 
-`Reset()` is not implemented as a blunt state clear back to `IDLE`.
+The current `ReadPort` has no universal `Reset()` that simultaneously cancels a request, clears bytes, and stops hardware. `ClearQueuedData()` discards bytes already queued; it returns `BUSY` with an active request and does not stop UART/DMA.
 
-For `BLOCK` paths, it follows the same model as timeout:
+Keeping these actions separate avoids a familiar race:
 
-1. detach the current waiter
-2. keep late completion silent
-3. reopen the port only after the old handoff has drained completely
+1. upper layers consider a reset complete;
+2. an old DMA/IRQ completion arrives later;
+3. that old completion touches state or notification storage already reused by a new request.
 
-That avoids races such as:
-
-- the caller already returned because of timeout or reset
-- the old backend completion arrives later
-- that old completion wakes up a new call by mistake
-
-So timeout and reset are the same class of problem here: detach ownership first, then wait for the
-old handoff to drain.
+A concrete backend that needs abort/reconfiguration must first make its hardware and backend buffers quiescent, then reopen the port-side path. Clearing a software queue cannot be used as proof that hardware stopped.
 
 ## 6. Where `AsyncBlockWait` fits
 
-`AsyncBlockWait` is not a replacement state machine for `ReadPort / WritePort`. It is better viewed
-as a shared waiter handoff helper for drivers that internally need "synchronous surface, asynchronous
-hardware".
-
-Its states are straightforward:
+`AsyncBlockWait` is not a replacement for `ReadPort / WritePort` state machines. It is a small waiter-handoff primitive for driver paths that present a synchronous call over asynchronous hardware:
 
 | State | Meaning |
 | ---- | ---- |
 | `IDLE` | No active waiter |
-| `PENDING` | Waiter is attached and waiting for completion |
-| `CLAIMED` | Completion has been claimed by the waiter |
-| `DETACHED` | Timeout detached the waiter; completion can only clean up silently |
+| `PENDING` | A waiter is armed and awaiting completion |
+| `CLAIMED` | Completion has claimed the notification |
+| `DETACHED` | Timeout detached the caller |
 
-It fits cases where:
+The usual ordering is: call `Start(sem)` first, then expose hardware that might complete immediately. Completion uses `TryPost(...)` to claim the waiter. `Wait(timeout)` can move an unclaimed waiter to `DETACHED`. If completion wins first, the waiter finishes the completion already assigned to it; if timeout detaches first, late completion only retires state and does not post the old waiter again.
 
-- the driver does not go through the full `ReadPort / WritePort` path
-- but still needs to synchronously wait for an asynchronous completion
+This mechanism owns **notification handoff**, not hardware cancellation. Whether DMA stopped, receive data was copied back, or an external buffer is safe to destroy remains the concrete driver's responsibility.
 
-For example, certain `SPI / I2C` `BLOCK` transactions.
+---
 
-## 7. The overall reading rule
+## 7. A useful way to read the state machines
 
-Read the port as a "completion ownership transfer" mechanism.
+Treat a port as a request/completion ownership handoff mechanism.
 
-What it really manages is not:
+It is not primarily deciding which UART produced a byte or how DMA registers are configured. It decides:
 
-- where data comes from
-- where data goes
+- who currently owns the request;
+- which data has been released to the other side;
+- which waiter/callback owns completion;
+- who may still access the old buffer or semaphore after timeout;
+- whether a late completion should hand off normally or only retire silently.
 
-It manages:
-
-- who the current completion belongs to
-- who is still allowed to speak after timeout
-- whether late completion should wake someone or stay silent
-
-The state names in `libxr_rw.*` follow from this view.
+With that view, the phases in `read_port.*`, `write_port.*`, and `operation.hpp` line up with the races they are solving. Hardware-specific DMA, FIFO, endpoint, and wire completion stays outside that ownership boundary.

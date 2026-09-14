@@ -33,7 +33,8 @@ STM32TimerTimebase timebase(&htimX); // X 为时钟基准的定时器
 当前 `GeneratorCodeSTM32.py` 在 timebase 这一项的主要行为是：
 
 - `Timebase.Source == SysTick` 时生成 `STM32Timebase timebase;`
-- `Timebase.Source` 为 `TIMx / LPTIMx / HRTIMx` 时，生成 `STM32TimerTimebase timebase(&hxxx);`
+- `Timebase.Source` 为普通 `TIMx` 时，生成 `STM32TimerTimebase timebase(&htimx);`
+- 当前 `STM32TimerTimebase` 构造函数只接受 `TIM_HandleTypeDef*`。generator 若从 IOC 读到 `LPTIMx / HRTIMx` 并按同一形状生成代码，该句与当前 LibXR 类型并不兼容；这两类源不能当作已适配的 timebase 使用。
 - 随后 `PlatformInit(...)` 的参数是否为空、还是包含软件定时器优先级/栈深度，取决于当前 `SYSTEM`（裸机 / FreeRTOS / ThreadX）。
 
 ## 使用
