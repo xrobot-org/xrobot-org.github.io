@@ -75,13 +75,15 @@ LibXR::CH32USBOtgFS usb_dev_fs(
 
 ## `CH32USBOtgHS` (OTG HS)
 
+For the two-buffer bidirectional form, constructor order is **TX/IN first, RX/OUT second**: `EPConfig(buffer_tx, buffer_rx)`.
+
 `CH32USBOtgHS` supports three endpoint declaration styles. For non-EP0 endpoints, a buffer size of 1024 bytes is recommended. Endpoint numbers auto-increment:
 
 1. `{ep0_buffer_hs}`: pass the EP0 buffer directly.  
 2. `{ep1_buffer_tx_hs, true}`: pass the buffer and enable double buffering  
    - ep1_buffer_tx_hs: buffer for the EP1 endpoint  
    - true: whether this endpoint is configured as IN  
-3. `{ep2_buffer_rx_hs, ep2_buffer_tx_hs}`: pass buffers for a bidirectional endpoint without enabling double buffering  
+3. `{ep2_buffer_tx_hs, ep2_buffer_rx_hs}`: pass buffers for a bidirectional endpoint without enabling double buffering
 
 ```cpp
 LibXR::CH32USBOtgHS usb_dev_hs(
@@ -90,7 +92,7 @@ LibXR::CH32USBOtgHS usb_dev_hs(
         {ep0_buf_hs},                    // EP0
         {ep1_in_buf_hs, true},           // EP1 IN (unidirectional, double-buffered)
         {ep2_out_buf_hs, false},         // EP2 OUT (unidirectional, double-buffered)
-        {ep3_out_buf_hs, ep3_in_buf_hs}  // EP3 bidirectional (no double buffer)
+        {ep3_in_buf_hs, ep3_out_buf_hs}  // EP3 bidirectional (no double buffer)
     },
     /* vid pid bcd */
     0x1D50, 0x6199, 0x0100,

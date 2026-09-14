@@ -81,7 +81,7 @@ LibXR::CH32USBOtgFS usb_dev_fs(
 1. `{ep1_buffer_tx_hs, true}`：传入缓冲区并开启双缓冲  
    - ep1_buffer_tx_hs: EP1 端点的缓冲区  
    - true: 是否配置为IN端点  
-1. `{ep2_buffer_rx_hs, ep2_buffer_tx_hs}`：传入双向端点的缓冲区，不开启双缓冲
+1. `{ep2_buffer_tx_hs, ep2_buffer_rx_hs}`：传入双向端点的缓冲区，不开启双缓冲；参数顺序为 **TX/IN 在前、RX/OUT 在后**（`EPConfig(buffer_tx, buffer_rx)`）
 
 ```cpp
 LibXR::CH32USBOtgHS usb_dev_hs(
@@ -90,7 +90,7 @@ LibXR::CH32USBOtgHS usb_dev_hs(
         {ep0_buf_hs},                    // EP0
         {ep1_in_buf_hs, true},           // EP1 IN（单向，双缓冲）
         {ep2_out_buf_hs, false},         // EP2 OUT（单向，双缓冲）
-        {ep3_out_buf_hs, ep3_in_buf_hs}  // EP3 双向（不启双缓冲）
+        {ep3_in_buf_hs, ep3_out_buf_hs}  // EP3 双向（不启双缓冲）
     },
     /* vid pid bcd */
     0x1D50, 0x6199, 0x0100,

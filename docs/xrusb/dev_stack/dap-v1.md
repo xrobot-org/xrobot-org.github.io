@@ -13,7 +13,7 @@ sidebar_position: 5
 支持能力概览：
 
 - **CMSIS-DAP v1 HID transport**
-- **SWD-only**（`DAP_Connect` 仅支持 SWD；JTAG 未实现）
+- **SWD + 可选 JTAG**：直接包含 `daplink_v1.hpp` 时编译 JTAG 支持；调用 `SetJtag()` 绑定后端后才向主机宣告/使用 JTAG。`daplink_v1_profile_swd.hpp` 可构建纯 SWD 版本。
 - **可选 nRESET 控制**（通过 `GPIO* nreset_gpio` 注入）
 - **HID IN/OUT + Feature Report** 路径
 - **DAP_Transfer / DAP_TransferBlock**（含 AP posted-read pipeline）
@@ -31,17 +31,18 @@ sidebar_position: 5
 ```cpp
 template <typename SwdPort>
 explicit DapLinkV1Class(
+    Endpoint::EPNumber in_ep_num,
+    Endpoint::EPNumber out_ep_num,
     SwdPort& swd_link,
-    LibXR::GPIO* nreset_gpio = nullptr,
-    Endpoint::EPNumber in_ep_num = Endpoint::EPNumber::EP_AUTO,
-    Endpoint::EPNumber out_ep_num = Endpoint::EPNumber::EP_AUTO);
+    LibXR::GPIO* nreset_gpio = nullptr);
 ```
 
 参数说明：
 
+- `in_ep_num` / `out_ep_num`：显式指定 HID IN/OUT 端点号
 - `swd_link`：SWD 链路对象引用
 - `nreset_gpio`：可选 nRESET GPIO
-- `in_ep_num` / `out_ep_num`：HID IN/OUT 端点号；支持自动分配
+- `SetJtag(jtag)`：在启用 JTAG 的构建中绑定 JTAG 后端
 
 常用接口：
 
@@ -124,7 +125,7 @@ HID 报告描述符定义了：
 
 当前实现中，关键 `DAP_Info` 字段行为为：
 
-- `CAPABILITIES`：`DAP_CAP_SWD`
+- `CAPABILITIES`：始终包含 SWD；JTAG 编译启用且已绑定后端时附加 JTAG capability
 - `PACKET_COUNT`：`1`
 - `PACKET_SIZE`：`64`
 - `TIMESTAMP_CLOCK`：`1,000,000`
@@ -158,7 +159,7 @@ HID 报告描述符定义了：
 
 实现边界：
 
-- 当前主线仍是 **SWD-only**；JTAG 未实现
+- JTAG 命令在启用 JTAG profile 且调用 `SetJtag()` 后可用；纯 SWD profile 不编译 JTAG 路径
 - `PACKET_COUNT` 固定为 `1`，因此没有 DAPLinkV2 那种主机可见的多包并行响应深度
 
 ---
@@ -190,7 +191,8 @@ HID 报告描述符定义了：
 MySwdBackend swd(/* ... init ... */);
 MyGpio nreset(/* ... optional ... */);
 
-LibXR::USB::DapLinkV1Class<MySwdBackend> dap(swd, &nreset);
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::DapLinkV1Class<MySwdBackend> dap(EP::EP1, EP::EP1, swd, &nreset);
 
 LibXR::USB::DapLinkV1Class<MySwdBackend>::InfoStrings info;
 info.vendor = "XRobot";
@@ -209,7 +211,7 @@ dap.SetInfoStrings(info);
 ## 8. 与 DAPLinkV2 的区别
 
 - `DapLinkV1Class`：**HID transport**, `PACKET_SIZE=64`, `PACKET_COUNT=1`
-- `DapLinkV2Class`：**Bulk transport**, 当前主线默认 `PACKET_SIZE=512`, `PACKET_COUNT=4`
+- `DapLinkV2Class`：**Bulk transport**, 当前默认主机可见 `PACKET_SIZE=1024`, `PACKET_COUNT=4`
 
 如果主机工具链支持 CMSIS-DAP v2 Bulk，一般优先使用 `DapLinkV2Class`；
 如果需要兼容仍依赖 HID 报告路径的主机，则使用 `DapLinkV1Class`。

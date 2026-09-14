@@ -1,27 +1,24 @@
 ---
 id: perf-topic
-title: Messaging System Performance Tests
+title: Message System Performance
 sidebar_position: 3
 ---
 
-# Messaging System Performance Tests
+# Message System Performance
 
-This page is an entry point to published messaging-performance benchmarks, not a place to state unconditional performance conclusions without the test context.
+The original cross-framework latency benchmark remains available at:
 
-The currently public benchmark repository is:
+- [Jiu-xiao/FuckingRosLatency](https://github.com/Jiu-xiao/FuckingRosLatency)
 
-- [Jiu-xiao/FuckingRosLatency](https://github.com/Jiu-xiao/FuckingRosLatency/blob/master/README_en.md)
+The current LibXR repository also contains host-side `LinuxSharedTopic` benchmarks under `test/automatic/middleware/message/topic/`:
 
-When reading those results, check at least:
+- `linux_shm_bench.cpp`: continuous publication, reporting publish rate, receive latency, and errors;
+- `linux_shm_latency_bench.cpp`: waits for receive acknowledgement per message and measures handoff latency;
+- `linux_shm_overload_bench.cpp`: compares FULL and DROP_OLD with a slow subscriber;
+- `linux_shm_subscriber_modes_bench.cpp`: compares broadcast, drop-old, and load-balanced subscriber modes.
 
-- which system and scheduler conditions were used;
-- whether the path being measured is in-process `Topic`, Linux shared memory, or something else;
-- the payload size, subscription form, publish frequency, and statistics method.
+Keep the two data paths separate when reading results. In-process `Topic::Publish()` dispatches synchronously in the publisher context, while `LinuxSharedTopic` hands shared payload slots and descriptors between processes. Match payload size, subscription mode, and consumer work before comparing them.
 
-If you first want to understand which mainline mechanisms are relevant, start from:
+Read throughput together with latency and error/drop counters. If a shared-memory benchmark touches only part of a payload, bandwidth calculated from the full logical frame size represents message handoff rate; it does not mean the CPU read or wrote every payload byte at that rate.
 
-- [Topic](../basic_coding/middleware/message/topic.md)
-- [Linux Shared-Memory Topic](../basic_coding/middleware/message/linux-shared-topic.md)
-- [Memory FastCopy / FastSet / FastCmp](../basic_coding/core/core-mem.md)
-
-If you are going to write a new performance claim, attach the code path, input scale, and measurement method directly instead of relying on short phrases such as "sub-microsecond" or "faster than `std::memcpy`" without context.
+These automatic benchmarks are maintained with the repository source. When comparing LibXR revisions, rerun the benchmark source from each corresponding revision instead of treating old numbers as current results.

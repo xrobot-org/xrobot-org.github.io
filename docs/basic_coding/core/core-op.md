@@ -47,7 +47,7 @@ Operation(Semaphore &sem, uint32_t timeout = UINT32_MAX);
 Operation(Callback<T> &cb);
 
 // 构造轮询操作
-Operation(OperationPollingStatus &status);
+Operation(std::atomic<OperationPollingStatus> &status);
 ```
 
 另外，`Operation` 支持从另一个 `Operation` 实例初始化（复制/移动语义等价于赋值）。
@@ -93,14 +93,17 @@ read_port(buffer, op_cb);
 ### 轮询方式查询完成状态
 
 ```cpp
-auto status = LibXR::ReadOperation::OperationPollingStatus::READY;
+std::atomic<LibXR::ReadOperation::OperationPollingStatus> status{
+    LibXR::ReadOperation::OperationPollingStatus::READY};
 ReadOperation op_poll(status);
 read_port(buffer, op_poll);
 
 // 后续通过 status 查询是否完成
-if (status == LibXR::ReadOperation::OperationPollingStatus::DONE) {
+if (status.load(std::memory_order_acquire) ==
+    LibXR::ReadOperation::OperationPollingStatus::DONE) {
   // 成功完成
-} else if (status == LibXR::ReadOperation::OperationPollingStatus::ERROR) {
+} else if (status.load(std::memory_order_acquire) ==
+           LibXR::ReadOperation::OperationPollingStatus::ERROR) {
   // 完成但发生错误
 }
 ```

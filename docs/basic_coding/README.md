@@ -10,6 +10,8 @@ sidebar_position: 6
 
 ## 目录
 
+- [CMake 配置](./cmake.md)
+
 - [核心组件](/docs/basic_coding/core)
 - [数据结构](/docs/basic_coding/structure)
 - [中间件](/docs/basic_coding/middleware)

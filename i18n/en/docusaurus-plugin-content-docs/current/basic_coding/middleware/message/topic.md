@@ -166,21 +166,21 @@ auto cb0 = LibXR::Topic::Callback::Create(
     {
         printf("%u %.2f\n", (unsigned)ts, data);
     },
-    nullptr);
+    static_cast<void*>(nullptr));
 
 auto cb1 = LibXR::Topic::Callback::Create(
     [](bool, void*, const LibXR::Topic::MessageView<float>& msg)
     {
         printf("%.2f\n", *msg.data);
     },
-    nullptr);
+    static_cast<void*>(nullptr));
 
 auto cb2 = LibXR::Topic::Callback::Create(
     [](bool, void*, const LibXR::ConstRawData& raw)
     {
         // raw payload view
     },
-    nullptr);
+    static_cast<void*>(nullptr));
 
 topic.RegisterCallback(cb0);
 topic.RegisterCallback(cb1);

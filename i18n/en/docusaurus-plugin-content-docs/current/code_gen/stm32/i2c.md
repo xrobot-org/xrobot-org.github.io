@@ -12,7 +12,7 @@ From the current generator’s perspective, this page mainly covers two generate
 
 ## Example
 
-The last constructor argument is the minimum transfer size required before DMA is enabled.
+The last constructor argument is the DMA switching threshold. The relevant branch requires the transfer length to be **strictly greater** than this value.
 
 ```cpp
 STM32I2C i2c1(&hi2c1, i2c1_buf, 3);

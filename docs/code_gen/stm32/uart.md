@@ -27,7 +27,11 @@ static constexpr auto USB_OTG_FS_LANG_PACK =
         /* 序列号字符串前缀（可读） */
         "XRUSB-DEMO-");
 
-LibXR::USB::CDCUart usb_otg_fs_cdc(128, 128, 3);
+LibXR::USB::CDCUart usb_otg_fs_cdc(
+    LibXR::USB::Endpoint::EPNumber::EP1,
+    LibXR::USB::Endpoint::EPNumber::EP1,
+    LibXR::USB::Endpoint::EPNumber::EP2,
+    128, 128, 3);
 STM32USBDeviceOtgFS usb_fs(
     &hpcd_USB_OTG_FS,
     256,
@@ -52,7 +56,11 @@ static constexpr auto USB_OTG_HS_LANG_PACK =
         /* 序列号字符串前缀（可读） */
         "XRUSB-DEMO-");
 
-LibXR::USB::CDCUart usb_otg_hs_cdc(128, 128, 3);
+LibXR::USB::CDCUart usb_otg_hs_cdc(
+    LibXR::USB::Endpoint::EPNumber::EP1,
+    LibXR::USB::Endpoint::EPNumber::EP1,
+    LibXR::USB::Endpoint::EPNumber::EP2,
+    128, 128, 3);
 
 STM32USBDeviceOtgHS usb_hs(
     &hpcd_USB_OTG_HS,
@@ -78,7 +86,11 @@ static constexpr auto USB_FS_LANG_PACK =
         /* 序列号字符串前缀（可读） */
         "XRUSB-DEMO-");
 
-LibXR::USB::CDCUart usb_fs_cdc(128, 128, 3);
+LibXR::USB::CDCUart usb_fs_cdc(
+    LibXR::USB::Endpoint::EPNumber::EP1,
+    LibXR::USB::Endpoint::EPNumber::EP1,
+    LibXR::USB::Endpoint::EPNumber::EP2,
+    128, 128, 3);
 
 STM32USBDeviceDevFs usb_fs(
     &hpcd_USB_FS,

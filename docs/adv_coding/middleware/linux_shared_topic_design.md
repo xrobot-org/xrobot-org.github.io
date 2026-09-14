@@ -59,7 +59,7 @@ sidebar_position: 2
 
 ### `BROADCAST_FULL`
 
-保留所有投递内容。代价是某个慢订阅者满队列时，会拉低 publish 成功率。
+已经进入订阅者队列的内容不会为了给新消息让路而被覆盖；某个慢订阅者队列满时，新 publish 可能失败。代价是慢订阅者会直接形成 backpressure。
 
 ### `BROADCAST_DROP_OLD`
 
@@ -123,7 +123,15 @@ standard-case 的 `latency_avg` 容易受 scheduler 和启动 backlog 污染：�
 
 ---
 
-## 10. 适用与不适用场景
+## 10. 句柄与共享布局的生命周期
+
+共享 payload 的裸指针只能跟着对应的数据句柄使用。通过 subscriber 取得的句柄还依赖 subscriber 自身的 slot；正常退出时先释放活动数据，再销毁 subscriber，最后关闭 topic 映射。
+
+所有参与进程还必须对 `T` 的布局、ABI 和共享内存配置有相同理解。`T` 适合放固定布局数据，不要把进程私有指针、`std::string` 这类拥有进程内资源的对象直接放进去。
+
+---
+
+## 11. 适用与不适用场景
 
 适合：
 

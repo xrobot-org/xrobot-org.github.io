@@ -52,8 +52,8 @@ Watchdog:
   feed_interval_ms: 250      # 定时任务喂狗周期（毫秒，仅在非线程模式下有效）
 ```
 
-> * 若 `RunAsThread: true`，则每个启用的 IWDG 会自动生成线程，线程参数可全局配置。
-> * 若 `RunAsThread: false`，则采用定时任务方式喂狗。
+> * 若 `run_as_thread: true`，则每个启用的 IWDG 会自动生成线程，线程参数可全局配置。
+> * 若 `run_as_thread: false`，则采用定时任务方式喂狗。
 
 ## 当前 generator 覆盖范围
 

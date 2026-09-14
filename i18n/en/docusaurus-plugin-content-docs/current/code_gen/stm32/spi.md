@@ -12,7 +12,7 @@ From the current generator’s perspective, this page mainly covers **buffer dec
 
 ## Example
 
-The last constructor argument decides the minimum byte count required before DMA is used. Transfers smaller than this threshold stay on the non-DMA path.
+The last constructor argument is a DMA switching threshold tested with **strict greater-than**. With threshold `3`, a three-byte transfer does not enter that DMA branch; four bytes does.
 
 ```cpp
 STM32SPI spi1(&hspi1, spi1_rx_buf, spi1_tx_buf, 3);

@@ -216,8 +216,9 @@ cb.Run(in_isr, pack);
 
 因此用户侧回调可按如下签名实现：
 
-- `in_isr`：指示当前是否在中断上下文中调用。True if called in ISR context.
-- `pack`：接收到的帧。Received frame.
+- `in_isr`：指示当前是否在中断上下文中调用。
+- 第二个参数是创建回调时绑定的上下文参数；示例使用一个未使用的 `int`。
+- `pack`：接收到的帧。
 
 > `pack` 为只读引用，回调实现不得保存该引用用于异步访问。
 
@@ -286,11 +287,11 @@ void Register(Callback cb,
 LibXR::CAN &can = ...;
 
 can.Register(
-    LibXR::CAN::Callback(
-        [](bool in_isr, const LibXR::CAN::ClassicPack &pack) {
+    LibXR::CAN::Callback::Create(
+        [](bool in_isr, int, const LibXR::CAN::ClassicPack &pack) {
           (void)in_isr;
           // 快速处理，不要阻塞
-        }),
+        }, 0),
     LibXR::CAN::Type::STANDARD,
     LibXR::CAN::FilterMode::ID_RANGE,
     0x100, 0x1FF);
@@ -300,15 +301,15 @@ can.Register(
 
 ```cpp
 can.Register(
-    LibXR::CAN::Callback(
-        [](bool in_isr, const LibXR::CAN::ClassicPack &pack) {
+    LibXR::CAN::Callback::Create(
+        [](bool in_isr, int, const LibXR::CAN::ClassicPack &pack) {
           (void)in_isr;
           if (!LibXR::CAN::IsErrorId(pack.id)) {
             return;
           }
           auto err = LibXR::CAN::ToErrorID(pack.id);
           // 根据 err 做诊断
-        }),
+        }, 0),
     LibXR::CAN::Type::ERROR,
     LibXR::CAN::FilterMode::ID_RANGE,
     LibXR::CAN::FromErrorID(LibXR::CAN::ErrorID::CAN_ERROR_ID_GENERIC),
@@ -453,7 +454,7 @@ cb.Run(in_isr, pack);
 用户侧回调可按如下签名实现：
 
 ```cpp
-[](bool in_isr, const LibXR::FDCAN::FDPack &pack) { ... }
+[](bool in_isr, int, const LibXR::FDCAN::FDPack &pack) { ... }
 ```
 
 #### FD 过滤器结构 `FDCAN::Filter`

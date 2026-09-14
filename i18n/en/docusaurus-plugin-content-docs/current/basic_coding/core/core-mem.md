@@ -22,7 +22,7 @@ class Memory {
    * @param src  Source address
    * @param size Number of bytes to copy
    */
-  static void FastCopy(void* dst, const void* src, size_t size);
+  void FastCopy(void* dst, const void* src, size_t size);
 
   /**
    * @brief Fast memory move (overlap-safe)
@@ -30,7 +30,7 @@ class Memory {
    * @param src  Source address
    * @param size Number of bytes to move
    */
-  static void FastMove(void* dst, const void* src, size_t size);
+  void FastMove(void* dst, const void* src, size_t size);
 
   /**
    * @brief Fast memory fill (memset-like)
@@ -38,7 +38,7 @@ class Memory {
    * @param value Fill value (repeated per byte)
    * @param size  Number of bytes to fill
    */
-  static void FastSet(void* dst, uint8_t value, size_t size);
+  void FastSet(void* dst, uint8_t value, size_t size);
 
   /**
    * @brief Fast memory compare (memcmp-like)
@@ -47,16 +47,16 @@ class Memory {
    * @param size Number of bytes to compare
    * @return 0 if equal; otherwise non-zero. The sign and difference semantics match memcmp (difference of the first mismatching byte).
    */
-  static int FastCmp(const void* a, const void* b, size_t size);
+  int FastCmp(const void* a, const void* b, size_t size);
 };
 } // namespace LibXR
 ```
 
 ## FastCopy Semantics
 
-- If `dst` and `src` have the same alignment phase (alignment offset), the implementation first handles the unaligned head bytes, then switches to burst copies using `LIBXR_ALIGN_SIZE` (typically 8 or 4) with 8x unrolling.
+- If `dst` and `src` have the same alignment phase (alignment offset), the implementation first handles the unaligned head bytes, then switches to burst copies using `LibXR::ALIGN_SIZE` (typically 8 or 4) with 8x unrolling.
 - If their alignment phases differ, it tries to fall back to the largest possible width based on address delta:
-  - When `LIBXR_ALIGN_SIZE == 8` and the address delta is a multiple of 4, it can fall back to 4-byte burst copies.
+  - When `LibXR::ALIGN_SIZE == 8` and the address delta is a multiple of 4, it can fall back to 4-byte burst copies.
   - When the address delta is even, it can fall back to 2-byte burst copies.
   - Otherwise it falls back to byte-by-byte copying.
 - The tail that does not fill a full "wide copy" unit is completed byte-by-byte.
@@ -71,13 +71,13 @@ class Memory {
 ## FastSet Semantics
 
 - Returns immediately if `size == 0`.
-- Writes head bytes until aligned, then performs bulk stores using a `LIBXR_ALIGN_SIZE`-wide pattern (8 or 4) with 8x unrolling, and finally writes the tail bytes.
+- Writes head bytes until aligned, then performs bulk stores using a `LibXR::ALIGN_SIZE`-wide pattern (8 or 4) with 8x unrolling, and finally writes the tail bytes.
 
 ## FastCmp Semantics
 
 - Equivalent to `memcmp(a, b, size)`: returns 0 if equal; otherwise non-zero.
 - Returns 0 when `size == 0` or `a == b`.
-- If alignment conditions allow, it compares using `LIBXR_ALIGN_SIZE`-wide loads (8 or 4) with 8x unrolling. When a wide word differs, it falls back to byte-by-byte comparison within that word to produce the same return value semantics as `memcmp`.
+- If alignment conditions allow, it compares using `LibXR::ALIGN_SIZE`-wide loads (8 or 4) with 8x unrolling. When a wide word differs, it falls back to byte-by-byte comparison within that word to produce the same return value semantics as `memcmp`.
 - Falls back to byte-by-byte comparison when alignment conditions do not allow the wide path.
 
 ## Usage Example

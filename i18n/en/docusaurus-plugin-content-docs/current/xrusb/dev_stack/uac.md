@@ -282,6 +282,8 @@ Match conditions:
 - `GET_CUR (wLength=2)`: read `vol_cur_`
 - `GET_MIN / GET_MAX / GET_RES (wLength=2)`: return constructor parameters `vol_min_ / vol_max_ / vol_res_`
 
+The class stores and reports Mute/Volume control values, but the transmit path does not apply them to PCM samples. Upstream acquisition/processing applies actual mute or gain if required.
+
 ---
 
 ## 10. Usage Example
@@ -291,7 +293,9 @@ Match conditions:
 
 using Mic = LibXR::USB::UAC1MicrophoneQ<2, 16>; // 2ch, 16-bit
 
-Mic mic(/*sample_rate*/48000,
+using EP = LibXR::USB::Endpoint::EPNumber;
+Mic mic(EP::EP1,
+        /*sample_rate*/48000,
         /*vol_min*/-90*256, /*vol_max*/0, /*vol_res*/256,
         /*speed*/LibXR::USB::Speed::FULL,
         /*queue_bytes*/2048,

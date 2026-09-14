@@ -13,7 +13,7 @@ sidebar_position: 12
 ## Feature Overview
 
 - **Zero extra copies**: writer writes → goes directly into the shared queue → reader takes from the same queue.
-- **ISR-friendly**: read-side progress is done via `ProcessPendingReads(in_isr)` and can be triggered in either ISR or task context.
+- **ISR-friendly**: read-side progress is done via `shared-queue data notification` and can be triggered in either ISR or task context.
 - **Consistent semantics with `ReadPort`/`WritePort`**: completion modes such as blocking/callback/polling are uniformly controlled by `Operation`.
 
 ---
@@ -61,9 +61,8 @@ LibXR::ReadOperation rop(status_or_cb_or_sem);
 LibXR::WriteOperation wop(status_or_cb_or_sem);
 
 r({buf, sizeof(buf)}, rop);           // may pend
-w({some_data, some_len}, wop);        // this will drive r.ProcessPendingReads(...)
+w({some_data, some_len}, wop);        // writing notifies the reader to check the shared queue
 ```
 
-> Note: the read side of `Pipe` is "passively progressed": a pending read completes only when the write side triggers progress (or you explicitly call `ProcessPendingReads` from the outside). This matches the `ReadPort` model.
 
-> Another current implementation boundary is that `WriteFun` pops one `WriteInfoBlock` from the writer's `queue_info_`; if that pop fails, the implementation asserts and returns `ErrorCode::EMPTY`. So `Pipe` depends on the current `WritePort` queue/finish protocol rather than an arbitrary writer callback contract.
+Write completion means the bytes entered the shared queue; it does not wait for the reader to consume them. A full queue returns `FULL`.

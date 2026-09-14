@@ -19,8 +19,9 @@ sidebar_position: 1
 
 ```cpp
 /* USB Classes */
-LibXR::USB::CDCUart cdc_uart;
-LibXR::USB::HIDKeyboard hid_keyboard;
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCUart cdc_uart(EP::EP1, EP::EP1, EP::EP2);
+LibXR::USB::HIDKeyboard hid_keyboard(EP::EP3, EP::EP_INVALID, false);
 
 static constexpr auto LANG_PACK =
     LibXR::USB::DescriptorStrings::MakeLanguagePack(

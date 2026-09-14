@@ -55,8 +55,8 @@ uint32_t Size();
 ### 使用示例
 
 ```cpp
-LibXR::LockFreeList list;
 LibXR::LockFreeList::Node<int> node1(123);
+LibXR::LockFreeList list;
 list.Add(node1);
 
 list.Foreach<int>([](int& val) {

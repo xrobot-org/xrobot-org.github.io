@@ -1,139 +1,127 @@
 ---
-id: adv-coding-driver-block-timeout-semantics
+id: adv-coding-drv-block-timeout-semantics
 title: BLOCK Timeout and Completion Handoff
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 # BLOCK Timeout and Completion Handoff
 
-This page is not about the `SPI / I2C / UART` APIs themselves. It is about what `BLOCK` timeout
-really means once the implementation runs on an asynchronous completion path. The core question is
-always the same: the caller stopped waiting, but will the backend still complete; if it will, is
-that completion still allowed to wake the old waiter.
+This page is not an API list for `SPI / I2C / UART`. It explains what a `BLOCK` timeout means when the implementation completes asynchronously. The central question is always the same: the caller stopped waiting, but can the backend still complete; if it can, may that completion still wake the old waiter or touch the old buffer?
 
-## 1. What `BLOCK timeout` really means
+## 1. What a `BLOCK` timeout actually means
 
-`BLOCK` timeout limits the caller's synchronous waiting window. It does not guarantee that an
-accepted backend operation has been cancelled. In other words, returning `TIMEOUT` does not mean the
-hardware has stopped. If the backend was already started, late completion can still arrive.
+A `BLOCK` timeout limits the caller's synchronous wait window. It does not mean every piece of backend work is automatically withdrawn.
+
+For `ReadPort`, an unfinished software read can be cancelled, but the call must not return while an old completion path can still access the caller's destination. If completion already claimed the handoff, the waiter finishes that handoff before returning.
+
+For `WritePort`, accepted bytes have already been copied into the port queue. Timeout does not withdraw them, and the backend may still transmit them. "The call returned `TIMEOUT`" and "the command did not happen" are not equivalent statements.
+
+Transaction-style `SPI / I2C` drivers decide separately whether DMA can be stopped, a peripheral can be reset, or staging storage can be reclaimed safely. A waiter state machine cannot perform those hardware actions on its own.
 
 ## 2. Why detach semantics exist
 
-If timeout simply clears the port or waiter state by force, a typical failure appears:
+If timeout simply clears the wait state, a familiar race appears:
 
-1. the caller already returned `TIMEOUT`
-2. the old backend completion arrives later
-3. that completion wakes a new caller or leaves a stale semaphore token behind
+1. the caller returned `TIMEOUT`;
+2. an old hardware completion arrives later;
+3. it posts the old semaphore again or touches a notification object already reused by a later call.
 
-So the right thing here is not "hard clear everything". The waiter must first be detached, then
-late completion must finish silently, and only after the old handoff drains can the port reopen.
-States such as `BLOCK_DETACHED` exist to express exactly that.
+The wait path therefore needs an explicit answer to "does this waiter still belong to the caller?" `AsyncBlockWait` uses `DETACHED` for a caller that timed out. `WritePort` has its own `BLOCK_DETACHED` / `BLOCK_RETIRE_WAITING` phases for a call that returned while its queued request is still retiring.
+
+Detach does not pretend the backend work disappeared. It tells late completion that the old waiter is no longer a valid wakeup target.
 
 ## 3. What `AsyncBlockWait` solves
 
-`AsyncBlockWait` is intentionally narrow. It gives drivers a standard handoff helper for paths that
-look synchronous from the outside but wait on asynchronous completion internally. It does not cancel
-hardware. It only makes ownership of completion explicit: `Start(sem)` attaches a waiter in
-`PENDING`, `TryPost(...)` only wakes when `PENDING -> CLAIMED` succeeds, and `Wait(timeout)` turns
-the waiter into `DETACHED` after timeout. If a late completion only sees `DETACHED`, it must clean
-up silently and must not post again.
+`AsyncBlockWait` provides a standard handoff for a driver that exposes a synchronous call over asynchronous completion.
+
+| State | Meaning |
+| ---- | ---- |
+| `IDLE` | No active waiter |
+| `PENDING` | A waiter is armed |
+| `CLAIMED` | Completion claimed the notification |
+| `DETACHED` | Timeout detached the waiter |
+
+`Start(sem)` first publishes the waiter as `PENDING`. Completion writes the result and posts only after it successfully changes `PENDING -> CLAIMED`. The timeout path changes an unclaimed `PENDING` waiter into `DETACHED`. If completion wins first, `Wait()` must finish the post already assigned to the current call even if its first bounded semaphore wait just expired.
+
+This model solves waiter ownership. It does not automatically stop DMA or make a caller buffer safe.
+
+---
 
 ## 4. Common bugs
 
 ### 4.1 Hardware starts before the waiter is armed
 
-This is the most common one.
+The classic bad ordering is:
 
-Wrong order:
+1. arm hardware / start DMA / enable completion interrupt;
+2. then call `block_wait_.Start(...)`.
 
-1. arm hardware / start DMA / enable interrupts
-2. then call `block_wait_.Start(...)`
+If hardware completes quickly, ISR can arrive before a legal waiter exists to claim the notification. Arm the waiter first, then expose hardware to a completion path that may run immediately.
 
-Risk:
+### 4.2 Treating a stale semaphore token as current completion
 
-- completion happens too quickly
-- ISR fires before waiter setup finishes
-- the wakeup is lost
+If one semaphore is reused across waits and the caller interprets only `sem->Wait(...) == OK` as success, a stale token from an earlier operation can be mistaken for the current one.
 
-Correct order:
+Request state must identify the owner first. `AsyncBlockWait` expects `CLAIMED`; port BLOCK paths have corresponding ownership phases. The semaphore is a wakeup channel, not the request identity.
 
-1. arm the waiter first
-2. only then expose hardware to ISR / DMA / completion paths
+### 4.3 Returning on timeout without handling ownership
 
-### 4.2 Treating an old semaphore token as the current completion
+This looks simple and produces difficult failures. After the caller returns, an old completion may still mutate shared state, post again, or collide with the next waiter's ownership.
 
-If the same semaphore is reused across multiple `BLOCK` calls and the wait path only checks
-`sem->Wait(timeout) == OK`, then a token left behind by the previous call can be misread as the
-current completion. What actually matters is whether `busy_` or waiter state has already reached the
-`CLAIMED` state for the current operation. Without that ownership check, the wakeup may just be a
-stale token.
+Before returning, either cancel the software request safely or detach its waiter so late completion retires silently. If completion has already claimed the request, finish that handoff.
 
-### 4.3 Returning on timeout without detach
+### 4.4 Completion says success but the caller buffer is stale
 
-This looks simple, but it almost always leaves damage behind. After timeout returns, the old
-completion path can still mutate shared state, post the semaphore again, or even overwrite the
-ownership of a new waiter. Before returning on timeout, the completion side must be told explicitly
-that this waiter no longer belongs to the current caller.
+This often appears in "asynchronous hardware + synchronous API" reads. Completion reports success while DMA data still lives in staging storage, or a late completion writes into caller memory after timeout.
 
-### 4.4 Completion says success, but caller-visible buffer is still old
+A correct driver therefore defines not only who gets posted, but also what state the caller-visible buffer has on successful return and who may still access it after timeout.
 
-This often shows up in mixed "asynchronous completion + synchronous surface" paths. Completion
-reports success, but DMA or ISR data was never copied back into the caller-visible buffer. For APIs
-such as `MemRead` or `ReadAndWrite`, that is more dangerous than a timeout because the result looks
-successful while the data is still stale.
+---
 
-## 5. Why `TIMEOUT` and the final result may differ
+## 5. Why timeout and final result can differ
 
-When timeout races completion, two outcomes exist.
+When timeout races completion, two broad outcomes exist.
 
-### timeout wins first
+### Timeout wins first
 
-- waiter detaches successfully from `PENDING`
-- the call returns `TIMEOUT`
-- late completion only performs silent cleanup
+- the waiter detaches from `PENDING`;
+- the call returns `TIMEOUT`;
+- late completion no longer wakes that caller and only retires its own state.
 
-### completion claims first
+### Completion claims first
 
-- completion has already claimed the waiter
-- timeout may appear to return first from `Wait()`
-- but the code must still wait for the completion already owned by this waiter
-- the return value becomes final `block_result_`, not `TIMEOUT`
+- completion changes the waiter to `CLAIMED`;
+- the bounded semaphore wait may still have just returned timeout;
+- completion ownership already belongs to this call;
+- the wait path finishes the matching post and returns the actual completion result.
 
-So `BLOCK timeout` is not simply "timeout means failure". The real answer depends on who finally
-owns that completion.
+The timeout is therefore a wait window, not a strict wall-clock upper bound on the function. Ownership at the race decides the final result.
 
-## 6. Why `Reset()` cannot bypass the same semantics
+## 6. Why `ReadPort` and `WritePort` differ
 
-If `Reset()` forces state back to `IDLE` while an active `BLOCK` waiter still exists, it usually
-causes:
+A read port borrows the caller's destination. After timeout, the important guarantee is that no old completion can still touch that buffer when the call returns. It can cancel an unfinished software read and, if needed, wait for a completion path that already claimed the buffer.
 
-- the old waiter to lose ownership
-- a new waiter to enter too early
-- the old completion to hit the new state later
+A write port copied the caller's source on admission, so source lifetime is no longer the problem. The problem is how the old queued request retires without touching a semaphore owned by a call that already returned. That is the role of `BLOCK_DETACHED` / `BLOCK_RETIRE_WAITING`.
 
-So the safer rule is:
+Do not turn "read buffer is safe after timeout return" into "a timed-out write was cancelled". The latter is not guaranteed.
 
-- `Reset()` detaches an active `BLOCK` waiter first
-- completion remains silent
-- reopen only after the old handoff drains
+## 7. Clearing a queue is not hardware abort
 
-That is the same problem as timeout, not a separate reset-only concern.
+`ReadPort::ClearQueuedData()` discards bytes already queued and returns `BUSY` with an active request. It does not cancel that request and does not stop UART/DMA.
 
-## 7. Why `SPI / I2C` hits this easily
+A concrete abort/reconfiguration/reset path must make its own hardware and buffers quiescent, prevent old completion from touching released storage, and finish any port/waiter handoff. Clearing software bytes is only one possible step.
 
-Compared with long-lived streaming paths such as UART or USB, `SPI / I2C` is more often written in
-the shape of "launch one transaction, then wait synchronously in a thread". The surface looks
-synchronous, but the backend is still driven by DMA, IRQ, and a state machine. Once the synchronous
-surface is mistaken for a synchronous implementation, waiter-arm races, stale tokens after timeout,
-non-silent late completion, and reset reopening too early all appear at once.
+This is the same core issue as timeout: the dangerous question is not only which error code returned, but who can still touch old state afterwards.
 
 ## 8. A practical checklist
 
-To check whether a `BLOCK` driver path is sound, ask four things:
+For a `BLOCK` driver path, ask:
 
-- is the waiter armed before hardware becomes visible
-- does timeout explicitly detach
-- does late completion stay silent after detach
-- does the final result match the actual caller-visible buffer contents
+- was the waiter armed before hardware could complete;
+- after timeout, was completion ownership detached or safely cancelled;
+- can late completion wake a caller that already returned;
+- on success, is caller-visible receive data already updated;
+- after timeout, can DMA/ISR still access caller-owned storage;
+- for writes, does the caller know the timed-out request may still execute.
 
-If all four hold, the `BLOCK` semantics are usually sound.
+If all of those have clear answers, the `BLOCK` contract is usually on solid ground.
