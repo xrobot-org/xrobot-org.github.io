@@ -56,7 +56,7 @@
    - code_gen/stm32/...：看“CubeMX + YAML 怎么生成代码”。
    - basic_coding/driver/...：看“外设抽象类有哪些接口”。
    - basic_coding/middleware/...：看“终端、数据库、事件等中间件行为和用法”。
-3. C++ API 索引：https://jiu-xiao.github.io/libxr/
+3. C++ API 索引：https://xrobot.work/libxr/
    - 搜索类名（STM32UART、STM32Flash、Database、Terminal、RamFS 等），看函数签名与注释。
 4. GitHub README 与示例：
    - 不确定某仓库负责什么时，看 README 即可；

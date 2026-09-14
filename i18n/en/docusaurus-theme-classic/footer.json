@@ -21,7 +21,7 @@
   },
   "link.item.label.LibXR 类文档": {
     "message": "LibXR Class Document",
-    "description": "The label of footer link with label=LibXR 类文档 linking to https://jiu-xiao.github.io/libxr/"
+    "description": "The label of footer link with label=LibXR 类文档 linking to https://xrobot.work/libxr/"
   },
   "link.item.label.CodeGenerator命令行工具": {
     "message": "CodeGenerator Command Line Tool",

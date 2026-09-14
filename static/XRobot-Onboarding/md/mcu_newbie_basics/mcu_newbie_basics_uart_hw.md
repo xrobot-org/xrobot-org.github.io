@@ -5,7 +5,7 @@
 - Operation 抽象（Operation / ReadOperation / WriteOperation）：https://xrobot.work/docs/basic_coding/core/core-op
 - ReadPort / WritePort 抽象：https://xrobot.work/docs/basic_coding/core/core-rw
 - 原始数据封装 RawData / ConstRawData：https://xrobot.work/docs/basic_coding/core/core-rawdata
-- LibXR C++ API 参考文档（查某个类 / 函数的具体接口定义时使用）：https://jiu-xiao.github.io/libxr/
+- LibXR C++ API 参考文档（查某个类 / 函数的具体接口定义时使用）：https://xrobot.work/libxr/
 本节只做“硬件串口 + 简单文本输出”，先不启用 USB CDC、终端和 STDIO::Printf。
 ## 本任务目标
 - 在已有的 LibXR STM32 工程中，把一组硬件串口（例如 USART1）配置完整，并通过 CodeGenerator 生成对应的 STM32UART 对象。

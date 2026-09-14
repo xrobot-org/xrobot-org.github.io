@@ -4,7 +4,7 @@
 - Database 闪存数据库中间件文档：
   https://xrobot.work/docs/basic_coding/middleware/database
 - LibXR C++ API 索引（查 STM32Flash / Database / Key 等类的具体接口）：
-  https://jiu-xiao.github.io/libxr/
+  https://xrobot.work/libxr/
 - 视频（可选）：【LibXR STM32 C++ 代码生成工具 第四节-Flash数据库】
   https://www.bilibili.com/video/BV1UQGCzSE74
 ## 本任务目标

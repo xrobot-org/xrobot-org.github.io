@@ -43,7 +43,7 @@
   - 抽象类的名称（例如 ADC、I2C、SPI、UART 等）。
   - 是否有 Configuration 结构体、SetConfig()、Enable()/Disable() 之类的接口。
   - 最基础的读写或控制方法叫什么（例如 Read()、Write()、SetDutyCycle()）。
-遇到某个类或函数名不清楚时，可以在 LibXR C++ API 索引中查：https://jiu-xiao.github.io/libxr/
+遇到某个类或函数名不清楚时，可以在 LibXR C++ API 索引中查：https://xrobot.work/libxr/
 ## 三、选择一个方向，做一个只涉及少量代码的小实验
 本任务没有“统一的标准示例代码”，而是鼓励你根据手头硬件和兴趣，在现有工程上做一个小范围尝试。可以参考以下思路任选其一（或自选）：
 ### 示例方向 1：在现有工程上再增加一个 GPIO 功能
@@ -88,7 +88,7 @@
 2. 外设驱动文档（basic_coding/driver 下对应外设）：
    - 抽象类有哪些基础接口。
    - 启用、配置、读写分别怎么调用。
-3. C++ API 索引（https://jiu-xiao.github.io/libxr/）：
+3. C++ API 索引（https://xrobot.work/libxr/）：
    - 查具体类和函数的签名、参数类型和返回值含义。
 ## 五、完成标准
 - 能用自己的话说出：

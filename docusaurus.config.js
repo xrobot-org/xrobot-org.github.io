@@ -98,7 +98,7 @@ module.exports = {
             },
             {
               label: 'LibXR 类文档',
-              href: 'https://jiu-xiao.github.io/libxr/',
+              href: 'https://xrobot.work/libxr/',
             },
             {
               label: 'CodeGenerator命令行工具',
