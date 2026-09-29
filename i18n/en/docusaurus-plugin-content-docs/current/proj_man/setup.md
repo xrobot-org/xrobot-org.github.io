@@ -50,6 +50,8 @@ xrobot module remove owner/Repo
 
 The lock records, for every Module in the dependency closure, the repository, the requested ref, what it resolved to, and the commit. Local repository paths are stored relative to the lock file. Once written, the lock is authoritative: the same lock builds the same sources on a feature branch, after its merge, and in CI.
 
+The lock is written by `xrobot setup`, says so in its first line, and is not edited by hand. After a change to `modules.yaml`, `xrobot setup` updates the lock, and both are committed together.
+
 | Command | Effect |
 | --- | --- |
 | `xrobot setup` | Keeps locked commits; added, removed or changed requests change only those entries |

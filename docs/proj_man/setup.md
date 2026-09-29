@@ -50,6 +50,8 @@ xrobot module remove owner/Repo
 
 锁文件记录依赖闭包中每个模块的仓库、请求的 ref、解析结果和 commit。本地仓库路径以相对锁文件的路径保存。锁生成后即为唯一依据，同一个锁在功能分支、合并后和 CI 中构建出相同的源码。
 
+锁文件由 `xrobot setup` 写出，首行为生成说明，不应手动编辑。修改 `modules.yaml` 后运行 `xrobot setup` 更新锁文件，并与 `modules.yaml` 一起提交。
+
 | 命令 | 效果 |
 | --- | --- |
 | `xrobot setup` | 保留已锁定的 commit；新增、删除或修改的请求只影响对应条目 |
