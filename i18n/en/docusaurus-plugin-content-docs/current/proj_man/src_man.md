@@ -52,7 +52,7 @@ bsps:
 
 ## xrobot source
 
-`xrobot source` reads `Modules/sources.yaml` relative to the current directory; run it from the BSP root, or put `--sources PATH` before the subcommand.
+Like the other commands, `xrobot source` finds the BSP at or above the current directory (or the `-C` directory) and reads its `Modules/sources.yaml`; `--sources PATH` before the subcommand selects another file.
 
 ```bash
 xrobot source list                      # every package

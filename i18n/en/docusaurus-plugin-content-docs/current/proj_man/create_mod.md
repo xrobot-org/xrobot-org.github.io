@@ -59,7 +59,7 @@ class MySensor
 };
 ```
 
-`xrobot module show <folder or header>` prints the manifest and constructors.
+`xrobot module show <folder, header or Module id>` prints the manifest and constructors; with `owner/Repo` or `Repo` it reads the locked Module of the current BSP.
 
 ---
 

@@ -16,7 +16,7 @@ XRobot（`xrobot` 命令）把可复用的 C++ 模块解析到精确的 commit�
 pip install xrobot==1.0.0
 ```
 
-BSP 在 `Modules/modules.yaml` 里用 `xrobot: 1.0.0` 固定工具版本，安装与之一致的版本；已安装版本与固定版本不同时，`xrobot` 会给出警告。STM32 BSP 还需要代码生成器 `libxr`（`pip install libxr==6.0.0`），其版本由 `User/libxr_config.yaml` 的 `generator:` 固定。
+BSP 在 `Modules/modules.yaml` 里用 `xrobot: 1.0.0` 固定工具版本，安装与之一致的版本；已安装版本与固定版本不同时，`xrobot setup` 和 `xrobot gen` 给出警告，`xrobot setup --frozen` 报错。STM32 BSP 还需要代码生成器 `libxr`（`pip install libxr==6.0.0`），其版本由 `User/libxr_config.yaml` 的 `generator:` 固定。
 
 也可以用 `pipx install xrobot==1.0.0` 安装到隔离环境。不要同时用 pip 和 pipx 安装同一个包。
 
@@ -99,7 +99,7 @@ STM32 BSP 的入口 `User/app_main.cpp` 由代码生成器写出，见 [与 XRob
 | `xrobot format [--check] [-c CONFIG]...` | 把配置改写为规范格式 |
 | `xrobot instance [-c CONFIG] add\|set\|remove\|rename` | 编辑一个实例 |
 | `xrobot module add\|remove owner/Repo[@ref]` | 编辑 `Modules/modules.yaml` |
-| `xrobot module show PATH` | 显示模块的 manifest 和构造函数 |
+| `xrobot module show MODULE` | 显示模块的 manifest 和构造函数（目录、头文件或模块 id） |
 | `xrobot new-module NAME` | 创建模块骨架（头文件、CMake、README、CI） |
 | `xrobot check-module MODULE` | 生成模块 CI 使用的构造调用（只编译，不执行） |
 | `xrobot source ...` | 查询或编辑模块源 |

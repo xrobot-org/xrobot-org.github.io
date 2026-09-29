@@ -16,7 +16,7 @@ XRobot (the `xrobot` command) resolves reusable C++ Modules to exact commits and
 pip install xrobot==1.0.0
 ```
 
-A BSP pins the tool version in `Modules/modules.yaml` (`xrobot: 1.0.0`); install that version. `xrobot` warns when the installed version differs from the pin. STM32 BSPs also use the code generator `libxr` (`pip install libxr==6.0.0`), pinned by `generator:` in `User/libxr_config.yaml`.
+A BSP pins the tool version in `Modules/modules.yaml` (`xrobot: 1.0.0`); install that version. When the installed version differs from the pin, `xrobot setup` and `xrobot gen` warn and `xrobot setup --frozen` fails. STM32 BSPs also use the code generator `libxr` (`pip install libxr==6.0.0`), pinned by `generator:` in `User/libxr_config.yaml`.
 
 `pipx install xrobot==1.0.0` installs into an isolated environment. Do not install the same package with both pip and pipx.
 
@@ -99,7 +99,7 @@ In STM32 BSPs the entry `User/app_main.cpp` is written by the code generator; se
 | `xrobot format [--check] [-c CONFIG]...` | Rewrite configs in the canonical layout |
 | `xrobot instance [-c CONFIG] add\|set\|remove\|rename` | Edit one instance |
 | `xrobot module add\|remove owner/Repo[@ref]` | Edit `Modules/modules.yaml` |
-| `xrobot module show PATH` | Print a Module's manifest and constructors |
+| `xrobot module show MODULE` | Print a Module's manifest and constructors (folder, header or Module id) |
 | `xrobot new-module NAME` | Create a Module skeleton (header, CMake, README, CI) |
 | `xrobot check-module MODULE` | Write the constructor call used by Module CI (compiled, never executed) |
 | `xrobot source ...` | Query or edit catalogs |

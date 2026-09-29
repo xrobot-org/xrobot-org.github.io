@@ -55,7 +55,7 @@ The lock records, for every Module in the dependency closure, the repository, th
 | `xrobot setup` | Keeps locked commits; added, removed or changed requests change only those entries |
 | `xrobot setup --update MODULE...` | Re-resolves the named Modules |
 | `xrobot setup --update` | Re-resolves every Module |
-| `xrobot setup --frozen` | Restores exactly the lock; fails if `modules.yaml` no longer matches it |
+| `xrobot setup --frozen` | Restores exactly the lock; fails if `modules.yaml` no longer matches it or the installed XRobot differs from `xrobot:` |
 | `xrobot setup --offline` | Uses only local checkouts and commits, without network access |
 | `xrobot setup --context-ref REF` | Sets the BSP context for `same` / `same-or-dev` |
 | `xrobot setup --release-ref REF` | Refuses commits that are not released for the target line (see below) |
@@ -70,11 +70,11 @@ Setup also fails when two selected packages define the same global Module class,
 
 ## What Setup Does
 
-1. Resolves the Modules as described above, writes `xrobot.lock` and checks the Modules out into `Modules/<owner>/<Repo>/`;
-2. writes `Modules/CMakeLists.txt`;
-3. checks every application configuration under `User/` (except `User/libxr_config.yaml`);
-4. regenerates `User/xrobot_main.hpp` for the selected product (default `User/xrobot.yaml`);
-5. warns when the installed XRobot differs from `xrobot:`.
+1. Compares the installed XRobot with `xrobot:`: a difference is a warning, and an error with `--frozen`; a commit in `xrobot:` is not compared;
+2. resolves the Modules as described above, writes `xrobot.lock` and checks the Modules out into `Modules/<owner>/<Repo>/`;
+3. writes `Modules/CMakeLists.txt`;
+4. checks every application configuration under `User/` (except `User/libxr_config.yaml`);
+5. regenerates `User/xrobot_main.hpp` for the selected product (default `User/xrobot.yaml`).
 
 ```text
 $ xrobot setup

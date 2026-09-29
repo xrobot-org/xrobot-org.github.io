@@ -55,7 +55,7 @@ xrobot module remove owner/Repo
 | `xrobot setup` | 保留已锁定的 commit；新增、删除或修改的请求只影响对应条目 |
 | `xrobot setup --update MODULE...` | 只重新解析指定模块 |
 | `xrobot setup --update` | 重新解析全部模块 |
-| `xrobot setup --frozen` | 严格恢复锁文件；`modules.yaml` 与锁不一致时失败 |
+| `xrobot setup --frozen` | 严格恢复锁文件；`modules.yaml` 与锁不一致，或已安装的 XRobot 与 `xrobot:` 不一致时失败 |
 | `xrobot setup --offline` | 不访问网络，只使用本地已有的检出和提交 |
 | `xrobot setup --context-ref REF` | 指定 `same` / `same-or-dev` 的 BSP 上下文 |
 | `xrobot setup --release-ref REF` | 拒绝对目标分支未发布的提交（见下文） |
@@ -70,11 +70,11 @@ xrobot module remove owner/Repo
 
 ## setup 做了什么
 
-1. 按上表解析模块，写入 `xrobot.lock`，把模块检出到 `Modules/<owner>/<Repo>/`；
-2. 生成 `Modules/CMakeLists.txt`；
-3. 检查 `User/` 下的所有应用配置（`User/libxr_config.yaml` 除外）；
-4. 为当前选中的产品重新生成 `User/xrobot_main.hpp`（默认 `User/xrobot.yaml`）；
-5. 已安装的 XRobot 与 `xrobot:` 不一致时给出警告。
+1. 比较已安装的 XRobot 与 `xrobot:`：不一致时给出警告，`--frozen` 下报错；`xrobot:` 为提交号时不比较；
+2. 按上表解析模块，写入 `xrobot.lock`，把模块检出到 `Modules/<owner>/<Repo>/`；
+3. 生成 `Modules/CMakeLists.txt`；
+4. 检查 `User/` 下的所有应用配置（`User/libxr_config.yaml` 除外）；
+5. 为当前选中的产品重新生成 `User/xrobot_main.hpp`（默认 `User/xrobot.yaml`）。
 
 输出示例：
 

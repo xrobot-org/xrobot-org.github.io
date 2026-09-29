@@ -52,7 +52,7 @@ bsps:
 
 ## xrobot source
 
-`xrobot source` 默认读取当前目录下的 `Modules/sources.yaml`，请在 BSP 根目录运行，或在子命令前加 `--sources PATH`。
+`xrobot source` 与其他命令一样，从当前目录（或 `-C` 指定的目录）向上查找 BSP，读取其中的 `Modules/sources.yaml`；在子命令前加 `--sources PATH` 可指定其他文件。
 
 ```bash
 xrobot source list                      # 所有包
