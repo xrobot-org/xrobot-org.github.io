@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # 编码规范
 
-这里整理仓库当前采用的代码写法。
+这里整理仓库当前采用的 C++ 代码写法。Python 代码的写法见 [Python 编码规范](./coding_style_python.md)。
 
 ## 命名
 

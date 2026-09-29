@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # Code Style
 
-This page summarizes the code style currently used in the repository.
+This page summarizes the C++ code style currently used in the repository. For Python code, see [Python Code Style](./coding_style_python.md).
 
 ## Naming
 
