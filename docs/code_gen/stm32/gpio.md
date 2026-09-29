@@ -41,4 +41,4 @@ STM32GPIO gpioA1(GPIOA, GPIO_PIN_1, EXTI1_IRQn);
 ## 使用建议
 
 - 若你修改了 CubeMX 中的引脚模式（例如普通 GPIO 改成 EXTI），需要重新生成代码，确保构造形状同步变化；
-- 生成后的对象命名通常来自 generator 的 alias 规则；若工程开启了 XRobot 集成或自定义别名，应以生成结果为准。
+- 对象名取 CubeMX 中的引脚标签（没有标签时由引脚名得到）；开启 XRobot 集成（`--xrobot`）时，同名对象以 `XR_REGISTER(<名字>, LibXR::GPIO)` 注册，应用配置按这个名字引用。

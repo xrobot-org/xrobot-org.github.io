@@ -170,7 +170,7 @@ Make sure to adjust the initial thread stack size in STM32CubeMX to avoid stack 
 | ---------- | --------------------------------------- |
 | `-d`       | Specify STM32 project root directory    |
 | `-t`       | Set terminal peripheral (e.g. `usart1`) |
-| `--xrobot` | Generate glue code for XRobot modules   |
+| `--xrobot` | Emit `XR_REGISTER` registrations and `XROBOT_MAIN();`, see [Integrate with XRobot](../xrobot_inter.md) |
 | `--commit` | Pin the LibXR submodule to a specific commit |
 | `--git-source` | Select the preferred Git source or base URL for LibXR |
 | `--git-mirrors` | Provide additional mirror URLs for auto source selection |

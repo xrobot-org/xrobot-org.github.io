@@ -17,7 +17,6 @@ This module summarizes the middleware components in LibXR used for system servic
 
 ## Contents
 
-- [Application Framework](./app-framework.md)
 - [Logger System](./logger.md)
 - [Event System](./event.md)
 - [Message System](/docs/basic_coding/middleware/message)

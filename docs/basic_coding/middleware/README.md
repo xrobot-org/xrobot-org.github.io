@@ -17,7 +17,6 @@ sidebar_position: 3
 
 ## 目录
 
-- [Application 框架](./app-framework.md)
 - [Logger 日志系统](./logger.md)
 - [Event 事件系统](./event.md)
 - [消息系统](/docs/basic_coding/middleware/message)

@@ -14,6 +14,6 @@ This documentation provides a modular introduction to the environment setup, bas
 
 * [CodeGenerator](../docs/code_gen): Automatically generates C++ initialization code for peripherals, CMake files, and related assets.
 
-* [XRobot](../docs/proj_man): Package, source, and dependency management; module parameter management and instantiation; and function entry generation.
+* [XRobot](../docs/proj_man): Module catalogs, dependency resolution and locking, application configuration, and static application entry generation.
 
 ![XRobot Logo](/img/XRobot.png)

@@ -73,9 +73,9 @@ typedef RBTree<uint32_t>::Node<Block>* TopicHandle;
 - Keep existing include order in headers. Do not reorder includes just for cleanup.
 
 ```cpp
-#include "app_framework.hpp"
 #include "async.hpp"
 #include "database.hpp"
+#include "event.hpp"
 ```
 
 - Headers use `#pragma once`.

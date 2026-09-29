@@ -35,8 +35,10 @@ git submodule add https://github.com/Jiu-xiao/libxr.git libxr
 直接通过 pip 安装：
 
 ```bash
-pip install libxr xrobot
+pip install xrobot==1.0.0 libxr==6.0.0
 ```
+
+XRobot BSP 在 `Modules/modules.yaml` 的 `xrobot:` 和 `User/libxr_config.yaml` 的 `generator:` 中固定两个工具的版本，请安装与 BSP 一致的版本。
 
 使用 `pipx` 安装：
 
@@ -44,13 +46,15 @@ pip install libxr xrobot
 ### windows
 python -m pip install --user pipx
 python -m pipx ensurepath
-pipx install libxr xrobot
+pipx install xrobot==1.0.0
+pipx install libxr==6.0.0
 pipx ensurepath
 # Restart your terminal
 
 ### linux
 sudo apt install pipx
-pipx install libxr xrobot
+pipx install xrobot==1.0.0
+pipx install libxr==6.0.0
 pipx ensurepath
 # Restart your terminal
 ```

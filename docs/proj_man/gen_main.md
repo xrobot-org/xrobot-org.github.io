@@ -1,145 +1,109 @@
 ---
 id: proj-man-gen-main
-title: 生成主函数
+title: 入口与生成
 sidebar_position: 3
 ---
 
-# 自动生成主函数（XRobotMain）
+# 入口与生成
 
-`xrobot_gen_main` 根据模块头文件中的 MANIFEST 信息提取构造参数，并生成统一入口函数 `XRobotMain`。
-
----
-
-## 1. 什么是 XRobotMain？
-
-XRobotMain 是一个统一的主函数入口，用于：
-
-- 实例化每个模块（从 MANIFEST 中提取参数）
-- 构建模块之间的依赖关系
-- 通过 `ApplicationManager::MonitorAll()` 周期性调度各模块的 `OnMonitor()`
-
-生成后的文件是标准的 C++ 源码，可以直接编译和使用。
+`xrobot gen` 读取选中的应用配置、入口源文件中的注册和锁定的模块头文件，生成 `User/xrobot_main.hpp`。生成结果是普通的 C++：一个 `XRobotMain` 函数，按配置顺序构造静态实例，然后进入监视循环。没有运行期的硬件容器、名字查找或应用管理器。
 
 ---
 
-## 2. 快速入门
+## 入口源文件
 
-在已有模块目录结构下，直接运行：
-
-```bash
-xrobot_gen_main
-```
-
-输出类似如下：
-
-```bash
-Discovered modules: BlinkLED
-[INFO] Successfully parsed manifest for BlinkLED
-[INFO] Writing configuration to User/xrobot.yaml
-[SUCCESS] Generated entry file: User/xrobot_main.hpp
-```
-
-生成后通常会有两个文件：
-
-- `User/xrobot.yaml`：模块参数配置文件
-- `User/xrobot_main.hpp`：主函数源码（自动生成）
-
----
-
-## 3. 修改模块构造参数
-
-打开 `User/xrobot.yaml`：
-
-```yaml
-global_settings:
-  monitor_sleep_ms: 1000
-
-modules:
-  - name: BlinkLED
-    constructor_args:
-      blink_cycle: 250
-```
-
-修改参数后重新运行 `xrobot_gen_main`，主函数会随之更新。
-
----
-
-## 4. 使用已有配置文件
-
-如果已有 `xrobot.yaml`，也可以显式指定：
-
-```bash
-xrobot_gen_main --config User/xrobot.yaml
-```
-
-这样可以避免重新扫描模块或覆盖配置。
-
----
-
-## 5. 自定义输出与硬件容器变量
-
-当前 CLI 还支持：
-
-```bash
-xrobot_gen_main --output User/xrobot_main.hpp --hw hw
-```
-
-- `--output`：指定输出文件路径
-- `--hw`：指定生成代码里的硬件容器变量名
-
----
-
-## 6. 支持模板参数和实例名
-
-如果模块 MANIFEST 中包含模板参数 `template_args`，也会一并生成：
-
-```yaml
-- name: PID
-  constructor_args:
-    kp: 1.0
-    ki: 0.2
-  template_args:
-    T: float
-  id: pid_left
-```
-
-生成代码类似：
+`User/` 下有且只有一个源文件调用 `XROBOT_MAIN()`。它包含生成的头文件，构造 BSP 对象，用 `XR_REGISTER(名字, 类型)` 注册配置可以使用的对象，最后调用 `XROBOT_MAIN()`：
 
 ```cpp
-static PID<float> pid_left(hw, appmgr, 1.0, 0.2);
-```
+#include "xrobot_main.hpp"
 
----
-
-## 7. 最终生成的主函数长什么样？
-
-```cpp
-#include "app_framework.hpp"
-#include "libxr.hpp"
-
-// Module headers
-#include "BlinkLED.hpp"
-
-static void XRobotMain(LibXR::HardwareContainer &hw) {
-  using namespace LibXR;
-  ApplicationManager appmgr;
-
-  // Auto-generated module instantiations
-  static BlinkLED blinkled(hw, appmgr, 250);
-
-  while (true) {
-    appmgr.MonitorAll();
-    Thread::Sleep(1000);
-  }
+extern "C" void app_main()
+{
+  // ... 平台初始化，构造 BSP 对象 ...
+  XR_REGISTER(LED_R, LibXR::GPIO);
+  XR_REGISTER(spi1, LibXR::SPI);
+  XR_REGISTER(can1, LibXR::CAN);
+  XROBOT_MAIN();
 }
 ```
 
+规则：
+
+- 每个名字只注册一种类型。要以另一种类型提供同一对象，声明一个引用并单独注册：
+
+  ```cpp
+  LibXR::CAN& can1 = fdcan1;
+  XR_REGISTER(fdcan1, LibXR::FDCAN);
+  XR_REGISTER(can1, LibXR::CAN);
+  ```
+
+- 注册对象类型，不注册引用类型；名字不能重复，不能是 C++ 关键字或宏名。
+- `XR_REGISTER` 不能放在 `#if` / `#ifdef` 等条件编译块中，生成器不求值构建选项。
+- 注册的对象必须在 `XROBOT_MAIN()` 处可见，且生命周期覆盖整个应用。
+- 只有当前产品用到的注册对象会传给 `XRobotMain`；其余注册仍参与类型检查，不产生未使用变量警告。
+
+STM32 BSP 的这些行由 `xr_gen_code_stm32 --xrobot` 生成，见 [与 XRobot 集成](../code_gen/xrobot_inter.md)。
+
 ---
 
-## 8. 典型流程
+## 生成的头文件
 
-1. 确保每个模块头文件包含 `=== MODULE MANIFEST` 注释块
-2. 运行 `xrobot_gen_main` 自动生成配置和主函数
-3. 手动调整 YAML 配置中的参数
-4. 重复运行命令生成新的主函数
-5. 在工程中调用 `XRobotMain()` 即可完成系统初始化
+```bash
+xrobot gen                                # 当前产品
+xrobot gen -c User/RobotConfig/hero.yaml  # 选择另一个产品
+```
+
+以 BlinkLED 为例，生成的主要部分：
+
+```cpp
+#pragma once
+// xrobot: config "xrobot.yaml"
+// xrobot: depends "../xrobot.lock"
+// xrobot: depends "main.cpp"
+// xrobot: depends "../Modules/xrobot-org/BlinkLED/BlinkLED.hpp"
+
+#include "libxr.hpp"
+#include "BlinkLED.hpp"
+
+[[noreturn]] static inline void XRobotMain(
+    LibXR::GPIO& LED_R)
+{
+  // modules[0]: status_led
+  static BlinkLED status_led(
+      LED_R
+      , xrobot_generated::Implicit<uint32_t>(250)
+  );
+  for (;;)
+  {
+    LibXR::Thread::Sleep(1000);
+  }
+}
+
+#define XR_REGISTER(name, ...) static_cast<void>(name)
+#define XROBOT_MAIN() ::XRobotMain(LED_R)
+```
+
+（示例省略了 `#line` 指令和辅助定义。）
+
+- 开头的 `// xrobot:` 行记录配置和生成时读取的全部输入（锁文件、入口源文件、模块头文件）。
+- 实例是函数内 `static` 对象，按配置顺序在 `XRobotMain` 执行时构造，构造函数完成初始化，没有额外的 `Init()`/`Start()` 阶段。
+- 循环中按配置顺序调用每个实例的公有 `void OnMonitor()`（有才调用），然后休眠 `settings.monitor_sleep_ms` 毫秒。`XROBOT_MAIN()` 不返回，在调用它的线程中运行。
+- 内容未变化时不重写文件。不要手动编辑该文件，也不要提交它。
+
+---
+
+## 构建时检查
+
+LibXR 的 CMake 在 BSP 设置了 `XROBOT_MODULES_DIR` 时：
+
+- `User/xrobot_main.hpp` 不存在时配置失败，提示运行 `xrobot setup` 或 `xrobot gen -c <配置>`；
+- 配置阶段打印 `XRobot product: <配置>`；
+- 每次构建比较时间戳，任一输入比头文件新或已不存在时构建失败，并给出需要运行的 `xrobot gen -c <配置>`。
+
+CMake 只检查、不重新生成。修改配置、入口源文件或模块后运行 `xrobot gen`；修改 `modules.yaml` 后运行 `xrobot setup`。
+
+---
+
+## IDE
+
+生成的文件与构建使用同一路径。语言服务器请使用 BSP 实际构建产生的 `compile_commands.json`。

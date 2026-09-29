@@ -35,8 +35,10 @@ git submodule add https://github.com/Jiu-xiao/libxr.git libxr
 Install with `pip`:
 
 ```bash
-pip install libxr xrobot
+pip install xrobot==1.0.0 libxr==6.0.0
 ```
+
+An XRobot BSP pins both tools, with `xrobot:` in `Modules/modules.yaml` and `generator:` in `User/libxr_config.yaml`; install the versions the BSP pins.
 
 Install with `pipx`:
 
@@ -44,13 +46,15 @@ Install with `pipx`:
 ### Windows
 python -m pip install --user pipx
 python -m pipx ensurepath
-pipx install libxr xrobot
+pipx install xrobot==1.0.0
+pipx install libxr==6.0.0
 pipx ensurepath
 # Restart your terminal
 
 ### Linux
 sudo apt install pipx
-pipx install libxr xrobot
+pipx install xrobot==1.0.0
+pipx install libxr==6.0.0
 pipx ensurepath
 # Restart your terminal
 ```

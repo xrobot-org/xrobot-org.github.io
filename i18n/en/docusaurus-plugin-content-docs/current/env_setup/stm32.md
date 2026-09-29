@@ -35,7 +35,7 @@ Recommended extensions:
 - `STMicroelectronics.stm32-vscode-extension`
 - [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot)
 
-`XRobot.xrobot` provides a GUI view for code-generation configuration inside the workspace.
+`XRobot.xrobot` provides two views: the LibXR view runs the code generator and edits `User/libxr_config.yaml`; the XRobot view shows an XRobot BSP's state, products and instances and makes every change through an `xrobot` command.
 
 ## Toolchain Choice
 

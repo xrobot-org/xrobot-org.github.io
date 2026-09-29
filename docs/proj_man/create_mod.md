@@ -1,107 +1,143 @@
 ---
 id: proj-man-create-mod
-title: 快速创建模块
-sidebar_position: 2
+title: 编写模块
+sidebar_position: 4
 ---
 
-# 快速创建模块
+# 编写模块
 
-XRobot 提供了模块生成工具 `xrobot_create_mod`，可以从模板快速创建模块目录结构、标准头文件和 README 文档，适合新手快速上手模块开发。
-
----
-
-## 1. 创建一个模块
-
-只需一句命令：
-
-```bash
-xrobot_create_mod MySensor --desc "IMU interface module" --hw imu scl sda
-```
-
-输出如下：
-
-```bash
-[OK] Module MySensor generated at Modules/MySensor
-```
-
-你将获得如下结构：
-
-```bash
-Modules/
-└── MySensor/
-    ├── MySensor.hpp        # 含 MANIFEST 的模块头文件
-    ├── README.md           # 自动生成的模块说明文档
-    ├── CMakeLists.txt      # 构建配置
-    └── .github/workflows/build.yml # GitHub 自动测试
-```
+模块是一个 Git 仓库 `owner/Repo`，主头文件 `Repo.hpp` 声明同名的全局 C++ 类 `Repo`。它的公有构造函数就是接口：应用配置按参数名填写，生成器直接调用构造函数。模块不继承框架基类，也没有额外的初始化阶段。
 
 ---
 
-## 2. 查看模块信息
-
-创建后可通过 `xrobot_mod_parser` 查看模块结构：
+## 创建骨架
 
 ```bash
-xrobot_mod_parser --path ./Modules/MySensor/
+xrobot new-module MySensor --desc "IMU driver" \
+  --constructor "LibXR::I2C& i2c" \
+  --constructor "uint32_t period_ms = 10" \
+  --include i2c.hpp \
+  --depends xrobot-org/BlinkLED
 ```
 
-输出示例：
+| 参数 | 含义 |
+| --- | --- |
+| `--desc` | 模块描述 |
+| `--constructor` | 一个 C++ 参数声明，每个参数重复一次 |
+| `--template` | 一个模板参数声明，每个重复一次 |
+| `--include` | 头文件 |
+| `--depends` | 依赖 `owner/Repo[@ref]`，可写多个；默认 ref 为 `same-or-dev` |
+| `--out` | 输出目录，默认当前目录 |
 
-```bash
-=== Module: MySensor.hpp ===
-Description       : IMU interface module
+生成：
 
-Constructor Args  :
-Required Hardware : imu, scl, sda
-Depends           : None
+```text
+MySensor/
+├── MySensor.hpp                  # 类、构造函数与 manifest
+├── CMakeLists.txt                # 把源文件加入 LibXR 的 xr 目标
+├── README.md
+└── .github/workflows/build.yml   # 调用共享的模块 CI
 ```
+
+```cpp
+#pragma once
+
+// clang-format off
+/* === MODULE MANIFEST V2 ===
+module_description: IMU driver
+depends:
+- id: xrobot-org/BlinkLED
+  ref: same-or-dev
+=== END MANIFEST === */
+// clang-format on
+
+#include "i2c.hpp"
+class MySensor
+{
+ public:
+  MySensor(LibXR::I2C& i2c, uint32_t period_ms = 10) {}
+};
+```
+
+`xrobot module show <目录或头文件>` 显示模块的 manifest 和构造函数。
 
 ---
 
-## 3. MANIFEST 格式说明
+## 构造函数约定
 
-头文件中的模块描述信息位于 `/* === MODULE MANIFEST === */` 注释块中，格式如下：
+- 依赖（硬件或其他模块）在前，写成没有默认值的引用或指针；可选依赖写成没有默认值的指针，配置可填 `nullptr`。
+- 值配置在后，带默认值。`xrobot instance add` 会把默认值写入配置。
+- 参数必须有名字；数组、函数指针等复杂类型请先定义类型别名。
+- 结构体参数的字段会被配置按映射逐项填写，因此要在模块头文件中定义。
+- 可以有多个公有构造函数，配置按参数名选择；参数名相同的重载需靠显式类型区分。
+- 构造函数负责全部初始化。宏生成或随条件编译变化的接口需要写成显式声明。
+
+可选的公有非静态 `void OnMonitor()` 会被主循环按配置顺序周期调用。
+
+---
+
+## Manifest
+
+manifest 只允许以下键：
 
 ```yaml
-/* === MODULE MANIFEST V2 ===
-module_description: IMU interface module
-constructor_args: []
-template_args: []
-required_hardware:
-  - imu
-  - scl
-  - sda
-depends: []
-=== END MANIFEST === */
+module_description: 描述
+depends:
+  - id: owner/Repo
+    ref: same-or-dev
+standalone: false
 ```
 
-MANIFEST 是模块元信息的核心来源，**生成主函数、文档、依赖树等都基于此内容**。
+- `depends`：依赖模块及 ref，规则见 [模块请求与锁定](./setup.md#ref-规则)。常用 `same-or-dev`，使依赖跟随 BSP 所在的分支。
+- `standalone: false`：只作为其他模块依赖的库，不能被实例化。
 
 ---
 
-## 4. 更多参数选项
-
-你还可以添加构造参数、模板参数、依赖模块等：
+## 在 BSP 中使用与开发
 
 ```bash
-xrobot_create_mod PIDController   --desc "A generic PID controller"   --hw input output   --constructor kp=1.0 ki=0.2 kd=0.0   --template T=float   --depends MySensor
+xrobot module add owner/MySensor@dev
+xrobot setup
+xrobot instance add owner/MySensor
 ```
 
----
+在 BSP 的 `Modules/owner/MySensor/` 中直接修改并构建；保持修改未提交。准备好后在模块仓库中提交并推送到一个分支，然后在 BSP 中运行 `xrobot setup --update owner/MySensor` 更新锁文件。
 
-## 5. 构造参数与模板参数说明
-
-- `--constructor kp=1.0 ki=0.2` 会自动写入 MANIFEST 和 README
-- `--template T=float` 支持模块模板参数
-- 所有字段都支持自动类型推断（int、float、bool）
+模块被加入 BSP 需要能在模块源中找到，见 [模块源](./src_man.md)。
 
 ---
 
-## 6. CMake 与 CI 配置
+## 模块 CI
 
-生成的模块自动包含：
+模块仓库调用共享工作流 `xrobot-org/XRobot/.github/workflows/module-ci.yml`。官方模块在 `dev` 线上的 `.github/workflows/build.yml`：
 
-- 可被包含进 `Modules/CMakeLists.txt` 的构建脚本
-- 支持 GitHub Actions 自动构建的 `build.yml`
+```yaml
+name: Module CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@dev
+    with:
+      xrobot-ref: dev
+      libxr-ref: dev
+      dependency-ref: refs/heads/dev
+      template-args: '[]'
+```
 
-这些默认模板可以根据需要手动修改。
+工作流在 Linux 容器中解析模块依赖，运行 `xrobot check-module` 生成一个构造调用，然后用 LibXR 编译模块源文件和这个调用。依赖参数用 `void*` 占位，调用只编译、从不执行；`standalone: false` 的库只编译其头文件和源文件。
+
+| 输入 | 默认值 | 含义 |
+| --- | --- | --- |
+| `xrobot-ref` | `master` | 使用的 XRobot 版本 |
+| `libxr-ref` | `master` | 使用的 LibXR 版本 |
+| `dependency-ref` | `refs/heads/master` | 依赖 `same-or-dev` 的上下文 |
+| `template-args` | `'[]'` | 类模板的模板实参（JSON 列表） |
+| `image` | `ghcr.io/xrobot-org/docker-image-linux:main` | 构建容器 |
+| `apt-packages` | 空 | 额外的 Debian 包 |
+| `cmake-options` | 空 | 额外的 CMake 配置参数 |
+| `ctest-regex` | 空 | 非空时构建测试并运行匹配的 CTest |
+
+编译通过不代表硬件验证。

@@ -33,7 +33,7 @@ sudo apt install -y git python3 python3-pip cmake tar xz-utils wget pipx ninja-b
 * `STMicroelectronics.stm32-vscode-extension`
 * [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot)
 
-`XRobot.xrobot` 提供代码生成工具的 GUI 配置页面，适合直接在工作区里看和改当前配置。
+`XRobot.xrobot` 提供两个视图：LibXR 视图调用代码生成器并编辑 `User/libxr_config.yaml`；XRobot 视图显示 XRobot BSP 的状态、产品和实例，所有修改都通过 `xrobot` 命令完成。
 
 <img src="/img/xrobot_vscode_plugin_setup.png" alt="XRobot VS Code 插件界面" width="360" />
 

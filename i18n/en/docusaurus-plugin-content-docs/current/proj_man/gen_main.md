@@ -1,132 +1,109 @@
 ---
 id: proj-man-gen-main
-title: Generate Main Function
+title: Entry and Generation
 sidebar_position: 3
 ---
 
-# Auto-Generate Main Function (XRobotMain)
+# Entry and Generation
 
-`xrobot_gen_main` extracts constructor parameters from the MANIFEST sections in module headers and generates the unified entry function `XRobotMain`.
-
----
-
-## 1. What is XRobotMain?
-
-`XRobotMain` is a unified main function that:
-
-- Instantiates each module (based on MANIFEST parameters)
-- Builds dependency relationships between modules
-- Periodically calls each module's `OnMonitor()` method
-
-The generated file is standard C++ code and can be compiled and used directly.
+`xrobot gen` reads the selected application configuration, the registrations in the entry source and the locked Module headers, and writes `User/xrobot_main.hpp`. The result is ordinary C++: one `XRobotMain` function that constructs static instances in configuration order and then runs the monitor loop. There is no runtime hardware container, name lookup or application manager.
 
 ---
 
-## 2. Quick Start
+## Entry Source
 
-In a valid module directory structure, simply run:
-
-```bash
-xrobot_gen_main
-```
-
-Sample output:
-
-```bash
-Discovered modules: BlinkLED
-[INFO] Successfully parsed manifest for BlinkLED
-[INFO] Writing configuration to User/xrobot.yaml
-[SUCCESS] Generated entry file: User/xrobot_main.hpp
-```
-
-Generation usually produces two files:
-
-- `User/xrobot.yaml`: module parameter configuration
-- `User/xrobot_main.hpp`: auto-generated main function source code
-
----
-
-## 3. Modify Module Constructor Parameters
-
-Open `User/xrobot.yaml`:
-
-```yaml
-global_settings:
-  monitor_sleep_ms: 1000
-
-modules:
-  - name: BlinkLED
-    constructor_args:
-      blink_cycle: 250
-```
-
-Adjust the parameters and rerun `xrobot_gen_main` to regenerate the main function.
-
----
-
-## 4. Use an Existing Configuration File
-
-If you already have a `xrobot.yaml` file, you can specify it explicitly:
-
-```bash
-xrobot_gen_main --config User/xrobot.yaml
-```
-
-This avoids re-scanning modules or overwriting existing settings.
-
----
-
-## 5. Support for Template Parameters and Instance IDs
-
-If a module's MANIFEST includes `template_args`, they will also be generated:
-
-```yaml
-- name: PID
-  constructor_args:
-    kp: 1.0
-    ki: 0.2
-  template_args:
-    T: float
-  id: pid_left
-```
-
-Generated code will look like:
+Exactly one source file under `User/` calls `XROBOT_MAIN()`. It includes the generated header, constructs the BSP objects, registers the objects configurations may use with `XR_REGISTER(name, Type)`, and finally calls `XROBOT_MAIN()`:
 
 ```cpp
-static PID<float> pid_left(hw, appmgr, 1.0, 0.2);
-```
+#include "xrobot_main.hpp"
 
----
-
-## 6. What Does the Generated Main Function Look Like?
-
-```cpp
-#include "app_framework.hpp"
-#include "libxr.hpp"
-
-// Module headers
-#include "BlinkLED.hpp"
-
-static void XRobotMain(LibXR::HardwareContainer &hw) {
-  using namespace LibXR;
-  ApplicationManager appmgr;
-
-  // Auto-generated module instantiations
-  static BlinkLED blinkled(hw, appmgr, 250);
-
-  while (true) {
-    appmgr.MonitorAll();
-    Thread::Sleep(1000);
-  }
+extern "C" void app_main()
+{
+  // ... platform init, construct BSP objects ...
+  XR_REGISTER(LED_R, LibXR::GPIO);
+  XR_REGISTER(spi1, LibXR::SPI);
+  XR_REGISTER(can1, LibXR::CAN);
+  XROBOT_MAIN();
 }
 ```
 
+Rules:
+
+- One name registers one type. To offer the same object as another type, declare a reference and register it separately:
+
+  ```cpp
+  LibXR::CAN& can1 = fdcan1;
+  XR_REGISTER(fdcan1, LibXR::FDCAN);
+  XR_REGISTER(can1, LibXR::CAN);
+  ```
+
+- Register object types, not reference types. Names must be unique and cannot be C++ keywords or macro names.
+- `XR_REGISTER` cannot appear inside `#if` / `#ifdef` blocks; the generator does not evaluate build options.
+- Registered objects must be visible where `XROBOT_MAIN()` is called and must live as long as the application.
+- Only the registrations the selected product uses are passed to `XRobotMain`; the others are still type-checked and cause no unused-variable warnings.
+
+In STM32 BSPs these lines are written by `xr_gen_code_stm32 --xrobot`; see [Integrate with XRobot](../code_gen/xrobot_inter.md).
+
 ---
 
-## 7. Typical Flow
+## The Generated Header
 
-1. Ensure each module header includes a `=== MODULE MANIFEST` comment block
-2. Run `xrobot_gen_main` to generate configuration and main function
-3. Manually tweak YAML parameter values
-4. Rerun the tool to regenerate the main function
-5. Call `XRobotMain()` in your project to initialize the system
+```bash
+xrobot gen                                # the selected product
+xrobot gen -c User/RobotConfig/hero.yaml  # select another product
+```
+
+For BlinkLED, the main parts of the generated file:
+
+```cpp
+#pragma once
+// xrobot: config "xrobot.yaml"
+// xrobot: depends "../xrobot.lock"
+// xrobot: depends "main.cpp"
+// xrobot: depends "../Modules/xrobot-org/BlinkLED/BlinkLED.hpp"
+
+#include "libxr.hpp"
+#include "BlinkLED.hpp"
+
+[[noreturn]] static inline void XRobotMain(
+    LibXR::GPIO& LED_R)
+{
+  // modules[0]: status_led
+  static BlinkLED status_led(
+      LED_R
+      , xrobot_generated::Implicit<uint32_t>(250)
+  );
+  for (;;)
+  {
+    LibXR::Thread::Sleep(1000);
+  }
+}
+
+#define XR_REGISTER(name, ...) static_cast<void>(name)
+#define XROBOT_MAIN() ::XRobotMain(LED_R)
+```
+
+(`#line` directives and helper definitions are omitted.)
+
+- The leading `// xrobot:` lines record the configuration and every input generation read (lock, entry source, Module headers).
+- Instances are function-local `static` objects, constructed in configuration order when `XRobotMain` runs. Constructors do all initialization; there is no extra `Init()`/`Start()` phase.
+- The loop calls each instance's public `void OnMonitor()` (where one exists) in configuration order, then sleeps `settings.monitor_sleep_ms` milliseconds. `XROBOT_MAIN()` does not return and runs in the calling thread.
+- An unchanged result is not rewritten. Do not edit or commit the file.
+
+---
+
+## Build Check
+
+When the BSP sets `XROBOT_MODULES_DIR`, LibXR's CMake:
+
+- fails configuration when `User/xrobot_main.hpp` is missing, suggesting `xrobot setup` or `xrobot gen -c <config>`;
+- prints `XRobot product: <config>` during configuration;
+- compares timestamps on every build and fails if any input is newer than the header or no longer exists, naming the `xrobot gen -c <config>` command to run.
+
+CMake only checks; it never regenerates. Run `xrobot gen` after changing a configuration, the entry source or a Module; run `xrobot setup` after changing `modules.yaml`.
+
+---
+
+## IDE
+
+The generated file keeps the path the build uses. Point the language server at the `compile_commands.json` produced by the BSP's actual build.

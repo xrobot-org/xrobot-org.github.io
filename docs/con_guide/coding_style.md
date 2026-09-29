@@ -73,9 +73,9 @@ typedef RBTree<uint32_t>::Node<Block>* TopicHandle;
 - 头文件中的 include 保持现有顺序，不为整理做无关重排。
 
 ```cpp
-#include "app_framework.hpp"
 #include "async.hpp"
 #include "database.hpp"
+#include "event.hpp"
 ```
 
 - 头文件统一使用 `#pragma once`。

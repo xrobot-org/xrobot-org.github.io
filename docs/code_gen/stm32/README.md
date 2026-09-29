@@ -164,7 +164,7 @@ int main() {
 | ---------- | --------------------------- |
 | `-d`       | 指定 STM32 工程根目录       |
 | `-t`       | 设置终端外设（如 `usart1`） |
-| `--xrobot` | 生成 XRobot 模块 glue 代码  |
+| `--xrobot` | 生成 `XR_REGISTER` 注册与 `XROBOT_MAIN();`，见 [与XRobot集成](../xrobot_inter.md) |
 | `--commit` | 显式指定 LibXR 子模块 commit |
 | `--git-source` | 选择 LibXR 的 Git 源或 base URL |
 | `--git-mirrors` | 为自动选源提供额外镜像 URL |

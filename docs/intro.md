@@ -16,7 +16,7 @@ sidebar_position: 1
 
 * [CodeGenerator](../docs/code_gen): 自动生成外设的C++初始化代码、CMake等内容
 
-* [XRobot](../docs/proj_man): 软件包、软件源和依赖管理，模块参数管理与实例化，函数入口生成
+* [XRobot](../docs/proj_man): 模块源与依赖解析、版本锁定，应用配置，静态应用入口生成
 
 ## 学习路线与任务引导
 

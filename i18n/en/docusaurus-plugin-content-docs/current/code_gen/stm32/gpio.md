@@ -41,4 +41,4 @@ This means:
 ## Usage notes
 
 - if you change a pin mode in CubeMX, for example from a normal GPIO to EXTI, regenerate the code so that the constructor shape stays in sync;
-- generated object names usually follow the generator’s alias rules; if the project uses XRobot integration or custom aliases, treat the generated result as authoritative.
+- object names come from the CubeMX pin labels (derived from the pin name when there is no label); with XRobot integration (`--xrobot`) each object is registered under the same name with `XR_REGISTER(<name>, LibXR::GPIO)`, and application configurations refer to it by that name.
