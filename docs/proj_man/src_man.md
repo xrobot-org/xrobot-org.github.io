@@ -23,7 +23,7 @@ sources:
 ```
 
 - `url` 可以是 HTTP(S) 地址，也可以是相对 `sources.yaml` 的本地路径。
-- 同一个包出现在多个源中时，`priority` 数值小的优先；优先级相同且仓库不同时报错。
+- 同一个包出现在多个源中时，`priority` 数值小的优先；优先级相同且仓库不同时报错。镜像源不参与这一比较。
 - `xrobot init` 写入官方源 `https://xrobot.work/xrobot-modules/index.yaml`。
 
 ---
@@ -46,7 +46,7 @@ bsps:
 - 包的标识是 `owner/Repo`。GitHub 地址直接给出标识；其他地址使用 `namespace/仓库名`，或在映射中写 `id`。
 - `bsps` 只用于发现 BSP 仓库，BSP 不能作为模块依赖。
 - `status` 取 `community`（默认）、`verified` 或 `official`，描述维护与验证情况；后两者必须写 `tested_ref` 和 `tested_libxr`，表示验证针对的版本，不代表之后的所有版本。
-- `mirror_of: <namespace>` 表示镜像源：从镜像拉取源码，`xrobot.lock` 仍记录原仓库地址。
+- `mirror_of: <namespace>` 表示镜像源。列出镜像源后，`xrobot setup` 从镜像拉取源码，与镜像源的 `priority` 无关；`xrobot source get` 的 `repo` 显示镜像地址，`canonical` 和 `xrobot.lock` 记录原仓库地址。
 
 ---
 
@@ -70,6 +70,8 @@ xrobot source add-source https://example.com/index.yaml --priority 1
 xrobot source create-index -o my-index.yaml --namespace my-team [--mirror-of xrobot-org]
 xrobot source add-index https://github.com/my-team/MySensor.git --index my-index.yaml
 ```
+
+`add-source` 和 `add-index` 在列表末尾追加一项，文件的其余内容和注释保持不变。
 
 输出示例：
 

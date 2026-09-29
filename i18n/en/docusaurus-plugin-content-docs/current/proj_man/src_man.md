@@ -23,7 +23,7 @@ sources:
 ```
 
 - `url` is an HTTP(S) address or a local path relative to `sources.yaml`.
-- When several catalogs list a package, the smaller `priority` wins; equal priorities that name different repositories are an error.
+- When several Sources list a package, the smaller `priority` wins; equal priorities that name different repositories are an error. Mirror Sources take no part in this choice.
 - `xrobot init` writes the official catalog `https://xrobot.work/xrobot-modules/index.yaml`.
 
 ---
@@ -46,7 +46,7 @@ bsps:
 - A package is identified as `owner/Repo`. A GitHub URL gives the identity directly; other URLs use `namespace/<repository name>`, or an explicit `id` in a mapping.
 - `bsps` is for discovering BSP repositories only; a BSP is never a Module dependency.
 - `status` is `community` (default), `verified` or `official` and describes maintenance and validation. The latter two require `tested_ref` and `tested_libxr`, the versions the validation applies to, not every later version.
-- `mirror_of: <namespace>` marks a mirror catalog: sources are fetched from the mirror while `xrobot.lock` keeps the original repository URL.
+- `mirror_of: <namespace>` marks a mirror Source. Once a mirror is listed, `xrobot setup` fetches from it whatever its `priority`; `repo` in `xrobot source get` shows the mirror, while `canonical` and `xrobot.lock` keep the original repository URL.
 
 ---
 
@@ -70,6 +70,8 @@ xrobot source add-source https://example.com/index.yaml --priority 1
 xrobot source create-index -o my-index.yaml --namespace my-team [--mirror-of xrobot-org]
 xrobot source add-index https://github.com/my-team/MySensor.git --index my-index.yaml
 ```
+
+`add-source` and `add-index` append one item to the list; the rest of the file and its comments stay as they are.
 
 Example output:
 
