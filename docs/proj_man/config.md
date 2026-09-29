@@ -16,7 +16,7 @@ sidebar_position: 2
 xrobot gen -c User/RobotConfig/hero.yaml
 ```
 
-`xrobot gen -c` 为指定配置生成 `User/xrobot_main.hpp`，即选中该产品。头文件开头记录了配置和生成时读取的每个文件；`xrobot gen`（不带 `-c`）和 `xrobot setup` 沿用当前选择，没有生成过时使用 `User/xrobot.yaml`。
+`xrobot gen -c` 为指定配置生成 `User/xrobot_main.hpp`，即选中该产品。头文件开头记录了配置和生成时读取的每个文件；`xrobot gen`（不带 `-c`）和 `xrobot setup` 沿用当前选择，没有生成过时使用 `User/xrobot.yaml`。选中的配置被删除或改名后，这些命令报错，需要用 `xrobot gen -c` 重新选择。
 
 ---
 

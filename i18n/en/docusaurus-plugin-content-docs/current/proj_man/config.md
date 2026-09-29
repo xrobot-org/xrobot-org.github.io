@@ -16,7 +16,7 @@ An application configuration describes one product: which Module instances are c
 xrobot gen -c User/RobotConfig/hero.yaml
 ```
 
-`xrobot gen -c` generates `User/xrobot_main.hpp` for that configuration, which selects the product. The header's first lines record the configuration and every file generation read. `xrobot gen` without `-c` and `xrobot setup` keep the current selection, or use `User/xrobot.yaml` when nothing was generated yet.
+`xrobot gen -c` generates `User/xrobot_main.hpp` for that configuration, which selects the product. The header's first lines record the configuration and every file generation read. `xrobot gen` without `-c` and `xrobot setup` keep the current selection, or use `User/xrobot.yaml` when nothing was generated yet. If the selected configuration has been deleted or renamed, these commands report an error and a configuration has to be selected again with `xrobot gen -c`.
 
 ---
 
