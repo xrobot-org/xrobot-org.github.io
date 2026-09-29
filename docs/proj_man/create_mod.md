@@ -139,5 +139,6 @@ jobs:
 | `apt-packages` | 空 | 额外的 Debian 包 |
 | `cmake-options` | 空 | 额外的 CMake 配置参数 |
 | `ctest-regex` | 空 | 非空时构建测试并运行匹配的 CTest |
+| `ctest-timeout` | `15` | 每个 CTest 测试的超时（秒） |
 
 编译通过不代表硬件验证。

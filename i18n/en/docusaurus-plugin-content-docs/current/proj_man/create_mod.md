@@ -139,5 +139,6 @@ In a Linux container the workflow resolves the Module's dependencies, runs `xrob
 | `apt-packages` | empty | Extra Debian packages |
 | `cmake-options` | empty | Extra CMake configure options |
 | `ctest-regex` | empty | When set, build tests and run the matching CTest tests |
+| `ctest-timeout` | `15` | Per-test CTest timeout in seconds |
 
 A successful compile is not hardware verification.
