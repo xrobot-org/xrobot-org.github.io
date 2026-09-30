@@ -106,6 +106,8 @@ STM32 BSP 的入口 `User/app_main.cpp` 由代码生成器写出，见 [与 XRob
 
 `xrobot <命令> --help` 显示每个命令的参数。
 
+命令的输出和报错随系统语言：中文环境下为中文，其他环境下为英文。环境变量 `XR_LANG` 可以指定语言（`zh` 或 `en`），LibXR_CppCodeGenerator 的命令同样使用这个变量。生成的文件内容不随语言变化。
+
 ---
 
 ## 本章内容

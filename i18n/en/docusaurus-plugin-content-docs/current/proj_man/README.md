@@ -106,6 +106,8 @@ In STM32 BSPs the entry `User/app_main.cpp` is written by the code generator; se
 
 `xrobot <command> --help` lists each command's options.
 
+Command output and errors follow the system language: Chinese in a Chinese environment, English otherwise. The environment variable `XR_LANG` selects the language (`zh` or `en`); the LibXR_CppCodeGenerator commands use the same variable. Generated files do not change with the language.
+
 ---
 
 ## In This Chapter
