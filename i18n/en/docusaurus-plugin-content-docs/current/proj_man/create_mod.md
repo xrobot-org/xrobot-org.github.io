@@ -16,7 +16,6 @@ A Module is a Git repository `owner/Repo` whose primary header `Repo.hpp` declar
 xrobot new-module MySensor --desc "IMU driver" \
   --constructor "LibXR::I2C& i2c" \
   --constructor "uint32_t period_ms = 10" \
-  --include i2c.hpp \
   --depends xrobot-org/BlinkLED
 ```
 
@@ -25,9 +24,12 @@ xrobot new-module MySensor --desc "IMU driver" \
 | `--desc` | Module description |
 | `--constructor` | One C++ parameter declaration; repeat per parameter |
 | `--template` | One template parameter declaration; repeat per parameter |
-| `--include` | A header to include |
-| `--depends` | Dependencies `owner/Repo[@ref]`, several allowed; the default ref is `same-or-dev` |
+| `--template-arg` | A template argument the Module CI compiles with; repeat per argument; template parameters with defaults may be left out |
+| `--include` | Another header to include; `libxr.hpp` and the headers of the LibXR hardware interfaces the constructor uses (such as `i2c.hpp`) are always included |
+| `--depends` | A dependency `owner/Repo[@ref]`; repeat per dependency; the default ref is `same-or-dev` |
 | `--out` | Output directory, default the current directory |
+
+Before writing anything, `new-module` checks the assembled header with the rules of `setup` and `instance add`: every parameter has a name, dependencies come before parameters with defaults, and a template parameter without a default has a `--template-arg`. When the check fails it reports the error and creates nothing.
 
 Result:
 
@@ -35,7 +37,7 @@ Result:
 MySensor/
 ├── MySensor.hpp                  # class, constructor and manifest
 ├── CMakeLists.txt                # adds the sources to LibXR's xr target
-├── README.md
+├── README.md                     # laid out like a Module README; purposes are left to the author
 └── .github/workflows/build.yml   # calls the shared Module CI
 ```
 
@@ -52,6 +54,8 @@ depends:
 // clang-format on
 
 #include "i2c.hpp"
+#include "libxr.hpp"
+
 class MySensor
 {
  public:

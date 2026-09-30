@@ -16,7 +16,6 @@ sidebar_position: 4
 xrobot new-module MySensor --desc "IMU driver" \
   --constructor "LibXR::I2C& i2c" \
   --constructor "uint32_t period_ms = 10" \
-  --include i2c.hpp \
   --depends xrobot-org/BlinkLED
 ```
 
@@ -25,9 +24,12 @@ xrobot new-module MySensor --desc "IMU driver" \
 | `--desc` | 模块描述 |
 | `--constructor` | 一个 C++ 参数声明，每个参数重复一次 |
 | `--template` | 一个模板参数声明，每个重复一次 |
-| `--include` | 头文件 |
-| `--depends` | 依赖 `owner/Repo[@ref]`，可写多个；默认 ref 为 `same-or-dev` |
+| `--template-arg` | 模块 CI 编译时使用的模板实参，每个重复一次；有默认值的模板参数可以不写 |
+| `--include` | 另外包含的头文件；`libxr.hpp` 和构造参数用到的 LibXR 硬件接口头文件（如 `i2c.hpp`）总会包含 |
+| `--depends` | 依赖 `owner/Repo[@ref]`，每个依赖写一次；默认 ref 为 `same-or-dev` |
 | `--out` | 输出目录，默认当前目录 |
+
+写文件前，`new-module` 按 `setup` 和 `instance add` 的规则检查拼好的头文件：参数要有名字，依赖在带默认值的参数之前，没有默认值的模板参数要有 `--template-arg`。检查不通过时报错，不创建任何文件。
 
 生成：
 
@@ -35,7 +37,7 @@ xrobot new-module MySensor --desc "IMU driver" \
 MySensor/
 ├── MySensor.hpp                  # 类、构造函数与 manifest
 ├── CMakeLists.txt                # 把源文件加入 LibXR 的 xr 目标
-├── README.md
+├── README.md                     # 按模块 README 的结构写出，参数用途等留给作者填写
 └── .github/workflows/build.yml   # 调用共享的模块 CI
 ```
 
@@ -52,6 +54,8 @@ depends:
 // clang-format on
 
 #include "i2c.hpp"
+#include "libxr.hpp"
+
 class MySensor
 {
  public:
