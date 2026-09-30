@@ -130,6 +130,7 @@ User/xrobot.yaml: status_led.args.led: LED_X is neither an XR_REGISTER name nor 
 xrobot instance add owner/Repo [--id ID]      # 按构造函数写出全部参数及默认值
 xrobot instance set ID args.led LED_B
 xrobot instance set ID args.param.reverse true
+xrobot instance set ID args.topic_name '"bmi088_gyro"'
 xrobot instance set ID template_args[0] float
 xrobot instance rename ID NEW_ID              # 同时改写本配置中对它的引用
 xrobot instance remove ID
@@ -137,7 +138,7 @@ xrobot sync [-c CONFIG]...
 xrobot format [--check] [-c CONFIG]...
 ```
 
-`set` 的值按 JSON 解析，不是 JSON 的文本按 C++ 文本写入。路径是 `id`、`template_args[n]` 或 `args.<参数>[.<字段>|[n]]...`；`args` 本身可以整体替换为一个列表，用于换用另一个构造函数。`--if-match <sha256>` 在文件已被修改时拒绝写入（值为按 LF 规范化后文件内容的 SHA-256）。
+`set` 的值按配置中值的规则读取：不加引号或用单引号的是 C++ 代码，双引号的是 C++ 字符串。加 `--json` 时值按 JSON 读取，JSON 字符串是 C++ 文本，VS Code 插件用这种方式写入。路径是 `id`、`template_args[n]` 或 `args.<参数>[.<字段>|[n]]...`；`args` 本身可以整体替换为一个列表，用于换用另一个构造函数。`--if-match <sha256>` 在文件已被修改时拒绝写入（值为按 LF 规范化后文件内容的 SHA-256）。
 
 `xrobot describe` 以 JSON 输出生成器读取和检查的全部内容：配置列表与当前产品、头文件是否过期、工具版本、锁定的模块、构造函数签名、映射需要的字段、注册名与类型、每个参数可绑定的名字以及诊断信息。VS Code 插件基于它显示和编辑配置。
 
