@@ -139,6 +139,7 @@ In a Linux container the workflow resolves the Module's dependencies, runs `xrob
 | `libxr-ref` | `master` | LibXR version used |
 | `dependency-ref` | `refs/heads/master` | Context for `same-or-dev` dependencies |
 | `template-args` | `'[]'` | Template arguments for a class template (JSON list) |
+| `sources` | empty | Further index URLs, one per line; the official indexes win when both list a package |
 | `image` | `ghcr.io/xrobot-org/docker-image-linux:main` | Build container |
 | `apt-packages` | empty | Extra Debian packages |
 | `cmake-options` | empty | Extra CMake configure options |

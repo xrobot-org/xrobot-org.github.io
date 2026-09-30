@@ -139,6 +139,7 @@ jobs:
 | `libxr-ref` | `master` | 使用的 LibXR 版本 |
 | `dependency-ref` | `refs/heads/master` | 依赖 `same-or-dev` 的上下文 |
 | `template-args` | `'[]'` | 类模板的模板实参（JSON 列表） |
+| `sources` | 空 | 另外使用的 index URL，每行一个；与官方 index 列出同一个包时以官方为准 |
 | `image` | `ghcr.io/xrobot-org/docker-image-linux:main` | 构建容器 |
 | `apt-packages` | 空 | 额外的 Debian 包 |
 | `cmake-options` | 空 | 额外的 CMake 配置参数 |
