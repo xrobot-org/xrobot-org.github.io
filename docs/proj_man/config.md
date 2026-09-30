@@ -29,20 +29,20 @@ constexpr_includes:
 constexprs:
   YawFeedbackId:
     type: uint16_t
-    value: '522'
+    value: 522
 modules:
   - module: xrobot-org/BlinkLED
     id: blink_led
     args:
       - led: LED_B
-      - blink_cycle: '250'
+      - blink_cycle: 250
   - module: QDU-Robomaster/RMMotor
     id: motor_yaw
     args:
       - can_bus: can2
       - param:
           model: RMMotor::Model::MOTOR_GM6020
-          reverse: 'false'
+          reverse: false
           feedback_id: BoardConfig::YawFeedbackId
 settings:
   monitor_sleep_ms: 1000
@@ -68,14 +68,19 @@ settings:
 
 ## 值
 
-值是 C++ 文本，按原样写入生成代码：
+不加引号或用单引号的值是 C++ 代码，按原样写入生成代码；双引号的值是 C++ 字符串：
 
 ```yaml
-- blink_cycle: '250'
-- topic_name: '"bmi088_gyro"'          # C++ 字符串字面量要带引号
+- blink_cycle: 250
 - mode: CMD::Mode::CMD_OP_CTRL
+- topic_name: "bmi088_gyro"
 - rotation: '{0.707, 0.0, 0.0, 0.707}'
+- referee: '&ref'
 ```
+
+`topic_name` 在生成代码中是 `"bmi088_gyro"`，其余各项与写法相同。YAML 不能直接写出的代码放在单引号中，例如以 `{`、`[`、`&`、`*` 开头的文本；单引号中的文本不做转换，`''` 表示一个单引号。双引号中的转义按 YAML 规则处理后写成 C++ 字符串字面量。
+
+`xrobot format` 和编辑命令按同一规则写值：代码在 YAML 允许时不加引号，否则加单引号；字符串用双引号。块格式和流格式（`[...]`、`{...}`）保持原样，流格式中含逗号的代码也加单引号。
 
 - `null`、`~` 和空值表示"未填写"，生成时报错；空指针写 `nullptr`。
 - 值内不能写 C++ 注释（用 YAML 的 `#` 注释），整数不能以 `0` 开头（C++ 会按八进制解析）。
@@ -87,7 +92,7 @@ settings:
 
 - 入口源文件中 `XR_REGISTER` 注册的名字；
 - 排在前面的实例 `id`；
-- `&名字`（参数是指针时）；
+- `'&名字'`（参数是指针时）；
 - `nullptr`（参数是指针时）。
 
 可选依赖在模块中声明为没有默认值的指针参数，配置中写 `nullptr` 即不使用。名字错误时给出同类型的候选：

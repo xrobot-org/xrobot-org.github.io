@@ -29,20 +29,20 @@ constexpr_includes:
 constexprs:
   YawFeedbackId:
     type: uint16_t
-    value: '522'
+    value: 522
 modules:
   - module: xrobot-org/BlinkLED
     id: blink_led
     args:
       - led: LED_B
-      - blink_cycle: '250'
+      - blink_cycle: 250
   - module: QDU-Robomaster/RMMotor
     id: motor_yaw
     args:
       - can_bus: can2
       - param:
           model: RMMotor::Model::MOTOR_GM6020
-          reverse: 'false'
+          reverse: false
           feedback_id: BoardConfig::YawFeedbackId
 settings:
   monitor_sleep_ms: 1000
@@ -68,14 +68,19 @@ Each instance:
 
 ## Values
 
-Values are C++ text, written into the generated code as-is:
+A value without quotes or in single quotes is C++ code, written into the generated code as-is; a double-quoted value is a C++ string:
 
 ```yaml
-- blink_cycle: '250'
-- topic_name: '"bmi088_gyro"'          # a C++ string literal keeps its quotes
+- blink_cycle: 250
 - mode: CMD::Mode::CMD_OP_CTRL
+- topic_name: "bmi088_gyro"
 - rotation: '{0.707, 0.0, 0.0, 0.707}'
+- referee: '&ref'
 ```
+
+In the generated code `topic_name` is `"bmi088_gyro"`; the other values are as written. Code that YAML cannot take without quotes goes in single quotes, for example text starting with `{`, `[`, `&` or `*`; text in single quotes is not changed, and `''` stands for one single quote. Escapes in double quotes are resolved by YAML, and the result is written as a C++ string literal.
+
+`xrobot format` and the edit commands write values by the same rule: code without quotes where YAML allows it and in single quotes otherwise, strings in double quotes. Block and flow style (`[...]`, `{...}`) are kept; inside flow style, code containing a comma is also single-quoted.
 
 - `null`, `~` and an empty value mean "not filled in" and generation refuses them; write `nullptr` for a null pointer.
 - A value cannot contain C++ comments (use a YAML `#` comment), and an integer cannot start with `0` (C++ would read it as octal).
@@ -87,7 +92,7 @@ A reference or pointer parameter without a default is a dependency. Its value is
 
 - a name registered with `XR_REGISTER` in the entry source;
 - the `id` of an earlier instance;
-- `&name` (for a pointer parameter);
+- `'&name'` (for a pointer parameter);
 - `nullptr` (for a pointer parameter).
 
 An optional dependency is declared by the Module as a pointer parameter without a default; `nullptr` leaves it unused. A wrong name is reported with the candidates of the right type:
