@@ -108,7 +108,7 @@ When a parameter's type is a struct or class defined in a Module header, write a
 - an aggregate lists all its fields in declaration order;
 - a class with constructors lists all parameters of one constructor, in order.
 
-Mappings can nest. For such types, positional lists and positional braces (`{1, 2, 3}`) are rejected; designated initializers (`{.a = 1, .b = 2}`) are checked like mappings. Other types (for example LibXR or standard library types) accept any C++ expression, including braces.
+Module headers are the `*.hpp` in the root folder of a locked Module and the headers inside the Module folder that they bring in with `#include "..."`. Mappings can nest. For such types, positional lists and positional braces (`{1, 2, 3}`) are rejected; designated initializers (`{.a = 1, .b = 2}`) are checked like mappings. Other types (for example LibXR or standard library types) accept any C++ expression, including braces; when the parameter's default names the fields with a designated initializer, a mapping is accepted too and checked against those field names.
 
 After a new Module version adds or removes fields or parameters, run `xrobot sync`: new ones are written with their source defaults, removed ones are dropped, and existing values are kept. `xrobot setup --update` does this automatically.
 
