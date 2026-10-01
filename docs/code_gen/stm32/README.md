@@ -33,12 +33,8 @@ libxr stm32 setup -d .
 
 ```text
 [信息] 默认的 LibXR 提交：4e9670164541b6af6b600a6d544115a9b3e49d98
-[信息] 选用的 Git 源：https://github.com
 [信息] [完成] git -C . submodule sync -- Middlewares/Third_Party/LibXR
-[信息] LibXR 子模块已存在，保留当前检出。
-[信息] LibXR 子模块已登记。
-[信息] LibXR 子模块路径已存在。
-[信息] 保留现有的 LibXR 检出。
+[信息] 保留现有的 LibXR 检出 4e9670164541。
 [信息] 找到 .ioc 文件：.\STM32F103RC.ioc
 [信息] 正在解析 .ioc 文件……
 [信息] 正在处理 STM32F103RC.ioc……
@@ -50,10 +46,8 @@ libxr stm32 setup -d .
 [信息] 已生成并写入 FlashLayout，MCU：STM32F103RCT6
 [信息] Flash 布局映射已写入：.\User\flash_map.hpp
 [信息] 生成成功：.\User
-[信息] 已生成头文件：.\User\app_main.h
 [信息] 已生成头文件：app_main.h
-[信息] 已按系统 FreeRTOS 更新现有的 LibXR.CMake
-[信息] 已规范化 cmake\starm-clang.cmake 中的 STARM_TOOLCHAIN_CONFIG
+[信息] LibXR.CMake 已是最新，无需修改。
 [信息] CMakeLists.txt 已经 include LibXR.CMake。
 [信息] [通过] 全部任务已完成！
 ```
@@ -178,9 +172,9 @@ int main() {
 | ---------- | --------------------------- |
 | `-d`       | 指定 STM32 工程根目录       |
 | `-t`       | 设置终端外设（如 `usart1`） |
-| `--xrobot` | 生成 `XR_REGISTER` 注册与 `XROBOT_MAIN();`，见 [与XRobot集成](../xrobot_inter.md) |
+| `--xrobot` / `--no-xrobot` | 生成或不生成 `XR_REGISTER` 注册与 `XROBOT_MAIN();`，见 [与XRobot集成](../xrobot_inter.md)；都不写时沿用工程现在的选择 |
 | `--commit` | 显式指定 LibXR 子模块 commit |
-| `--git-source` | 选择 LibXR 的 Git 源或 base URL |
+| `--git-source` | 需要克隆 LibXR 时使用的 Git 源或 base URL；`.gitmodules` 始终记录 GitHub 地址 |
 | `--git-mirrors` | 为自动选源提供额外镜像 URL |
 
 ---

@@ -31,12 +31,8 @@ This command will perform the following steps automatically:
 
 ```text
 [INFO] Default LibXR commit: 4e9670164541b6af6b600a6d544115a9b3e49d98
-[INFO] Selected Git base/repo: https://github.com
 [INFO] [OK] git -C . submodule sync -- Middlewares/Third_Party/LibXR
-[INFO] LibXR submodule already exists; preserving current checkout.
-[INFO] LibXR submodule already registered.
-[INFO] LibXR submodule path exists.
-[INFO] Keeping the existing LibXR checkout.
+[INFO] Keeping the LibXR checkout 4e9670164541.
 [INFO] Found .ioc file: .\STM32F103RC.ioc
 [INFO] Parsing .ioc file...
 [INFO] Processing STM32F103RC.ioc...
@@ -48,10 +44,8 @@ This command will perform the following steps automatically:
 [INFO] FlashLayout is generated and injected, MCU: STM32F103RCT6
 [INFO] Flash layout map written to: .\User\flash_map.hpp
 [INFO] Successfully generated: .\User
-[INFO] Generated header: .\User\app_main.h
 [INFO] Generated header file: app_main.h
-[INFO] Updated existing LibXR.CMake for system: FreeRTOS
-[INFO] Normalized STARM_TOOLCHAIN_CONFIG in cmake\starm-clang.cmake
+[INFO] LibXR.CMake already up to date, no changes needed.
 [INFO] LibXR.CMake already included in CMakeLists.txt.
 [INFO] [Pass] All tasks completed successfully!
 ```
@@ -184,9 +178,9 @@ Make sure to adjust the initial thread stack size in STM32CubeMX to avoid stack 
 | ---------- | --------------------------------------- |
 | `-d`       | Specify STM32 project root directory    |
 | `-t`       | Set terminal peripheral (e.g. `usart1`) |
-| `--xrobot` | Emit `XR_REGISTER` registrations and `XROBOT_MAIN();`, see [Integrate with XRobot](../xrobot_inter.md) |
+| `--xrobot` / `--no-xrobot` | Emit `XR_REGISTER` registrations and `XROBOT_MAIN();`, or not, see [Integrate with XRobot](../xrobot_inter.md); without either the project keeps its choice |
 | `--commit` | Pin the LibXR submodule to a specific commit |
-| `--git-source` | Select the preferred Git source or base URL for LibXR |
+| `--git-source` | The Git source or base URL that LibXR is cloned from when needed; `.gitmodules` always records the GitHub URL |
 | `--git-mirrors` | Provide additional mirror URLs for auto source selection |
 
 ---
