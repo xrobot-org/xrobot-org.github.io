@@ -164,6 +164,21 @@ int main() {
 
 将 `app_main()` 放入主线程入口（StartDefaultTask）中调用。注意更改STM32CubeMX中的初始线程大小，避免栈溢出。
 
+FreeRTOS 的接口（Interface）选择 `CMSIS_V2`。STM32Cube FW_H7 V1.13.0 等固件包已经移除 CMSIS-RTOS V1 接口层，接口为 `CMSIS_V1` 的工程迁移到这类固件包时，STM32CubeMX 会移除整个 FreeRTOS，且没有提示。这类工程打开时先选择 Continue 保持原固件包，把接口改为 `CMSIS_V2` 后再迁移。
+
+选择 `CMSIS_V2` 后，STM32CubeMX 总是打开 FreeRTOS 软件定时器（`configUSE_TIMERS`），并多创建一个定时器任务。LibXR 的定时任务（`LibXR::Timer`）在自己的线程中执行，线程的优先级和栈深度由 `PlatformInit()` 设置；`configUSE_TIMERS` 打开时，LibXR 编译时会给出警告。在 `Core/Inc/FreeRTOSConfig.h` 的 `USER CODE BEGIN Defines` 区中覆盖以下定义，即可关闭软件定时器，以及依赖它的 CMSIS-RTOS2 `osTimer` 接口和在中断中设置事件标志的功能，`INCLUDE_xTimerPendFunctionCall` 保持关闭。该区域的内容在重新生成代码时保留。
+
+```c
+/* USER CODE BEGIN Defines */
+#undef configUSE_TIMERS
+#define configUSE_TIMERS 0
+#undef configUSE_OS2_TIMER
+#define configUSE_OS2_TIMER 0
+#undef configUSE_OS2_EVENTFLAGS_FROM_ISR
+#define configUSE_OS2_EVENTFLAGS_FROM_ISR 0
+/* USER CODE END Defines */
+```
+
 ---
 
 ## 可选参数

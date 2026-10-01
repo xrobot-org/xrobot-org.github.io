@@ -170,6 +170,21 @@ int main() {
 Call `app_main()` in the main thread entry function (such as `StartDefaultTask`).  
 Make sure to adjust the initial thread stack size in STM32CubeMX to avoid stack overflow.
 
+Select `CMSIS_V2` as the FreeRTOS interface. Firmware packages such as STM32Cube FW_H7 V1.13.0 have removed the CMSIS-RTOS V1 wrapper; when a project with the `CMSIS_V1` interface moves to such a package, STM32CubeMX removes FreeRTOS entirely, without a message. Open such a project with Continue to keep its firmware package, switch the interface to `CMSIS_V2`, then migrate.
+
+With `CMSIS_V2`, STM32CubeMX always enables FreeRTOS software timers (`configUSE_TIMERS`), which adds a timer task. LibXR runs its timed tasks (`LibXR::Timer`) in its own thread, whose priority and stack depth `PlatformInit()` sets; when `configUSE_TIMERS` is on, LibXR warns at compile time. Overriding the following definitions in the `USER CODE BEGIN Defines` section of `Core/Inc/FreeRTOSConfig.h` turns off the software timers, together with the CMSIS-RTOS2 `osTimer` API and event flags set from interrupts, which depend on them; `INCLUDE_xTimerPendFunctionCall` stays off. That section is kept when code is regenerated.
+
+```c
+/* USER CODE BEGIN Defines */
+#undef configUSE_TIMERS
+#define configUSE_TIMERS 0
+#undef configUSE_OS2_TIMER
+#define configUSE_OS2_TIMER 0
+#undef configUSE_OS2_EVENTFLAGS_FROM_ISR
+#define configUSE_OS2_EVENTFLAGS_FROM_ISR 0
+/* USER CODE END Defines */
+```
+
 ---
 
 ## Optional Arguments
