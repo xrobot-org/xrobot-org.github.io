@@ -94,7 +94,7 @@ Timer::Start(terminal_task);
 ```cpp
 static LibXR::Thread term_thread;
 term_thread.Create(&terminal, terminal.ThreadFun, "terminal", 1024,
-                   static_cast<LibXR::Thread::Priority>(3));
+                   LibXR::Thread::Priority::HIGH);
 ```
 
 USB CDC 作为终端时，`terminal_source` 写 CDC 串口的名字，例如 `usb_otg_fs_cdc`。`terminal_source` 为空时不生成终端；它不是已生成的串口对象时，`libxr gen` 给出警告，不初始化终端。
@@ -151,7 +151,7 @@ Terminal:
 
 生成器补上的数值以十进制写入，例如默认的 vid 0x1D50 写作 `vid: 7504`；文件中已有的十六进制写法保持不变。CubeMX 中的 USB_DEVICE 等中间件不对应任何 USB 设置，也不生成代码。
 
-`Terminal` 的前四项是 `Terminal` 模板参数，依次为读取缓冲区大小、单行最大长度、最大参数个数和历史命令条数。`terminal_source` 非空时另外写入 `run_as_thread`（默认 `false`），它为 `true` 时再写入 `thread_stack_depth`（默认 1024）和 `thread_priority`（默认 3）。
+`Terminal` 的前四项是 `Terminal` 模板参数，依次为读取缓冲区大小、单行最大长度、最大参数个数和历史命令条数。`terminal_source` 非空时另外写入 `run_as_thread`（默认 `false`），它为 `true` 时再写入 `thread_stack_depth`（默认 1024）和 `thread_priority`（默认 3，即 `HIGH`，见[软件定时器](./timer.md)）。
 
 ---
 

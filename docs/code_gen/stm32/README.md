@@ -127,7 +127,7 @@ extern "C" void app_main(void) {
   // clang-format off
   // NOLINTBEGIN
   static STM32TimerTimebase timebase(&htim2);
-  PlatformInit(2, 1024);
+  PlatformInit(static_cast<uint32_t>(LibXR::Thread::Priority::MEDIUM), 1024);
   static STM32PowerManager power_manager;
 
   /* GPIO Configuration */

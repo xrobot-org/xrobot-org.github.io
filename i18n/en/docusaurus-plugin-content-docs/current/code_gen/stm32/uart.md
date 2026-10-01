@@ -94,7 +94,7 @@ With `Terminal.run_as_thread` set to `true`, the terminal runs in a thread of it
 ```cpp
 static LibXR::Thread term_thread;
 term_thread.Create(&terminal, terminal.ThreadFun, "terminal", 1024,
-                   static_cast<LibXR::Thread::Priority>(3));
+                   LibXR::Thread::Priority::HIGH);
 ```
 
 For a USB CDC terminal, `terminal_source` names the CDC port, for example `usb_otg_fs_cdc`. An empty `terminal_source` generates no terminal; when it is not a generated serial port object, `libxr gen` logs a warning and does not set up the terminal.
@@ -151,7 +151,7 @@ Under `USB`, each USB peripheral (`usb_fs`, `usb_otg_fs`, `usb_otg_hs`) has a gr
 
 Values filled in by the generator are written in decimal, so the default vid 0x1D50 appears as `vid: 7504`; a hexadecimal value already in the file is kept as written. Middleware such as USB_DEVICE in CubeMX has no USB settings and generates no code.
 
-The first four entries of `Terminal` are the `Terminal` template arguments: read buffer size, maximum line length, maximum number of arguments and number of history entries. A non-empty `terminal_source` adds `run_as_thread` (default `false`); when it is `true`, `thread_stack_depth` (default 1024) and `thread_priority` (default 3) are added as well.
+The first four entries of `Terminal` are the `Terminal` template arguments: read buffer size, maximum line length, maximum number of arguments and number of history entries. A non-empty `terminal_source` adds `run_as_thread` (default `false`); when it is `true`, `thread_stack_depth` (default 1024) and `thread_priority` (default 3, that is `HIGH`; see [Software Timer](./timer.md)) are added as well.
 
 ---
 

@@ -33,7 +33,7 @@ Timer::Start(iwdg_task);
 iwdg.Feed();
 static LibXR::Thread iwdg_thread;
 iwdg_thread.Create(reinterpret_cast<LibXR::Watchdog *>(&iwdg), iwdg.ThreadFun, "iwdg_wdg", 1024,
-                    static_cast<LibXR::Thread::Priority>(3));
+                    LibXR::Thread::Priority::HIGH);
 ```
 
 ## 配置文件说明
@@ -54,7 +54,7 @@ Watchdog:
 
 `Watchdog` 下的设置对所有 IWDG 实例生效：
 
-- `run_as_thread`：为 `true` 时用独立线程喂狗，线程按实例的 `feed_interval_ms` 循环喂狗，另外写入 `thread_stack_depth`（默认 1024）和 `thread_priority`（默认 3）；
+- `run_as_thread`：为 `true` 时用独立线程喂狗，线程按实例的 `feed_interval_ms` 循环喂狗，另外写入 `thread_stack_depth`（默认 1024）和 `thread_priority`（默认 3，即 `HIGH`，见[软件定时器](./timer.md)）；
 - `feed_interval_ms`：定时器任务的喂狗周期，默认 250 ms。
 
 ## 生成代码命令

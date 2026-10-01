@@ -33,7 +33,7 @@ With `Watchdog.run_as_thread` set to `true`, a thread of its own feeds the watch
 iwdg.Feed();
 static LibXR::Thread iwdg_thread;
 iwdg_thread.Create(reinterpret_cast<LibXR::Watchdog *>(&iwdg), iwdg.ThreadFun, "iwdg_wdg", 1024,
-                    static_cast<LibXR::Thread::Priority>(3));
+                    LibXR::Thread::Priority::HIGH);
 ```
 
 ## Configuration File
@@ -54,7 +54,7 @@ Watchdog:
 
 The settings under `Watchdog` apply to all IWDG instances:
 
-- `run_as_thread`: with `true`, a thread feeds the watchdog in a loop at the instance's `feed_interval_ms`, and `thread_stack_depth` (default 1024) and `thread_priority` (default 3) are added;
+- `run_as_thread`: with `true`, a thread feeds the watchdog in a loop at the instance's `feed_interval_ms`, and `thread_stack_depth` (default 1024) and `thread_priority` (default 3, that is `HIGH`; see [Software Timer](./timer.md)) are added;
 - `feed_interval_ms`: period of the timer task, 250 ms by default.
 
 ## Regeneration Command
