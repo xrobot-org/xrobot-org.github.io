@@ -25,15 +25,17 @@ STM32CANFD fdcan1(&hfdcan1, 5);
 
 ```yaml
 CAN:
-  CAN1:
+  can1:
     queue_size: 5
 
 FDCAN:
-  FDCAN1:
+  fdcan1:
     queue_size: 5
 ```
 
 - `queue_size`：发送队列的大小，用于缓存待发送的 CAN/FDCAN 数据帧。
+
+实例的键是小写的实例名。以前版本生成的大写键（如 `CAN1`、`FDCAN1`）在重新生成时改为小写，设置保持不变。
 
 ## 当前 generator 覆盖范围
 

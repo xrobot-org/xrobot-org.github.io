@@ -25,15 +25,17 @@ After code generation, the following configuration will appear in `User/libxr_co
 
 ```yaml
 CAN:
-  CAN1:
+  can1:
     queue_size: 5
 
 FDCAN:
-  FDCAN1:
+  fdcan1:
     queue_size: 5
 ```
 
 - `queue_size`: size of the transmit queue used to buffer pending CAN/FDCAN frames.
+
+Instances are keyed by their lower-case name. The upper-case keys of earlier versions (such as `CAN1` or `FDCAN1`) are renamed to lower case on regeneration, keeping their settings.
 
 ## Current Generator Scope
 
