@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # 与XRobot集成
 
-加上 `--xrobot` 后，代码生成器在 `app_main.cpp` 中为每个生成的外设对象写一行 `XR_REGISTER(名字, 类型)`，并在 User Code 3 区域之后调用 `XROBOT_MAIN();`。不加 `--xrobot` 时不生成任何 XRobot 代码。应用配置按这些名字引用硬件，见 [项目管理（XRobot）](../proj_man/README.md)。
+加上 `--xrobot` 后，代码生成器在 `app_main.cpp` 中为每个生成的外设对象写一行 `XR_REGISTER(名字, 类型)`，并在 User Code 3 区域之后调用 `XROBOT_MAIN();`。加上 `--no-xrobot` 时不生成任何 XRobot 代码；两者都不写时，`libxr gen` 和 `libxr stm32 setup` 沿用已有 `app_main.cpp` 的选择，新工程不生成 XRobot 代码。应用配置按这些名字引用硬件，见 [项目管理（XRobot）](../proj_man/README.md)。
 
 ## 示例
 

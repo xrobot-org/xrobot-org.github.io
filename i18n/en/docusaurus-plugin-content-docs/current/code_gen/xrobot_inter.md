@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # Integrate with XRobot
 
-With `--xrobot`, the code generator writes one `XR_REGISTER(name, Type)` line per generated peripheral object into `app_main.cpp` and calls `XROBOT_MAIN();` after the User Code 3 region. Without `--xrobot`, no XRobot code is generated. Application configurations refer to hardware by these names; see [Project Management (XRobot)](../proj_man/README.md).
+With `--xrobot`, the code generator writes one `XR_REGISTER(name, Type)` line per generated peripheral object into `app_main.cpp` and calls `XROBOT_MAIN();` after the User Code 3 region. With `--no-xrobot`, no XRobot code is generated; with neither, `libxr gen` and `libxr stm32 setup` keep the choice of the existing `app_main.cpp`, and a new project gets no XRobot code. Application configurations refer to hardware by these names; see [Project Management (XRobot)](../proj_man/README.md).
 
 ## Example
 
