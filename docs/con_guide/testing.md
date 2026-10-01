@@ -40,7 +40,6 @@ Python 仓库：
 
 - `tests/test_<模块>.py` 对应 `src/<包>/<模块>.py`。命令行的参数解析、输出格式和退出码放在 `test_cli.py`；由命令触发、在其他模块中实现的行为，放在那个模块的测试文件中。
 - 多个测试文件共用的辅助放在 `tests/fixtures.py`（pytest 仓库放在 `conftest.py`），只在一个文件中使用的留在该文件。
-- 逐字节比较的基准文件放在 `tests/data/<名字>/`，同一目录中保存生成它们的输入；生成结果有意改变时用仓库提供的脚本刷新（LibXR_CppCodeGenerator 的 `tests/reference_projects.py`），再逐行检查差异。`.gitattributes` 对这些文件关闭换行转换。
 - 测试类按行为分组，类名是名词短语（`AddInstance`、`LockFile`），继承 `fixtures.TestCase` 或它的子类；测试方法名以 `test_` 开头，其余部分是一句说明行为的话（`test_a_missing_lock_is_reported`）。
 
 LibXR：

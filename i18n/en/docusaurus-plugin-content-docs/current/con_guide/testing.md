@@ -40,7 +40,6 @@ Python repositories:
 
 - `tests/test_<module>.py` belongs to `src/<package>/<module>.py`. Argument parsing, output format and exit codes of the command line go to `test_cli.py`; behavior that a command triggers but another module implements goes to that module's test file.
 - Helpers shared by several test files live in `tests/fixtures.py` (`conftest.py` in pytest repositories); a helper used by one file stays in that file.
-- Reference files compared byte for byte live in `tests/data/<name>/` next to the inputs they come from. When the output changes on purpose, the repository's script refreshes them (`tests/reference_projects.py` in LibXR_CppCodeGenerator) and the difference is reviewed line by line. `.gitattributes` turns off line-ending conversion for these files.
 - Test classes group behavior and are named with noun phrases (`AddInstance`, `LockFile`), deriving from `fixtures.TestCase` or one of its subclasses. Test method names start with `test_` and the rest is a sentence stating the behavior (`test_a_missing_lock_is_reported`).
 
 LibXR:
