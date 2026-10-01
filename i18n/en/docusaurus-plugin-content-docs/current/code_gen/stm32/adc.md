@@ -10,7 +10,7 @@ It is strongly recommended to enable DMA transfers in STM32CubeMX. In polling mo
 
 ## DMA Mode Configuration Requirements
 
-* Configure the ADC conversion sequence (Rank), ensuring each channel has exactly one corresponding Rank.
+* Configure the ADC conversion sequence (Rank).
 * Enable Continuous Conversion Mode and DMA Continuous Requests.
 * Set DMA to Circular mode.
 
@@ -31,7 +31,7 @@ static auto& adc3_adc_channel_8 = adc3.GetChannel(0);
 UNUSED(adc3_adc_channel_8);
 ```
 
-In polling mode, all enabled channels are recognized; in DMA mode, only channels with a configured Rank are recognized. With XRobot integration (`--xrobot`), each channel reference is registered under the same name as `LibXR::ADC`.
+In polling mode, all enabled channels are recognized; in DMA mode, only channels with a configured Rank are recognized. In DMA mode the channel references follow the Ranks, `GetChannel(i)` being Rank i+1; when a channel is configured in several Ranks, the later references carry a Rank suffix, for example `adc3_adc_channel_8_rank12`. With XRobot integration (`--xrobot`), each channel reference is registered under the same name as `LibXR::ADC`.
 
 `STM32ADC` is not derived from the ADC base class. Instead, it contains multiple ADC channel objects that are derived from the base ADC class.
 

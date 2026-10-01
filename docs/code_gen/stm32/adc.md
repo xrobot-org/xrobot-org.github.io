@@ -10,7 +10,7 @@ sidebar_position: 5
 
 ## DMA模式配置要求
 
-* 需要配置ADC的转换顺序（Rank），确保每个通道只有一个对应的Rank
+* 需要配置ADC的转换顺序（Rank）
 * 开启连续转换模式与DMA连续转换请求
 * DMA配置为循环模式
 
@@ -31,7 +31,7 @@ static auto& adc3_adc_channel_8 = adc3.GetChannel(0);
 UNUSED(adc3_adc_channel_8);
 ```
 
-轮询模式下会识别所有开启的通道，DMA模式下只会识别配置了Rank的通道。开启 XRobot 集成（`--xrobot`）时，每个通道引用以同名注册为 `LibXR::ADC`。
+轮询模式下会识别所有开启的通道，DMA模式下只会识别配置了Rank的通道。DMA模式下通道引用按Rank排列，`GetChannel(i)` 对应第 i+1 个Rank；同一通道配置在多个Rank时，之后的引用名带上Rank后缀，例如 `adc3_adc_channel_8_rank12`。开启 XRobot 集成（`--xrobot`）时，每个通道引用以同名注册为 `LibXR::ADC`。
 
 STM32ADC类并不是由ADC基类的派生，而是包含了多个由ADC基类派生的ADC通道对象。
 
