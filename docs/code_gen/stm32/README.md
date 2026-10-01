@@ -45,7 +45,7 @@ libxr stm32 setup -d .
 [信息] 已生成 User：未变化 app_main.cpp、app_main.h、flash_map.hpp、libxr_config.yaml
 [信息] LibXR.CMake 已是最新，无需修改。
 [信息] CMakeLists.txt 已经 include LibXR.CMake。
-[信息] [通过] 全部任务已完成！
+[信息] [通过] 全部任务已完成。
 ```
 
 生成器只写内容有变化的文件；上例中工程已是最新，四个文件都没有改写。
@@ -212,7 +212,7 @@ FreeRTOS 的接口（Interface）选择 `CMSIS_V2`。STM32Cube FW_H7 V1.13.0 等
 | `-t`       | 设置终端外设（如 `usart1`） |
 | `--xrobot` / `--no-xrobot` | 生成或不生成 `XR_REGISTER` 注册与 `XROBOT_MAIN();`，见 [与XRobot集成](../xrobot_inter.md)；都不写时沿用工程现在的选择 |
 | `--commit` | 显式指定 LibXR 子模块 commit |
-| `--git-source` | 需要克隆 LibXR 时使用的 Git 源或 base URL；`.gitmodules` 始终记录 GitHub 地址 |
+| `--git-source` | 需要克隆 LibXR 时使用的 Git 源：base URL、仓库地址或本地仓库；`.gitmodules` 始终记录 GitHub 地址 |
 | `--git-mirrors` | 为自动选源提供额外镜像 URL |
 
 ---

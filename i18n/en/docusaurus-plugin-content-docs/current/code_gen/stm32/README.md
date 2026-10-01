@@ -43,7 +43,7 @@ This command will perform the following steps automatically:
 [INFO] Generated User: unchanged app_main.cpp, app_main.h, flash_map.hpp, libxr_config.yaml
 [INFO] LibXR.CMake already up to date, no changes needed.
 [INFO] LibXR.CMake already included in CMakeLists.txt.
-[INFO] [Pass] All tasks completed successfully!
+[INFO] [Pass] All tasks completed.
 ```
 
 The generator writes only files whose content changed; the project above is already up to date, so none of the four files is rewritten.
@@ -217,7 +217,7 @@ With `CMSIS_V2`, STM32CubeMX always enables FreeRTOS software timers (`configUSE
 | `-t`       | Set terminal peripheral (e.g. `usart1`) |
 | `--xrobot` / `--no-xrobot` | Emit `XR_REGISTER` registrations and `XROBOT_MAIN();`, or not, see [Integrate with XRobot](../xrobot_inter.md); without either the project keeps its choice |
 | `--commit` | Pin the LibXR submodule to a specific commit |
-| `--git-source` | The Git source or base URL that LibXR is cloned from when needed; `.gitmodules` always records the GitHub URL |
+| `--git-source` | The Git source that LibXR is cloned from when needed: a base URL, a repository URL or a local repository; `.gitmodules` always records the GitHub URL |
 | `--git-mirrors` | Provide additional mirror URLs for auto source selection |
 
 ---
