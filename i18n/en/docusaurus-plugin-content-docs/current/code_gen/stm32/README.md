@@ -235,6 +235,8 @@ libxr stm32 toolchain clang --picolibc
 
 The command edits `CMakePresets.json` and `cmake/starm-clang.cmake`. Switching between gcc and clang removes the `build/` and `cmake-build*` directories: CMake does not change the compiler of an existing build directory, so the next build configures a new one. `clang` without a standard library option keeps the current one.
 
+`-g` (hybrid) compiles with ST Arm Clang and links with the GNU toolchain. `cmake/starm-clang.cmake` finds the GNU toolchain from the environment variables `CLANG_GCC_CMSIS_COMPILER` (the ST Arm Clang installation directory, holding `multilib.gnu_tools_for_stm32.yaml`) and `GCC_TOOLCHAIN_ROOT` (the `bin` directory of `arm-none-eabi-gcc`), so both must be set before building.
+
 ---
 
 ## Project Requirements

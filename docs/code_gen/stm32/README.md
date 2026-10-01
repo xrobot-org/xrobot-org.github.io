@@ -230,6 +230,8 @@ libxr stm32 toolchain clang --picolibc
 
 命令修改 `CMakePresets.json` 和 `cmake/starm-clang.cmake`。在 gcc 与 clang 之间切换时，命令删除 `build/` 和 `cmake-build*` 目录：CMake 不会更换已有构建目录的编译器，下次构建在新的构建目录中配置。`clang` 不带标准库选项时沿用现在的标准库。
 
+`-g`（hybrid）用 ST Arm Clang 编译、GNU 工具链链接。`cmake/starm-clang.cmake` 从环境变量 `CLANG_GCC_CMSIS_COMPILER`（ST Arm Clang 的安装目录，其中有 `multilib.gnu_tools_for_stm32.yaml`）和 `GCC_TOOLCHAIN_ROOT`（`arm-none-eabi-gcc` 所在的 `bin` 目录）找到 GNU 工具链，构建前需要设置这两个变量。
+
 ---
 
 ## 项目要求
