@@ -213,6 +213,7 @@ extern "C" __attribute__((weak)) void vApplicationStackOverflowHook(...);
 ```
 
 - 但命名、括号风格和基本版式仍然保持与主代码一致。
+- 测试放在哪里、测什么、怎样确认每个测试都有作用，见[测试规范](./testing.md)。
 
 ## clang-format
 

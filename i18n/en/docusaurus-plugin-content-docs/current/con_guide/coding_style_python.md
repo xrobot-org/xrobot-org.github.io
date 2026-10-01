@@ -224,6 +224,7 @@ from xrobot.config import ConfigError  # noqa: F401
 - XRobot and LibXR_CppCodeGenerator use `unittest`, xr-syntax uses `pytest`; each repository keeps its framework.
 - Tests that need a compiler select it through the `CXX` environment variable and are skipped when none is found.
 - Test code follows the same naming and layout as the main code.
+- Where tests go, what they check and how to confirm that every test is needed: see [Testing](./testing.md).
 
 ## ruff
 

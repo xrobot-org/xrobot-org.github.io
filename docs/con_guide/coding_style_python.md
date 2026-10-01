@@ -224,6 +224,7 @@ from xrobot.config import ConfigError  # noqa: F401
 - XRobot 与 LibXR_CppCodeGenerator 使用 `unittest`，xr-syntax 使用 `pytest`；各仓库沿用现有框架。
 - 需要编译器的测试通过环境变量 `CXX` 选择编译器，找不到编译器时跳过。
 - 测试代码的命名和版式与主代码一致。
+- 测试放在哪里、测什么、怎样确认每个测试都有作用，见[测试规范](./testing.md)。
 
 ## ruff
 

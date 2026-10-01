@@ -213,6 +213,7 @@ extern "C" __attribute__((weak)) void vApplicationStackOverflowHook(...);
 ```
 
 - Naming, brace style, and basic layout still follow the same conventions as the main code.
+- Where tests go, what they check and how to confirm that every test is needed: see [Testing](./testing.md).
 
 ## clang-format
 
