@@ -95,12 +95,12 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
 ### 工具链切换怎么做
 
-如果你已经接入了代码生成工具，也可以直接使用 `xr_stm32_toolchain_switch` 切换工具链和标准库，例如：
+如果你已经接入了代码生成工具，也可以直接使用 `libxr stm32 toolchain` 切换工具链和标准库，例如：
 
 ```bash
-xr_stm32_toolchain_switch gcc
-xr_stm32_toolchain_switch clang --newlib
-xr_stm32_toolchain_switch clang --picolibc
+libxr stm32 toolchain gcc
+libxr stm32 toolchain clang --newlib
+libxr stm32 toolchain clang --picolibc
 ```
 
 这个命令会直接修改 `CMakePresets.json` 和 `cmake/starm-clang.cmake`，改完后重启 `VS Code` 即可生效。

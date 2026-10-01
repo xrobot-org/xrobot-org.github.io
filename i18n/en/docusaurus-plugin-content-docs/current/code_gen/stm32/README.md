@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # STM32 Code Generation
 
-LibXR provides the `xr_cubemx_cfg` command to automatically generate C++ initialization code from an STM32CubeMX project. This command wraps several tools including configuration parsing, code generation, and CMake integration.
+LibXR provides the `libxr stm32 setup` command to automatically generate C++ initialization code from an STM32CubeMX project. This command wraps several tools including configuration parsing, code generation, and CMake integration.
 
 ---
 
@@ -15,7 +15,7 @@ LibXR provides the `xr_cubemx_cfg` command to automatically generate C++ initial
 In the root directory of your STM32CubeMX project, run:
 
 ```bash
-xr_cubemx_cfg -d .
+libxr stm32 setup -d .
 ```
 
 This command will perform the following steps automatically:
@@ -30,15 +30,31 @@ This command will perform the following steps automatically:
 ## Example Output
 
 ```text
-[INFO] LibXR submodule already exists. Checking for updates...
-[INFO] [OK] cd . && git submodule update --init --recursive
-[INFO] LibXR submodule updated.
-Found .ioc file: ./atom.ioc
-Parsing .ioc file...
-[INFO] [OK] xr_parse_ioc -d . -o ./.config.yaml
-Generating C++ code...
-[INFO] [OK] xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp
-[INFO] [OK] xr_stm32_cmake .
+[INFO] Default LibXR commit: 4e9670164541b6af6b600a6d544115a9b3e49d98
+[INFO] Selected Git base/repo: https://gitee.com/jiu-xiao/libxr
+[INFO] [OK] git -C . submodule sync -- Middlewares/Third_Party/LibXR
+[INFO] LibXR submodule already exists; preserving current checkout.
+[INFO] LibXR submodule already registered.
+[INFO] LibXR submodule path exists.
+[INFO] Keeping the existing LibXR checkout.
+[INFO] Found .ioc file: .\STM32F103RC.ioc
+[INFO] Parsing .ioc file...
+[INFO] Processing STM32F103RC.ioc...
+[INFO] [USBParser] Detected USB peripherals: ['USB']
+[INFO] [USBParser] Parsing configuration for: USB
+[INFO] Configuration exported to: .\.config.yaml
+[INFO] Generating C++ code...
+[INFO] Detected FreeRTOS configuration
+[INFO] FlashLayout is generated and injected, MCU: STM32F103RCT6
+[INFO] Flash layout map written to: .\User\flash_map.hpp
+[INFO] Successfully generated: .\User
+[INFO] Generated header: .\User\app_main.h
+[INFO] Generated header file: app_main.h
+[INFO] No build or cmake-build* directory found, nothing to clean.
+[INFO] LibXR.CMake already up to date, no changes needed.
+[INFO] LibXR.CMake generated/updated successfully.
+[INFO] Normalized STARM_TOOLCHAIN_CONFIG in cmake\starm-clang.cmake
+[INFO] LibXR.CMake already included in CMakeLists.txt.
 [INFO] [Pass] All tasks completed successfully!
 ```
 
@@ -182,10 +198,10 @@ Make sure to adjust the initial thread stack size in STM32CubeMX to avoid stack 
 If you need to switch between GCC/Clang compilers or change the Clang standard library, use the following commands:
 
 ```bash
-xr_stm32_toolchain_switch gcc
-xr_stm32_toolchain_switch clang -g
-xr_stm32_toolchain_switch clang --newlib
-xr_stm32_toolchain_switch clang --picolibc
+libxr stm32 toolchain gcc
+libxr stm32 toolchain clang -g
+libxr stm32 toolchain clang --newlib
+libxr stm32 toolchain clang --picolibc
 ```
 
 Command execution will automatically modify CMakePresets.json and cmake/starm-clang.cmake, restart VSCode to take effect.
@@ -206,16 +222,18 @@ By default, the generated CMake configuration applies the `-O2` optimization opt
 
 ---
 
-## Subcommands (Internally used by `xr_cubemx_cfg`, can also be run separately)
+## Subcommands (Internally used by `libxr stm32 setup`, can also be run separately)
 
-| Tool                        | Description                                    |
-| --------------------------- | ---------------------------------------------- |
-| `xr_cubemx_generate`        | Run STM32CubeMX script-mode generation only    |
-| `xr_parse_ioc`              | Parses `.ioc` and generates `.config.yaml`     |
-| `xr_gen_code_stm32`         | Generates `app_main.cpp` from the YAML config  |
-| `xr_stm32_flash`            | Generates the STM32 flash layout table         |
-| `xr_stm32_cmake`            | Integrates LibXR into the project build system |
-| `xr_stm32_toolchain_switch` | Switch toolchain and standard library          |
+| Command                  | Description                                    |
+| ------------------------ | ---------------------------------------------- |
+| `libxr stm32 cubemx-gen` | Run STM32CubeMX script-mode generation only    |
+| `libxr parse`            | Parses `.ioc` and generates `.config.yaml`     |
+| `libxr gen`              | Generates `app_main.cpp` from the YAML config  |
+| `libxr stm32 flash-info` | Prints the STM32 flash layout table            |
+| `libxr stm32 cmake`      | Integrates LibXR into the project build system |
+| `libxr stm32 toolchain`  | Switch toolchain and standard library          |
+
+The `xr_*` commands of libxr before 6.0.0 (such as `xr_cubemx_cfg`) still work: they name their new command when they run and are removed in 7.0.0. The [CodeGenerator README](https://github.com/xrobot-org/LibXR_CppCodeGenerator#旧命令--old-commands) lists them.
 
 ---
 

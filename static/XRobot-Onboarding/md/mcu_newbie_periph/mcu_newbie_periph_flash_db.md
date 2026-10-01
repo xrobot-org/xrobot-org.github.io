@@ -16,7 +16,7 @@
 - 一个可以正常编译、下载、运行的 LibXR STM32 工程：
   - 已经接入 app_main()。
   - 至少实现过 LED 闪烁或串口输出。
-- 已经运行过一次 xr_cubemx_cfg（或等价流程），工程中出现了 User/flash_map.hpp。
+- 已经运行过一次 libxr stm32 setup（或等价流程），工程中出现了 User/flash_map.hpp。
 - 最好已经有一条可靠的串口输出路径，方便把数据库里的值打印出来做验证。
 整体思路：
 1. 利用 flash_map.hpp 里自动生成的扇区表，构造 STM32Flash 对象。

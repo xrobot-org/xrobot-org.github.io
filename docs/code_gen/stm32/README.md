@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # STM32 代码生成
 
-LibXR 提供 `xr_cubemx_cfg` 命令用于从 STM32CubeMX 工程中一键生成符合 LibXR 架构的 C++ 初始化代码。该命令集成了配置解析、代码生成、CMake 集成等多个子工具。
+LibXR 提供 `libxr stm32 setup` 命令用于从 STM32CubeMX 工程中一键生成符合 LibXR 架构的 C++ 初始化代码。该命令集成了配置解析、代码生成、CMake 集成等多个子工具。
 
 ---
 
@@ -15,7 +15,7 @@ LibXR 提供 `xr_cubemx_cfg` 命令用于从 STM32CubeMX 工程中一键生成�
 在 `STM32CubeMX` 工程根目录下执行：
 
 ```bash
-xr_cubemx_cfg -d .
+libxr stm32 setup -d .
 ```
 
 如果你已经在 `VS Code` 里使用 [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot)，也可以直接在插件提供的 GUI 页面里改配置；修改后会自动执行生成命令。
@@ -32,16 +32,32 @@ xr_cubemx_cfg -d .
 ## 示例输出
 
 ```text
-[INFO] LibXR submodule already exists. Checking for updates...
-[INFO] [OK] cd . && git submodule update --init --recursive
-[INFO] LibXR submodule updated.
-Found .ioc file: ./atom.ioc
-Parsing .ioc file...
-[INFO] [OK] xr_parse_ioc -d . -o ./.config.yaml
-Generating C++ code...
-[INFO] [OK] xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp
-[INFO] [OK] xr_stm32_cmake .
-[INFO] [Pass] All tasks completed successfully!
+[信息] 默认的 LibXR 提交：4e9670164541b6af6b600a6d544115a9b3e49d98
+[信息] 选用的 Git 源：https://github.com
+[信息] [完成] git -C . submodule sync -- Middlewares/Third_Party/LibXR
+[信息] LibXR 子模块已存在，保留当前检出。
+[信息] LibXR 子模块已登记。
+[信息] LibXR 子模块路径已存在。
+[信息] 保留现有的 LibXR 检出。
+[信息] 找到 .ioc 文件：.\STM32F103RC.ioc
+[信息] 正在解析 .ioc 文件……
+[信息] 正在处理 STM32F103RC.ioc……
+[信息] [USBParser] 检测到的 USB 外设：['USB']
+[信息] [USBParser] 正在解析配置：USB
+[信息] 配置已导出到：.\.config.yaml
+[信息] 正在生成 C++ 代码……
+[信息] 检测到 FreeRTOS 配置
+[信息] 已生成并写入 FlashLayout，MCU：STM32F103RCT6
+[信息] Flash 布局映射已写入：.\User\flash_map.hpp
+[信息] 生成成功：.\User
+[信息] 已生成头文件：.\User\app_main.h
+[信息] 已生成头文件：app_main.h
+[信息] 没有 build 或 cmake-build* 目录，无需清理。
+[信息] LibXR.CMake 已是最新，无需修改。
+[信息] LibXR.CMake 已生成或更新。
+[信息] 已规范化 cmake\starm-clang.cmake 中的 STARM_TOOLCHAIN_CONFIG
+[信息] CMakeLists.txt 已经 include LibXR.CMake。
+[信息] [通过] 全部任务已完成！
 ```
 
 ---
@@ -176,10 +192,10 @@ int main() {
 如需切换 GCC/Clang 或切换 Clang 标准库，可以使用：
 
 ```bash
-xr_stm32_toolchain_switch gcc
-xr_stm32_toolchain_switch clang -g
-xr_stm32_toolchain_switch clang --newlib
-xr_stm32_toolchain_switch clang --picolibc
+libxr stm32 toolchain gcc
+libxr stm32 toolchain clang -g
+libxr stm32 toolchain clang --newlib
+libxr stm32 toolchain clang --picolibc
 ```
 
 执行命令会自动修改 CMakePresets.json 和 cmake/starm-clang.cmake，重启 VSCode 即可生效。
@@ -202,14 +218,16 @@ xr_stm32_toolchain_switch clang --picolibc
 
 ## 相关命令
 
-| 工具名                      | 功能说明                          |
-| --------------------------- | --------------------------------- |
-| `xr_cubemx_generate`        | 仅执行 STM32CubeMX 脚本模式生成   |
-| `xr_parse_ioc`              | 解析 `.ioc`，生成 `.config.yaml`  |
-| `xr_gen_code_stm32`         | 根据 YAML 配置生成 `app_main.cpp` |
-| `xr_stm32_flash`            | 生成 STM32 Flash 布局表           |
-| `xr_stm32_cmake`            | 修改 CMake 构建文件，集成 LibXR   |
-| `xr_stm32_toolchain_switch` | 切换工具链和标准库                |
+| 命令                     | 功能说明                          |
+| ------------------------ | --------------------------------- |
+| `libxr stm32 cubemx-gen` | 仅执行 STM32CubeMX 脚本模式生成   |
+| `libxr parse`            | 解析 `.ioc`，生成 `.config.yaml`  |
+| `libxr gen`              | 根据 YAML 配置生成 `app_main.cpp` |
+| `libxr stm32 flash-info` | 打印 STM32 Flash 布局表           |
+| `libxr stm32 cmake`      | 修改 CMake 构建文件，集成 LibXR   |
+| `libxr stm32 toolchain`  | 切换工具链和标准库                |
+
+libxr 6.0.0 之前的 `xr_*` 命令（如 `xr_cubemx_cfg`）仍可使用，运行时会提示对应的新命令，7.0.0 删除；对照表见 [CodeGenerator 的 README](https://github.com/xrobot-org/LibXR_CppCodeGenerator#旧命令--old-commands)。
 
 ## 参考
 

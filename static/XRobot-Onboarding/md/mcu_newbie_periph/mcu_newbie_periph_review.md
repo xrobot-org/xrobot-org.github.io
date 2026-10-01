@@ -25,7 +25,7 @@
 - 外设：CubeMX 里打开对应外设（GPIO / ADC / SPI / I2C / UART / USB / CAN 等），打开中断 / DMA。
 - 中间件 / 高级行为：在 .config.yaml / libxr_config.yaml 中配置终端、USB、Flash 数据库等行为。
 2. 重新生成（CodeGenerator）：
-- 在工程根目录跑 xr_cubemx_cfg -d .，刷新 .config.yaml、app_main.cpp、flash_map.hpp 等。
+- 在工程根目录跑 libxr stm32 setup -d .，刷新 .config.yaml、app_main.cpp、flash_map.hpp 等。
 3. 找对象（app_main.cpp / flash_map.hpp）：
 - 在 app_main.cpp 中搜索 STM32ADC / STM32SPI / STM32I2C / STM32UART / CDCUart / Terminal / RamFS / Database 等对象。
 - 在 flash_map.hpp 中确认 Flash 扇区布局。

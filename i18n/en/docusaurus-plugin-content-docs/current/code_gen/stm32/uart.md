@@ -193,12 +193,12 @@ After modifying `libxr_config.yaml`, use one of the following commands to regene
 
 ```bash
 # Regenerate the entire project
-xr_cubemx_cfg -d .
+libxr stm32 setup -d .
 ```
 
 Or:
 
 ```bash
 # Regenerate only app_main.cpp
-xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp
+libxr gen -i ./.config.yaml -o ./User/app_main.cpp
 ```

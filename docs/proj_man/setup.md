@@ -125,4 +125,4 @@ set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
 add_subdirectory(Middlewares/Third_Party/LibXR)
 ```
 
-`xr_stm32_cmake` 为 `--xrobot` 生成的 STM32 工程写入这一行。LibXR 随后包含 `Modules/CMakeLists.txt`，并检查 `User/xrobot_main.hpp`，见 [入口与生成](./gen_main.md#构建时检查)。
+`libxr stm32 cmake` 为 `--xrobot` 生成的 STM32 工程写入这一行。LibXR 随后包含 `Modules/CMakeLists.txt`，并检查 `User/xrobot_main.hpp`，见 [入口与生成](./gen_main.md#构建时检查)。

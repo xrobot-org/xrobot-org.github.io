@@ -73,7 +73,7 @@ Watchdog:
 修改 `libxr_config.yaml` 后，重新生成代码：
 
 ```bash
-xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp
+libxr gen -i ./.config.yaml -o ./User/app_main.cpp
 ```
 
 ## 注意事项

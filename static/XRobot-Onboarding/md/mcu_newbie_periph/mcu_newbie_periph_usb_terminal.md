@@ -45,7 +45,7 @@
      - run_as_thread: true。
      - thread_stack_depth、thread_priority 使用默认即可。
 ## 四、重新生成代码
-- 在工程根目录执行一次 xr_cubemx_cfg -d .。
+- 在工程根目录执行一次 libxr stm32 setup -d .。
 - CodeGenerator 会根据 YAML 自动完成：
   - 若 USB enable: true：生成 CDCUart + USB 设备对象，并在 app_main.cpp 中调用 Init()/Start()。
   - 根据 terminal_source 自动生成 STDIO 绑定、RamFS 和 Terminal 初始化代码，并按配置决定是否以线程方式运行终端。
@@ -72,7 +72,7 @@
 2. CubeMX 与 YAML 配置：
    - USB 外设是否启用，terminal_source 是否为正确的对象名。
 3. 代码生成与构建：
-   - 修改配置后是否重新执行 xr_cubemx_cfg -d .。
+   - 修改配置后是否重新执行 libxr stm32 setup -d .。
    - 重新生成后是否完整构建工程。
 4. 生成代码状态：
    - app_main.cpp 中能否找到 CDCUart / USB 设备对象、STDIO 绑定、RamFS 和 Terminal 初始化代码。

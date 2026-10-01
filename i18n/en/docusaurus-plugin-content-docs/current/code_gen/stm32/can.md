@@ -43,6 +43,6 @@ In current `GeneratorCodeSTM32.py`, the generation logic here mainly does two th
 - emit the corresponding `STM32CAN` / `STM32CANFD` constructor code.
 
 You can edit the config file directly. To apply the changes, rerun:
-`xr_cubemx_cfg -d .`
+`libxr stm32 setup -d .`
 or
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`

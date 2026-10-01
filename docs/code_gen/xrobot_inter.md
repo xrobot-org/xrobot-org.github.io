@@ -11,10 +11,10 @@ sidebar_position: 2
 ## 示例
 
 ```bash
-xr_cubemx_cfg -d . --xrobot
+libxr stm32 setup -d . --xrobot
 # 或单独重新生成 app_main.cpp：
-xr_parse_ioc -d . -o .config.yaml
-xr_gen_code_stm32 -i .config.yaml -o User/app_main.cpp --xrobot --libxr-config User/libxr_config.yaml
+libxr parse -d . -o .config.yaml
+libxr gen -i .config.yaml -o User/app_main.cpp --xrobot --libxr-config User/libxr_config.yaml
 ```
 
 生成的 `app_main.cpp`（节选）：
@@ -42,7 +42,7 @@ extern "C" void app_main(void) {
 - 需要注册更多对象（例如在 User Code 3 中创建的数据库或额外串口）时，在 User Code 3 中写 `XR_REGISTER`，这些内容在重新生成时保留。
 - `XROBOT_MAIN();` 由生成器维护。旧版本把它写在 User Code 3 中；若 User Code 区域中仍有该调用，生成器报告行号并停止、不写任何文件，删除该行后重新生成即可。
 
-`xr_stm32_cmake` 检测到 `--xrobot` 生成的 `app_main.cpp` 时，在 `cmake/LibXR.CMake` 中设置 `XROBOT_MODULES_DIR`。
+`libxr stm32 cmake` 检测到 `--xrobot` 生成的 `app_main.cpp` 时，在 `cmake/LibXR.CMake` 中设置 `XROBOT_MODULES_DIR`。
 
 ## 生成器版本
 

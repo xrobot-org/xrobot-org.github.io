@@ -194,12 +194,12 @@ USB:
 
 ```bash
 # 重新生成整个工程
-xr_cubemx_cfg -d .
+libxr stm32 setup -d .
 ```
 
 或：
 
 ```bash
 # 只重新生成app_main.cpp
-xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp
+libxr gen -i ./.config.yaml -o ./User/app_main.cpp
 ```

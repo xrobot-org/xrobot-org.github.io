@@ -45,6 +45,6 @@ FDCAN:
 它只处理实例名和队列大小，不生成跨芯片一致的过滤器 / FIFO 拓扑。
 
 可直接修改该配置文件。如需应用更改，请执行以下命令重新生成代码：  
-`xr_cubemx_cfg -d .`  
+`libxr stm32 setup -d .`  
 或  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`

@@ -95,12 +95,12 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
 ### Switching toolchains
 
-If you already use the code-generation toolchain, `xr_stm32_toolchain_switch` can switch the toolchain and C library directly:
+If you already use the code-generation toolchain, `libxr stm32 toolchain` can switch the toolchain and C library directly:
 
 ```bash
-xr_stm32_toolchain_switch gcc
-xr_stm32_toolchain_switch clang --newlib
-xr_stm32_toolchain_switch clang --picolibc
+libxr stm32 toolchain gcc
+libxr stm32 toolchain clang --newlib
+libxr stm32 toolchain clang --picolibc
 ```
 
 That command edits `CMakePresets.json` and `cmake/starm-clang.cmake` directly. Restart `VS Code` afterwards so the new configuration is picked up cleanly.

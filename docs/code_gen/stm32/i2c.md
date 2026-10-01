@@ -41,6 +41,6 @@ I2C:
 - 页中的 `dma_section` 只影响缓冲区声明落在哪个 section，不改变 `STM32I2C` 构造形状本身。
 
 可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`xr_cubemx_cfg -d .`  
+`libxr stm32 setup -d .`  
 或  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`

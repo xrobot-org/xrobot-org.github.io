@@ -54,6 +54,6 @@ ADC:
 - `vref`: The reference voltage for the ADC, in volts.
 
 You can modify this file directly. To apply the updated configuration, run either of the following commands to regenerate the code:  
-`xr_cubemx_cfg -d .`  
+`libxr stm32 setup -d .`  
 or  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`

@@ -8,7 +8,7 @@
   - 知道 Python / pip 在哪里，安装过 libxr（CodeGenerator）和 xrobot（后面会用到）。
 - 工程和 LibXR：
   - 用 STM32CubeMX 生成过基础工程，知道 .ioc 在哪、Core/ 和 Drivers/ 大致放什么。
-  - 用 CodeGenerator（例如 xr_cubemx_cfg）在原工程上集成过 LibXR，见过新出现的 Middlewares/Third_Party/LibXR 和 User/app_main.cpp 等文件。
+  - 用 CodeGenerator（例如 libxr stm32 setup）在原工程上集成过 LibXR，见过新出现的 Middlewares/Third_Party/LibXR 和 User/app_main.cpp 等文件。
   - 知道 app_main() 在哪里，理解它负责完成 LibXR 平台初始化和外设封装对象的创建。
 - 自己写的部分：
   - 在 app_main.cpp 的 User Code 区域实现过点灯。
@@ -67,7 +67,7 @@
    - 中断 / DMA 是否为该外设打开。
    - 修改后是否重新生成了 STM32 代码。
 3. CodeGenerator 和 LibXR：
-   - 修改 .ioc 后是否重新运行过代码生成（例如 xr_cubemx_cfg）。
+   - 修改 .ioc 后是否重新运行过代码生成（例如 libxr stm32 setup）。
    - 工程是否重新配置 / 编译。
    - app_main.cpp 中是否已经出现对应的 LibXR 封装对象。
 4. 自己的代码：

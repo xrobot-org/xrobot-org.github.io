@@ -52,6 +52,6 @@ ADC:
 其中`buffer_size`为ADC基础缓冲大小，实际生成的 `uint16_t` 缓冲区会根据启用的通道/Rank 数量展开；`dma_section`为缓冲区所在的内存区域，`vref`为ADC参考电压，单位为V。
 
 可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`xr_cubemx_cfg -d .`  
+`libxr stm32 setup -d .`  
 或  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`

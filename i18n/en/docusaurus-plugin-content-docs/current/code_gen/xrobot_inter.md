@@ -11,10 +11,10 @@ With `--xrobot`, the code generator writes one `XR_REGISTER(name, Type)` line pe
 ## Example
 
 ```bash
-xr_cubemx_cfg -d . --xrobot
+libxr stm32 setup -d . --xrobot
 # or regenerate only app_main.cpp:
-xr_parse_ioc -d . -o .config.yaml
-xr_gen_code_stm32 -i .config.yaml -o User/app_main.cpp --xrobot --libxr-config User/libxr_config.yaml
+libxr parse -d . -o .config.yaml
+libxr gen -i .config.yaml -o User/app_main.cpp --xrobot --libxr-config User/libxr_config.yaml
 ```
 
 Generated `app_main.cpp` (excerpt):
@@ -42,7 +42,7 @@ extern "C" void app_main(void) {
 - To register more objects (for example a database or an extra serial port created in User Code 3), write `XR_REGISTER` in User Code 3; that code is kept on regeneration.
 - `XROBOT_MAIN();` is owned by the generator. Older versions placed it in User Code 3; if a User Code region still calls it, the generator reports the line and stops without writing anything. Delete that line and regenerate.
 
-When `xr_stm32_cmake` detects an `app_main.cpp` generated with `--xrobot`, it sets `XROBOT_MODULES_DIR` in `cmake/LibXR.CMake`.
+When `libxr stm32 cmake` detects an `app_main.cpp` generated with `--xrobot`, it sets `XROBOT_MODULES_DIR` in `cmake/LibXR.CMake`.
 
 ## Generator Version
 

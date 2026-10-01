@@ -72,7 +72,7 @@ Specifically:
 After editing `libxr_config.yaml`, regenerate with:
 
 ```bash
-xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp
+libxr gen -i ./.config.yaml -o ./User/app_main.cpp
 ```
 
 ## Notes

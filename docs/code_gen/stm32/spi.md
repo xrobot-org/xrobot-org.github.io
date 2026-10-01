@@ -38,6 +38,6 @@ SPI:
 - `dma_enable_min_size` 当前会直接作为 `STM32SPI(..., dma_enable_min_size)` 的最后一个参数生成。
 
 可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`xr_cubemx_cfg -d .`  
+`libxr stm32 setup -d .`  
 或  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`

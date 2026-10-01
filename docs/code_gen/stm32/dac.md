@@ -43,6 +43,6 @@ DAC:
 如果一个 DAC 外设没有启用任何通道，当前 generator 不会为它生成实例。
 
 可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`xr_cubemx_cfg -d .`  
+`libxr stm32 setup -d .`  
 或  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`

@@ -42,7 +42,7 @@ extern "C" void app_main()
 - 注册的对象必须在 `XROBOT_MAIN()` 处可见，且生命周期覆盖整个应用。
 - 只有当前产品用到的注册对象会传给 `XRobotMain`；其余注册仍参与类型检查，不产生未使用变量警告。
 
-STM32 BSP 的这些行由 `xr_gen_code_stm32 --xrobot` 生成，见 [与 XRobot 集成](../code_gen/xrobot_inter.md)。
+STM32 BSP 的这些行由 `libxr gen --xrobot` 生成，见 [与 XRobot 集成](../code_gen/xrobot_inter.md)。
 
 ---
 

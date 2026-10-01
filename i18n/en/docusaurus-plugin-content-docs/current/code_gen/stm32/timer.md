@@ -50,5 +50,5 @@ software_timer:
   stack_depth: 1024
 ```
 
-You can modify this file directly. To apply updated settings, run `xr_cubemx_cfg -d .` or  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp` to regenerate the code.
+You can modify this file directly. To apply updated settings, run `libxr stm32 setup -d .` or  
+`libxr gen -i ./.config.yaml -o ./User/app_main.cpp` to regenerate the code.

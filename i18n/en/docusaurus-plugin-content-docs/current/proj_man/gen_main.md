@@ -42,7 +42,7 @@ Rules:
 - Registered objects must be visible where `XROBOT_MAIN()` is called and must live as long as the application.
 - Only the registrations the selected product uses are passed to `XRobotMain`; the others are still type-checked and cause no unused-variable warnings.
 
-In STM32 BSPs these lines are written by `xr_gen_code_stm32 --xrobot`; see [Integrate with XRobot](../code_gen/xrobot_inter.md).
+In STM32 BSPs these lines are written by `libxr gen --xrobot`; see [Integrate with XRobot](../code_gen/xrobot_inter.md).
 
 ---
 
