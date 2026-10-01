@@ -31,7 +31,7 @@ This command will perform the following steps automatically:
 
 ```text
 [INFO] Default LibXR commit: 4e9670164541b6af6b600a6d544115a9b3e49d98
-[INFO] Selected Git base/repo: https://gitee.com/jiu-xiao/libxr
+[INFO] Selected Git base/repo: https://github.com
 [INFO] [OK] git -C . submodule sync -- Middlewares/Third_Party/LibXR
 [INFO] LibXR submodule already exists; preserving current checkout.
 [INFO] LibXR submodule already registered.
@@ -50,9 +50,7 @@ This command will perform the following steps automatically:
 [INFO] Successfully generated: .\User
 [INFO] Generated header: .\User\app_main.h
 [INFO] Generated header file: app_main.h
-[INFO] No build or cmake-build* directory found, nothing to clean.
-[INFO] LibXR.CMake already up to date, no changes needed.
-[INFO] LibXR.CMake generated/updated successfully.
+[INFO] Updated existing LibXR.CMake for system: FreeRTOS
 [INFO] Normalized STARM_TOOLCHAIN_CONFIG in cmake\starm-clang.cmake
 [INFO] LibXR.CMake already included in CMakeLists.txt.
 [INFO] [Pass] All tasks completed successfully!
@@ -204,7 +202,7 @@ libxr stm32 toolchain clang --newlib
 libxr stm32 toolchain clang --picolibc
 ```
 
-Command execution will automatically modify CMakePresets.json and cmake/starm-clang.cmake, restart VSCode to take effect.
+The command edits `CMakePresets.json` and `cmake/starm-clang.cmake`. Switching between gcc and clang removes the `build/` and `cmake-build*` directories: CMake does not change the compiler of an existing build directory, so the next build configures a new one. `clang` without a standard library option keeps the current one.
 
 ---
 

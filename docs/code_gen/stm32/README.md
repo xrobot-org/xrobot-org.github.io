@@ -52,9 +52,7 @@ libxr stm32 setup -d .
 [信息] 生成成功：.\User
 [信息] 已生成头文件：.\User\app_main.h
 [信息] 已生成头文件：app_main.h
-[信息] 没有 build 或 cmake-build* 目录，无需清理。
-[信息] LibXR.CMake 已是最新，无需修改。
-[信息] LibXR.CMake 已生成或更新。
+[信息] 已按系统 FreeRTOS 更新现有的 LibXR.CMake
 [信息] 已规范化 cmake\starm-clang.cmake 中的 STARM_TOOLCHAIN_CONFIG
 [信息] CMakeLists.txt 已经 include LibXR.CMake。
 [信息] [通过] 全部任务已完成！
@@ -198,7 +196,7 @@ libxr stm32 toolchain clang --newlib
 libxr stm32 toolchain clang --picolibc
 ```
 
-执行命令会自动修改 CMakePresets.json 和 cmake/starm-clang.cmake，重启 VSCode 即可生效。
+命令修改 `CMakePresets.json` 和 `cmake/starm-clang.cmake`。在 gcc 与 clang 之间切换时，命令删除 `build/` 和 `cmake-build*` 目录：CMake 不会更换已有构建目录的编译器，下次构建在新的构建目录中配置。`clang` 不带标准库选项时沿用现在的标准库。
 
 ---
 
