@@ -170,7 +170,7 @@ int main() {
 
 | 参数       | 说明                        |
 | ---------- | --------------------------- |
-| `-d`       | 指定 STM32 工程根目录       |
+| `-d`       | 指定 STM32 工程根目录（默认：当前目录） |
 | `-t`       | 设置终端外设（如 `usart1`） |
 | `--xrobot` / `--no-xrobot` | 生成或不生成 `XR_REGISTER` 注册与 `XROBOT_MAIN();`，见 [与XRobot集成](../xrobot_inter.md)；都不写时沿用工程现在的选择 |
 | `--commit` | 显式指定 LibXR 子模块 commit |

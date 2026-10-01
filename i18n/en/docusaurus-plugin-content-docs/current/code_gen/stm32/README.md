@@ -176,7 +176,7 @@ Make sure to adjust the initial thread stack size in STM32CubeMX to avoid stack 
 
 | Argument   | Description                             |
 | ---------- | --------------------------------------- |
-| `-d`       | Specify STM32 project root directory    |
+| `-d`       | Specify STM32 project root directory (default: current directory) |
 | `-t`       | Set terminal peripheral (e.g. `usart1`) |
 | `--xrobot` / `--no-xrobot` | Emit `XR_REGISTER` registrations and `XROBOT_MAIN();`, or not, see [Integrate with XRobot](../xrobot_inter.md); without either the project keeps its choice |
 | `--commit` | Pin the LibXR submodule to a specific commit |
