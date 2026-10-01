@@ -42,7 +42,7 @@ PlatformInit(2, 1024);
 
 ## 配置文件
 
-对于非裸机环境，会在`User/libxr_config.yaml`中生成如下配置:
+`User/libxr_config.yaml` 中的 `software_timer` 设置这两个参数，裸机环境下不使用：
 
 ```yaml
 software_timer:

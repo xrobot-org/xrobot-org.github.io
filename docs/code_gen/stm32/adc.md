@@ -25,15 +25,13 @@ sidebar_position: 5
 
 ```cpp
 // 生成ADC对象
-STM32ADC adcX(&hadcX, adcX_buf, {ADC_CHANNEL_1, ADC_CHANNEL_2, ...}, 3.3);
-
-// 获取每个ADC通道对象
-auto adcX_adc_channel_1 = adcX.GetChannel(0);
-auto adcX_adc_channel_2 = adcX.GetChannel(1);
-...
+static STM32ADC adc3(&hadc3, adc3_buf, {ADC_CHANNEL_8}, 3.3);
+// 每个通道一个引用，名字为 <ADC 实例>_<通道>
+static auto& adc3_adc_channel_8 = adc3.GetChannel(0);
+UNUSED(adc3_adc_channel_8);
 ```
 
-轮询模式下会识别所有开启的通道，DMA模式下只会识别配置了Rank的通道。
+轮询模式下会识别所有开启的通道，DMA模式下只会识别配置了Rank的通道。开启 XRobot 集成（`--xrobot`）时，每个通道引用以同名注册为 `LibXR::ADC`。
 
 STM32ADC类并不是由ADC基类的派生，而是包含了多个由ADC基类派生的ADC通道对象。
 
@@ -44,12 +42,12 @@ STM32ADC类并不是由ADC基类的派生，而是包含了多个由ADC基类派
 ```yaml
 ADC:
   adcX:
-    buffer_size: 32 # 默认基础缓冲大小；实际生成的 uint16_t 缓冲区会按启用通道/Rank 数量展开
+    buffer_size: 32
     dma_section: ''
     vref: 3.3
 ```
 
-其中`buffer_size`为ADC基础缓冲大小，实际生成的 `uint16_t` 缓冲区会根据启用的通道/Rank 数量展开；`dma_section`为缓冲区所在的内存区域，`vref`为ADC参考电压，单位为V。
+其中`buffer_size`为每个通道的缓冲字节数，生成的 `uint16_t` 缓冲区有 `buffer_size / 2 × 通道数` 个元素（上例中 1 个通道，16 个元素）；`dma_section`为缓冲区所在的内存区域，`vref`为ADC参考电压，单位为V。
 
 可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
 `libxr stm32 setup -d .`  

@@ -8,14 +8,12 @@ sidebar_position: 9
 
 在 STM32CubeMX 中，需要启用 I2C 对应的 DMA 通道，并配置相关中断。
 
-对当前 generator 而言，这一页主要覆盖的是**共享缓冲区大小**与**DMA 启用阈值**这两个生成参数。
-
 ## 示例
 
 最后一个参数表示启用 DMA 传输的最小字节数，低于该值将不启用 DMA。
 
 ```cpp
-STM32I2C i2c1(&hi2c1, i2c1_buf, 3);
+static STM32I2C i2c1(&hi2c1, i2c1_buf, 3);
 ```
 
 ## 配置文件
@@ -34,11 +32,12 @@ I2C:
 - `dma_section`：缓冲区所在的内存区域
 - `dma_enable_min_size`：启用 DMA 的最小传输字节数
 
-当前生成逻辑要点：
+生成规则：
 
-- generator 会为每个 I2C 实例生成一个共享 buffer，例如 `i2c1_buf`；
-- `dma_enable_min_size` 当前会直接作为 `STM32I2C(..., dma_enable_min_size)` 的最后一个参数生成；
-- 页中的 `dma_section` 只影响缓冲区声明落在哪个 section，不改变 `STM32I2C` 构造形状本身。
+- 每个 I2C 实例生成一个收发共用的缓冲区，例如 `i2c1_buf`，长度为 `buffer_size` 字节；
+- `dma_enable_min_size` 作为 `STM32I2C` 构造函数的最后一个参数；
+- `dma_section` 决定缓冲区所在的 section，见 [Cache](./cache.md)；
+- FMPI2C 外设不生成对象，`libxr parse` 给出警告；LibXR 没有 FMPI2C 驱动。
 
 可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
 `libxr stm32 setup -d .`  

@@ -17,20 +17,28 @@ libxr parse -d . -o .config.yaml
 libxr gen -i .config.yaml -o User/app_main.cpp --xrobot --libxr-config User/libxr_config.yaml
 ```
 
-Generated `app_main.cpp` (excerpt):
+`app_main.cpp` generated for an STM32F407 project (excerpt):
 
 ```cpp
+#include "flash_map.hpp"
 #include "xrobot_main.hpp"
 ......
 
 extern "C" void app_main(void) {
   ......
   XR_REGISTER(power_manager, LibXR::PowerManager);
-  XR_REGISTER(LED_B, LibXR::GPIO);
+  XR_REGISTER(USER_KEY, LibXR::GPIO);
+  ......
   XR_REGISTER(spi1, LibXR::SPI);
   XR_REGISTER(usart1, LibXR::UART);
+  ......
   XR_REGISTER(can1, LibXR::CAN);
+  ......
   XR_REGISTER(ramfs, LibXR::RamFS);
+  XR_REGISTER(terminal, LibXR::Terminal<32, 32, 5, 5>);
+
+  // clang-format on
+  // NOLINTEND
   /* User Code Begin 3 */
   /* User Code End 3 */
   XROBOT_MAIN();
@@ -42,7 +50,7 @@ extern "C" void app_main(void) {
 - To register more objects (for example a database or an extra serial port created in User Code 3), write `XR_REGISTER` in User Code 3; that code is kept on regeneration.
 - `XROBOT_MAIN();` is owned by the generator. Older versions placed it in User Code 3; if a User Code region still calls it, the generator reports the line and stops without writing anything. Delete that line and regenerate.
 
-When `libxr stm32 cmake` detects an `app_main.cpp` generated with `--xrobot`, it sets `XROBOT_MODULES_DIR` in `cmake/LibXR.CMake`.
+When `libxr stm32 cmake` creates `cmake/LibXR.CMake` and `User/app_main.cpp` was generated with `--xrobot`, the new file sets `XROBOT_MODULES_DIR`. An existing `LibXR.CMake` belongs to the user; when its setting disagrees with `app_main.cpp`, only a warning is logged.
 
 ## Generator Version
 

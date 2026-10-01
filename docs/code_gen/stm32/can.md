@@ -6,17 +6,15 @@ sidebar_position: 10
 
 # CAN 与 CAN FD
 
-LibXR 支持标准 CAN 和 CAN FD。对代码生成器而言，这一页主要覆盖的是**实例生成与队列配置**；至于过滤器、FIFO 或消息 RAM 的更细节初始化，属于 CubeMX 工程本身和底层驱动侧的职责，不应被扩大理解成当前 generator 直接生成的一套统一策略。
-
-在 STM32CubeMX 中，仍然需要先把对应外设与中断配置完整；如果目标工程依赖特定过滤器或 FIFO 分配，也应在 CubeMX / HAL 初始化侧确认，而不是假定 generator 会替你统一生成这一层策略。
+LibXR 支持标准 CAN 和 CAN FD。代码生成为每个 CAN/FDCAN 实例生成驱动对象，并设置发送队列长度。外设和中断在 STM32CubeMX 中配置；过滤器、FIFO 分配和消息 RAM 由 CubeMX 生成的 HAL 初始化代码和 LibXR 驱动处理。
 
 ## 示例
 
 第二个参数表示发送队列大小，用于缓冲待发送的数据帧。
 
 ```cpp
-STM32CAN can1(&hcan1, 5);
-STM32CANFD fdcan1(&hfdcan1, 5);
+static STM32CAN can1(&hcan1, 5);
+static STM32CANFD fdcan1(&hfdcan1, 5);
 ```
 
 ## 配置文件
@@ -37,14 +35,11 @@ FDCAN:
 
 实例的键是小写的实例名。以前版本生成的大写键（如 `CAN1`、`FDCAN1`）在重新生成时改为小写，设置保持不变。
 
-## 当前 generator 覆盖范围
+## 生成规则
 
-就当前 `GeneratorCodeSTM32.py` 而言，这一项生成逻辑主要做两件事：
-
-- 从 `CAN.<instance>.queue_size` 或 `FDCAN.<instance>.queue_size` 读取配置；
-- 生成 `STM32CAN` / `STM32CANFD` 的实例构造代码。
-
-它只处理实例名和队列大小，不生成跨芯片一致的过滤器 / FIFO 拓扑。
+- 对象名为小写的实例名，例如 `can1`、`fdcan1`；
+- 从 `CAN.<实例>.queue_size` 或 `FDCAN.<实例>.queue_size` 读取发送队列长度，默认 5；
+- 开启 XRobot 集成（`--xrobot`）时，FDCAN 对象另有一个 `LibXR::CAN` 引用，见[与XRobot集成](../xrobot_inter.md)。
 
 可直接修改该配置文件。如需应用更改，请执行以下命令重新生成代码：  
 `libxr stm32 setup -d .`  

@@ -6,17 +6,15 @@ sidebar_position: 10
 
 # CAN & CAN FD
 
-LibXR supports both classic CAN and CAN FD. From the generator's point of view, this page mainly covers **instance emission and queue-size configuration**. More detailed topics such as filters, FIFO layout, or message RAM partitioning still belong to the CubeMX project and the lower-level driver side; they should not be over-read as a unified strategy generated directly by the current generator.
-
-You still need to configure the peripheral instances and interrupts correctly in STM32CubeMX first. If the target project depends on a specific filter setup or FIFO assignment, confirm that on the CubeMX / HAL side rather than assuming the generator will synthesize that policy for you.
+LibXR supports both classic CAN and CAN FD. Code generation emits a driver object for every CAN/FDCAN instance and sets its transmit queue length. The peripherals and their interrupts are configured in STM32CubeMX; filters, FIFO assignment and message RAM are handled by the HAL initialization code CubeMX generates and by the LibXR drivers.
 
 ## Example
 
 The second constructor argument is the transmit queue size used to buffer outgoing CAN frames.
 
 ```cpp
-STM32CAN can1(&hcan1, 5);
-STM32CANFD fdcan1(&hfdcan1, 5);
+static STM32CAN can1(&hcan1, 5);
+static STM32CANFD fdcan1(&hfdcan1, 5);
 ```
 
 ## Configuration File
@@ -37,14 +35,13 @@ FDCAN:
 
 Instances are keyed by their lower-case name. The upper-case keys of earlier versions (such as `CAN1` or `FDCAN1`) are renamed to lower case on regeneration, keeping their settings.
 
-## Current Generator Scope
+## Generation Rules
 
-In current `GeneratorCodeSTM32.py`, the generation logic here mainly does two things:
+- objects are named after the lower-case instance, such as `can1` or `fdcan1`;
+- the transmit queue length comes from `CAN.<instance>.queue_size` or `FDCAN.<instance>.queue_size` and defaults to 5;
+- with XRobot integration (`--xrobot`), each FDCAN object also gets a `LibXR::CAN` reference, see [Integrate with XRobot](../xrobot_inter.md).
 
-- read `CAN.<instance>.queue_size` or `FDCAN.<instance>.queue_size` from the config;
-- emit the corresponding `STM32CAN` / `STM32CANFD` constructor code.
-
-You can edit the config file directly. To apply the changes, rerun:
+The config file can be edited directly. To apply the changes, rerun:
 `libxr stm32 setup -d .`
 or
 `libxr gen -i ./.config.yaml -o ./User/app_main.cpp`

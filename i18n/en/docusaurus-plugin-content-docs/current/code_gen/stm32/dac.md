@@ -6,16 +6,14 @@ sidebar_position: 6
 
 # DAC
 
-In current mainline, the generator’s DAC responsibility is straightforward: it reads the DAC channels enabled in CubeMX, generates matching `STM32DAC` instances, and injects the initial output value plus reference voltage from `libxr_config.yaml` into the constructor arguments.
-
-This path currently does not generate DMA-related DAC setup.
+Code generation emits one `STM32DAC` object for each DAC output channel enabled in CubeMX, with the initial output voltage and the reference voltage taken from `libxr_config.yaml`.
 
 ## Example
 
 The generator reads each enabled DAC channel and emits code like:
 
 ```cpp
-STM32DAC dac1_out1(&hdac1, DAC_CHANNEL_1, 0.0, 3.3);
+static STM32DAC dac1_out2(&hdac1, DAC_CHANNEL_2, 0.0, 3.3);
 ```
 
 ## Configuration File
@@ -29,16 +27,12 @@ DAC:
     vref: 3.3
 ```
 
-- `init_voltage`: initial output voltage-like target
-- `vref`: reference voltage used by the generated constructor arguments
+- `init_voltage`: initial output voltage
+- `vref`: reference voltage
 
-## Current generator coverage
+## Generation Rules
 
-In current `GeneratorCodeSTM32.py`, the DAC generation path mainly does the following:
-
-- read the enabled channel list for each DAC peripheral;
-- normalize `DAC_OUTx` into `DAC_CHANNEL_x`;
-- read `DAC.<instance>.init_voltage` and `DAC.<instance>.vref` from configuration;
-- generate instance code such as `STM32DAC dac1_out1(&hdac1, DAC_CHANNEL_1, 0.0, 3.3);`.
-
-If a DAC peripheral has no enabled channels, the current generator does not emit any DAC instance for it.
+- each enabled output channel gets one object named `<instance>_<channel>`, such as `dac1_out2`;
+- `DAC_OUTx` is written as `DAC_CHANNEL_x`;
+- the constructor arguments come from `DAC.<instance>.init_voltage` (default 0.0) and `DAC.<instance>.vref` (default 3.3);
+- a DAC peripheral without enabled channels gets no object.

@@ -8,14 +8,12 @@ sidebar_position: 9
 
 In STM32CubeMX, the matching I2C DMA channels and interrupts should be configured.
 
-From the current generator’s perspective, this page mainly covers two generated parameters: the **shared buffer size** and the **DMA enable threshold**.
-
 ## Example
 
 The last constructor argument is the minimum transfer size required before DMA is enabled.
 
 ```cpp
-STM32I2C i2c1(&hi2c1, i2c1_buf, 3);
+static STM32I2C i2c1(&hi2c1, i2c1_buf, 3);
 ```
 
 ## Configuration File
@@ -34,8 +32,9 @@ I2C:
 - `dma_section`: linker section for the generated buffer declaration
 - `dma_enable_min_size`: minimum transfer byte count to enable DMA
 
-Current generation details:
+Generation rules:
 
-- the generator emits one shared buffer per I2C instance, for example `i2c1_buf`;
-- `dma_enable_min_size` is currently emitted directly as the last argument of `STM32I2C(..., dma_enable_min_size)`;
-- `dma_section` only affects where the buffer declaration is placed, and does not change the `STM32I2C` constructor shape itself.
+- each I2C instance gets one buffer shared by transmit and receive, for example `i2c1_buf`, of `buffer_size` bytes;
+- `dma_enable_min_size` is the last argument of the `STM32I2C` constructor;
+- `dma_section` decides the section the buffer goes to, see [Cache](./cache.md);
+- FMPI2C peripherals get no object and `libxr parse` warns about them; LibXR has no FMPI2C driver.

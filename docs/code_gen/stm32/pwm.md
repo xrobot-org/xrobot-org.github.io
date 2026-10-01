@@ -13,13 +13,11 @@ sidebar_position: 7
 第三个参数为`true`时，使用此定时器通道的互补输出。
 
 ```cpp
-STM32PWM pwm_timX_chX(&htimX, TIM_CHANNEL_X, false);
+static STM32PWM pwm_tim1_ch1(&htim1, TIM_CHANNEL_1, false);
 ```
 
-## 当前 generator 覆盖范围
+## 生成规则
 
-就当前 `GeneratorCodeSTM32.py` 而言，PWM 这一项的主要职责是：
-
-- 遍历 CubeMX 工程里每个 TIM 外设下配置为 PWM 的通道；
-- 根据通道名生成对象名，例如 `pwm_tim1_ch1`；
-- 若通道配置含 `Complementary = true`，则第三个构造参数生成为 `true`；否则为 `false`。
+- CubeMX 工程中每个 TIM 外设下配置为 PWM 的通道各生成一个对象；
+- 对象名为 `pwm_<定时器>_ch<通道>`，例如 `pwm_tim1_ch1`；
+- 互补输出通道（CubeMX 中的 `CHxN`）的对象名带 `n`（如 `pwm_tim1_ch1n`），使用 `TIM_CHANNEL_x`，第三个构造参数为 `true`；其他通道为 `false`。

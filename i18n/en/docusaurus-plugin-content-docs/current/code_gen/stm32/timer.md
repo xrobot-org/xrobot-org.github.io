@@ -18,7 +18,7 @@ For bare-metal systems, the following code will be generated without any paramet
 PlatformInit();
 ```
 
-For RTOS environments, you need to provide thread priority and stack depth:
+In RTOS projects, the thread priority and stack depth are passed:
 
 ```cpp
 PlatformInit(2, 1024);
@@ -42,7 +42,7 @@ Thread priorities are defined as follows:
 
 ## Configuration File
 
-For non-bare-metal systems, the following configuration will be generated in `User/libxr_config.yaml`:
+`software_timer` in `User/libxr_config.yaml` sets these two arguments; bare-metal projects do not use it:
 
 ```yaml
 software_timer:
@@ -50,5 +50,7 @@ software_timer:
   stack_depth: 1024
 ```
 
-You can modify this file directly. To apply updated settings, run `libxr stm32 setup -d .` or  
-`libxr gen -i ./.config.yaml -o ./User/app_main.cpp` to regenerate the code.
+The file can be edited directly. To apply the settings, regenerate the code with either command:  
+`libxr stm32 setup -d .`  
+or  
+`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`

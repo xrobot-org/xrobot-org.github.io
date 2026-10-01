@@ -6,16 +6,14 @@ sidebar_position: 8
 
 # SPI
 
-In STM32CubeMX, the corresponding DMA channels must be enabled and the SPI interrupt must also be configured.
-
-From the current generator’s perspective, this page mainly covers **buffer declarations + constructor arguments**. Whether DMA buffers are actually generated depends on whether `DMA_TX / DMA_RX` are enabled for that SPI instance in CubeMX.
+In STM32CubeMX, the corresponding DMA channels must be enabled and the SPI interrupt must also be configured. The transmit and receive DMA buffers are generated only for the directions with DMA enabled in CubeMX.
 
 ## Example
 
 The last constructor argument decides the minimum byte count required before DMA is used. Transfers smaller than this threshold stay on the non-DMA path.
 
 ```cpp
-STM32SPI spi1(&hspi1, spi1_rx_buf, spi1_tx_buf, 3);
+static STM32SPI spi1(&hspi1, spi1_rx_buf, spi1_tx_buf, 3);
 ```
 
 ## Configuration File
@@ -31,8 +29,8 @@ SPI:
     dma_enable_min_size: 3
 ```
 
-Current generation details:
+Generation rules:
 
-- when `DMA_TX` is not enabled, the TX buffer constructor argument falls back to `{nullptr, 0}`;
-- when `DMA_RX` is not enabled, the RX buffer constructor argument falls back to `{nullptr, 0}`;
-- `dma_enable_min_size` is currently emitted directly as the last argument of `STM32SPI(..., dma_enable_min_size)`.
+- without DMA on the transmit direction, the transmit buffer argument is `{nullptr, 0}`, and likewise for receive;
+- `dma_enable_min_size` is the last argument of the `STM32SPI` constructor;
+- `dma_section` decides the section the buffers go to, see [Cache](./cache.md).
