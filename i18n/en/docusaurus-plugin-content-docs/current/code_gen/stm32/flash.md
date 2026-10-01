@@ -35,7 +35,7 @@ constexpr LibXR::FlashSector FLASH_SECTORS[] = {
 constexpr size_t FLASH_SECTOR_NUMBER = sizeof(FLASH_SECTORS) / sizeof(LibXR::FlashSector);
 ```
 
-The same layout is recorded as `FlashLayout` in `User/libxr_config.yaml`; `libxr stm32 flash-info <model>` prints the layout of a model on its own. When no flash layout can be derived for the MCU, `libxr gen` logs a warning, generates no `flash_map.hpp`, leaves it out of the includes of `app_main.cpp`, and deletes a previously generated `flash_map.hpp`.
+`libxr stm32 flash-info <model>` prints the layout of a model on its own. When no flash layout can be derived for the MCU, `libxr gen` logs a warning, generates no `flash_map.hpp`, leaves it out of the includes of `app_main.cpp`, and deletes a previously generated `flash_map.hpp`.
 
 ---
 

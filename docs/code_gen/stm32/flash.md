@@ -35,7 +35,7 @@ constexpr LibXR::FlashSector FLASH_SECTORS[] = {
 constexpr size_t FLASH_SECTOR_NUMBER = sizeof(FLASH_SECTORS) / sizeof(LibXR::FlashSector);
 ```
 
-同样的布局也记录在 `User/libxr_config.yaml` 的 `FlashLayout` 中；`libxr stm32 flash-info <型号>` 可以单独打印某个型号的布局。推算不出 MCU 型号的 Flash 布局时，`libxr gen` 给出警告，不生成 `flash_map.hpp`，`app_main.cpp` 也不 include 它，以前生成的 `flash_map.hpp` 被删除。
+`libxr stm32 flash-info <型号>` 可以单独打印某个型号的布局。推算不出 MCU 型号的 Flash 布局时，`libxr gen` 给出警告，不生成 `flash_map.hpp`，`app_main.cpp` 也不 include 它，以前生成的 `flash_map.hpp` 被删除。
 
 ## 创建Flash对象
 
