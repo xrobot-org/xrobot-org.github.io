@@ -39,7 +39,7 @@ This command will perform the following steps automatically:
 [INFO] Processing STM32F103RC.ioc...
 [INFO] Configuration exported to: .\.config.yaml
 [INFO] Generating C++ code...
-[INFO] Detected FreeRTOS configuration
+[INFO] System: FreeRTOS
 [INFO] Generated User: unchanged app_main.cpp, app_main.h, flash_map.hpp, libxr_config.yaml
 [INFO] LibXR.CMake already up to date, no changes needed.
 [INFO] LibXR.CMake already included in CMakeLists.txt.

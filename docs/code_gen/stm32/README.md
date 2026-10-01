@@ -41,7 +41,7 @@ libxr stm32 setup -d .
 [信息] 正在处理 STM32F103RC.ioc……
 [信息] 配置已导出到：.\.config.yaml
 [信息] 正在生成 C++ 代码……
-[信息] 检测到 FreeRTOS 配置
+[信息] 系统：FreeRTOS
 [信息] 已生成 User：未变化 app_main.cpp、app_main.h、flash_map.hpp、libxr_config.yaml
 [信息] LibXR.CMake 已是最新，无需修改。
 [信息] CMakeLists.txt 已经 include LibXR.CMake。
