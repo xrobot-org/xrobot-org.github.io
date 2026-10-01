@@ -8,9 +8,7 @@ sidebar_position: 2
 
 STM32CubeMX uses SysTick as the default time base, but other timers can also be selected manually.
 
-For bare-metal projects, keeping SysTick as the time base is usually fine, although raising SysTick interrupt priority is generally recommended.
-
-For RTOS-based projects, using another timer as the time base is usually preferable, and the selected timer interrupt should typically be kept at the highest practical priority.
+Set the time base (SYS > Timebase Source) to a general-purpose timer such as TIM6, and give its interrupt the highest preemption priority (0) in NVIC. `libxr parse` warns when the time base is still SysTick, or when the preemption priority of the timer interrupt is not 0.
 
 From the current generator’s perspective, this page mainly determines the shape of the single timebase instance constructed before `PlatformInit(...)`.
 

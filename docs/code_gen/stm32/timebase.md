@@ -8,9 +8,7 @@ sidebar_position: 2
 
 STM32CubeMX默认会将Systick作为时钟基准，也可以手动指定其他定时器。
 
-对于裸机来说，保持时钟基准为Systick即可，但是建议将Systick的中断优先级调至最高。
-
-对于RTOS，建议指定其他定时器作为时钟基准，并且将该定时器的中断优先级调至最高。
+建议在 SYS 中把时钟基准（Timebase Source）改为普通定时器（例如 TIM6），并在 NVIC 中把该定时器中断的抢占优先级设为最高（0）。时钟基准仍是 SysTick，或定时器中断的抢占优先级不是 0 时，`libxr parse` 会给出警告。
 
 从当前 generator 的角度，这一页真正决定的主要是 `PlatformInit(...)` 前那一行 timebase 实例构造形状。
 
