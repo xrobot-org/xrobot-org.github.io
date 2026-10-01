@@ -8,7 +8,7 @@ sidebar_position: 11
 
 生成器为两类串口生成代码：硬件串口（USART、UART、LPUART）和 USB CDC 虚拟串口。两者都可以作为终端的输入输出。
 
-硬件串口在 CubeMX 中需要开启中断，并为使用的收发方向开启 DMA。USB CDC 需要开启 USB 外设及其中断，并且不启用 CubeMX 的 USB_DEVICE 中间件或 USBX，XRUSB 协议栈直接使用 PCD 句柄。
+硬件串口在 CubeMX 中设为异步（Asynchronous）等使用 UART 句柄的模式，需要开启中断，并为使用的收发方向开启 DMA。USB CDC 需要开启 USB 外设及其中断，并且不启用 CubeMX 的 USB_DEVICE 中间件或 USBX，XRUSB 协议栈直接使用 PCD 句柄。
 
 ## 串口代码示例
 

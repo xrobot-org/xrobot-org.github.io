@@ -242,6 +242,7 @@ The command edits `CMakePresets.json` and `cmake/starm-clang.cmake`. Switching b
 - Must be a CMake project exported from STM32CubeMX  
 - Must contain a valid `.ioc` file  
 - Must enable Mutex when using FreeRTOS(`configUSE_MUTEXES`)  
+- Peripherals use the HAL driver, with Generate Code left on in the Project Manager  
 - The HAL timebase uses a general-purpose timer at the highest interrupt priority, see [Time Base](./timebase.md)
 
 ---

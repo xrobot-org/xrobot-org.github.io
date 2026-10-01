@@ -18,6 +18,6 @@ static STM32PWM pwm_tim1_ch1(&htim1, TIM_CHANNEL_1, false);
 
 ## 生成规则
 
-- CubeMX 工程中每个 TIM 外设下配置为 PWM 的通道各生成一个对象；
+- CubeMX 工程中每个 TIM 外设下处于 PWM Generation 模式的通道各生成一个对象；
 - 对象名为 `pwm_<定时器>_ch<通道>`，例如 `pwm_tim1_ch1`；
-- 互补输出通道（CubeMX 中的 `CHxN`）的对象名带 `n`（如 `pwm_tim1_ch1n`），使用 `TIM_CHANNEL_x`，第三个构造参数为 `true`；其他通道为 `false`。
+- 互补输出通道（CubeMX 中的 `CHxN`）的对象名带 `n`（如 `pwm_tim1_ch1n`），使用 `TIM_CHANNEL_x`，第三个构造参数为 `true`；其他通道为 `false`。同时打开主输出和互补输出（`PWM Generation1 CH1 CH1N`）时生成 `pwm_tim1_ch1` 和 `pwm_tim1_ch1n` 两个对象。

@@ -237,6 +237,7 @@ libxr stm32 toolchain clang --picolibc
 - 必须为 STM32CubeMX 导出的 CMake 工程；
 - 必须存在 `.ioc` 文件；
 - FreeRTOS 必须开启互斥锁（`configUSE_MUTEXES`）；
+- 外设使用 HAL 驱动，并在 Project Manager 中保持代码生成（Generate Code）开启；
 - HAL 时基使用普通定时器，中断优先级设为最高，见[时钟基准](./timebase.md)。
 
 ---

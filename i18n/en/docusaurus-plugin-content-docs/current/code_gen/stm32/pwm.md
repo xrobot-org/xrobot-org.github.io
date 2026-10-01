@@ -18,6 +18,6 @@ static STM32PWM pwm_tim1_ch1(&htim1, TIM_CHANNEL_1, false);
 
 ## Generation Rules
 
-- every channel configured for PWM under a TIM peripheral of the CubeMX project gets one object;
+- every channel in a PWM Generation mode under a TIM peripheral of the CubeMX project gets one object;
 - objects are named `pwm_<timer>_ch<channel>`, such as `pwm_tim1_ch1`;
-- a complementary output channel (`CHxN` in CubeMX) gets an object name ending in `n` (such as `pwm_tim1_ch1n`) and uses `TIM_CHANNEL_x` with `true` as the third constructor argument; other channels pass `false`.
+- a complementary output channel (`CHxN` in CubeMX) gets an object name ending in `n` (such as `pwm_tim1_ch1n`) and uses `TIM_CHANNEL_x` with `true` as the third constructor argument; other channels pass `false`. With both the main and the complementary output on (`PWM Generation1 CH1 CH1N`), the two objects `pwm_tim1_ch1` and `pwm_tim1_ch1n` are generated.

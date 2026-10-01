@@ -8,7 +8,7 @@ sidebar_position: 11
 
 The generator emits code for two kinds of serial ports: hardware UARTs (USART, UART, LPUART) and USB CDC virtual serial ports. Both can serve as the input and output of the terminal.
 
-A hardware UART needs its interrupt enabled in CubeMX, and DMA for each direction in use. USB CDC needs the USB peripheral and its interrupt enabled, without the CubeMX USB_DEVICE middleware or USBX; the XRUSB stack works on the PCD handle directly.
+A hardware UART uses a mode with a UART handle in CubeMX, such as Asynchronous, and needs its interrupt enabled and DMA for each direction in use. USB CDC needs the USB peripheral and its interrupt enabled, without the CubeMX USB_DEVICE middleware or USBX; the XRUSB stack works on the PCD handle directly.
 
 ## UART Code Examples
 

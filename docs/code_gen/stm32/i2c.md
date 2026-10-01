@@ -6,7 +6,7 @@ sidebar_position: 9
 
 # I2C
 
-在 STM32CubeMX 中，需要启用 I2C 对应的 DMA 通道，并配置相关中断。
+在 STM32CubeMX 中，I2C 设为 I2C 模式（SMBus 模式使用 SMBUS 句柄），需要启用对应的 DMA 通道，并配置相关中断。
 
 ## 示例
 

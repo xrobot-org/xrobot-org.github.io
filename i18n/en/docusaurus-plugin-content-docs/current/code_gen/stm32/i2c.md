@@ -6,7 +6,7 @@ sidebar_position: 9
 
 # I2C
 
-In STM32CubeMX, the matching I2C DMA channels and interrupts should be configured.
+In STM32CubeMX, the I2C runs in I2C mode (SMBus mode uses an SMBUS handle), with the matching DMA channels and interrupts configured.
 
 ## Example
 
