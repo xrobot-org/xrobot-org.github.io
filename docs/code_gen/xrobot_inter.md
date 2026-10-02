@@ -50,7 +50,7 @@ extern "C" void app_main(void) {
 - 需要注册更多对象（例如在 User Code 3 中创建的数据库或额外串口）时，在 User Code 3 中写 `XR_REGISTER`，这些内容在重新生成时保留。
 - `XROBOT_MAIN();` 由生成器维护。旧版本把它写在 User Code 3 中；若 User Code 区域中仍有该调用，生成器报告行号并停止、不写任何文件，删除该行后重新生成即可。
 
-`libxr stm32 cmake` 新建 `cmake/LibXR.CMake` 时，若 `User/app_main.cpp` 由 `--xrobot` 生成，则在其中设置 `XROBOT_MODULES_DIR`。已有的 `LibXR.CMake` 由用户维护，其中的设置与 `app_main.cpp` 不一致时只给出警告。
+`libxr stm32 cmake` 和 `libxr stm32 setup` 按 `User/app_main.cpp` 是否由 `--xrobot` 生成，在 `cmake/LibXR.CMake` 中设置或删除 `XROBOT_MODULES_DIR`，这一行写在 `add_subdirectory(Middlewares/Third_Party/LibXR)` 之前。已有的 `LibXR.CMake` 中没有这行 `add_subdirectory` 时，只给出警告，写出要加入的一行。
 
 ## 生成器版本
 

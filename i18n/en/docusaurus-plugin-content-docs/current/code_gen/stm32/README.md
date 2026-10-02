@@ -32,7 +32,6 @@ This command will perform the following steps automatically:
 ```text
 [INFO] Default LibXR commit: 4e9670164541b6af6b600a6d544115a9b3e49d98
 [INFO] User/app_main.cpp uses XRobot; generating with --xrobot (--no-xrobot turns it off).
-[INFO] [OK] git -C . submodule sync -- Middlewares/Third_Party/LibXR
 [INFO] Keeping the LibXR checkout 4e9670164541.
 [INFO] Found .ioc file: .\STM32F103RC.ioc
 [INFO] Parsing .ioc file...
@@ -44,9 +43,10 @@ This command will perform the following steps automatically:
 [INFO] LibXR.CMake already up to date, no changes needed.
 [INFO] LibXR.CMake already included in CMakeLists.txt.
 [INFO] [Pass] All tasks completed.
+[INFO] Build: cmake --preset debug && cmake --build --preset debug
 ```
 
-The generator writes only files whose content changed; the project above is already up to date, so none of the four files is rewritten.
+The generator writes only files whose content changed; the project above is already up to date, so none of the four files is rewritten. The last line is the build command of the first preset in `CMakePresets.json`; while no source file in `Core/Src` calls `app_main()`, a line before it names where to call it; see [How to Use](#how-to-use).
 
 ---
 

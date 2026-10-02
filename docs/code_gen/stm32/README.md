@@ -34,7 +34,6 @@ libxr stm32 setup -d .
 ```text
 [信息] 默认的 LibXR 提交：4e9670164541b6af6b600a6d544115a9b3e49d98
 [信息] User/app_main.cpp 使用了 XRobot，继续按 --xrobot 生成（--no-xrobot 可关闭）。
-[信息] [完成] git -C . submodule sync -- Middlewares/Third_Party/LibXR
 [信息] 保留现有的 LibXR 检出 4e9670164541。
 [信息] 找到 .ioc 文件：.\STM32F103RC.ioc
 [信息] 正在解析 .ioc 文件……
@@ -46,9 +45,10 @@ libxr stm32 setup -d .
 [信息] LibXR.CMake 已是最新，无需修改。
 [信息] CMakeLists.txt 已经 include LibXR.CMake。
 [信息] [通过] 全部任务已完成。
+[信息] 构建：cmake --preset debug && cmake --build --preset debug
 ```
 
-生成器只写内容有变化的文件；上例中工程已是最新，四个文件都没有改写。
+生成器只写内容有变化的文件；上例中工程已是最新，四个文件都没有改写。最后一行是 `CMakePresets.json` 中第一个 preset 的构建命令；`Core/Src` 中还没有源文件调用 `app_main()` 时，它前面另有一行写出调用的位置，见[使用说明](#使用说明)。
 
 ---
 

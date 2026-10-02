@@ -97,7 +97,7 @@ term_thread.Create(&terminal, terminal.ThreadFun, "terminal", 1024,
                    LibXR::Thread::Priority::HIGH);
 ```
 
-USB CDC 作为终端时，`terminal_source` 写 CDC 串口的名字，例如 `usb_otg_fs_cdc`。`terminal_source` 为空时不生成终端；它不是已生成的串口对象时，`libxr gen` 给出警告，不初始化终端。
+USB CDC 作为终端时，`terminal_source` 写 CDC 串口的名字，例如 `usb_otg_fs_cdc`。`terminal_source` 为空时不生成终端；它不是已生成的串口对象时，`libxr gen` 给出警告，不初始化终端；它是 `enable` 为 `false` 的 USB 外设的 CDC 串口时，警告写出要改为 `true` 的键。
 
 ## 配置文件说明
 
@@ -139,7 +139,7 @@ Terminal:
 
 `USART` 下的设置对 USART、UART 和 LPUART 都适用。`tx_buffer_size` 和 `rx_buffer_size` 是 DMA 缓冲区大小，`tx_queue_size` 是发送队列长度，`dma_section` 见 [高速缓存](./cache.md)。
 
-`USB` 下每个 USB 外设（`usb_fs`、`usb_otg_fs`、`usb_otg_hs`）有一组设置。首次生成时只写入 `enable: false`，此时不生成 USB 代码；改为 `true` 后再次生成，其余设置以默认值补齐：
+`USB` 下每个 USB 外设（`usb_fs`、`usb_otg_fs`、`usb_otg_hs`）有一组设置。首次生成时写入 `enable`：CubeMX 中为设备模式的外设为 `true`，主机模式的为 `false`；工程启用了 CubeMX 的 USB_DEVICE、USB_HOST 或 USBX 中间件时都为 `false`，这些中间件与 XRUSB 使用同一个外设，`libxr gen` 记录一条说明。`enable` 为 `false` 时不生成 USB 代码；为 `true` 时其余设置以默认值补齐：
 
 - `ep0_packet_size`：EP0 包大小，只能是 8、16、32 或 64，其他值给出警告并改为 8；
 - `tx_buffer_size`、`rx_buffer_size`：EP1 收发缓冲区大小；

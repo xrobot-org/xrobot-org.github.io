@@ -45,14 +45,63 @@ The BSP root is the nearest directory containing `Modules/modules.yaml`. Every c
 
 ## Quick Start
 
+Take a minimal BSP on Linux: an LED on line 17 of `/dev/gpiochip0`, blinked by the BlinkLED Module. The BSP root holds the LibXR submodule, `CMakeLists.txt` and the entry source `User/main.cpp`:
+
 ```bash
+git init
+git submodule add https://github.com/xrobot-org/libxr.git libxr
 xrobot init
+```
+
+`CMakeLists.txt` sets `XROBOT_MODULES_DIR` before adding LibXR, so that LibXR adds the Modules and checks the generated entry (see [CMake Integration](./setup.md#cmake-integration)):
+
+```cmake
+cmake_minimum_required(VERSION 3.19)
+project(blink CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
+add_subdirectory(libxr)
+
+add_executable(blink User/main.cpp)
+target_include_directories(blink PRIVATE User)
+target_link_libraries(blink PRIVATE xr)
+```
+
+The entry source constructs the BSP objects, registers the ones that configurations may use with `XR_REGISTER`, and enters the application:
+
+```cpp
+#include "linux_gpio.hpp"
+#include "xrobot_main.hpp"
+
+int main()
+{
+  LibXR::PlatformInit();
+  static LibXR::LinuxGPIO LED_R("/dev/gpiochip0", 17);
+  XR_REGISTER(LED_R, LibXR::GPIO);
+  XROBOT_MAIN();
+}
+```
+
+Add the Module and an instance:
+
+```bash
 xrobot module add xrobot-org/BlinkLED@dev
 xrobot setup                              # fetch, lock, check configs, generate the entry
 xrobot instance add xrobot-org/BlinkLED   # adds instance blinkled_0
 ```
 
-`instance add` writes every constructor parameter with its source default; a dependency without a default is left empty (`null`, "not filled in"). Fill it with the name of a registered BSP object:
+`instance add` writes every constructor parameter with its source default; a dependency without a default is left empty (`null`, "not filled in"), and the registered objects it can take are listed:
+
+```text
+$ xrobot instance add xrobot-org/BlinkLED
+Added blinkled_0 to User/xrobot.yaml; fill the null values (dependencies) before generating
+  led (LibXR::GPIO&): LED_R
+```
+
+Fill it with the name of a registered BSP object:
 
 ```yaml
 modules:
@@ -63,16 +112,6 @@ modules:
       - blink_cycle: 250
 settings:
   monitor_sleep_ms: 1000
-```
-
-The entry source registers the objects that configurations may use and enters the application:
-
-```cpp
-#include "xrobot_main.hpp"
-
-// ... construct LED_R and the other BSP objects ...
-XR_REGISTER(LED_R, LibXR::GPIO);
-XROBOT_MAIN();
 ```
 
 Generate and build with the native tools:

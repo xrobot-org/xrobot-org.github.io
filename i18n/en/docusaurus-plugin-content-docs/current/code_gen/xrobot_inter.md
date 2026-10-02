@@ -50,7 +50,7 @@ extern "C" void app_main(void) {
 - To register more objects (for example a database or an extra serial port created in User Code 3), write `XR_REGISTER` in User Code 3; that code is kept on regeneration.
 - `XROBOT_MAIN();` is owned by the generator. Older versions placed it in User Code 3; if a User Code region still calls it, the generator reports the line and stops without writing anything. Delete that line and regenerate.
 
-When `libxr stm32 cmake` creates `cmake/LibXR.CMake` and `User/app_main.cpp` was generated with `--xrobot`, the new file sets `XROBOT_MODULES_DIR`. An existing `LibXR.CMake` belongs to the user; when its setting disagrees with `app_main.cpp`, only a warning is logged.
+`libxr stm32 cmake` and `libxr stm32 setup` set or remove `XROBOT_MODULES_DIR` in `cmake/LibXR.CMake` according to whether `User/app_main.cpp` was generated with `--xrobot`; the line goes before `add_subdirectory(Middlewares/Third_Party/LibXR)`. When an existing `LibXR.CMake` has no such `add_subdirectory` line, only a warning is logged, naming the line to add.
 
 ## Generator Version
 

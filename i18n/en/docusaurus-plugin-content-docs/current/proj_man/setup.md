@@ -123,4 +123,4 @@ set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
 add_subdirectory(Middlewares/Third_Party/LibXR)
 ```
 
-`libxr stm32 cmake` writes this line for STM32 projects generated with `--xrobot`. LibXR then includes `Modules/CMakeLists.txt` and checks `User/xrobot_main.hpp`; see [Entry and Generation](./gen_main.md#build-check).
+In an STM32 project, `libxr stm32 cmake` and `libxr stm32 setup` write or remove this line according to whether `User/app_main.cpp` uses XRobot. LibXR then includes `Modules/CMakeLists.txt` and checks `User/xrobot_main.hpp`; see [Entry and Generation](./gen_main.md#build-check).

@@ -45,14 +45,63 @@ BSP 根目录是向上查找到的第一个包含 `Modules/modules.yaml` 的目�
 
 ## 快速上手
 
+以 Linux 上的一个最小 BSP 为例：一个 LED 接在 `/dev/gpiochip0` 的 17 号线上，由模块 BlinkLED 控制闪烁。BSP 根目录下有 LibXR 子模块、`CMakeLists.txt` 和入口源文件 `User/main.cpp`：
+
 ```bash
+git init
+git submodule add https://github.com/xrobot-org/libxr.git libxr
 xrobot init
+```
+
+`CMakeLists.txt` 在添加 LibXR 之前设置 `XROBOT_MODULES_DIR`，LibXR 据此加入模块并检查生成的入口（见 [CMake 集成](./setup.md#cmake-集成)）：
+
+```cmake
+cmake_minimum_required(VERSION 3.19)
+project(blink CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
+add_subdirectory(libxr)
+
+add_executable(blink User/main.cpp)
+target_include_directories(blink PRIVATE User)
+target_link_libraries(blink PRIVATE xr)
+```
+
+入口源文件构造 BSP 对象，用 `XR_REGISTER` 注册配置可以使用的对象，然后进入应用：
+
+```cpp
+#include "linux_gpio.hpp"
+#include "xrobot_main.hpp"
+
+int main()
+{
+  LibXR::PlatformInit();
+  static LibXR::LinuxGPIO LED_R("/dev/gpiochip0", 17);
+  XR_REGISTER(LED_R, LibXR::GPIO);
+  XROBOT_MAIN();
+}
+```
+
+加入模块并新增实例：
+
+```bash
 xrobot module add xrobot-org/BlinkLED@dev
 xrobot setup                              # 拉取、锁定、检查配置、生成入口
 xrobot instance add xrobot-org/BlinkLED   # 新增实例 blinkled_0
 ```
 
-`instance add` 按构造函数写出全部参数及源码中的默认值；没有默认值的依赖参数留空（`null`，表示"未填写"）。把它填成已注册的 BSP 对象名：
+`instance add` 按构造函数写出全部参数及源码中的默认值；没有默认值的依赖参数留空（`null`，表示"未填写"），并列出可以填写的已注册对象：
+
+```text
+$ xrobot instance add xrobot-org/BlinkLED
+已将 blinkled_0 添加到 User/xrobot.yaml；生成前请填写值为空的依赖参数
+  led（LibXR::GPIO&）：LED_R
+```
+
+把它填成已注册的 BSP 对象名：
 
 ```yaml
 modules:
@@ -63,16 +112,6 @@ modules:
       - blink_cycle: 250
 settings:
   monitor_sleep_ms: 1000
-```
-
-入口源文件注册配置可以使用的对象，然后进入应用：
-
-```cpp
-#include "xrobot_main.hpp"
-
-// ... 构造 LED_R 等 BSP 对象 ...
-XR_REGISTER(LED_R, LibXR::GPIO);
-XROBOT_MAIN();
 ```
 
 生成并用原生工具构建：

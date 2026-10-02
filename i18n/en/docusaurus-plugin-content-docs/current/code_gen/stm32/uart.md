@@ -97,7 +97,7 @@ term_thread.Create(&terminal, terminal.ThreadFun, "terminal", 1024,
                    LibXR::Thread::Priority::HIGH);
 ```
 
-For a USB CDC terminal, `terminal_source` names the CDC port, for example `usb_otg_fs_cdc`. An empty `terminal_source` generates no terminal; when it is not a generated serial port object, `libxr gen` logs a warning and does not set up the terminal.
+For a USB CDC terminal, `terminal_source` names the CDC port, for example `usb_otg_fs_cdc`. An empty `terminal_source` generates no terminal; when it is not a generated serial port object, `libxr gen` logs a warning and does not set up the terminal; when it is the CDC port of a USB peripheral whose `enable` is `false`, the warning names the key to set to `true`.
 
 ## Configuration File Explanation
 
@@ -139,7 +139,7 @@ Terminal:
 
 The settings under `USART` apply to USART, UART and LPUART alike. `tx_buffer_size` and `rx_buffer_size` are the DMA buffer sizes, `tx_queue_size` is the transmit queue length, and `dma_section` is described in [Cache](./cache.md).
 
-Under `USB`, each USB peripheral (`usb_fs`, `usb_otg_fs`, `usb_otg_hs`) has a group of settings. The first generation writes only `enable: false`, and no USB code is generated; after it is set to `true`, the next generation fills in the remaining settings with defaults:
+Under `USB`, each USB peripheral (`usb_fs`, `usb_otg_fs`, `usb_otg_hs`) has a group of settings. The first generation writes `enable`: `true` for a peripheral in device mode in CubeMX and `false` for one in host mode; when the project enables the CubeMX USB_DEVICE, USB_HOST or USBX middleware, it is `false` for all of them, because the middleware uses the same peripheral as XRUSB, and `libxr gen` logs a notice. With `enable` set to `false` no USB code is generated; with `true` the remaining settings are filled in with defaults:
 
 - `ep0_packet_size`: EP0 packet size, one of 8, 16, 32 or 64; any other value is warned about and becomes 8;
 - `tx_buffer_size`, `rx_buffer_size`: EP1 transmit and receive buffer sizes;
