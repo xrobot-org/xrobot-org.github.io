@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Flash Database
 
-After code generation, a file named `User/flash_map.hpp` will be created. This file defines the STM32 flash sector layout, with a format similar to:
+After code generation, a file named `User/flash_map.hpp` will be created. This file defines the STM32 flash sector layout. Each entry is a run of adjacent sectors of equal size: start address, sector size in bytes and sector count. The format is similar to:
 
 ```cpp
 #pragma once
@@ -17,22 +17,13 @@ After code generation, a file named `User/flash_map.hpp` will be created. This f
 
 #include "stm32_flash.hpp"
 
-constexpr LibXR::FlashSector FLASH_SECTORS[] = {
-  {0x08000000, 0x00004000},
-  {0x08004000, 0x00004000},
-  {0x08008000, 0x00004000},
-  {0x0800C000, 0x00004000},
-  {0x08010000, 0x00010000},
-  {0x08020000, 0x00020000},
-  {0x08040000, 0x00020000},
-  {0x08060000, 0x00020000},
-  {0x08080000, 0x00020000},
-  {0x080A0000, 0x00020000},
-  {0x080C0000, 0x00020000},
-  {0x080E0000, 0x00020000},
+constexpr LibXR::FlashRegion FLASH_REGIONS[] = {
+  {0x08000000, 0x00004000, 4},
+  {0x08010000, 0x00010000, 1},
+  {0x08020000, 0x00020000, 7},
 };
 
-constexpr size_t FLASH_SECTOR_NUMBER = sizeof(FLASH_SECTORS) / sizeof(LibXR::FlashSector);
+constexpr size_t FLASH_REGION_NUMBER = sizeof(FLASH_REGIONS) / sizeof(LibXR::FlashRegion);
 ```
 
 `libxr stm32 flash-info <model>` prints the layout of a model on its own. When no flash layout can be derived for the MCU, `libxr gen` logs a warning, generates no `flash_map.hpp`, leaves it out of the includes of `app_main.cpp`, and deletes a previously generated `flash_map.hpp`.
@@ -41,12 +32,13 @@ constexpr size_t FLASH_SECTOR_NUMBER = sizeof(FLASH_SECTORS) / sizeof(LibXR::Fla
 
 ## Creating a Flash Object
 
-The first parameter is the Flash address mapping table, the second parameter is the total number of flash sectors, and the third parameter is the starting sector index for the database. The third parameter is optional; in current mainline, the 2-argument constructor forwards `start_sector = sector_count - 1`.
+The first parameter is the Flash address mapping table, the second parameter is the number of its entries, and the third parameter is the start address of the database storage area, which extends to the end of the Flash. The start address must be exactly the start of a sector; otherwise an assertion fails in the constructor. The third parameter is optional; without it the last two sectors are used, one for the main block and one for the backup block of the database.
 
 ```cpp
   // app_main.cpp
   /* User Code Begin 3 */
-  STM32Flash flash(FLASH_SECTORS, FLASH_SECTOR_NUMBER);
+  STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER);
+  // Same as STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER, 0x080C0000);
 ```
 
 ---

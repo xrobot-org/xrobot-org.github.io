@@ -26,22 +26,22 @@
 1. 打开 User/flash_map.hpp，可以看到类似内容：
    - MCU 型号说明。
    - 包含 main.h 和 stm32_flash.hpp。
-   - constexpr LibXR::FlashSector FLASH_SECTORS[] = {...};
-   - constexpr size_t FLASH_SECTOR_NUMBER = sizeof(FLASH_SECTORS) / sizeof(LibXR::FlashSector);
+   - constexpr LibXR::FlashRegion FLASH_REGIONS[] = {...};
+   - constexpr size_t FLASH_REGION_NUMBER = sizeof(FLASH_REGIONS) / sizeof(LibXR::FlashRegion);
 2. 概念：
-   - FlashSector：表示 Flash 中一个扇区（起始地址 + 大小）。
-   - FLASH_SECTORS：把所有可用扇区按顺序放在一个数组里。
-   - FLASH_SECTOR_NUMBER：扇区总数。
+   - FlashRegion：表示 Flash 中一段地址相接、大小相同的扇区（起始地址 + 扇区大小 + 扇区个数）。
+   - FLASH_REGIONS：按地址顺序把整片 Flash 的各段放在一个数组里。
+   - FLASH_REGION_NUMBER：段数。
 3. 这个文件是自动生成的：
    - 不需要手动修改。
-   - 只需要在 app_main.cpp 里直接使用 FLASH_SECTORS 和 FLASH_SECTOR_NUMBER 即可。
+   - 只需要在 app_main.cpp 里直接使用 FLASH_REGIONS 和 FLASH_REGION_NUMBER 即可。
 ## 三、在 app_main() 中创建 STM32Flash 对象
 1. 打开 User/app_main.cpp。
 2. 确认已经包含 flash_map.hpp，如无则添加：#include "flash_map.hpp"。
 3. 在 app_main() 中、各外设对象附近添加：
-   - STM32Flash flash(FLASH_SECTORS, FLASH_SECTOR_NUMBER);
-   - 第 1 个参数：扇区数组；第 2 个参数：扇区总数；
-   - 可选第 3 个参数是“数据库起始扇区编号”，不写时默认使用最后两个扇区作为数据库区域。
+   - STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER);
+   - 第 1 个参数：扇区表；第 2 个参数：表的段数；
+   - 可选第 3 个参数是“数据库存储区的起始地址”，须正好是某个扇区的起点；不写时默认使用最后两个扇区作为数据库区域。
 ## 四、选择数据库类型：DatabaseRaw vs DatabaseRawSequential
 1. 如果是 STM32F1 / F4 等常见型号：
    - 使用 DatabaseRaw<4>：写入粒度 4 字节。

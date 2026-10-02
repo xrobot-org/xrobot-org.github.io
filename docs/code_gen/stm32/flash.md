@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Flash数据库
 
-在上一步代码生成后，会出现`User/flash_map.hpp`，该文件记录了STM32的Flash地址映射表，格式如下：
+在上一步代码生成后，会出现`User/flash_map.hpp`，该文件记录了STM32的Flash地址映射表。表中每一项是一段地址相接、大小相同的扇区，依次为起始地址、扇区字节数和扇区个数，格式如下：
 
 ```cpp
 #pragma once
@@ -17,34 +17,26 @@ sidebar_position: 1
 
 #include "stm32_flash.hpp"
 
-constexpr LibXR::FlashSector FLASH_SECTORS[] = {
-  {0x08000000, 0x00004000},
-  {0x08004000, 0x00004000},
-  {0x08008000, 0x00004000},
-  {0x0800C000, 0x00004000},
-  {0x08010000, 0x00010000},
-  {0x08020000, 0x00020000},
-  {0x08040000, 0x00020000},
-  {0x08060000, 0x00020000},
-  {0x08080000, 0x00020000},
-  {0x080A0000, 0x00020000},
-  {0x080C0000, 0x00020000},
-  {0x080E0000, 0x00020000},
+constexpr LibXR::FlashRegion FLASH_REGIONS[] = {
+  {0x08000000, 0x00004000, 4},
+  {0x08010000, 0x00010000, 1},
+  {0x08020000, 0x00020000, 7},
 };
 
-constexpr size_t FLASH_SECTOR_NUMBER = sizeof(FLASH_SECTORS) / sizeof(LibXR::FlashSector);
+constexpr size_t FLASH_REGION_NUMBER = sizeof(FLASH_REGIONS) / sizeof(LibXR::FlashRegion);
 ```
 
 `libxr stm32 flash-info <型号>` 可以单独打印某个型号的布局。推算不出 MCU 型号的 Flash 布局时，`libxr gen` 给出警告，不生成 `flash_map.hpp`，`app_main.cpp` 也不 include 它，以前生成的 `flash_map.hpp` 被删除。
 
 ## 创建Flash对象
 
-第一个参数是 Flash 地址映射表，第二个参数是 Flash 的总扇区数，第三个参数是数据库的起始扇区编号。第三个参数可以省略；当前主线的二参数构造会转发为 `start_sector = sector_count - 1`。
+第一个参数是 Flash 地址映射表，第二个参数是表的项数，第三个参数是数据库存储区的起始地址，存储区一直到 Flash 末尾。起始地址须正好是某个扇区的起点，否则构造时断言失败。第三个参数可以省略，这时使用末尾两个扇区，数据库的主块和备份块各占一个。
 
 ```cpp
   // app_main.cpp
   /* User Code Begin 3 */
-  STM32Flash flash(FLASH_SECTORS, FLASH_SECTOR_NUMBER);
+  STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER);
+  // 等同于 STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER, 0x080C0000);
 ```
 
 ## 创建数据库对象
