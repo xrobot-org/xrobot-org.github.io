@@ -16,7 +16,7 @@ sidebar_position: 2
 xrobot gen -c User/RobotConfig/hero.yaml
 ```
 
-`xrobot gen -c` 为指定配置生成 `User/xrobot_main.hpp`，即选中该产品。头文件开头记录了配置和生成时读取的每个文件；`xrobot gen`（不带 `-c`）和 `xrobot setup` 沿用当前选择，没有生成过时使用 `User/xrobot.yaml`。选中的配置被删除或改名后，这些命令报错，需要用 `xrobot gen -c` 重新选择。
+`xrobot gen -c` 为指定配置生成 `User/xrobot_main.hpp`，即选中该产品。头文件末尾记录了配置和生成时读取的每个文件；`xrobot gen`（不带 `-c`）和 `xrobot setup` 沿用当前选择，没有生成过时使用 `User/xrobot.yaml`。选中的配置被删除或改名后，这些命令报错，需要用 `xrobot gen -c` 重新选择。
 
 ---
 
@@ -161,4 +161,4 @@ xrobot format [--check] [-c CONFIG]...
 
 ## 错误定位
 
-配置错误报告 `<配置>: <实例>.args.<参数>: 原因`。生成的代码带 `#line` 指令，C++ 编译错误会指向 YAML 中对应的行。
+配置错误报告 `<配置>: <实例>.args.<参数>: 原因`。生成的代码带 `#line` 指令，C++ 编译错误会指向 YAML 中对应的行（`xrobot gen --no-line-directives` 可以省略它们）。

@@ -16,7 +16,7 @@ An application configuration describes one product: which Module instances are c
 xrobot gen -c User/RobotConfig/hero.yaml
 ```
 
-`xrobot gen -c` generates `User/xrobot_main.hpp` for that configuration, which selects the product. The header's first lines record the configuration and every file generation read. `xrobot gen` without `-c` and `xrobot setup` keep the current selection, or use `User/xrobot.yaml` when nothing was generated yet. If the selected configuration has been deleted or renamed, these commands report an error and a configuration has to be selected again with `xrobot gen -c`.
+`xrobot gen -c` generates `User/xrobot_main.hpp` for that configuration, which selects the product. The header's last lines record the configuration and every file generation read. `xrobot gen` without `-c` and `xrobot setup` keep the current selection, or use `User/xrobot.yaml` when nothing was generated yet. If the selected configuration has been deleted or renamed, these commands report an error and a configuration has to be selected again with `xrobot gen -c`.
 
 ---
 
@@ -161,4 +161,4 @@ The `set` value is read like a value in the config: C++ code without quotes or i
 
 ## Locating Errors
 
-Configuration errors are reported as `<config>: <instance>.args.<param>: reason`. The generated code carries `#line` directives, so C++ compiler errors point to the corresponding YAML line.
+Configuration errors are reported as `<config>: <instance>.args.<param>: reason`. The generated code carries `#line` directives, so C++ compiler errors point to the corresponding YAML line (`xrobot gen --no-line-directives` leaves them out).

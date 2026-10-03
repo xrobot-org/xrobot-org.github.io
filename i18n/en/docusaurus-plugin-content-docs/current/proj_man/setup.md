@@ -61,6 +61,7 @@ The lock is written by `xrobot setup`, says so in its first line, and is not edi
 | `xrobot setup --offline` | Uses only local checkouts and commits, without network access |
 | `xrobot setup --context-ref REF` | Sets the BSP context for `same` / `same-or-dev` |
 | `xrobot setup --release-ref REF` | Refuses commits that are not released for the target line (see below) |
+| `xrobot setup --no-line-directives` | Leaves the `#line` directives out of the regenerated entry |
 
 `--update` cannot be combined with `--frozen` or `--offline`. It also runs `xrobot sync` on every configuration and prints the changes.
 
@@ -110,7 +111,7 @@ cmake -S . -B build
 cmake --build build
 ```
 
-`CONTEXT_REF` is the branch or tag being built; `TARGET_REF` is the pull request's base branch (for a push, the pushed branch or tag).
+`CONTEXT_REF` is the branch or tag being built; `TARGET_REF` is the pull request's base branch (for a push, the pushed branch or tag). An STM32 BSP does not need to write these steps: the shared workflow `bsp-stm32-ci.yml` contains them; see [BSP CI](./README.md#bsp-ci).
 
 ---
 

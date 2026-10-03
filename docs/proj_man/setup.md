@@ -61,6 +61,7 @@ xrobot module remove owner/Repo
 | `xrobot setup --offline` | 不访问网络，只使用本地已有的检出和提交 |
 | `xrobot setup --context-ref REF` | 指定 `same` / `same-or-dev` 的 BSP 上下文 |
 | `xrobot setup --release-ref REF` | 拒绝对目标分支未发布的提交（见下文） |
+| `xrobot setup --no-line-directives` | 重新生成入口时不写 `#line` 指令 |
 
 `--update` 不能与 `--frozen`、`--offline` 同时使用；它还会对所有配置执行 `xrobot sync`，并打印改动。
 
@@ -112,7 +113,7 @@ cmake -S . -B build
 cmake --build build
 ```
 
-`CONTEXT_REF` 是被构建的分支或标签，`TARGET_REF` 是 PR 的目标分支（推送时即被推送的分支或标签）。
+`CONTEXT_REF` 是被构建的分支或标签，`TARGET_REF` 是 PR 的目标分支（推送时即被推送的分支或标签）。STM32 BSP 不必自己写这些步骤：共享工作流 `bsp-stm32-ci.yml` 已包含它们，见 [BSP CI](./README.md#bsp-ci)。
 
 ---
 
