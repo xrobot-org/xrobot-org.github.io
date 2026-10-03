@@ -110,6 +110,20 @@ User/xrobot.yaml: status_led.args.led: LED_X is neither an XR_REGISTER name nor 
 
 模块头文件指已锁定模块根目录下的 `*.hpp`，以及它们用 `#include "..."` 引入、位于模块目录内的头文件。字段可以嵌套映射。对这类类型，位置列表和位置花括号（`{1, 2, 3}`）会被拒绝，指定初始化器（`{.a = 1, .b = 2}`）按映射检查。其他类型（如 LibXR 或标准库类型）可以写任意 C++ 表达式，包括花括号；参数默认值用指定初始化器写出了字段时，也可以写成映射，按默认值中的字段名检查。
 
+以 LibXR 的 `PID<float>::Param` 为例，模块把默认值写成 `{.k = 1.0f, .p = 0.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}` 时，`xrobot instance add` 写出映射，映射需列出默认值中的全部字段，`xrobot gen` 检查字段名，`xrobot instance set` 可以单独修改其中一项。同一个值也可以写成一行指定初始化器，只写与默认成员初始化不同的字段，由编译器检查：
+
+```yaml
+- pid_param:            # 映射 / mapping
+    k: 1.0
+    p: 30.0
+    i: 0.0
+    d: 1.0
+    i_limit: 0.0
+    out_limit: 0.0
+    cycle: true
+- pid_param: '{.p = 30.0, .d = 1.0, .cycle = true}'   # 一行指定初始化器 / designated initializer
+```
+
 模块新版本增减字段或参数后运行 `xrobot sync`：新增的写入源码默认值，删除的去掉，已有的值保持不变。`xrobot setup --update` 会自动执行这一步。
 
 ### 常量
@@ -127,7 +141,8 @@ User/xrobot.yaml: status_led.args.led: LED_X is neither an XR_REGISTER name nor 
 以下命令保留注释，并按 `xrobot format` 的规范格式写入；不带 `-c` 时编辑当前选中的产品。
 
 ```bash
-xrobot instance add owner/Repo [--id ID]      # 按构造函数写出全部参数及默认值
+xrobot instance add owner/Repo [--id ID] [--template-arg VALUE]...
+                                              # 按构造函数写出全部参数及默认值
 xrobot instance set ID args.led LED_B
 xrobot instance set ID args.param.reverse true
 xrobot instance set ID args.topic_name '"bmi088_gyro"'

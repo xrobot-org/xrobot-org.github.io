@@ -110,6 +110,20 @@ When a parameter's type is a struct or class defined in a Module header, write a
 
 Module headers are the `*.hpp` in the root folder of a locked Module and the headers inside the Module folder that they bring in with `#include "..."`. Mappings can nest. For such types, positional lists and positional braces (`{1, 2, 3}`) are rejected; designated initializers (`{.a = 1, .b = 2}`) are checked like mappings. Other types (for example LibXR or standard library types) accept any C++ expression, including braces; when the parameter's default names the fields with a designated initializer, a mapping is accepted too and checked against those field names.
 
+Take LibXR's `PID<float>::Param`: when a Module writes the default as `{.k = 1.0f, .p = 0.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 0.0f, .cycle = false}`, `xrobot instance add` writes a mapping. The mapping lists every field of the default, `xrobot gen` checks the field names, and `xrobot instance set` can change one field. The same value can also be written as a one-line designated initializer that names only the fields that differ from their default member initializers; the compiler checks it:
+
+```yaml
+- pid_param:            # mapping
+    k: 1.0
+    p: 30.0
+    i: 0.0
+    d: 1.0
+    i_limit: 0.0
+    out_limit: 0.0
+    cycle: true
+- pid_param: '{.p = 30.0, .d = 1.0, .cycle = true}'   # designated initializer
+```
+
 After a new Module version adds or removes fields or parameters, run `xrobot sync`: new ones are written with their source defaults, removed ones are dropped, and existing values are kept. `xrobot setup --update` does this automatically.
 
 ### Constants
@@ -127,7 +141,8 @@ Each entry in `constexprs` becomes `inline constexpr <type> <name> = <value>;` i
 These commands keep comments and write the canonical layout that `xrobot format` enforces. Without `-c` they edit the selected product.
 
 ```bash
-xrobot instance add owner/Repo [--id ID]      # writes every parameter with its default
+xrobot instance add owner/Repo [--id ID] [--template-arg VALUE]...
+                                              # writes every parameter with its default
 xrobot instance set ID args.led LED_B
 xrobot instance set ID args.param.reverse true
 xrobot instance set ID args.topic_name '"bmi088_gyro"'

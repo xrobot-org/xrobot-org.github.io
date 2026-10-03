@@ -181,6 +181,7 @@ Accepted:
 ## Examples
 
 - Command output comes from an actual run. Only machine paths may be replaced with `<BSP>` or relative paths; output is never written by hand.
+- The configuration example in a Module README is the instance `xrobot instance add` writes, then filled in; structs keep the form the tool writes (mapping or C++ text). In BSP configurations a LibXR struct value may be written as a one-line designated initializer that names only the fields that differ from the default.
 - Documentation of core repositories such as LibXR, XRobot and CodeGenerator uses generic examples without RoboMaster robot names.
 
 Rejected:
