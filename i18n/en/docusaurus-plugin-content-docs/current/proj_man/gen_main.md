@@ -67,13 +67,13 @@ The generated header follows LibXR's `.clang-format` (Google based, column limit
 
 [[noreturn]] static inline void XRobotMain(LibXR::GPIO& LED_B, LibXR::RamFS& ramfs)
 {
-  // blink_led: xrobot-org/BlinkLED (RobotConfig/doc_sample.yaml:2)
-#line 2 "RobotConfig/doc_sample.yaml"
+  // blink_led: xrobot-org/BlinkLED (User/RobotConfig/doc_sample.yaml:2)
+#line 2 "User/RobotConfig/doc_sample.yaml"
   static BlinkLED blink_led(LED_B, 250);
-#line 15 "xrobot_main.hpp"
+#line 15 "User/xrobot_main.hpp"
 
-  // ahrs: xrobot-org/MadgwickAHRS (RobotConfig/doc_sample.yaml:7)
-#line 7 "RobotConfig/doc_sample.yaml"
+  // ahrs: xrobot-org/MadgwickAHRS (User/RobotConfig/doc_sample.yaml:7)
+#line 11 "User/RobotConfig/doc_sample.yaml"
   static const MadgwickAHRS::Param xr_ahrs_param = {
       .beta = 0.033,
       .gyro_topic_name = "bmi088_gyro",
@@ -81,9 +81,11 @@ The generated header follows LibXR's `.clang-format` (Google based, column limit
       .quaternion_topic_name = "ahrs_quaternion",
       .euler_topic_name = "ahrs_euler",
       .task_stack_depth = 1536,
+#line 11 "User/RobotConfig/doc_sample.yaml"
   };
+#line 7 "User/RobotConfig/doc_sample.yaml"
   static MadgwickAHRS ahrs(ramfs, xr_ahrs_param);
-#line 28 "xrobot_main.hpp"
+#line 30 "User/xrobot_main.hpp"
 
   for (;;)
   {
@@ -101,7 +103,7 @@ The generated header follows LibXR's `.clang-format` (Google based, column limit
 // xrobot: entry "app_main.cpp"
 // xrobot: depends "../Modules/xrobot-org/BlinkLED/BlinkLED.hpp"
 // xrobot: depends "../Modules/xrobot-org/MadgwickAHRS/MadgwickAHRS.hpp"
-// xrobot: digest aaa09f5c0d95b1a059ce190aaf6157bcf9bf1056ebf4011a85d79108701ac273
+// xrobot: digest 116fe9efdb1e4ad5856423cd4e2416ba021bcd6c0722d5a7f9e5f76eccc3b557
 ```
 
 (The example lists the `depends` lines of two Module headers only; the real file lists the headers of every locked Module.)
@@ -112,7 +114,7 @@ The generated header follows LibXR's `.clang-format` (Google based, column limit
 - Values passed to reference, `std::initializer_list` or struct parameters are written as `static const <type> xr_<instance id>_<parameter> = {...};` right before the instance. They live as long as the instance, so a Module may keep a reference to them. Struct values have one field per line with a trailing comma, and nested values and lists that do not fit are broken per entry too; values written as C++ text in the YAML keep their tokens and only get new line breaks. Scalars, names of dependencies, `nullptr` and `&name` are written in the argument itself. A name or expression bound to a reference parameter (such as `Make()`) is written as `static const T& xr_... = expression;`, so it still refers to the same object instead of copying it.
 - The `xr_` prefix is reserved for the generator: instance ids and `XR_REGISTER` names cannot start with `xr_` (nor `XR_` or `xrobot_`), and `gen` reports an error. It also reports two instances that would produce the same static variable name; rename the id of one of them.
 - The C++ compiler checks types and values by its rules of implicit conversion; the generated code no longer writes a `static_assert`, `static_cast` or conversion function for every argument. Only when the Module has several constructors that could take the call is the parameter type written, so that the constructor the YAML's parameter names pick is the one called: scalars, pointers and references are then written `xrobot_generated::Implicit<type>(value)`, a function the header defines. It converts implicitly, so downcasts are still rejected and the compiler still warns about constants that change value. Other types passed by value get `static_cast<type>(value)`.
-- `#line`: one directive before each instance points into the configuration (the path is relative to the header's folder) and one after it points back into the header, so compiler errors in the instance and its `static` variables show the YAML line. `--no-line-directives` leaves them out (`xrobot setup` accepts it too).
+- `#line`: every line of an instance and its `static` variables is mapped to the YAML line it comes from: the first line of a `static` variable to the line of its argument, each field of a struct to the line of the field's key, a closing brace to the line of the value it closes (GCC reports errors in an initializer there), the first line of the constructor call to the line of the instance, and each later line to the line of its first argument; when one YAML value takes several lines of code, each of them maps to the line of that value. A `#line` is written only where the line the compiler counts by itself would differ, and one after the instance points back into the header. Paths are relative to the BSP root, as in the errors of `xrobot`, so an editor opens the location of a compiler error from the project folder. `--no-line-directives` leaves them out (`xrobot setup` accepts it too).
 - The loop calls each instance's public `void OnMonitor()` (where one exists) in configuration order, then sleeps `settings.monitor_sleep_ms` milliseconds. The return type of `OnMonitor` is checked by `gen` from the Module header: one that is certainly not `void` is an error; when the header cannot tell (`auto`, a type alias, a `using` declaration), a `static_assert(std::is_void_v<decltype(x.OnMonitor())>);` for that instance precedes the loop. `XROBOT_MAIN()` does not return and runs in the calling thread.
 - The `// xrobot:` lines at the end of the file record the configuration, every input generation read (lock, entry source, Module headers) and a digest of their content. LibXR's CMake matches them by line wherever they are, and the digest depends only on the inputs, not on the text of the header. The `depends` lines of the Module headers are sorted by comparing the characters of their relative paths (uppercase before lowercase), so one BSP generates the same header and digest on Windows and Linux.
 - An unchanged result is not rewritten. Do not edit or commit the file.

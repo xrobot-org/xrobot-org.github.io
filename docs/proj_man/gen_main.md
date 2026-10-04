@@ -67,13 +67,13 @@ xrobot gen --no-line-directives           # 不写 #line 指令
 
 [[noreturn]] static inline void XRobotMain(LibXR::GPIO& LED_B, LibXR::RamFS& ramfs)
 {
-  // blink_led: xrobot-org/BlinkLED (RobotConfig/doc_sample.yaml:2)
-#line 2 "RobotConfig/doc_sample.yaml"
+  // blink_led: xrobot-org/BlinkLED (User/RobotConfig/doc_sample.yaml:2)
+#line 2 "User/RobotConfig/doc_sample.yaml"
   static BlinkLED blink_led(LED_B, 250);
-#line 15 "xrobot_main.hpp"
+#line 15 "User/xrobot_main.hpp"
 
-  // ahrs: xrobot-org/MadgwickAHRS (RobotConfig/doc_sample.yaml:7)
-#line 7 "RobotConfig/doc_sample.yaml"
+  // ahrs: xrobot-org/MadgwickAHRS (User/RobotConfig/doc_sample.yaml:7)
+#line 11 "User/RobotConfig/doc_sample.yaml"
   static const MadgwickAHRS::Param xr_ahrs_param = {
       .beta = 0.033,
       .gyro_topic_name = "bmi088_gyro",
@@ -81,9 +81,11 @@ xrobot gen --no-line-directives           # 不写 #line 指令
       .quaternion_topic_name = "ahrs_quaternion",
       .euler_topic_name = "ahrs_euler",
       .task_stack_depth = 1536,
+#line 11 "User/RobotConfig/doc_sample.yaml"
   };
+#line 7 "User/RobotConfig/doc_sample.yaml"
   static MadgwickAHRS ahrs(ramfs, xr_ahrs_param);
-#line 28 "xrobot_main.hpp"
+#line 30 "User/xrobot_main.hpp"
 
   for (;;)
   {
@@ -101,18 +103,18 @@ xrobot gen --no-line-directives           # 不写 #line 指令
 // xrobot: entry "app_main.cpp"
 // xrobot: depends "../Modules/xrobot-org/BlinkLED/BlinkLED.hpp"
 // xrobot: depends "../Modules/xrobot-org/MadgwickAHRS/MadgwickAHRS.hpp"
-// xrobot: digest aaa09f5c0d95b1a059ce190aaf6157bcf9bf1056ebf4011a85d79108701ac273
+// xrobot: digest 116fe9efdb1e4ad5856423cd4e2416ba021bcd6c0722d5a7f9e5f76eccc3b557
 ```
 
 （示例只列出了两个模块头文件的 `depends` 行；实际写出锁定的每个模块的头文件。）
 
 - 第一行写明由哪份配置生成。其后是一个 `#include` 块，按文件名排序，只含用到的模块和生成的代码需要的头文件。
-- 每个实例前有一行注释：`<id>: <owner/Repo>[<模板实参>] (<配置相对路径>:<行号>)`，实例之间空一行。编译错误落在头文件中时，注释给出 YAML 中的位置。
+- 每个实例前有一行注释：`<id>: <owner/Repo>[<模板实参>] (<配置路径>:<行号>)`，实例之间空一行。编译错误落在头文件中时，注释给出 YAML 中的位置。
 - 实例是函数内 `static` 对象，按配置顺序在 `XRobotMain` 执行时构造，构造函数完成初始化，没有额外的 `Init()`/`Start()` 阶段。
 - 传给引用、`std::initializer_list` 或结构体参数的值写成紧邻实例之前的 `static const <类型> xr_<实例 id>_<参数名> = {…};`，与实例一样活到程序结束，所以模块可以保存对它的引用。结构体值每个字段一行、行尾带逗号，放不下的嵌套值和列表同样逐项分行；YAML 中写成 C++ 文本的值保持原样，只调整换行。标量、依赖的名字、`nullptr` 和 `&名字` 直接写在实参里。绑定到引用参数的名字或表达式（如 `Make()`）写成 `static const T& xr_… = 表达式;`，仍引用同一个对象，不复制。
 - `xr_` 前缀保留给生成器：实例 id 和 `XR_REGISTER` 的名字不能以 `xr_`（以及 `XR_`、`xrobot_`）开头，`gen` 会报错。两个实例会生成同一个静态变量名时也会报错，请给其中一个改 id。
 - 类型和取值由 C++ 编译器按隐式转换的规则检查，生成的代码不再为每个参数写 `static_assert`、`static_cast` 或转换函数。只有模块有几个能接受这些参数的构造函数时，才需要写出参数类型，使 YAML 的参数名选中的那个构造函数被调用：这时标量、指针和引用写成 `xrobot_generated::Implicit<类型>(值)`，头文件会定义这个函数；它是隐式转换，仍然拒绝向下转换，并对改变数值的常量给出编译警告。其他按值传递的类型写成 `static_cast<类型>(值)`。
-- `#line`：每个实例前一条指向配置的指令（路径相对头文件所在目录），实例之后一条指回头文件，所以实例及其 `static` 变量中的编译错误会显示 YAML 的行号。`--no-line-directives` 省略这些指令（`xrobot setup` 同样接受）。
+- `#line`：实例及其 `static` 变量的每行代码都对应到它来自的 YAML 行：`static` 变量的第一行对应参数所在的行，结构体的每个字段对应字段的键所在的行，右花括号对应它闭合的值所在的行（GCC 把初始化中的错误报在这里），构造调用的第一行对应实例所在的行，之后每行对应这一行第一个实参所在的行；一个 YAML 值拆成几行代码时，每行都对应这个值所在的行。`#line` 只写在编译器自己数出的行号对不上的地方，实例之后一条指回头文件。路径相对 BSP 根目录，与 `xrobot` 的报错一致，编辑器可以从工程目录直接打开编译错误中的位置。`--no-line-directives` 省略这些指令（`xrobot setup` 同样接受）。
 - 循环中按配置顺序调用每个实例的公有 `void OnMonitor()`（有才调用），然后休眠 `settings.monitor_sleep_ms` 毫秒。`OnMonitor` 的返回类型在 `gen` 时由模块头文件检查：明确不是 `void` 时报错；头文件无法判断（`auto`、类型别名、`using` 声明）时，循环前为这个实例写一条 `static_assert(std::is_void_v<decltype(x.OnMonitor())>);`。`XROBOT_MAIN()` 不返回，在调用它的线程中运行。
 - 文件末尾的 `// xrobot:` 行记录配置、生成时读取的全部输入（锁文件、入口源文件、模块头文件）和这些输入内容的摘要。LibXR 的 CMake 逐行匹配它们，与位置无关；摘要只取决于输入，与头文件本身的文本无关。模块头文件的 `depends` 行按相对路径的写法逐字符比较排序（大写字母在小写字母之前），所以同一个 BSP 在 Windows 和 Linux 上生成相同的头文件和摘要。
 - 内容未变化时不重写文件。不要手动编辑该文件，也不要提交它。
