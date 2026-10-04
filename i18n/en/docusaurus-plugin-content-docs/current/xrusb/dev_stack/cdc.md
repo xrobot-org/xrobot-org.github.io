@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # CDC Device Stack
 
-This section introduces XRUSB’s **USB CDC ACM (virtual serial port)** device class implementation, focusing on:
+This section introduces XRUSB’s USB CDC ACM (virtual serial port) device class implementation, focusing on:
 
 - Descriptor organization (IAD + Communication Interface + Data Interface)
 - Endpoint resource allocation, configuration, and callback dispatch
@@ -31,8 +31,8 @@ The current CDC stack consists of the following header files (source code is inc
 
 - Endpoint resource allocation and configuration (Data IN / Data OUT / Comm IN)
 - Filling a configuration-descriptor block for IAD + Communication Interface + Data Interface
-- CDC ACM standard class request handling (`GET_LINE_CODING` / `SET_LINE_CODING` / `SET_CONTROL_LINE_STATE`)
-- Notifying the upper layer via callbacks for **control line changes (DTR/RTS)** and **line parameter changes (Line Coding)**
+- CDC ACM standard class request handling (`GET_LINE_CODING` / `SET_LINE_CODING` / `SET_CONTROL_LINE_STATE` / `SEND_BREAK`; `SEND_BREAK` is answered with a ZLP only)
+- Notifying the upper layer via callbacks for control line changes (DTR/RTS) and line parameter changes (Line Coding)
 - Providing TX/RX completion hooks (`OnDataOutComplete` / `OnDataInComplete`) for derived classes to implement concrete data paths
 
 `CDCBase` does not implement a data path directly; derived classes must implement:
@@ -52,22 +52,23 @@ These hooks are triggered by endpoint transfer completion, and dispatched after 
 - `Write()`: sends IN data to the host
 - `SetConfig()`: maps UART configuration to CDC Line Coding, and sends one Serial State notification
 
-Internally it uses `LibXR::ReadPort` / `LibXR::WritePort` as a software RX buffer and TX queue manager, and performs enqueue/dequeue in endpoint callbacks. It also implements backpressure and a pending-cache mechanism: when RX queue space is insufficient, it pauses OUT re-arm and resumes once the upper layer consumes data.
+Internally it uses `LibXR::ReadPort` / `LibXR::WritePort` as a software RX buffer and TX queue manager, and performs enqueue/dequeue in endpoint callbacks. When the RX queue lacks space, the received data is held and OUT reception pauses; after the upper layer reads data, the held data is queued and reception restarts.
 
 ### `LibXR::USB::CDCToUart`
 
-`CDCToUart` derives from `CDCUart` and bridges a **USB CDC virtual serial port** with an external `LibXR::UART` instance bidirectionally:
+`CDCToUart` derives from `CDCUart` and bridges a USB CDC virtual serial port with an external `LibXR::UART` instance bidirectionally:
 
 - CDC RX → UART TX: CDC OUT data is written to the UART
 - UART RX → CDC TX: UART RX data is written to CDC
 
-It is implemented as a callback-chain pump: each side's write completion triggers the other side's next read/write, enabling continuous forwarding.
+It is implemented as a callback chain: completing a write on one side starts the next read, so data is forwarded continuously.
 
 Notes:
 
 - The constructor performs dynamic allocation (heap buffers for RX/TX temporary storage).
-- The bridged UART's write-queue capacity must satisfy `rx_buffer_size` (the code asserts `uart_.write_port_->queue_data_->MaxSize() >= rx_buffer_size`).
+- The bridged UART's write-port capacity must be at least `rx_buffer_size` (asserted in the constructor).
 - After construction it arms one CDC read and one UART read (`Read({nullptr, 0}, ...)`) to enter the callback chain.
+- The constructor registers its own callback with `SetOnSetLineCodingCallback()` that forwards host line coding to the bridged UART's `SetConfig()`; calling `SetOnSetLineCodingCallback()` on a `CDCToUart` replaces this forwarding.
 
 ### `LibXR::USB::CDCWriteTest` / `LibXR::USB::CDCReadTest`
 
@@ -82,7 +83,7 @@ Both derive from `CDCBase` and are used to validate link throughput and driver s
 
 ### Interfaces
 
-A CDC ACM device is exposed as **two interfaces (Communication + Data)** and includes an IAD (Interface Association Descriptor), allowing the host to recognize it as a single CDC composite function.
+A CDC ACM device is exposed as two interfaces (Communication + Data) and includes an IAD (Interface Association Descriptor), allowing the host to recognize it as a single CDC composite function.
 
 - Communication Interface: includes 1 Interrupt IN endpoint (Notification Endpoint)
 - Data Interface: includes 1 Bulk OUT + 1 Bulk IN endpoint (data RX/TX)
@@ -107,7 +108,7 @@ Notes:
 
 The Comm IN endpoint max packet size is fixed at 16 bytes; the Serial State notification itself is a 10-byte structure (see below).
 
-Endpoint numbers can be specified when constructing `CDCBase` / `CDCUart` / `CDCToUart` / the test classes; the default is `Endpoint::EPNumber::EP_AUTO`, which lets the endpoint pool auto-assign numbers.
+Constructors of `CDCBase`-derived classes take endpoint numbers in this order: data IN, data OUT, notification IN. Data IN and data OUT may share one number (for example EP1); the notification endpoint uses another. `CDCUart`, `CDCWriteTest` and `CDCReadTest` also take two interface strings at the end, defaulting to `"XRUSB CDC Control"` and `"XRUSB CDC Data"`; `CDCToUart` has no such parameters.
 
 ### Speed and Max Packet Size
 
@@ -140,7 +141,7 @@ When receiving the `SET_CONTROL_LINE_STATE` class request, the behavior is:
 
 Engineering recommendation:
 
-- Treat **DTR** as the key signal indicating “the host has opened the serial port / is ready to communicate”
+- Treat DTR as the key signal indicating “the host has opened the serial port / is ready to communicate”
 - When DTR is deasserted, avoid continuing to transmit to prevent upper-layer blocking or meaningless queue buildup
 
 ### Line Coding (Baud Rate / Parity / Stop Bits / Data Bits)
@@ -212,9 +213,9 @@ struct SerialStateNotification
 
 ## Initialization and Resource Release Behavior
 
-### Init Behavior
+### Binding Endpoints
 
-Key actions in `CDCBase::BindEndpoints(endpoint_pool, start_itf_num)`:
+Key actions in `CDCBase::BindEndpoints(endpoint_pool, start_itf_num, in_isr)`:
 
 - Clear `control_line_state_`
 - Request three endpoints from `EndpointPool` and `Configure` them
@@ -229,9 +230,9 @@ Notes:
 - The pre-receive length uses `MaxPacketSize()` as the first receive length to enter the continuous receive loop quickly
 - `CDCBase` does not buffer received data; derived classes must consume the data in `OnDataOutComplete` and restart the OUT transfer (or restart according to their own strategy)
 
-### Deinit Behavior
+### Unbinding Endpoints
 
-Key actions in `CDCBase::UnbindEndpoints(endpoint_pool)`:
+Key actions in `CDCBase::UnbindEndpoints(endpoint_pool, in_isr)`:
 
 - Set `inited_ = false`
 - Clear `control_line_state_`
@@ -242,13 +243,9 @@ Key actions in `CDCBase::UnbindEndpoints(endpoint_pool)`:
 Derived classes or upper-layer adapters should ensure in `UnbindEndpoints()`:
 
 - Terminate all asynchronous operations that depend on endpoint objects
-- Complete or fail any pending read/write requests to avoid upper layers waiting indefinitely
+- Finish pending read/write requests (with success or an error) so the upper layer does not wait forever
 
-`CDCUart` performs additional queue cleanup and fail recovery in `UnbindEndpoints()`:
-
-- Clears the TX data queue and resets the dequeue helper
-- Pops TX info entries one by one and calls `Finish()` with `ErrorCode::INIT_ERR` to avoid the upper layer getting stuck
-- Clears ZLP state and RX backpressure (`recv_pause_` / `pending_data_`), and resets write-port state
+`CDCUart::UnbindEndpoints()` calls `CDCBase::UnbindEndpoints()` and then only clears the ZLP flag and the receive-pause state (`recv_pause_` / `pending_data_`); data still in the TX queue is kept, and pending writes are not finished with an error.
 
 ---
 
@@ -259,11 +256,15 @@ Derived classes or upper-layer adapters should ensure in `UnbindEndpoints()`:
 ```cpp
 #include "cdc_uart.hpp"
 
-LibXR::USB::CDCUart cdc_uart(/*rx*/256, /*tx*/256, /*tx_queue*/8);
+using EPNumber = LibXR::USB::Endpoint::EPNumber;
+
+// data IN EP1, data OUT EP1, notification IN EP2
+LibXR::USB::CDCUart cdc_uart(EPNumber::EP1, EPNumber::EP1, EPNumber::EP2,
+                             /*rx*/ 256, /*tx*/ 256, /*tx_queue*/ 8);
 
 // When constructing the USB device, put &cdc_uart into the class list: {{&cdc_uart}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 ```
 
 Optional: listen to host changes for Line Coding and DTR/RTS:
@@ -273,7 +274,7 @@ cdc_uart.SetOnSetLineCodingCallback(
   LibXR::Callback<LibXR::UART::Configuration>::Create(
     [](bool in_isr, int, LibXR::UART::Configuration cfg) {
       (void)in_isr;
-      // You can synchronize this to a real UART peripheral here
+      // Synchronize to a real UART peripheral here if needed
       // (do not block in ISR context)
     },
     0
@@ -285,7 +286,7 @@ cdc_uart.SetOnSetControlLineStateCallback(
     [](bool in_isr, int, bool dtr, bool rts) {
       (void)in_isr;
       (void)rts;
-      // dtr=true indicates the host has opened the serial port and you can start transmitting
+      // dtr=true: the host has opened the port; transmission can start
     },
     0
   )
@@ -297,9 +298,12 @@ cdc_uart.SetOnSetControlLineStateCallback(
 ```cpp
 #include "cdc_to_uart.hpp"
 
-extern LibXR::UART& uart1;  // your hardware/peripheral UART instance
+extern LibXR::UART& uart1;  // hardware UART being bridged
 
 LibXR::USB::CDCToUart cdc_to_uart(
+  LibXR::USB::Endpoint::EPNumber::EP1,  // data IN
+  LibXR::USB::Endpoint::EPNumber::EP1,  // data OUT
+  LibXR::USB::Endpoint::EPNumber::EP2,  // notification IN
   uart1,
   /*rx_buffer_size*/ 128,
   /*tx_buffer_size*/ 128,
@@ -307,8 +311,8 @@ LibXR::USB::CDCToUart cdc_to_uart(
 );
 
 // When constructing the USB device, put &cdc_to_uart into the class list: {{&cdc_to_uart}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 ```
 
 ### Throughput Tests
@@ -317,14 +321,16 @@ Write test:
 
 ```cpp
 #include "cdc_test.hpp"
-LibXR::USB::CDCWriteTest cdc_write_test;
+using EPNumber = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCWriteTest cdc_write_test(EPNumber::EP1, EPNumber::EP1, EPNumber::EP2);
 ```
 
 Read test:
 
 ```cpp
 #include "cdc_test.hpp"
-LibXR::USB::CDCReadTest cdc_read_test;
+using EPNumber = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCReadTest cdc_read_test(EPNumber::EP1, EPNumber::EP1, EPNumber::EP2);
 ```
 
 Pass them into the USB Device class list in the same way.

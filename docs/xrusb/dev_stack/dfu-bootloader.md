@@ -1,7 +1,7 @@
 ---
 id: xrusb-dev-stack-dfu-bootloader
 title: DFU Bootloader
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # DFU Bootloader 设备协议栈
@@ -26,18 +26,18 @@ sidebar_position: 7
 ```cpp
 LibXR::USB::DfuBootloaderBackend backend(
     flash,
-    image_base,
+    image_offset,
     image_limit,
     seal_offset,
     jump_to_app,
-    jump_ctx,
+    jump_app_ctx,
     true);
 ```
 
 参数说明：
 
 - `flash`：底层 `Flash` 实例
-- `image_base`：镜像区起始地址
+- `image_offset`（`DfuBootloaderClass` 中名为 `image_base`）：镜像区在 `flash` 对象内的起始偏移，不是绝对地址
 - `image_limit`：镜像区总长度
 - `seal_offset`：镜像区内 seal 记录偏移
 - `jump_to_app`：跳转到应用固件的回调
@@ -56,7 +56,7 @@ LibXR::USB::DfuBootloaderClass dfu_bl(
     image_limit,
     seal_offset,
     jump_to_app,
-    jump_ctx,
+    jump_app_ctx,
     true,
     "XRUSB DFU");
 ```
@@ -70,7 +70,7 @@ LibXR::USB::DfuBootloaderClass dfu_bl(
 
 ## 2. 接口与描述符
 
-`DfuBootloaderClass` 只贡献 **1 个 DFU 接口**，不使用 IAD，也不申请额外数据端点，所有数据都经控制传输完成。
+`DfuBootloaderClass` 只贡献 1 个 DFU 接口，不使用 IAD，也不申请额外数据端点，所有数据都经控制传输完成。
 
 - `GetInterfaceCount() = 1`
 - `HasIAD() = false`
@@ -89,13 +89,13 @@ DFU Functional Descriptor 的关键字段来自 backend 上报的 `DFUCapabiliti
 
 当前默认别名 `DfuBootloaderClass` 的最大传输块尺寸是 `4096` 字节，写入描述符时会同步到 `wTransferSize`。
 
-除可选的 WebUSB BOS capability 外，bootloader DFU 路径还会通过 `DfuInterfaceClassBase` 默认发布 **WinUSB MS OS 2.0** 描述符集；若构造时不额外覆盖，当前默认使用的是 device-scoped WinUSB 元数据。
+除可选的 WebUSB BOS capability 外，bootloader DFU 路径还会通过 `DfuInterfaceClassBase` 默认发布 WinUSB MS OS 2.0 描述符集；若构造时不额外覆盖，当前默认使用的是 device-scoped WinUSB 元数据。
 
 ---
 
 ## 3. 支持的请求与行为
 
-当前主线支持：
+支持的请求：
 
 | 请求 | 行为 |
 | ---- | ---- |
@@ -153,7 +153,7 @@ dfu_bl.Process();
 - 处理待提交写入
 - 处理 manifest
 
-因此这条路径同样不要求专门后台线程，但**必须在主循环或周期任务中持续调用 `Process()`**。如果完全不调用，主机看到的 `GETSTATUS` 会进入等待状态，但实际写入和 manifest 不会继续推进。
+`Process()` 须在主循环或周期任务中持续调用。不调用时，主机看到的 `GETSTATUS` 一直处于等待状态，写入和 manifest 不会继续。
 
 若启用了 `autorun`，镜像 ready 后仍需要上层显式消费启动请求：
 
@@ -179,7 +179,7 @@ static void JumpToApp(void*)
 
 LibXR::USB::DfuBootloaderClass dfu_bl(
     flash,
-    APP_IMAGE_BASE,
+    APP_IMAGE_OFFSET,  // flash 对象内的偏移
     APP_IMAGE_LIMIT,
     APP_SEAL_OFFSET,
     JumpToApp,
@@ -187,8 +187,8 @@ LibXR::USB::DfuBootloaderClass dfu_bl(
     true);
 
 // USB class list: {{&dfu_bl}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 
 for (;;)
 {

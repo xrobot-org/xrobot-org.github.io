@@ -13,7 +13,7 @@ XRUSB is the USB device stack inside LibXR. It is built from platform-side USB d
 - modern C++ implementation
 - lock-free data structures where appropriate
 - double-buffer and DMA-oriented transfer paths
-- dynamic endpoint allocation
+- endpoint numbers set by each class's constructor; endpoints taken from the endpoint pool when a configuration is selected
 - one-shot construction-time memory allocation
 - interrupt-driven and ISR-safe design
 
@@ -23,12 +23,12 @@ XRUSB is the USB device stack inside LibXR. It is built from platform-side USB d
 |------|--------|------|
 | CDC-ACM | supported | exposed as LibXR UART adapters |
 | HID | supported | keyboard / mouse / gamepad paths are ready to use; other HID types should derive their own class |
-| UAC | supported | current mainline primarily documents a UAC1 microphone path |
+| UAC | supported | UAC1 microphone |
 | GSUSB | supported (CAN/FDCAN) | oriented toward Linux SocketCAN |
-| DAPLinkV1 | supported (SWD only) | oriented toward CMSIS-DAP v1 HID host tooling |
+| DAPLinkV1 | supported (SWD; JTAG once a backend is set with `SetJtag()`) | oriented toward CMSIS-DAP v1 HID host tooling |
 | DFU Runtime | supported | handles runtime `DETACH` and deferred jump to bootloader |
 | DFU Bootloader | supported | supports `DNLOAD / UPLOAD / GETSTATUS / ABORT / CLRSTATUS / manifest` flows |
-| DAPLinkV2 | supported (SWD only) | oriented toward CMSIS-DAP v2 bulk host tooling |
+| DAPLinkV2 | supported (SWD; JTAG once a backend is set with `SetJtag()`) | oriented toward CMSIS-DAP v2 bulk host tooling |
 
 ## BOS / Platform Capability Support
 
@@ -39,12 +39,12 @@ XRUSB is the USB device stack inside LibXR. It is built from platform-side USB d
 
 Additional notes:
 
-- This table describes capability surfaces that can already be confirmed from current mainline device-class or BOS-related code.
+- The tables list the capabilities present in the device-class and BOS code.
 - Whether a specific BOS capability is actually published by a device instance still depends on constructor choices such as WebUSB landing-page parameters or the selected/default WinUSB metadata scope.
 
 ## Platform Support
 
-| Platform | Current mainline device class / controller path | Status | Tested hardware |
+| Platform | Device class / controller | Status | Tested hardware |
 |------|-----------------------------------------------|--------|----------------|
 | STM32 | `STM32USBDeviceDevFs` / FSDEV | supported | STM32F103 / STM32G431 |
 | STM32 | `STM32USBDeviceOtgFS` / `USB_OTG_FS` | supported (Device) | STM32F401 / STM32F407 |
@@ -65,4 +65,4 @@ Additional notes:
 - the platform-specific pages focus on how USB device and endpoint implementations are realized on different MCU / SoC targets;
 - the device-class pages focus on the behavior and interfaces of each USB device class;
 - the `VID/PID` page covers the default XRUSB conventions, not every special identification strategy such as CMSIS-DAP compatibility choices.
-- the current documentation covers device-side paths only; the host side still does not have a stable public stack surface in current mainline that should be expanded into parallel host-stack pages.
+- This section covers the device-side (Device) stack only.

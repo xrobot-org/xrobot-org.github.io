@@ -1,14 +1,14 @@
 ---
 id: xrusb-dev-stack-daplinkv2
 title: DAPLinkV2
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # DAPLinkV2 Device Stack
 
-This document describes XRUSB’s **CMSIS-DAP v2 (Bulk)** device-class implementation: `LibXR::USB::DapLinkV2Class<SwdPort>`. A known-working test VID:PID is `0x0D28:0x2040`, with BCD version `0x0201`.
+This document describes XRUSB’s CMSIS-DAP v2 (Bulk) device-class implementation: `LibXR::USB::DapLinkV2Class<SwdPort>`. A known-working test VID:PID is `0x0D28:0x2040`, with BCD version `0x0201`.
 
-This class targets common CMSIS-DAP v2 host toolchains (e.g., pyOCD, OpenOCD CMSIS-DAP backend, DAPLink-compatible clients) using **USB Bulk transport**. It uses a **single Vendor interface + two Bulk endpoints (1 IN + 1 OUT)**, implements a practical subset of DAP v2 commands (SWD-focused), and advertises plug-and-play **WinUSB (MS OS 2.0)** capability on Windows.
+This class targets common CMSIS-DAP v2 host toolchains (e.g., pyOCD, OpenOCD CMSIS-DAP backend, DAPLink-compatible clients) using USB Bulk transport. It uses a single Vendor interface + two Bulk endpoints (1 IN + 1 OUT), implements a practical subset of DAP v2 commands (SWD-focused), and advertises plug-and-play WinUSB (MS OS 2.0) capability on Windows.
 
 Since DAPLink commonly declares itself as a composite device, this class is typically used together with other USB classes (e.g., CDC virtual COM). Hosts also often look for devices containing the `CMSIS-DAP` string, so the recommended LanguagePack is:
 
@@ -21,12 +21,12 @@ static constexpr auto USB_FS_LANG_PACK =
 
 Supported features:
 
-- **CMSIS-DAP v2 Bulk transport**
-- **SWD-only** (`DAP_Connect` supports SWD only; JTAG is not implemented)
-- **Optional nRESET control** (inject via `GPIO* nreset_gpio`; disabled by default)
-- **SWJ_Pins shadow semantics** (SWDIO/SWCLK are exposed via shadow state; if wired, nRESET can report the physical level)
-- **WinUSB (MS OS 2.0) BOS platform capability** (CompatibleID="WINUSB" + DeviceInterfaceGUIDs)
-- **DAP_Transfer / DAP_TransferBlock** (includes AP posted-read pipeline; Transfer supports match / timestamp constraint checks)
+- CMSIS-DAP v2 Bulk transport
+- SWD; with a JTAG backend set, `DAP_Connect` can also connect over JTAG
+- Optional nRESET control (inject via `GPIO* nreset_gpio`; disabled by default)
+- SWJ_Pins shadow semantics (SWDIO/SWCLK are exposed via shadow state; if wired, nRESET can report the physical level)
+- WinUSB (MS OS 2.0) BOS platform capability (CompatibleID="WINUSB" + DeviceInterfaceGUIDs)
+- DAP_Transfer / DAP_TransferBlock (includes AP posted-read pipeline; Transfer supports match / timestamp constraint checks)
 
 ---
 
@@ -39,25 +39,32 @@ This is a template class. The SWD backend type is specified by the template para
 Constructor:
 
 ```cpp
-template <typename SwdPort>
+template <typename SwdPort, uint16_t DefaultDapPacketSize = 512,
+          uint8_t AdvertisedPacketCount = 8, uint16_t MaxDapPacketSize = 1024,
+          uint16_t QueuedRequestBufferSize = 2048, uint16_t QueuedCommandCountMax = 255>
 explicit DapLinkV2Class(
+    Endpoint::EPNumber data_in_ep_num,
+    Endpoint::EPNumber data_out_ep_num,
     SwdPort& swd_link,
     LibXR::GPIO* nreset_gpio = nullptr,
-    Endpoint::EPNumber data_in_ep_num  = Endpoint::EPNumber::EP_AUTO,
-    Endpoint::EPNumber data_out_ep_num = Endpoint::EPNumber::EP_AUTO);
+    const char* interface_string = DEFAULT_INTERFACE_STRING);  // "CMSIS-DAP v2"
 ```
 
 Parameters:
 
 - `swd_link`: SWD link object (`SwdPort` instance).
 - `nreset_gpio`: optional nRESET GPIO. If null, reset-related commands are handled best-effort.
-- `data_in_ep_num` / `data_out_ep_num`: Bulk IN/OUT endpoint numbers; `EP_AUTO` enables auto allocation.
+- `data_in_ep_num` / `data_out_ep_num`: Bulk IN/OUT endpoint numbers (required).
+- `MaxDapPacketSize`: `PACKET_SIZE`; values above 1279 are treated as 1279, and 0 falls back to `DefaultDapPacketSize`
+- `AdvertisedPacketCount`: the `PACKET_COUNT` actually exposed to the host is clamped to 4
+- `QueuedRequestBufferSize` / `QueuedCommandCountMax`: byte size of the `DAP_QueueCommands` queue buffer and the maximum number of queued commands
 
 Common APIs:
 
 - `SetInfoStrings(info)`: override `DAP_Info` string fields.
 - `GetState()`: read the internal DAP state.
 - `IsInited()`: whether bind/initialization has completed.
+- `SetJtag(jtag)`: set the JTAG backend (`LibXR::Debug::Jtag*`). Including `daplink_v2_profile_swd.hpp` disables JTAG at compile time and `SetJtag()` has no effect; JTAG is available when `daplink_v2.hpp` or `daplink_v2_profile_jtag.hpp` is included directly.
 
 ### 1.2 InfoStrings
 
@@ -89,7 +96,7 @@ Return rules:
 
 ### 2.1 Interface Descriptor
 
-`DapLinkV2Class` contributes **one interface** and does not use an IAD:
+`DapLinkV2Class` contributes one interface and does not use an IAD:
 
 - `GetInterfaceCount() = 1`
 - `HasIAD() = false`
@@ -98,12 +105,12 @@ The interface class is fixed to `0xFF` (Vendor Specific) and exposes two Bulk en
 
 ### 2.2 Bulk Endpoints
 
-- **Bulk OUT**: Host → Device (DAP request packets)
-- **Bulk IN**: Device → Host (DAP response packets)
+- Bulk OUT: Host → Device (DAP request packets)
+- Bulk IN: Device → Host (DAP response packets)
 
 Endpoint allocation/configuration happens in `BindEndpoints()`:
 
-- Allocate OUT/IN endpoints from `EndpointPool` (explicit or auto endpoint numbers).
+- Take the OUT/IN endpoints from `EndpointPool` using the endpoint numbers given at construction.
 - Endpoint type is BULK; the transfer size uses `UINT16_MAX` as an upper bound and the core chooses a legal value.
 - `wMaxPacketSize` in the configuration descriptor comes from the endpoint object’s `MaxPacketSize()`.
 
@@ -124,18 +131,18 @@ The interface number is only known at bind time, so the function subset field `b
 
 ## 4. Transport Model (Bulk Request/Response)
 
-This class implements a synchronous **CMSIS-DAP v2 over Bulk** request/response model:
+This class implements the CMSIS-DAP v2 over Bulk request/response model:
 
-1. Host sends one request frame to **Bulk OUT**.
-2. The device parses the request and builds the response in the OUT completion callback (into the IN endpoint buffer).
-3. The device sends the response on **Bulk IN**.
-4. After IN completes, the device re-arms OUT to receive the next request frame.
+1. The host sends one request frame to Bulk OUT.
+2. The device parses the request in the OUT completion callback: if IN is idle, it builds the response directly in the IN buffer and sends it; if IN is busy, it writes the response into the other half of the double buffer or into the response queue.
+3. While fewer than `PACKET_COUNT` (4) generated responses are still unsent, the device re-arms OUT immediately for the next frame; once the limit is reached, it re-arms OUT after an IN transfer completes.
+4. After each IN completion, the next pending response is sent.
 
 ---
 
 ## 5. Lifecycle: Bind / Unbind
 
-### 5.1 `BindEndpoints(endpoint_pool, start_itf_num)`
+### 5.1 `BindEndpoints(endpoint_pool, start_itf_num, in_isr)`
 
 Key points:
 
@@ -149,7 +156,7 @@ Key points:
   - SWJ shadow defaults: SWDIO=1, nRESET=1, SWCLK=0
 - Set `inited_ = true` and arm OUT reception.
 
-### 5.2 `UnbindEndpoints(endpoint_pool)`
+### 5.2 `UnbindEndpoints(endpoint_pool, in_isr)`
 
 Key points:
 
@@ -165,7 +172,7 @@ Key points:
 
 The internal state structure `LibXR::USB::DapLinkV2Def::State` includes:
 
-- `debug_port`: default DISABLED; becomes SWD after CONNECT
+- `debug_port`: default DISABLED; becomes SWD or JTAG after CONNECT
 - `transfer_abort`: TransferAbort flag
 - `transfer_cfg`: parsed TransferConfigure settings (`idle_cycles / retry_count / match_retry`)
 
@@ -196,7 +203,7 @@ Command dispatch is implemented in `ProcessOneCommand()`. The first byte `CMD` s
 | ----------------------- | -------------------: | ----------------------------------------------------------------------------------------------- |
 | `DAP_Info`              |               `INFO` | Returns string/numeric info (CAPABILITIES / PACKET_COUNT / PACKET_SIZE / TIMESTAMP_CLOCK, etc.) |
 | `DAP_HostStatus`        |        `HOST_STATUS` | Returns OK                                                                                      |
-| `DAP_Connect`           |            `CONNECT` | SWD-only; returns SWD port on success                                                           |
+| `DAP_Connect`           |            `CONNECT` | Connects SWD; can also connect JTAG once a JTAG backend is set; returns the actual port         |
 | `DAP_Disconnect`        |         `DISCONNECT` | Closes SWD and returns to DISABLED                                                              |
 | `DAP_TransferConfigure` | `TRANSFER_CONFIGURE` | Sets idle_cycles / retry / match_retry and maps to SWD policy                                   |
 | `DAP_Transfer`          |           `TRANSFER` | DP/AP read/write; supports match / timestamp; AP posted-read pipeline                           |
@@ -210,16 +217,19 @@ Command dispatch is implemented in `ProcessOneCommand()`. The first byte `CMD` s
 | `DAP_SWJ_Sequence`      |       `SWJ_SEQUENCE` | Writes SWJ bit sequence (LSB-first) and updates shadow (SWDIO=last bit, SWCLK=0)                |
 | `DAP_SWD_Configure`     |      `SWD_CONFIGURE` | Best-effort parse; returns OK                                                                   |
 | `DAP_SWD_Sequence`      |       `SWD_SEQUENCE` | Multi-segment in/out sequences; input data appended to response (LSB-first)                     |
-| `DAP_QueueCommands`     |     `QUEUE_COMMANDS` | Returns `<CMD, DAP_ERROR>`                                                                      |
-| `DAP_ExecuteCommands`   |   `EXECUTE_COMMANDS` | Returns `<CMD, DAP_ERROR>`                                                                      |
+| `DAP_JTAG_Sequence`     |      `JTAG_SEQUENCE` | Handled when JTAG is available                                                                  |
+| `DAP_JTAG_Configure`    |     `JTAG_CONFIGURE` | Handled when JTAG is available                                                                  |
+| `DAP_JTAG_IDCODE`       |        `JTAG_IDCODE` | Handled when JTAG is available                                                                  |
+| `DAP_QueueCommands`     |     `QUEUE_COMMANDS` | Appends the commands in the request to the queue buffer and returns `<CMD, DAP_OK>`; returns `<CMD, DAP_ERROR>` when `QueuedRequestBufferSize` / `QueuedCommandCountMax` is exceeded or the format is invalid |
+| `DAP_ExecuteCommands`   |   `EXECUTE_COMMANDS` | Executes the queued commands in order; the response is the `CMD` byte followed by each command's response; returns `<CMD, DAP_ERROR>` on failure |
 
 Note: The numeric values depend on `DapLinkV2Def::CommandId`; this document uses enum names.
 
 ### 7.2 Key `DAP_Info` Fields
 
-- `CAPABILITIES`: `DAP_CAP_SWD`
+- `CAPABILITIES`: `DAP_CAP_SWD`, plus `DAP_CAP_JTAG` when a JTAG backend is set
 - `PACKET_COUNT`: `4` by default. The class advertises `8` as its template default packet-count input, but the current implementation clamps the effective host-visible count to `4`.
-- `PACKET_SIZE`: returns `MaxTransferSize()` of the IN endpoint
+- `PACKET_SIZE`: `MaxDapPacketSize`, default 1024
 - `TIMESTAMP_CLOCK`: `1,000,000` (matches a microsecond time base)
 
 ---
@@ -230,16 +240,16 @@ Note: The numeric values depend on `DapLinkV2Def::CommandId`; this document uses
 
 ```cpp
 #include "daplink_v2.hpp"
-#include "usb/device.hpp"
-#include "debug/swd.hpp"
 
-MySwdBackend swd(/* ... init ... */);   // concrete SWD backend implementation
-MyGpio nreset(/* ... optional ... */);  // concrete GPIO implementation
+extern LibXR::Debug::Swd& swd;  // SWD backend provided by the platform
+extern LibXR::GPIO& nreset;     // optional nRESET pin
 
-LibXR::USB::DapLinkV2Class<MySwdBackend> dap(swd, &nreset);
+using EPNumber = LibXR::USB::Endpoint::EPNumber;
 
-// Optional: override DAP_Info strings
-LibXR::USB::DapLinkV2Class<MySwdBackend>::InfoStrings info;
+LibXR::USB::DapLinkV2Class<LibXR::Debug::Swd> dap(EPNumber::EP1, EPNumber::EP1, swd,
+                                                  &nreset);
+
+LibXR::USB::DapLinkV2Class<LibXR::Debug::Swd>::InfoStrings info;
 info.vendor = "XRobot";
 info.product = "DAPLinkV2";
 info.serial = "00000001";
@@ -247,8 +257,8 @@ info.firmware_ver = "2.0.0";
 dap.SetInfoStrings(info);
 
 // USB device class list: {{&dap}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 ```
 
 ### 8.2 Windows / WinUSB Access

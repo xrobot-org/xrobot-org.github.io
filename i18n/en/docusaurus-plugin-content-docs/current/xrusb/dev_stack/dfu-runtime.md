@@ -1,14 +1,14 @@
 ---
 id: xrusb-dev-stack-dfu-runtime
 title: DFU Runtime
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # DFU Runtime Device Stack
 
 `LibXR::USB::DfuRuntimeClass` provides the Runtime DFU interface used while the application firmware is already running.
 
-It only handles runtime `DETACH`. It does **not** implement `DNLOAD / UPLOAD` itself. After the host requests an upgrade, the device jumps to the board-level bootloader once the configured timeout expires.
+It handles runtime `DETACH`: after the host requests an upgrade, the device jumps to the board-level bootloader once the configured timeout expires; `DfuBootloaderClass` in the bootloader transfers the firmware.
 
 ---
 
@@ -37,13 +37,13 @@ Parameters:
 
 If `webusb_landing_page_url` and `webusb_vendor_code` are provided, the class also publishes an additional WebUSB BOS capability.
 
-By default, the runtime DFU path also exposes a **WinUSB MS OS 2.0** descriptor set through the shared `DfuInterfaceClassBase`, using function-scoped WinUSB metadata.
+By default, the runtime DFU path also exposes a WinUSB MS OS 2.0 descriptor set through the shared `DfuInterfaceClassBase`, using function-scoped WinUSB metadata.
 
 ---
 
 ## 2. Interface and Descriptors
 
-`DfuRuntimeClass` contributes **one interface** only, does not use an IAD, and does not allocate extra data endpoints.
+`DfuRuntimeClass` contributes one interface only, does not use an IAD, and does not allocate extra data endpoints.
 
 - `GetInterfaceCount() = 1`
 - `HasIAD() = false`
@@ -89,9 +89,7 @@ Runtime DFU requires periodic external calls to `Process()`:
 dfu_rt.Process();
 ```
 
-`Process()` does only one thing:
-
-- when `detach_pending_` is set and the timeout has expired, call `jump_to_bootloader(jump_ctx)`
+`Process()` calls `jump_to_bootloader(jump_ctx)` when `detach_pending_` is set and the timeout has expired.
 
 So this path can live in:
 
@@ -99,7 +97,7 @@ So this path can live in:
 - a periodic task
 - a timed scheduler entry
 
-It does not require a dedicated background thread, but **something must call `Process()` periodically**. Otherwise the host can issue `DETACH`, but the device will never actually jump into the bootloader.
+`Process()` must be called periodically; without it, the device does not jump to the bootloader after the host issues `DETACH`.
 
 ---
 
@@ -116,8 +114,8 @@ static void JumpToBootloader(void*)
 LibXR::USB::DfuRuntimeClass dfu_rt(JumpToBootloader, nullptr, 50);
 
 // USB class list: {{&dfu_rt}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 
 for (;;)
 {
@@ -132,4 +130,4 @@ for (;;)
 - Runtime DFU: exposes `DETACH` in application mode and jumps into bootloader after timeout
 - DFU Bootloader: handles `DNLOAD / UPLOAD / manifest` in bootloader mode
 
-If your project does not use a separate bootloader, this class is usually unnecessary.
+Projects without a separate bootloader usually do not need this class.

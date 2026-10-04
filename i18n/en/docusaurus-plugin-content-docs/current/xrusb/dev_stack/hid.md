@@ -6,11 +6,11 @@ sidebar_position: 2
 
 # HID Device Stack
 
-This section describes XRUSB’s **USB HID (Human Interface Device)** device-class implementation and how to extend it. It covers:
+This section describes XRUSB’s USB HID (Human Interface Device) device-class implementation and how to extend it. It covers:
 
 - The template HID base class `LibXR::USB::HID<REPORT_DESC_LEN, TX_REPORT_LEN, RX_REPORT_LEN>`
 - Automatic generation of the configuration-descriptor block (Interface + HID Descriptor + Endpoint Descriptors)
-- Optional **Interrupt OUT** (Output Report over Interrupt OUT)
+- Optional Interrupt OUT (Output Report over Interrupt OUT)
 - Standard request `GET_DESCRIPTOR` (HID / Report Descriptor)
 - A handling framework for HID class requests (`GET_REPORT/SET_REPORT/GET_IDLE/SET_IDLE/GET_PROTOCOL/SET_PROTOCOL`)
 - Input Report transmission and IN/OUT completion callbacks
@@ -29,7 +29,20 @@ Template parameters:
 - `REPORT_DESC_LEN`: Report Descriptor length (bytes)
 - `TX_REPORT_LEN`: Maximum Input Report length (Interrupt IN endpoint max packet size)
 - `RX_REPORT_LEN`: Maximum Output Report length (Interrupt OUT endpoint max packet size)
-  - If you need the Interrupt OUT endpoint, you must provide a suitable `RX_REPORT_LEN` and also explicitly enable `enable_out_endpoint` in the constructor
+  - Using the Interrupt OUT endpoint requires a suitable `RX_REPORT_LEN` and `enable_out_endpoint = true` in the constructor
+
+Constructor:
+
+```cpp
+HID(Endpoint::EPNumber in_ep_num, Endpoint::EPNumber out_ep_num,
+    bool enable_out_endpoint = false, uint8_t in_ep_interval = 10,
+    uint8_t out_ep_interval = 10,
+    const char* interface_string = DEFAULT_INTERFACE_STRING);  // "XRUSB HID"
+```
+
+- `out_ep_num`: pass `Endpoint::EPNumber::EP_INVALID` when the OUT endpoint is not enabled
+- `in_ep_interval` / `out_ep_interval`: written to the endpoint descriptors as `bInterval`; the base class defaults to 10, while `HIDMouse`, `HIDKeyboard` and `HIDGamepadT` default to 1
+- Derived classes: `HIDMouse(in_ep_num, in_ep_interval = 1, interface_string)`, `HIDKeyboard(in_ep_num, out_ep_num, enable_out_endpoint = false, in_ep_interval = 1, out_ep_interval = 1, interface_string)`, `HIDGamepadT(in_ep_num, interface_string)`
 
 The base class provides:
 
@@ -46,7 +59,7 @@ The base class provides:
 
 ### 2.1 Interface
 
-The HID base class contributes **one HID interface** and does not use an IAD:
+The HID base class contributes one HID interface and does not use an IAD:
 
 - `bInterfaceClass = 0x03` (HID)
 - `bNumEndpoints = 1` (IN only) or `2` (IN + OUT)
@@ -133,7 +146,7 @@ The base class supports common HID Class-Specific Requests:
 Recommended hooks to override as needed:
 
 - Report retrieval: `OnGetInputReport(...)` / `OnGetLastOutputReport(...)` / `OnGetFeatureReport(...)`
-  - The base implementation of `OnGetLastOutputReport(...)` returns empty data; if you need to return the last Output Report over control transfer, override it in the derived class
+  - The base implementation of `OnGetLastOutputReport(...)` returns empty data; returning the last Output Report over a control transfer requires overriding it in the derived class
 - Report setting: `OnSetReport(...)` (Setup stage) and `OnSetReportData(...)` (Data stage)
 - Custom extensions: `OnCustomClassRequest(...)` / `OnCustomClassData(...)`
   - Requests not handled directly by the base class return `NOT_SUPPORT` by default
@@ -182,13 +195,13 @@ After an IN transfer completes, `OnDataInComplete(in_isr, data)` is called. Typi
 
 ### 7.1 `HIDMouse`
 
-- Standard Boot mouse
+- Report format matches the HID Boot mouse
 - Input Report: commonly 4 bytes (Buttons + X + Y + Wheel)
 - IN endpoint only
 
 ### 7.2 `HIDKeyboard`
 
-- Standard Boot keyboard
+- Report format matches the HID Boot keyboard
 - Input Report: commonly 8 bytes (Modifier + Reserved + 6 KeyCodes)
 - Optional OUT endpoint (e.g., 1-byte LED)
 - Can also support host LED updates via control endpoint (`SET_REPORT`)
@@ -206,7 +219,7 @@ Current derived-class helpers also include:
 - Input Report and Report Descriptor are fixed at compile time
 - Typically provides convenience send APIs to update axes and button bitmap
 
-Current mainline also exports two ready-to-use aliases:
+Two ready-to-use aliases are also provided:
 
 - `HIDGamepad = HIDGamepadT<0, 2047, 1>`
 - `HIDGamepadBipolar = HIDGamepadT<-2048, 2047, 1>`
@@ -224,11 +237,11 @@ Note: How the USB device framework registers the class list depends on the upper
 ```cpp
 #include "hid_mouse.hpp"
 
-LibXR::USB::HIDMouse hid_mouse;
+LibXR::USB::HIDMouse hid_mouse(LibXR::USB::Endpoint::EPNumber::EP1);
 
 // usb_dev class list: {{&hid_mouse}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 
 hid_mouse.Move(LibXR::USB::HIDMouse::LEFT, 10, 0);
 hid_mouse.Release();
@@ -239,8 +252,9 @@ hid_mouse.Release();
 ```cpp
 #include "hid_keyboard.hpp"
 
-// enable_out_endpoint=true enables the optional Interrupt OUT endpoint for LED reports
-LibXR::USB::HIDKeyboard hid_kbd(true);
+// IN and OUT both on EP1; true enables the optional Interrupt OUT endpoint for LED reports
+LibXR::USB::HIDKeyboard hid_kbd(LibXR::USB::Endpoint::EPNumber::EP1,
+                                LibXR::USB::Endpoint::EPNumber::EP1, true);
 
 // Send: Shift + A
 hid_kbd.PressKey({LibXR::USB::HIDKeyboard::KeyCode::A},
@@ -264,10 +278,10 @@ hid_kbd.SetOnLedChangeCallback(
 ```cpp
 #include "hid_gamepad.hpp"
 
-LibXR::USB::HIDGamepad gamepad;
+LibXR::USB::HIDGamepad gamepad(LibXR::USB::Endpoint::EPNumber::EP1);
 gamepad.Send(1024, 1024, 1024, 1024, LibXR::USB::HIDGamepad::BTN1);
 
-LibXR::USB::HIDGamepadBipolar bipolar_gamepad;
+LibXR::USB::HIDGamepadBipolar bipolar_gamepad(LibXR::USB::Endpoint::EPNumber::EP2);
 bipolar_gamepad.SendAxes(0, -512, 512, 0);
 ```
 

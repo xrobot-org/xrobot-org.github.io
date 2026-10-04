@@ -6,15 +6,15 @@ sidebar_position: 3
 
 # UAC Device Stack
 
-This document describes XRUSB’s **USB Audio Class 1.0 (UAC1)** microphone device class implementation: `LibXR::USB::UAC1MicrophoneQ`. The class targets the **UAC1 recording (Device → Host)** use case. It uses a **queue-driven** byte FIFO to continuously feed upper-layer PCM data into an **Isochronous IN** endpoint, and implements the typical UAC1 control plane (sampling rate, mute, volume).
+This document describes XRUSB’s USB Audio Class 1.0 (UAC1) microphone device class implementation: `LibXR::USB::UAC1MicrophoneQ`. The class targets the UAC1 recording (Device → Host) use case. It uses a queue-driven byte FIFO to continuously feed upper-layer PCM data into an Isochronous IN endpoint, and implements the typical UAC1 control plane (sampling rate, mute, volume).
 
 Supported capabilities:
 
-- Standard UAC1 descriptor organization with **IAD + AC + AS** (two interfaces: AC/AS)
-- **Alt Setting 0/1** switching on the AS interface to start/stop the isochronous stream based on the host’s selection
-- **Sampling Frequency Control** on the Iso IN endpoint (3-byte little-endian)
-- Feature Unit **Mute / Volume** control (UAC1 semantics: Volume unit is 1/256 dB)
-- Automatic computation of the **bytes sent per isochronous service** based on the sampling rate and service period (FS = 1 ms; HS service rate is determined by `bInterval`)
+- Standard UAC1 descriptor organization with IAD + AC + AS (two interfaces: AC/AS)
+- Alt Setting 0/1 switching on the AS interface to start/stop the isochronous stream based on the host’s selection
+- Sampling Frequency Control on the Iso IN endpoint (3-byte little-endian)
+- Feature Unit Mute / Volume control (UAC1 semantics: Volume unit is 1/256 dB)
+- Automatic computation of the bytes sent per isochronous service based on the sampling rate and service period (FS = 1 ms; HS service rate is determined by `bInterval`)
 
 ---
 
@@ -24,8 +24,8 @@ Supported capabilities:
 
 Template parameters:
 
-- `CHANNELS`: number of channels (**1..8**)
-- `BITS_PER_SAMPLE`: bit depth (**8 / 16 / 24**)
+- `CHANNELS`: number of channels (1..8)
+- `BITS_PER_SAMPLE`: bit depth (8 / 16 / 24)
 
 Internal constant:
 
@@ -38,23 +38,24 @@ Internal constant:
 
 ## 2. Constructor Parameters and Runtime State
 
-Constructor (core parameters):
+Constructor parameters (in order):
 
+- `iso_in_ep_num`: Iso IN endpoint number (required)
 - `sample_rate_hz`: sampling rate (Hz)
-- `vol_min / vol_max / vol_res`: volume range and step, unit **1/256 dB**
-- `speed`: USB speed (`Speed::FULL` / `Speed::HIGH`)
-- `queue_bytes`: PCM queue capacity (bytes, default 2048)
-- `interval`: Iso IN endpoint `bInterval`
-  - Full-Speed: **must be 1** (enforced by code)
+- `vol_min / vol_max / vol_res`: volume range and step, unit 1/256 dB, default `0 / 0 / 1`
+- `speed`: USB speed (`Speed::FULL` / `Speed::HIGH`), default `Speed::FULL`
+- `queue_bytes`: PCM queue capacity (bytes), default 2048
+- `interval`: Iso IN endpoint `bInterval`, default 1
+  - Full-Speed: must be 1 (asserted when binding endpoints)
   - High-Speed: allowed 1..16 (spec meaning: microframe exponent scheduling)
-- `iso_in_ep_num`: Iso IN endpoint number (auto by default)
+- `control_interface_string` / `streaming_interface_string`: default `"XRUSB UAC1 Control"` / `"XRUSB UAC1 Streaming"`
 
 Key runtime state after initialization:
 
 - `streaming_`: `true` when AS Alt=1 is selected (actively streaming)
 - `sr_hz_`: current sampling rate (can be changed by host via SET_CUR)
 - `w_max_packet_size_`: runtime-computed `wMaxPacketSize` (bounded by FS/HS limits)
-- `pcm_queue_`: PCM byte queue (current mainline uses `LibXR::SPSCQueue<uint8_t>`)
+- `pcm_queue_`: PCM byte queue (`LibXR::SPSCQueue<uint8_t>`)
 
 ---
 
@@ -71,10 +72,10 @@ void ResetQueue();
 
 ### 3.1 PCM Data Format Requirements
 
-- `WritePcm()` writes **interleaved PCM bytes**. The exact format is defined by the upper layer (and must match the descriptor):
+- `WritePcm()` writes interleaved PCM bytes. The exact format is defined by the upper layer (and must match the descriptor):
   - 16-bit: S16LE (little-endian)
   - 24-bit: S24_3LE (3-byte little-endian)
-- **Channel interleaving**: e.g., for 2ch: `L0 R0 L1 R1 ...`
+- Channel interleaving: e.g., for 2ch: `L0 R0 L1 R1 ...`
 
 ### 3.2 Queue Sizing Recommendation
 
@@ -88,10 +89,10 @@ To reduce underflow caused by short-term jitter, it is recommended that `queue_b
 
 ## 4. UAC1 Interfaces and Descriptor Layout
 
-The device exposes **two interfaces** and associates them with an IAD:
+The device exposes two interfaces and associates them with an IAD:
 
-- **Audio Control (AC) interface**: entity topology and controls (Feature Unit)
-- **Audio Streaming (AS) interface**: carries the audio stream (Alt 0/Alt 1)
+- Audio Control (AC) interface: entity topology and controls (Feature Unit)
+- Audio Streaming (AS) interface: carries the audio stream (Alt 0/Alt 1)
 
 Implementation constraints:
 
@@ -114,8 +115,8 @@ Connection:
 
 ### 4.2 Alternate Settings on the AS Interface
 
-- **Alt 0**: no endpoint (no transmission)
-- **Alt 1**: includes 1 **Isochronous IN** endpoint (start transmission)
+- Alt 0: no endpoint (no transmission)
+- Alt 1: includes 1 Isochronous IN endpoint (start transmission)
 
 On the host side, switching the Alt Setting is the only trigger to start/stop audio streaming (see Section 6).
 
@@ -141,15 +142,15 @@ Endpoint type and attributes:
 
 Runtime limits for `wMaxPacketSize`:
 
-- Full-Speed: single transaction **≤ 1023**
-- High-Speed: single transaction **≤ 1024**  
-  > Note: This implementation computes and limits the size per “single transaction / per service”. It **does not use the HS multiplier (multiple transactions per microframe)**.
+- Full-Speed: single transaction ≤ 1023
+- High-Speed: single transaction ≤ 1024  
+  > Note: This implementation computes and limits the size per “single transaction / per service”. It does not use the HS multiplier (multiple transactions per microframe).
 
 ---
 
 ## 6. Stream Control: Behavior of `SetAltSetting()`
 
-`SetAltSetting(itf, alt)` is effective only for the **AS interface**:
+`SetAltSetting(itf, alt)` is effective only for the AS interface:
 
 - `alt = 0` (stop transmission)
   - `streaming_ = false`
@@ -174,8 +175,8 @@ This function is invoked in two cases:
 
 ### 7.1 Service Frequency `service_hz_`
 
-- **Full-Speed**: fixed `1000 Hz` (1 ms frame) and enforces `interval_ == 1`
-- **High-Speed**: compute service frequency from `bInterval` (8000 microframes per second)
+- Full-Speed: fixed `1000 Hz` (1 ms frame) and enforces `interval_ == 1`
+- High-Speed: compute service frequency from `bInterval` (8000 microframes per second)
   - `service_hz_ = 8000 / 2^(bInterval-1)`  
   - `bInterval` is clamped to 1..16
 
@@ -225,10 +226,8 @@ Steps:
 The current implementation first computes the target transfer length `to_send`, then pops at most `take = min(queue_size, to_send)` bytes from the PCM queue.
 
 - When `take == to_send`, the whole packet comes from queued PCM data.
-- When `take < to_send`, the remaining `to_send - take` bytes in the endpoint buffer are **zero-filled**.
-- The final length submitted to the endpoint is still `to_send`, not a short packet based only on `take`.
-
-So in current mainline, underflow behavior is closer to “zero-fill while keeping the isochronous cadence” than to “shrink this service to a short packet”.
+- When `take < to_send`, the remaining `to_send - take` bytes in the endpoint buffer are zero-filled.
+- The length submitted to the endpoint is always `to_send`.
 
 ---
 
@@ -236,8 +235,8 @@ So in current mainline, underflow behavior is closer to “zero-fill while keepi
 
 Two control surfaces are implemented:
 
-1. **Endpoint sampling-frequency control** (Recipient = Endpoint)
-2. **Feature Unit control** (Recipient = Interface / Entity)
+1. Endpoint sampling-frequency control (Recipient = Endpoint)
+2. Feature Unit control (Recipient = Interface / Entity)
 
 ### 9.1 Endpoint Sampling Frequency Control
 
@@ -245,7 +244,7 @@ Match conditions (implementation logic):
 
 - `wIndex & 0xFF` equals the Iso IN endpoint address
 - `(wValue >> 8) == 0x01` (Sampling Freq Control Selector)
-- data length must be **3 bytes** (24-bit little-endian)
+- data length must be 3 bytes (24-bit little-endian)
 
 Supported requests:
 
@@ -291,15 +290,16 @@ Match conditions:
 
 using Mic = LibXR::USB::UAC1MicrophoneQ<2, 16>; // 2ch, 16-bit
 
-Mic mic(/*sample_rate*/48000,
+Mic mic(/*iso_in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
+        /*sample_rate*/48000,
         /*vol_min*/-90*256, /*vol_max*/0, /*vol_res*/256,
         /*speed*/LibXR::USB::Speed::FULL,
         /*queue_bytes*/2048,
         /*interval*/1);
 
 // Add &mic to the USB Device class list during initialization: {{&mic}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 
 // Upper layer: continuously write S16LE interleaved PCM
 mic.WritePcm(pcm_bytes, pcm_len);
