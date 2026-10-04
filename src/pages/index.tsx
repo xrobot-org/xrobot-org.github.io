@@ -40,13 +40,13 @@ const agentQuickDeployPromptZh = [
   '- 如果仓库里同时存在多类入口，先说明你看到的证据，再决定主入口，不要直接跳到某个工具命令。',
   '',
   '## 文档入口',
-  '- 总入口：https://xrobot-org.github.io/docs/intro',
-  '- 设计思想：https://xrobot-org.github.io/docs/concept',
-  '- 环境配置：https://xrobot-org.github.io/docs/env_setup',
-  '- 基础编程：https://xrobot-org.github.io/docs/basic_coding',
-  '- 项目管理（XRobot）：https://xrobot-org.github.io/docs/proj_man',
-  '- XRUSB：https://xrobot-org.github.io/docs/xrusb',
-  '- 调试：https://xrobot-org.github.io/docs/debug',
+  '- 总入口：https://xrobot.work/docs/intro',
+  '- 设计思想：https://xrobot.work/docs/concept',
+  '- 环境配置：https://xrobot.work/docs/env_setup',
+  '- 基础编程：https://xrobot.work/docs/basic_coding',
+  '- 项目管理（XRobot）：https://xrobot.work/docs/proj_man',
+  '- XRUSB：https://xrobot.work/docs/xrusb',
+  '- 调试：https://xrobot.work/docs/debug',
   '',
   '## 入口选择规则',
   '- 只有确认是 XRobot workspace 时，才优先看 `proj_man`、`xrobot setup`、`xrobot describe`、`Modules/`、`User/`。',
@@ -68,7 +68,7 @@ const agentQuickDeployPromptZh = [
   '- 如果是驱动、XRUSB、调试或运行时问题，优先附上相关源码位置、最小复现代码和日志。',
   '',
   '## 补充入口',
-  '- 新手任务引导：https://xrobot-org.github.io/XRobot-Onboarding/',
+  '- 新手任务引导：https://xrobot.work/XRobot-Onboarding/',
 ].join('\n');
 
 const agentQuickDeployPromptEn = [
@@ -103,13 +103,13 @@ const agentQuickDeployPromptEn = [
   '- If multiple entry styles coexist, describe the evidence first and then pick the main entry point. Do not jump straight to one tool command.',
   '',
   '## Documentation entry points',
-  '- Overview: https://xrobot-org.github.io/docs/intro',
-  '- Design concepts: https://xrobot-org.github.io/docs/concept',
-  '- Environment setup: https://xrobot-org.github.io/docs/env_setup',
-  '- Basic coding: https://xrobot-org.github.io/docs/basic_coding',
-  '- Project management (XRobot): https://xrobot-org.github.io/docs/proj_man',
-  '- XRUSB: https://xrobot-org.github.io/docs/xrusb',
-  '- Debug: https://xrobot-org.github.io/docs/debug',
+  '- Overview: https://xrobot.work/docs/intro',
+  '- Design concepts: https://xrobot.work/docs/concept',
+  '- Environment setup: https://xrobot.work/docs/env_setup',
+  '- Basic coding: https://xrobot.work/docs/basic_coding',
+  '- Project management (XRobot): https://xrobot.work/docs/proj_man',
+  '- XRUSB: https://xrobot.work/docs/xrusb',
+  '- Debug: https://xrobot.work/docs/debug',
   '',
   '## Entry selection rules',
   '- Only prioritize `proj_man`, `xrobot setup`, `xrobot describe`, `Modules/`, and `User/` after confirming that the repository is an XRobot workspace.',
@@ -131,7 +131,7 @@ const agentQuickDeployPromptEn = [
   '- For driver, XRUSB, debug, or runtime problems, include the related source location, a minimal repro, and logs.',
   '',
   '## Extra entry',
-  '- Onboarding guide: https://xrobot-org.github.io/XRobot-Onboarding/',
+  '- Onboarding guide: https://xrobot.work/XRobot-Onboarding/',
 ].join('\n');
 
 type AgentPromptStatus = 'idle' | 'copied' | 'downloaded' | 'copy-failed';
@@ -275,8 +275,8 @@ export default function Home(): JSX.Element {
                   <Link
                     className="button button--lg homeButton homeButtonSecondary"
                     to={isEnglish
-                      ? 'https://xrobot-org.github.io/libxr_web_demo/index_en.html'
-                      : 'https://xrobot-org.github.io/libxr_web_demo/'}
+                      ? 'https://xrobot.work/libxr_web_demo/index_en.html'
+                      : 'https://xrobot.work/libxr_web_demo/'}
                   >
                     <Translate id="homepage.hero.cta.demo">Web Demo</Translate>
                   </Link>
@@ -332,7 +332,7 @@ export default function Home(): JSX.Element {
                 </div>
 
                 <div className="homeGuideGrid homeGuideGridInline">
-                  <Link className="homeGuideCard" to="https://xrobot-org.github.io/XRobot-Onboarding/">
+                  <Link className="homeGuideCard" to="https://xrobot.work/XRobot-Onboarding/">
                     <span className="homeGuideTag">Guide</span>
                     <h3>
                       <Translate id="homepage.guide.onboarding.title">新手任务引导</Translate>
@@ -673,7 +673,7 @@ export default function Home(): JSX.Element {
                 <Link className="homeAgentModalLink" to="/docs/proj_man">
                   {isEnglish ? 'Project Management' : '项目管理总览'}
                 </Link>
-                <Link className="homeAgentModalLink" to="https://xrobot-org.github.io/XRobot-Onboarding/">
+                <Link className="homeAgentModalLink" to="https://xrobot.work/XRobot-Onboarding/">
                   {isEnglish ? 'Onboarding Guide' : '新手任务引导'}
                 </Link>
               </div>

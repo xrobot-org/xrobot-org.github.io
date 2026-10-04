@@ -1,6 +1,6 @@
 ## 参考资料
-- STM32 代码生成 · GPIO 示例：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio
-- LibXR GPIO 抽象接口说明：https://xrobot-org.github.io/docs/basic_coding/driver/gpio
+- STM32 代码生成 · GPIO 示例：https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-gpio
+- LibXR GPIO 抽象接口说明：https://xrobot.work/docs/basic_coding/driver/gpio
 - 视频（可选）：【STM32 + VS Code】花式点灯（GPIO、外部中断与 PWM）- XRobot 官方教程 1.1 节
   https://www.bilibili.com/video/BV1kaWhzNE2t
 本任务只做最基础的“点灯”，外部中断和 PWM 会在后续章节单独说明。

@@ -203,7 +203,8 @@ After the call returns, the caller's source buffer can be reused.
 to `IDLE` in step 4, so the next writer can enter while the previous one is still inside `WriteFun`.
 `WriteFun` may therefore run concurrently in several threads, or in a thread and an ISR, and the
 backend's own transmit-complete interrupt also advances transmission. The backend serializes these
-entry points. `STM32UART` uses its `tx_service_` member of type `SerializedService`: `WriteFun` and
+entry points. `STM32UART` uses its `tx_service_` member of type
+[`SerializedService`](../../basic_coding/utils/serialized_service.md): `WriteFun` and
 each UART interrupt submit events through `tx_service_.Invoke(...)`; the caller that claims
 execution handles all events in turn, the other callers only record their events and return, and
 the recorded events are handled before execution is released.
@@ -265,6 +266,12 @@ size_t size = 0U;
 `STM32UART` constructs its `WritePort` with a data queue half the size of the DMA transmit buffer, so
 a single request always fits into one half.
 
+Port completion, DMA completion, and wire completion are therefore three different moments: port
+completion means the backend has accepted the whole request, DMA completion means one DMA block has
+been moved, and wire completion means the last stop bit has left the transmitter. Actions that
+depend on the wire being idle, such as RS485 direction switching, use the hardware
+transmit-complete event rather than the completion of the `WriteOperation`.
+
 ### 4.3 State
 
 The `WritePort` state is also one 32-bit atomic: the low 3 bits hold the phase and the remaining bits
@@ -300,6 +307,10 @@ first wait for the old request to retire: the phase changes to `BLOCK_RETIRE_WAI
 old request completes, the port hands `LOCKED` directly to this writer and wakes it; the writer then
 continues from step 3 of 4.1 and waits for its own completion. Each of the two waits uses the
 request's timeout; if the first wait times out, the call returns `TIMEOUT` and submits no data.
+
+When a write times out, the accepted data is still sent. A non-idempotent command resent after a
+timeout cannot assume that the first one was not sent; where this matters, the protocol layer
+handles it with sequence numbers, acknowledgements, or deduplication.
 
 ### 4.5 Batched writes
 

@@ -1,7 +1,7 @@
 ---
 id: core-print
 title: 编译期格式化输出
-sidebar_position: 9
+sidebar_position: 10
 ---
 
 # 编译期格式化输出

@@ -158,11 +158,11 @@ auto topic = LibXR::Topic::CreateTopic<double>("temperature", &domain);
 
 double rx_value = 0.0;
 auto cb = LibXR::Topic::Callback::Create(
-    [](bool, void*, LibXR::MicrosecondTimestamp, double& data)
+    [](bool, double* target, LibXR::MicrosecondTimestamp, double& data)
     {
-        rx_value = data;
+        *target = data;
     },
-    nullptr);
+    &rx_value);
 topic.RegisterCallback(cb);
 
 LibXR::Topic::PackedData<double> packet;

@@ -1,7 +1,7 @@
 ---
 id: list
 title: List
-sidebar_position: 4
+sidebar_position: 5
 ---
 
 # List
@@ -58,8 +58,8 @@ class Node : public BaseNode {
 ### Foreach Usage Example
 
 ```cpp
-LibXR::List list;
 LibXR::List::Node<int> node1(42);
+LibXR::List list;
 list.Add(node1);
 
 list.Foreach<int>([](int& data) {

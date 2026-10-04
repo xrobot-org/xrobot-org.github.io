@@ -3,7 +3,7 @@
   https://www.bilibili.com/video/BV1SHnAztE11
 视频中包含 Python 包安装、VS Code 与插件安装，以及最基本的一次编译和调试流程。本任务只关注其中“安装 Python 与 libxr / xrobot”这一部分，其他步骤会在后续任务中分别展开。
 ## 参考文档
-- 环境配置文档：https://xrobot-org.github.io/docs/env_setup
+- 环境配置文档：https://xrobot.work/docs/env_setup
 本任务主要对应文档中的「CodeGenerator(libxr) 与 XRobot」小节。LibXR 的 C++ 仓库在这一阶段不用手动处理，后续在创建 STM32 工程时会由工具自动拉取。
 ## 本任务要完成的事情
 - 在当前开发电脑（Windows 或 Linux）上准备好可用的 Python 3 环境。

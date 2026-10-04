@@ -8,7 +8,7 @@
 本任务不要求逐字跟随视频操作，只是推荐在实际配置时配合视频一起查看，遇到细节问题可以回到视频中对照。
 ## 参考文档
 - STM32 环境配置文档（只需关注 STM32 + VS Code + GCC 路线）：
-  https://xrobot-org.github.io/docs/env_setup/env-setup-stm32
+  https://xrobot.work/docs/env_setup/env-setup-stm32
 ## 本任务目标
 - 在 Windows 上安装 STM32CubeMX 和 VS Code。
 - 在 VS Code 中安装并启用 ST 官方插件 “STM32CubeIDE for Visual Studio Code”。

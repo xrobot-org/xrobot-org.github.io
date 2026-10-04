@@ -16,7 +16,7 @@ ESP32 使用官方 `ESP-IDF` 工作流。
 
 ## 工程接入
 
-LibXR 在 ESP32 上仍然通过 [`cmake/esp32.cmake`](https://github.com/Jiu-xiao/libxr/blob/master/cmake/esp32.cmake) 接入，但它的前提很明确：**必须运行在 ESP-IDF 的 component 工程里**。
+LibXR 在 ESP32 上仍然通过 [`cmake/esp32.cmake`](https://github.com/xrobot-org/libxr/blob/master/cmake/esp32.cmake) 接入，但它的前提很明确：**必须运行在 ESP-IDF 的 component 工程里**。
 
 对于官方 `Hello World` 这种标准工程，在 `main/CMakeLists.txt` 里先写完 `idf_component_register(...)`，再在后面加入：
 

@@ -221,7 +221,7 @@ extern "C" __attribute__((weak)) void vApplicationStackOverflowHook(...);
 - CI uses `clang-format 21.1.8`. The check entry is:
 
 ```bash
-tools/format_driver_src.sh --check
+tools/format_cpp_files.sh --check
 ```
 
-- The current script checks C/C++ source files under `driver/` and `src/`.
+- By default it checks C/C++ files under `driver/`, `src/`, `system/`, and `test/`; specific files can also be passed to the script.

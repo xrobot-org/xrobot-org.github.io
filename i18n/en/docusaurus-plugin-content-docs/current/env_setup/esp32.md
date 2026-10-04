@@ -16,7 +16,7 @@ If your target is actually `ESP32-C3 / S3 / C6`, switch to the corresponding chi
 
 ## Project Integration
 
-LibXR still integrates on ESP32 through [`cmake/esp32.cmake`](https://github.com/Jiu-xiao/libxr/blob/master/cmake/esp32.cmake), but the precondition is explicit: it **must** run inside an ESP-IDF component project.
+LibXR still integrates on ESP32 through [`cmake/esp32.cmake`](https://github.com/xrobot-org/libxr/blob/master/cmake/esp32.cmake), but the precondition is explicit: it **must** run inside an ESP-IDF component project.
 
 For a standard ESP-IDF `Hello World` style project, finish `idf_component_register(...)` in `main/CMakeLists.txt` first, then append:
 

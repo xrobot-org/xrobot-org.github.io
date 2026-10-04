@@ -21,13 +21,13 @@ CodeGenerator 和 XRobot 是基于 Python 的包，需要 Python 3 和 `pip3` �
 直接拉取代码：
 
 ```bash
-git clone https://github.com/Jiu-xiao/libxr.git
+git clone https://github.com/xrobot-org/libxr.git
 ```
 
 集成到现有工程时，更常见的做法是使用 submodule 或 subtree：
 
 ```bash
-git submodule add https://github.com/Jiu-xiao/libxr.git libxr
+git submodule add https://github.com/xrobot-org/libxr.git libxr
 ```
 
 ### CodeGenerator(libxr)与XRobot
@@ -46,9 +46,8 @@ XRobot BSP 在 `Modules/modules.yaml` 的 `xrobot:` 和 `User/libxr_config.yaml`
 ### windows
 python -m pip install --user pipx
 python -m pipx ensurepath
-pipx install xrobot==1.0.0
-pipx install libxr==6.0.0
-pipx ensurepath
+python -m pipx install xrobot==1.0.0
+python -m pipx install libxr==6.0.0
 # Restart your terminal
 
 ### linux

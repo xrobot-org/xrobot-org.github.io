@@ -79,5 +79,5 @@ int main()
 3. 能说明：为什么推荐用 `LockGuard` 来管理锁的生命周期，而不是手动成对调用 `Lock` / `Unlock`。
 
 ## 相关文档
-- [Mutex（互斥锁）文档](https://xrobot-org.github.io/docs/basic_coding/system/mutex)
-- [Thread（线程）文档](https://xrobot-org.github.io/docs/basic_coding/system/thread)
+- [Mutex（互斥锁）文档](https://xrobot.work/docs/basic_coding/system/mutex)
+- [Thread（线程）文档](https://xrobot.work/docs/basic_coding/system/thread)

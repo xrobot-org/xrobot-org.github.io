@@ -10,7 +10,7 @@ sidebar_position: 2
 
 In LibXR, all I/O is built on lock-free queues and ring buffers, with no reliance on mutexes or interrupt-masking critical sections during runtime, thereby ensuring deterministic transfer paths and controllable latency. Device events are driven entirely by hardware interrupts; the ISR is limited to necessary tasks such as double-buffer switching and state machine transitions, without additional logic. As a result, data flow is strictly paced by hardware rather than operating system scheduling.
 
-To prevent callbacks from recursively re-entering and growing the stack when events trigger each other and form a loop (for example A → B → C → A), the callback mechanism includes a reentrancy guard: if the same callback is already executing, re-triggering it does not create a new nested stack frame, but is instead merged/deferred so the call depth stays bounded. This keeps stack usage stable and makes worst-case latency analysis easier.
+To prevent self-reentrant callback chains from growing the stack, `Callback::CreateGuarded()` provides an explicit guard: if the same guarded callback is already executing, re-triggering it is merged/deferred instead of creating another nested stack frame. Ordinary `Callback::Create()` still invokes directly. Use the guarded form where that reentry can actually occur.
 
 ## `Runtime memory allocation in embedded systems is a design flaw`
 
@@ -91,4 +91,3 @@ Interfaces must remain platform-agnostic to ensure:
 - Code elimination for unused platform implementations  
 
 If a platform type appears in an interface, then that interface becomes non-reusable, unmaintainable, and causes upper-layer logic to depend on concrete implementations.
-

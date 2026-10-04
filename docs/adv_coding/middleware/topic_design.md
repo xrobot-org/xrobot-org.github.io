@@ -14,7 +14,7 @@ sidebar_position: 1
 
 ## `Block` 的角色
 
-`Topic` 的核心结构是 `Block`，里面存放 payload 类型契约、名称 CRC32 键、订阅者链表，以及并发控制状态。它默认针对单发布者优化：没有开启 `multi_publisher` 时，只用一个原子 `busy` 状态做串行化；开启后才改用 `Mutex`。常见的单发布者场景因此不需要加锁。
+`Topic` 的核心结构是 `Block`，里面存放 payload 类型契约、名称 CRC32 键、订阅者链表，以及并发控制状态。它默认针对单发布者优化：没有开启 `multi_publisher` 时，用原子 `busy` 状态检查发布独占，并发发布会触发断言；开启后才改用 `Mutex`。多发布者模式用于线程中的普通 `Publish()`，不能用于 `PublishFromCallback()`。常见的单发布者场景因此不需要加锁。
 
 ## 为什么不再内置 latest cache
 

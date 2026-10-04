@@ -204,7 +204,7 @@ struct InfoStrings {
 | `DAP_Info`              |               `INFO` | 返回字符串/数值信息（含 CAPABILITIES / PACKET_COUNT / PACKET_SIZE / TIMESTAMP_CLOCK 等） |
 | `DAP_HostStatus`        |        `HOST_STATUS` | 返回 OK                                                                                  |
 | `DAP_Connect`           |            `CONNECT` | 连接 SWD；设置 JTAG 后端后也可连接 JTAG；返回实际端口                                    |
-| `DAP_Disconnect`        |         `DISCONNECT` | 关闭 SWD 并回到 DISABLED                                                                 |
+| `DAP_Disconnect`        |         `DISCONNECT` | 关闭 SWD 和已设置的 JTAG 后端，回到 DISABLED                                             |
 | `DAP_TransferConfigure` | `TRANSFER_CONFIGURE` | 设置 idle_cycles / retry / match_retry，并映射到 SWD policy                              |
 | `DAP_Transfer`          |           `TRANSFER` | DP/AP 读写；支持 match / timestamp；AP posted-read pipeline                              |
 | `DAP_TransferBlock`     |     `TRANSFER_BLOCK` | DP/AP block 读写；AP read 使用 posted pipeline；不支持 match/timestamp                   |
@@ -229,7 +229,7 @@ struct InfoStrings {
 
 - `CAPABILITIES`：`DAP_CAP_SWD`；设置了 JTAG 后端时加上 `DAP_CAP_JTAG`
 - `PACKET_COUNT`：默认返回 `4`。虽然类模板默认的声明值是 `8`，但当前实现会把实际对主机暴露的数量钳制到 `4`。
-- `PACKET_SIZE`：`MaxDapPacketSize`，默认 1024
+- `PACKET_SIZE`：`MaxDapPacketSize`，默认 1024。端点的 `MaxTransferSize()` 不影响该值，只决定一个 DAP 包是否分成多次 Bulk 传输收发
 - `TIMESTAMP_CLOCK`：`1,000,000`（与微秒时间基准匹配）
 
 ---

@@ -67,8 +67,8 @@ They optimize for different goals.
 
 ### `BROADCAST_FULL`
 
-Preserves every published item. The cost is that one slow subscriber with a full queue reduces
-overall publish success.
+Items already queued for the subscriber are not overwritten to make room for a newer one. When a
+slow subscriber queue is full, a new publish may fail and backpressure the publisher.
 
 ### `BROADCAST_DROP_OLD`
 
@@ -107,7 +107,28 @@ still holding slots, and a segment left by a dead publisher. Each subscriber slo
 identity (PID and process start time), so slots of dead subscribers are recycled; when the
 publisher creates the topic and finds a segment left by a dead process, it reclaims that segment.
 
-## 10. Where it fits
+## 9. Why `latency_avg` is often not meaningful on its own
+
+The standard-case `latency_avg` is easily skewed by the scheduler and the startup backlog: when the
+publisher starts sending before the subscriber has settled into waiting, the average includes time
+spent queued and differs from the latency of a single delivery.
+
+Two measurements are more meaningful:
+
+- saturated-throughput queueing latency: queueing behavior when the system is fully loaded
+- single-outstanding one-way latency: the path of one message from publish until a wait returns it
+
+## 10. Handle and shared-layout lifetime
+
+A raw payload pointer is valid only while its data handle remains valid. Handles obtained through a
+subscriber also depend on that subscriber slot. On an orderly shutdown, release active data first,
+then destroy subscribers, then close the topic mapping.
+
+Every process also needs the same understanding of `T` layout, ABI, and shared-memory configuration.
+Use fixed-layout payloads; process-private pointers and owning objects such as `std::string` do not
+become valid cross-process state merely because the outer object lives in shared memory.
+
+## 11. Where it fits
 
 Suitable for:
 

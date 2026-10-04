@@ -28,9 +28,8 @@ the UART interrupt, or an I/O thread.
 ## MCU path
 
 `STM32UART` and `CH32UART` are the typical MCU implementations. Their common shape is clear:
-permanent DMA on the receive side, double buffering on the transmit side, user-facing reads and
-writes going through `ReadPort / WritePort`, and completion driven by DMA-complete interrupts or
-idle events.
+permanent DMA on the receive side, double buffering on the transmit side, and user-facing reads and
+writes going through `ReadPort / WritePort`.
 
 On the receive side, DMA stays active continuously. ISR only needs to compare the current write
 pointer with the last processed position, write the new byte range with `PushBatch` into the queue
@@ -63,11 +62,13 @@ controller, and it is not part of the XRUSB `DeviceCore`. Transmit bytes are con
 ## Linux path
 
 In `LinuxUART`, progress is driven by a thread instead of ISR or DMA. The implementation opens
-`/dev/tty*` (or matches a device by USB VID/PID, interface name, or serial number) and configures
-`termios`; one I/O thread handles open, close, reconnect, configuration, and transfer, and port
-callbacks only wake that thread. A write request completes when the Linux kernel accepts the data.
-Here the focus is less on interrupt-level latency and more on device discovery,
-serial parameter handling, and user-space blocking semantics.
+`/dev/tty*` in nonblocking mode (or matches a device by USB VID/PID, interface name, or serial
+number) and configures `termios`; one I/O thread (`io_thread_`) uses `poll` to handle open, close,
+reconnect, configuration, and transfer, port callbacks only wake that thread through an `eventfd`,
+and transmit data is written with `writev`. A write request completes when the Linux kernel accepts
+the data. The public interface stays unchanged; hardware events become kernel file-descriptor
+events, and the focus is on device discovery, serial parameter handling, kernel buffering, and
+scheduler latency.
 
 ## What this design optimizes for
 

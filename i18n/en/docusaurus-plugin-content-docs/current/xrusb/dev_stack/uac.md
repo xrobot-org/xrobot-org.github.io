@@ -281,6 +281,8 @@ Match conditions:
 - `GET_CUR (wLength=2)`: read `vol_cur_`
 - `GET_MIN / GET_MAX / GET_RES (wLength=2)`: return constructor parameters `vol_min_ / vol_max_ / vol_res_`
 
+The class stores and reports Mute/Volume control values, but the transmit path does not apply them to PCM samples. Upstream acquisition/processing applies actual mute or gain if required.
+
 ---
 
 ## 10. Usage Example

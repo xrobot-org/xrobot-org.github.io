@@ -56,7 +56,7 @@ cd ~/dev/xr_hello_linux
 
 2. 将 LibXR 仓库克隆到名为 `libxr` 的子目录：
 ```bash
-git clone https://github.com/Jiu-xiao/libxr.git libxr
+git clone https://github.com/xrobot-org/libxr.git libxr
 ```
 
 执行完成后，目录结构变为：

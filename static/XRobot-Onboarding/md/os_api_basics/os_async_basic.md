@@ -119,8 +119,8 @@ LibXR::ASync::Job g_async_job = LibXR::ASync::Job::Create(HeavyCalc, &g_arg);
 // 5. 模拟传感器中断服务程序：在 ISR 中提交 Job
 void SensorISR()
 {
-    // 在中断/回调上下文提交任务，isr = true
-    g_async_worker.AssignJobFromCallback(g_async_job, true);
+    // 本例由主循环模拟调用，in_isr 传 false；在真实的中断服务程序中传 true
+    g_async_worker.AssignJobFromCallback(g_async_job, false);
 }
 
 int main()
@@ -185,7 +185,7 @@ int main()
 1. 至少创建一个 `LibXR::ASync` 实例，并正确构造一个 `Job`：`LibXR::ASync::Job::Create(HeavyCalc, &ctx)`。
 2. 能从任务上下文或模拟 ISR 中成功提交 Job：
    - `AssignJob()` 在 READY 状态下返回 `ErrorCode::OK`；
-   - `AssignJobFromCallback()` 能在“伪 ISR”中被调用而不导致异常。
+   - `AssignJobFromCallback()` 需要传入真实调用上下文；普通回调/函数中传 `false`，真实 ISR 中传 `true`。
 3. 主循环中能通过 `GetStatus()` 观察到从 `BUSY` -> `DONE` -> `READY` 的状态变化。
 
 ### 理解到位
@@ -198,7 +198,7 @@ int main()
    - 怎样处理 `AssignJob()` 返回 `ErrorCode::BUSY` 的情况（丢弃 / 重试 / 合并）。
 
 ## 相关文档
-- [ASync（异步任务）文档](https://xrobot-org.github.io/docs/basic_coding/system/async)
-- [Callback（通用回调）文档](https://xrobot-org.github.io/docs/basic_coding/core/core-callback)
-- [Semaphore（信号量）文档](https://xrobot-org.github.io/docs/basic_coding/system/semaphore)
-- [Thread（线程）文档](https://xrobot-org.github.io/docs/basic_coding/system/thread)
+- [ASync（异步任务）文档](https://xrobot.work/docs/basic_coding/system/async)
+- [Callback（通用回调）文档](https://xrobot.work/docs/basic_coding/core/core-callback)
+- [Semaphore（信号量）文档](https://xrobot.work/docs/basic_coding/system/semaphore)
+- [Thread（线程）文档](https://xrobot.work/docs/basic_coding/system/thread)

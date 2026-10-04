@@ -1,7 +1,7 @@
 ---
 id: core-print
 title: Compile-Time Formatting
-sidebar_position: 9
+sidebar_position: 10
 ---
 
 # Compile-Time Formatting

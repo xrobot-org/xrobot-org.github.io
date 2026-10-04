@@ -240,12 +240,9 @@ Key actions in `CDCBase::UnbindEndpoints(endpoint_pool, in_isr)`:
 - Return endpoints to the `EndpointPool`
 - Set endpoint pointers to null
 
-Derived classes or upper-layer adapters should ensure in `UnbindEndpoints()`:
-
-- Terminate all asynchronous operations that depend on endpoint objects
-- Finish pending read/write requests (with success or an error) so the upper layer does not wait forever
-
 `CDCUart::UnbindEndpoints()` calls `CDCBase::UnbindEndpoints()` and then only clears the ZLP flag and the receive-pause state (`recv_pause_` / `pending_data_`); data still in the TX queue is kept, and pending writes are not finished with an error.
+
+An upper layer that has to work across disconnects and reconnects therefore manages the connection state and wait times itself, and makes sure that no callback chain still uses the related objects before they are destroyed.
 
 ---
 

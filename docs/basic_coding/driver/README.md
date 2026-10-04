@@ -31,6 +31,7 @@ LibXR 设备接口有以下共同点：
 - [Timebase（时间基准）](./timebase.md)
 - [看门狗（Watchdog）](./watchdog.md)
 - [USB（USB 设备）](./usb.md)
+- [网络接口与 Wi-Fi](./network.md)
 
 ## 接口组成
 

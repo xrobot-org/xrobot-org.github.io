@@ -1,7 +1,7 @@
 ---
 id: rbtree
 title: Red-Black Tree
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # RBTree (Red-Black Tree)

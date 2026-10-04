@@ -1,30 +1,53 @@
 ---
-id: adv-coding-driver-block-timeout-semantics
+id: adv-coding-drv-block-timeout-semantics
 title: BLOCK 超时与完成交接
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 # BLOCK 超时与完成交接
 
-本文说明异步完成路径中 `BLOCK` 超时的含义：调用者停止等待之后，底层是否还会完成；如果会，这次完成是否还能唤醒原来的等待者。
+本文说明异步完成路径中 `BLOCK` 超时的含义：调用者停止等待之后，底层是否还会完成；如果会，这次完成是否还能唤醒原来的等待者、访问原来的缓冲区。
 
 ## 1. `BLOCK timeout` 的真实含义
 
-`BLOCK` timeout 限制的是调用者的同步等待窗口，并不保证底层已经接受的操作会被自动取消。也就是说，超时返回不等于硬件停下来了；只要底层已经启动，迟到完成就仍然可能发生。
+`BLOCK` timeout 限制的是调用者的同步等待窗口，不等于所有底层工作都会被撤销。
+
+对 `ReadPort`，尚未完成的软件读可以取消；但返回前必须保证完成方不会再访问调用者的接收缓冲。如果完成已经先 claim 了这次交接，等待者会把这笔完成收完再返回。
+
+对 `WritePort`，请求一旦接纳，字节已经复制进端口队列。timeout 不撤回这些字节，后端仍可能继续发送。也就是说，“调用返回 `TIMEOUT`”和“这条命令没有发生”不是同一件事。
+
+事务型 `SPI / I2C` 则由具体驱动决定能不能停 DMA、复位外设或安全回收中间缓冲。统一的 waiter 状态机不能代替这些硬件动作。
 
 ## 2. 为什么要有 detach 语义
 
-如果超时后直接把端口或等待状态清零，会出现以下问题：
+如果超时后只把等待状态清零，会出现以下问题：
 
-1. 调用者已经返回 `TIMEOUT`
-2. 老的底层完成稍后到来
-3. 这次完成又错误地唤醒新调用，或者留下 stale semaphore token
+1. 调用者已经返回 `TIMEOUT`；
+2. 老的底层完成稍后到来；
+3. 这次完成又错误地 post 旧 semaphore，或者碰到下一次调用已经复用的通知对象。
 
-所以这里要做的不是“硬清空”，而是先把当前 waiter 分离，再让迟到完成静默收尾，等旧交接彻底排空后再重新开放端口。`BLOCK_DETACHED` 一类状态，就是为了表达这件事。
+所以等待路径要先把“这次 waiter 还属不属于当前调用者”说清楚。`AsyncBlockWait` 用 `DETACHED` 表达 timeout 已经分离 waiter；`WritePort` 也有自己的 `BLOCK_DETACHED` / `BLOCK_RETIRE_WAITING` 来处理“调用已返回，但请求还在队列里”的情况。
+
+detach 让迟到完成知道旧 waiter 已经不能再被唤醒，底层工作本身仍会继续。
 
 ## 3. `AsyncBlockWait` 解决什么问题
 
-`AsyncBlockWait` 做的事情很单纯，就是给驱动内部“同步等待一个异步完成”的路径提供标准 handoff。它不负责取消底层硬件，只负责说清楚这次完成还属不属于当前同步调用者：`Start(sem)` 把 waiter 挂起成 `PENDING`，`TryPost(...)` 只有在 `PENDING -> CLAIMED` 成功时才允许唤醒当前 waiter，`Wait(timeout)` 超时后则把 waiter 切成 `DETACHED`。如果迟到完成只看见 `DETACHED`，那就只能静默回收，不能再 post。`Cancel()` 在硬件启动失败时把状态清回 `IDLE`，不发送通知。`AsyncBlockWait` 不检查上一次传输是否结束：`Start()` 总是进入 `PENDING`，若旧传输的迟到完成在此之后到达，会认领新的等待者。因此驱动在调用 `Start()` 前须确认硬件空闲，例如 `STM32SPI` 在 HAL 状态不是 `HAL_SPI_STATE_READY` 时返回 `BUSY`。
+`AsyncBlockWait` 给驱动内部“同步等待一个异步完成”的路径提供标准 handoff。
+
+它的状态是：
+
+| 状态 | 含义 |
+| ---- | ---- |
+| `IDLE` | 当前没有等待 |
+| `PENDING` | waiter 已经挂起 |
+| `CLAIMED` | 完成方已经认领通知 |
+| `DETACHED` | timeout 已经把 waiter 分离 |
+
+`Start(sem)` 先把 waiter 挂成 `PENDING`。完成方（`TryPost(...)`）只有成功做出 `PENDING -> CLAIMED`，才写入结果并 post；timeout 方则在仍是 `PENDING` 时切到 `DETACHED`。如果完成先 claim，`Wait()` 即使最初那次有限等待已经超时，也要继续等这次已经归属当前调用的 post，再返回最终结果。迟到完成看到 `DETACHED` 时只把状态清回 `IDLE`，不再 post。
+
+`Cancel()` 在硬件启动失败时把状态清回 `IDLE`，不发送通知。`AsyncBlockWait` 不检查上一次传输是否结束：`Start()` 总是进入 `PENDING`，若旧传输的迟到完成在此之后到达，会认领新的等待者。因此驱动在调用 `Start()` 前须确认硬件空闲，例如 `STM32SPI` 在 HAL 状态不是 `HAL_SPI_STATE_READY` 时返回 `BUSY`。
+
+这个模型只处理 waiter 的归属；停止 DMA、保证 caller buffer 的状态由具体驱动负责。
 
 ---
 
@@ -36,67 +59,75 @@ sidebar_position: 3
 
 错误顺序：
 
-1. 先 arm 硬件 / 启动 DMA / 打开中断
-2. 再 `block_wait_.Start(...)`
+1. 先 arm 硬件 / 启动 DMA / 打开中断；
+2. 再 `block_wait_.Start(...)`。
 
-风险是：
+风险是底层完成太快，ISR 比 waiter setup 更早到，完成通知没有合法的等待者可以 claim。
 
-- 底层完成太快
-- ISR 比 waiter setup 更早到
-- 唤醒信号直接丢掉
-
-正确顺序应该是：
-
-1. 先把 waiter 状态挂好
-2. 再把硬件暴露给 ISR / DMA / 完成路径
-
----
+正确顺序应该是先把 waiter 状态挂好，再把硬件暴露给可能立即到来的 DMA / IRQ 完成路径。
 
 ### 4.2 把旧 semaphore token 当成本次完成
 
-如果一个 semaphore 被重复用于多次 `BLOCK` 调用，而等待路径只把 `sem->Wait(timeout) == OK` 当成成功，上一次残留的 token 就可能被误认成当前完成。这里需要先确认等待状态已由本次操作的完成方切换为 `CLAIMED`（`AsyncBlockWait` 的 `CLAIMED`，或端口的 `BLOCK_CLAIMED`）。只有这样，这次 wake 才属于本次操作；否则就应该继续等待，把它当成 stale token。
+如果一个 semaphore 被重复用于多次 `BLOCK` 调用，而等待路径只把 `sem->Wait(timeout) == OK` 当成成功，上一次残留的 token 就可能被误认成当前完成。
 
----
+正确做法是由请求状态先确认“这次 wake 到底属于谁”：等待状态须已由本次操作的完成方切换为 `CLAIMED`（`AsyncBlockWait` 的 `CLAIMED`，或端口的 `BLOCK_CLAIMED`）。semaphore 是唤醒通道，不是请求身份本身。
 
-### 4.3 `timeout` 后只返回，不做 detach
+### 4.3 timeout 后只返回，不处理所有权
 
-超时返回之后，旧的完成路径仍可能修改共享状态、再次 post 信号量，甚至覆盖新等待者的归属。因此超时返回前必须让完成路径知道该等待者已不属于当前调用者。
+超时返回之后，旧的完成路径仍可能修改共享状态、再次 post 信号量，甚至覆盖新等待者的归属。
 
----
+因此 timeout 返回前至少要完成一件事：要么安全取消这次软件请求，要么把 waiter detach，让迟到完成静默退出；如果完成已经 claim，则等这次交接结束。
 
 ### 4.4 完成成功了，但 caller buffer 没更新
 
-这类问题多出现在“异步完成 + 同步外观”混合路径里。完成路径报告成功，但 DMA 或 ISR 收到的数据没有拷回 caller-visible buffer；上层看到的是成功返回，手里的数据却还是旧的。对 `MemRead`、`ReadAndWrite` 这类接口来说，这比单纯超时更危险，因为它看起来像对的。
+这类问题多出现在“异步完成 + 同步外观”的读事务。完成路径报告成功，但 DMA 收到的数据还在中间 buffer，或者 timeout/abort 后又迟到写进 caller 地址；上层看到的状态和手里的数据不一致。
+
+所以驱动不能只检查“有没有 post”。它还要定义成功返回时 caller-visible buffer 已经处于什么状态，以及 timeout 返回后谁还可能访问它。
 
 ---
 
-## 5. 为什么 `TIMEOUT` 和最终结果可能不一致
+## 5. timeout 和最终结果为什么可能不一致
 
-如果 timeout 和 completion 竞争，可能有两种情况：
+如果 timeout 和 completion 竞争，大致有两种情况。
 
 ### timeout 先赢
 
-- waiter 成功从 `PENDING` detach
-- 当前调用返回 `TIMEOUT`
-- 迟到完成只负责静默收尾
+- waiter 成功从 `PENDING` detach；
+- 当前调用返回 `TIMEOUT`；
+- 迟到完成不再唤醒旧 waiter，只处理自己的收尾。
 
 ### completion 先 claim
 
-- completion 已经把当前 waiter 标成 `CLAIMED`
-- timeout 这边虽然表面上先从 `Wait()` 返回了超时
-- 但最终仍要继续等那次已经归属当前 waiter 的完成
-- 返回的是最终 `block_result_`，不是 `TIMEOUT`
+- completion 已经把 waiter 标成 `CLAIMED`；
+- 有限 `Wait(timeout)` 可能正好返回超时；
+- 但这笔完成的所有权已经属于当前调用；
+- 等待路径继续等对应 post，最后返回真实完成结果。
 
-所以 `BLOCK timeout` 的结果要看这次完成最后归谁所有，超时返回并不一定等于失败。
+因此 timeout 是等待窗口，不是严格的函数墙钟上限；竞争点上谁先拿到 completion ownership，决定最终结果。
 
----
+## 6. `ReadPort` 和 `WritePort` 为什么表现不同
 
-## 6. 这件事为什么在 `SPI / I2C` 上特别容易出问题
+读端口借用的是调用者接收缓冲区。timeout 后最重要的事情，是返回之前结束对这块缓冲区的访问，所以它可以取消尚未完成的软件读，并在必要时等待已经 claim 的处理方退出。
 
-相对 UART、USB 这类长期流式路径，`SPI / I2C` 更容易写成“发起一次事务，再在线程里同步等一个结果”的形状。问题在于外观是同步的，底层往往仍然是 DMA、IRQ 和状态机推进。把同步外观当作同步实现时，容易出现等待者晚于硬件启动才挂起、超时后残留信号量 token、迟到完成未保持静默等问题。
+写端在接纳时已经复制源数据，caller 的源 buffer 可以在调用返回后复用。因此 timeout 处理的是另一件事：队列里的旧请求怎样继续退出，同时不再触碰旧 waiter 的 semaphore。`BLOCK_DETACHED` / `BLOCK_RETIRE_WAITING` 用于这种情况。
 
----
+读端超时保证返回后接收缓冲区不再被访问；写端超时不撤销已经接纳的传输。
 
-## 7. 一个实用判断标准
+## 7. 清队列与硬件 abort
 
-检查一个 `BLOCK` 驱动路径时确认四点：waiter 是不是在硬件可见之前就已经挂好；timeout 之后是否明确 detach；迟到完成是否会对已 detach 的 waiter 保持静默；最终结果是否和 caller-visible buffer 的实际内容一致。
+`ReadPort::ClearQueuedData()` 只清已经排队的字节，有活动请求时返回 `BUSY`。它不取消挂起请求，也不停止 UART/DMA。
+
+具体驱动如果提供重新配置、abort 或复位路径，需要自己保证：旧 DMA 已经停稳，旧 completion 不会再访问已经释放的外部缓冲，端口/等待器状态也已经完成交接。软件队列清空只是其中一个动作。
+
+这与 timeout 的问题相同：关键在于返回之后还有谁可能继续修改旧状态。
+
+## 8. 一个实用判断标准
+
+检查一个 `BLOCK` 驱动路径时确认以下几点：
+
+- waiter 是不是在硬件可能完成之前就挂好；
+- timeout 后，完成所有权有没有明确 detach 或安全取消；
+- 迟到完成会不会再次唤醒已经返回的调用；
+- 成功返回时 caller-visible buffer 是否已经更新；
+- timeout 返回后还有没有 DMA/ISR 可能访问 caller-owned storage；
+- 对写事务，调用者是否知道 timeout 后请求仍可能执行。

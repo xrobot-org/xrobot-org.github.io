@@ -31,6 +31,7 @@ LibXR device interfaces share these properties:
 - [Timebase (Time Base)](./timebase.md)
 - [Watchdog (Watchdog Timer)](./watchdog.md)
 - [USB (Universal Serial Bus)](./usb.md)
+- [Network and Wi-Fi](./network.md)
 
 ## Interface structure
 

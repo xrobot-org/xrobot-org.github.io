@@ -3,7 +3,7 @@ const { themes: prismThemes } = require('prism-react-renderer');
 module.exports = {
   title: 'XRobot Docs',
   tagline: 'Want to be the best embedded framework',
-  url: 'https://xrobot-org.github.io',
+  url: 'https://xrobot.work',
   baseUrl: '/',
   trailingSlash: false,
   onBrokenLinks: 'throw',
@@ -98,7 +98,7 @@ module.exports = {
             },
             {
               label: 'LibXR 类文档',
-              href: 'https://jiu-xiao.github.io/libxr/',
+              href: 'https://xrobot.work/libxr/',
             },
             {
               label: 'CodeGenerator命令行工具',
@@ -119,11 +119,11 @@ module.exports = {
             },
             {
               label: 'LibXR',
-              href: 'https://github.com/Jiu-xiao/libxr',
+              href: 'https://github.com/xrobot-org/libxr',
             },
             {
               label: 'CodeGenerator',
-              href: 'https://github.com/Jiu-xiao/LibXR_CppCodeGenerator',
+              href: 'https://github.com/xrobot-org/LibXR_CppCodeGenerator',
             },
             {
               label: 'QDU Robomaster未来战队',

@@ -119,7 +119,7 @@ queue.Publish();
 
 调用返回后，调用者的源缓冲区即可复用。
 
-`LOCKED` 只保护复制和发布这两步。非 `BLOCK` 写在第 4 步已把阶段交还为 `IDLE`，下一个写入者可以在前一个仍在 `WriteFun` 中时进入，所以 `WriteFun` 可能被多个线程、或线程与 ISR 同时调用；后端自身的发送完成中断也会推进发送。这些入口由后端串行化。`STM32UART` 用 `SerializedService` 类型的成员 `tx_service_` 处理：`WriteFun` 和各个 UART 中断都通过 `tx_service_.Invoke(...)` 提交事件，取得执行权的一方依次处理所有事件，其他调用只登记事件后返回，登记的事件由执行方在交出执行权之前处理。
+`LOCKED` 只保护复制和发布这两步。非 `BLOCK` 写在第 4 步已把阶段交还为 `IDLE`，下一个写入者可以在前一个仍在 `WriteFun` 中时进入，所以 `WriteFun` 可能被多个线程、或线程与 ISR 同时调用；后端自身的发送完成中断也会推进发送。这些入口由后端串行化。`STM32UART` 用 [`SerializedService`](../../basic_coding/utils/serialized_service.md) 类型的成员 `tx_service_` 处理：`WriteFun` 和各个 UART 中断都通过 `tx_service_.Invoke(...)` 提交事件，取得执行权的一方依次处理所有事件，其他调用只登记事件后返回，登记的事件由执行方在交出执行权之前处理。
 
 ```cpp
 void STM32UART::WriteFun(WritePort& port, bool in_isr)
@@ -161,6 +161,8 @@ size_t size = 0U;
 
 `STM32UART` 构造 `WritePort` 时把数据队列容量设为 DMA 发送缓冲区的一半，单个请求总能放进一个半区。
 
+端口完成、DMA 完成和线路完成因此是三个不同的时刻：端口完成表示后端已接收整笔请求，DMA 完成表示一个 DMA 块已经搬运完毕，线路完成表示最后一个停止位已离开发送器。RS485 方向切换这类依赖线路发送完毕的动作，使用硬件的发送完成事件，不以 `WriteOperation` 的完成为准。
+
 ### 4.3 状态
 
 `WritePort` 的状态也是一个 32 位原子量：低 3 位为阶段，其余位为已发布请求数，即后端可以消费的请求个数。因此生产者持有 `LOCKED` 准备新请求时，后端仍可以继续消费此前已发布的请求。
@@ -184,6 +186,8 @@ size_t size = 0U;
 - 阶段为 `BLOCK_CLAIMED`：后端已认领完成，调用等待信号量交接，返回实际结果，耗时可能超过 timeout。
 
 `BLOCK_DETACHED` 期间，其他写入返回 `BUSY`。长度不超过 `Capacity()` 的 `BLOCK` 写可以先等待旧请求退出：阶段改为 `BLOCK_RETIRE_WAITING`，旧请求完成时端口把 `LOCKED` 直接交给这个写入者并唤醒它，之后从 4.1 的第 3 步起继续提交，并等待本次完成。两段等待各自使用该请求的 timeout；第一段等待超时则返回 `TIMEOUT`，本次数据不提交。
+
+写超时返回时，已接纳的数据仍会发出。超时后重发一条非幂等命令时，不能假定第一次没有发出，需要由协议层用序号、确认或去重来处理。
 
 ### 4.5 批量写入
 

@@ -27,7 +27,7 @@ static STM32TimerTimebase timebase(&htim2);
 ## 生成规则
 
 - 时钟基准为 SysTick 时生成 `STM32Timebase`；
-- 时钟基准为 TIM、LPTIM 或 HRTIM 时生成该定时器的 `STM32TimerTimebase`；
+- 时钟基准为定时器时生成该定时器的 `STM32TimerTimebase`。`STM32TimerTimebase` 的构造函数只接受 `TIM_HandleTypeDef*`，LPTIM 或 HRTIM 作为时钟基准时生成的代码无法编译，因此时钟基准应选用 TIM；
 - 随后的 `PlatformInit()` 在裸机工程中不带参数，在 FreeRTOS 和 ThreadX 工程中带软件定时器的优先级和栈深度，见[软件定时器](./timer.md)。
 
 ## 使用

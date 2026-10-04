@@ -204,7 +204,7 @@ Command dispatch is implemented in `ProcessOneCommand()`. The first byte `CMD` s
 | `DAP_Info`              |               `INFO` | Returns string/numeric info (CAPABILITIES / PACKET_COUNT / PACKET_SIZE / TIMESTAMP_CLOCK, etc.) |
 | `DAP_HostStatus`        |        `HOST_STATUS` | Returns OK                                                                                      |
 | `DAP_Connect`           |            `CONNECT` | Connects SWD; can also connect JTAG once a JTAG backend is set; returns the actual port         |
-| `DAP_Disconnect`        |         `DISCONNECT` | Closes SWD and returns to DISABLED                                                              |
+| `DAP_Disconnect`        |         `DISCONNECT` | Closes SWD and the JTAG backend if one is set, and returns to DISABLED                          |
 | `DAP_TransferConfigure` | `TRANSFER_CONFIGURE` | Sets idle_cycles / retry / match_retry and maps to SWD policy                                   |
 | `DAP_Transfer`          |           `TRANSFER` | DP/AP read/write; supports match / timestamp; AP posted-read pipeline                           |
 | `DAP_TransferBlock`     |     `TRANSFER_BLOCK` | DP/AP block read/write; AP read uses posted pipeline; no match/timestamp                        |
@@ -229,7 +229,7 @@ Note: The numeric values depend on `DapLinkV2Def::CommandId`; this document uses
 
 - `CAPABILITIES`: `DAP_CAP_SWD`, plus `DAP_CAP_JTAG` when a JTAG backend is set
 - `PACKET_COUNT`: `4` by default. The class advertises `8` as its template default packet-count input, but the current implementation clamps the effective host-visible count to `4`.
-- `PACKET_SIZE`: `MaxDapPacketSize`, default 1024
+- `PACKET_SIZE`: `MaxDapPacketSize`, default 1024. The endpoint's `MaxTransferSize()` does not change it; it only decides whether one DAP packet is sent and received in several Bulk transfers
 - `TIMESTAMP_CLOCK`: `1,000,000` (matches a microsecond time base)
 
 ---

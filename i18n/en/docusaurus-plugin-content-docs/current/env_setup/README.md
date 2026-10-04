@@ -21,13 +21,13 @@ CodeGenerator and XRobot are Python-based packages and require Python 3 plus a w
 Clone the repository directly:
 
 ```bash
-git clone https://github.com/Jiu-xiao/libxr.git
+git clone https://github.com/xrobot-org/libxr.git
 ```
 
 For integration into an existing project, `submodule` or `subtree` is more common:
 
 ```bash
-git submodule add https://github.com/Jiu-xiao/libxr.git libxr
+git submodule add https://github.com/xrobot-org/libxr.git libxr
 ```
 
 ### CodeGenerator (libxr) and XRobot
@@ -46,9 +46,8 @@ Install with `pipx`:
 ### Windows
 python -m pip install --user pipx
 python -m pipx ensurepath
-pipx install xrobot==1.0.0
-pipx install libxr==6.0.0
-pipx ensurepath
+python -m pipx install xrobot==1.0.0
+python -m pipx install libxr==6.0.0
 # Restart your terminal
 
 ### Linux

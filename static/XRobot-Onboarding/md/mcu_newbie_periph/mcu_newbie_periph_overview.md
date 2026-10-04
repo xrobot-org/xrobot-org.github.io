@@ -9,7 +9,7 @@
   - 至少有一个 LED 闪烁和一个串口文本输出示例可以正常运行。
 ## 一、先大致看一眼：有哪些外设可以自动生成
 入口文档：
-- STM32 代码生成（总览）：https://xrobot-org.github.io/docs/code_gen/stm32
+- STM32 代码生成（总览）：https://xrobot.work/docs/code_gen/stm32
 在这页的子页面中，可以看到当前支持的主要外设与功能，例如：
 - Flash 数据库
 - 时钟基准
@@ -27,7 +27,7 @@
 - 初步在心里选出 1–2 个“有硬件条件、也有兴趣”的方向。
 ## 二、再看抽象接口：同一类外设在 C++ 里长什么样
 入口文档：
-- 外设驱动（Device Drivers）：https://xrobot-org.github.io/docs/basic_coding/driver
+- 外设驱动（Device Drivers）：https://xrobot.work/docs/basic_coding/driver
 这里给出了统一的 C++ 抽象接口，包括：
 - GPIO（通用输入输出）。
 - UART（串口通信）。
@@ -43,14 +43,14 @@
   - 抽象类的名称（例如 ADC、I2C、SPI、UART 等）。
   - 是否有 Configuration 结构体、SetConfig()、Enable()/Disable() 之类的接口。
   - 最基础的读写或控制方法叫什么（例如 Read()、Write()、SetDutyCycle()）。
-遇到某个类或函数名不清楚时，可以在 LibXR C++ API 索引中查：https://jiu-xiao.github.io/libxr/
+遇到某个类或函数名不清楚时，可以在 LibXR C++ API 索引中查：https://xrobot.work/libxr/
 ## 三、选择一个方向，做一个只涉及少量代码的小实验
 本任务没有“统一的标准示例代码”，而是鼓励你根据手头硬件和兴趣，在现有工程上做一个小范围尝试。可以参考以下思路任选其一（或自选）：
 ### 示例方向 1：在现有工程上再增加一个 GPIO 功能
 - 例如：新增一个按键输入，只做“读一次电平并通过串口打印”。
 - 对照文档：
-  - STM32 代码生成 · GPIO：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio
-  - GPIO 驱动接口：https://xrobot-org.github.io/docs/basic_coding/driver/gpio
+  - STM32 代码生成 · GPIO：https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-gpio
+  - GPIO 驱动接口：https://xrobot.work/docs/basic_coding/driver/gpio
 - 自己完成的核心动作：
   - 在 .ioc 中配置一个新引脚为输入，重新生成 STM32 代码并运行一次 CodeGenerator。
   - 在 app_main.cpp 中找到新生成的 STM32GPIO 对象。
@@ -67,10 +67,10 @@
 ### 示例方向 3：用 I2C 或 SPI 读取一个简单传感器寄存器（例如 MPU6050 WHO_AM_I）
 - 前提：开发板上接有简单传感器模块（例如基于 MPU6050 的模块），并且已确认其使用 I2C 或 SPI 接口。
 - 对照文档：
-  - STM32 代码生成 · I2C：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-i2c
-  - STM32 代码生成 · SPI：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-spi
-  - I2C 驱动接口：https://xrobot-org.github.io/docs/basic_coding/driver/i2c
-  - SPI 驱动接口：https://xrobot-org.github.io/docs/basic_coding/driver/spi
+  - STM32 代码生成 · I2C：https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-i2c
+  - STM32 代码生成 · SPI：https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-spi
+  - I2C 驱动接口：https://xrobot.work/docs/basic_coding/driver/i2c
+  - SPI 驱动接口：https://xrobot.work/docs/basic_coding/driver/spi
 - 自己完成的核心动作（以 I2C 为例，SPI 思路类似）：
   1. 在 .ioc 中开启一条 I2C 总线：配置 SCL / SDA 引脚为 I2C 功能，并启用该 I2C 外设。
   2. 重新生成 STM32 代码并运行 CodeGenerator，在 app_main.cpp 中找到对应的 STM32I2C 对象。
@@ -88,7 +88,7 @@
 2. 外设驱动文档（basic_coding/driver 下对应外设）：
    - 抽象类有哪些基础接口。
    - 启用、配置、读写分别怎么调用。
-3. C++ API 索引（https://jiu-xiao.github.io/libxr/）：
+3. C++ API 索引（https://xrobot.work/libxr/）：
    - 查具体类和函数的签名、参数类型和返回值含义。
 ## 五、完成标准
 - 能用自己的话说出：

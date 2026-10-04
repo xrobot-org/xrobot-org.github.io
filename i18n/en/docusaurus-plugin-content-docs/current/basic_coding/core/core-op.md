@@ -47,7 +47,7 @@ Operation(Semaphore &sem, uint32_t timeout = UINT32_MAX);
 Operation(Callback<T> &cb);
 
 // Construct a polling-based operation
-Operation(OperationPollingStatus &status);
+Operation(std::atomic<OperationPollingStatus> &status);
 ```
 
 `Operation` can also be initialized from another `Operation` instance (copy/move semantics are equivalent to assignment).
@@ -92,14 +92,17 @@ read_port(buffer, op_cb);
 ### Polling to check for completion
 
 ```cpp
-auto status = LibXR::ReadOperation::OperationPollingStatus::READY;
+std::atomic<LibXR::ReadOperation::OperationPollingStatus> status{
+    LibXR::ReadOperation::OperationPollingStatus::READY};
 ReadOperation op_poll(status);
 read_port(buffer, op_poll);
 
 // Later check if completed
-if (status == LibXR::ReadOperation::OperationPollingStatus::DONE) {
+if (status.load(std::memory_order_acquire) ==
+    LibXR::ReadOperation::OperationPollingStatus::DONE) {
   // Completed successfully
-} else if (status == LibXR::ReadOperation::OperationPollingStatus::ERROR) {
+} else if (status.load(std::memory_order_acquire) ==
+           LibXR::ReadOperation::OperationPollingStatus::ERROR) {
   // Completed with an error
 }
 ```

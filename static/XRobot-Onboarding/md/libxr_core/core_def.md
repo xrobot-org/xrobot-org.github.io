@@ -5,7 +5,7 @@
 
 推荐先阅读官方文档原文，再看下面代码片段对照理解：
 
-> https://xrobot-org.github.io/docs/basic_coding/core/core-def
+> https://xrobot.work/docs/basic_coding/core/core-def
 
 ---
 

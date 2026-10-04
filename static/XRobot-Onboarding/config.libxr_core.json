@@ -14,14 +14,14 @@
                     "id": "libxr_core_read_core_doc",
                     "title": "阅读“核心组件”章节并建立整体模块图",
                     "descMd": "md/libxr_core/libxr_core_read_core_doc.md",
-                    "link": "https://xrobot-org.github.io/docs/basic_coding/core",
+                    "link": "https://xrobot.work/docs/basic_coding/core",
                     "estimateMinutes": 10
                 },
                 {
                     "id": "libxr_core_def_examples",
                     "title": "阅读 core-def 文档并走一遍示例函数",
                     "descMd": "md/libxr_core/core_def.md",
-                    "link": "https://xrobot-org.github.io/docs/basic_coding/core/core-def",
+                    "link": "https://xrobot.work/docs/basic_coding/core/core-def",
                     "estimateMinutes": 20
                 }
             ]

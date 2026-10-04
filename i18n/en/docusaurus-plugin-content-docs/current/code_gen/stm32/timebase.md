@@ -27,7 +27,7 @@ static STM32TimerTimebase timebase(&htim2);
 ## Generation Rules
 
 - with SysTick as the time base, `STM32Timebase` is generated;
-- with a TIM, LPTIM or HRTIM as the time base, `STM32TimerTimebase` on that timer is generated;
+- with a timer as the time base, `STM32TimerTimebase` on that timer is generated. The constructor of `STM32TimerTimebase` takes only a `TIM_HandleTypeDef*`; with an LPTIM or HRTIM as the time base the generated code does not compile, so the time base should be a TIM;
 - the following `PlatformInit()` takes no arguments in bare-metal projects, and the priority and stack depth of the software timer in FreeRTOS and ThreadX projects, see [Software Timer](./timer.md).
 
 ## Usage

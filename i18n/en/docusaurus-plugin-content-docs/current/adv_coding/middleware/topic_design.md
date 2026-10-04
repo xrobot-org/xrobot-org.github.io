@@ -20,9 +20,10 @@ across processes is provided by `LinuxSharedTopic<T>`.
 At the source level, `Block` is the central structure inside `Topic`. It stores the payload type
 contract, the topic-name CRC32 key, the subscriber lists, and the state used to coordinate
 concurrent access. By default it optimizes the single-publisher path: if `multi_publisher` is not
-explicitly enabled, it only uses a lightweight atomic `busy` state for serialization. Only when
-multi-publisher mode is enabled does it fall back to `Mutex`. This means `Topic` optimizes for the
-common single-publisher case rather than forcing every publish onto a locked path.
+explicitly enabled, a lightweight atomic `busy` state checks exclusive publication, and concurrent
+publication triggers an assertion. Only when multi-publisher mode is enabled does it fall back to
+`Mutex`. That mode is for ordinary task-context `Publish()` calls and cannot be used with
+`PublishFromCallback()`. The common single-publisher path therefore needs no lock.
 
 ## Why there is no built-in latest cache anymore
 
@@ -43,8 +44,9 @@ The subscriber types are split into synchronous, asynchronous, queued, and callb
 they represent four genuinely different consumption semantics. `SyncSubscriber` wakes the waiting
 thread when new data arrives; `ASyncSubscriber` arms a wait, the next publish fills its local
 buffer, and the subscriber reads it later; `QueuedSubscriber` writes every publish into a queue; a
-callback subscriber runs its callback at publish time. If all of that were collapsed into one subscriber interface, the result would
-either degenerate into the most conservative common subset or push too many branches into runtime.
+callback subscriber runs its callback at publish time. If all of that were collapsed into one
+subscriber interface, the result would either degenerate into the most conservative common subset
+or push too many branches into runtime.
 
 ## Dispatch
 

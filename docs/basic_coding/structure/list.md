@@ -1,7 +1,7 @@
 ---
 id: list
 title: 链表
-sidebar_position: 4
+sidebar_position: 5
 ---
 
 # 链表（List）
@@ -58,8 +58,8 @@ class Node : public BaseNode {
 ### Foreach 使用示例
 
 ```cpp
-LibXR::List list;
 LibXR::List::Node<int> node1(42);
+LibXR::List list;
 list.Add(node1);
 
 list.Foreach<int>([](int& data) {

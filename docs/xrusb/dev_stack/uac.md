@@ -281,6 +281,8 @@ rem_bytes_per_service  = bytes_per_sec_ % service_hz_
 - `GET_CUR (wLength=2)`：读出 `vol_cur_`
 - `GET_MIN / GET_MAX / GET_RES (wLength=2)`：返回构造参数 `vol_min_ / vol_max_ / vol_res_`
 
+当前类保存并返回 Mute / Volume 控制值，但发送路径不会自动修改 PCM 样本；需要实际静音或增益时，由上游采集/处理层应用这些控制值。
+
 ---
 
 ## 10. 使用示例

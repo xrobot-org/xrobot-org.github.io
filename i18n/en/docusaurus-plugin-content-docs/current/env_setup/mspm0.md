@@ -95,7 +95,7 @@ Many MSPM0 build issues are ultimately “chip-specific files were not switched 
 
 ## Current MSPM0 Driver Coverage in Mainline
 
-The current source tree already contains these MSPM0 implementation files:
+The default MSPM0 source list contains:
 
 - `mspm0_gpio.*`
 - `mspm0_pwm.*`
@@ -103,15 +103,10 @@ The current source tree already contains these MSPM0 implementation files:
 - `mspm0_uart.*`
 - `mspm0_spi.*`
 - `mspm0_i2c.*`
+- `mspm0_group1_shared.cpp`
+- `mspm0_atomic_shim.c`
 
-But the default build list currently includes only:
-
-- `GPIO`
-- `PWM`
-- `Timebase`
-- `UART`
-
-So if you want to use `SPI` or `I2C` directly in an MSPM0 project, first verify that your own `LibXR.CMake` or upper-layer build scripts explicitly add those sources. Seeing the files in the source tree is not enough to prove they are already part of the default MSPM0 driver line.
+SPI/I2C are already part of the LibXR MSPM0 build, so upper projects do not need to add those sources again. The project still supplies the matching SDK, SysConfig output, and peripheral initialization.
 
 ## Toolchain Requirements
 

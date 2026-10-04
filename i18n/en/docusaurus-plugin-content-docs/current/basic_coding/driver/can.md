@@ -527,4 +527,3 @@ protected:
 
 - Called by the driver on FD frame reception.
 - Internally dispatches to matching FD filters and invokes callbacks as `cb.Run(in_isr, pack)`.
-

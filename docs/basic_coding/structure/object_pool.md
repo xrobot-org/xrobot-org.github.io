@@ -1,7 +1,7 @@
 ---
 id: object_pool
 title: RAII 对象池
-sidebar_position: 8
+sidebar_position: 9
 ---
 
 # ObjectPool
@@ -17,8 +17,6 @@ LibXR::BasicObjectPool<Data, FreeQueue>
 - `LibXR::ObjectPool<Data, IndexType>`：底层使用 `Queue<IndexType>`
 - `LibXR::SPSCObjectPool<Data, IndexType>`：底层使用 `SPSCQueue<IndexType>`
 - `LibXR::MPMCObjectPool<Data, IndexType>`：底层使用 `MPMCQueue<IndexType>`
-
-与 [LockFreePool](./lockfree_pool.md) 不同，这一组对象池强调的是：
 
 - 通过 `Acquire()` 获取一个独占槽位；
 - 通过 move-only `Handle` 在析构时自动归还槽位；
@@ -163,10 +161,3 @@ handle.Reset();
 ```
 
 ---
-
-## 6. 与 LockFreePool 的区别
-
-- `ObjectPool` 系列以“槽位独占 + RAII 归还”为核心语义，更适合对象复用、临时缓冲区借还、工作槽租赁。
-- `LockFreePool` 以“槽状态机 + 无序 Put/Get”为核心语义，更适合高并发缓存和无严格配对的投递/取走。
-
-如果你的场景需要“拿到一个槽位，期间独占修改，结束后自动归还”，通常优先选择 `ObjectPool` 系列。

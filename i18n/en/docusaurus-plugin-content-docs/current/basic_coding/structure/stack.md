@@ -1,7 +1,7 @@
 ---
 id: stack
 title: Stack
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 # Stack

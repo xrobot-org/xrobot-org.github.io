@@ -1,5 +1,5 @@
 ## 参考资料
-- 文档：STM32 代码生成 https://xrobot-org.github.io/docs/code_gen/stm32
+- 文档：STM32 代码生成 https://xrobot.work/docs/code_gen/stm32
 - 视频：[STM32 + VS Code] 自动生成 C++ 代码 | Python & libxr  - XRobot 官方教程 1.0 节
   https://www.bilibili.com/video/BV1yUnpz6E6h
 本任务建议一边对照视频，一边按照文字步骤操作。文档中的高级选项和工具链切换内容，新手可以暂时跳过。

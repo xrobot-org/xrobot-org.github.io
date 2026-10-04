@@ -80,6 +80,7 @@ topic.PublishFromCallback(temp, LibXR::MicrosecondTimestamp(2000), true);
 - 普通发布路径使用 `Lock()` / `Unlock()` 串行化；
 - `multi_publisher = false` 时优先走轻量原子快路径；
 - `multi_publisher = true` 时改用 `Mutex` 串行化；
+- `multi_publisher = true` 的主题只走线程中的普通 `Publish()`，不能使用 `PublishFromCallback()`；
 - `Topic` 本身只负责本次发布的分发，不保存 latest payload 副本。
 
 ## 订阅方式
@@ -166,21 +167,21 @@ auto cb0 = LibXR::Topic::Callback::Create(
     {
         printf("%u %.2f\n", (unsigned)ts, data);
     },
-    nullptr);
+    static_cast<void*>(nullptr));
 
 auto cb1 = LibXR::Topic::Callback::Create(
     [](bool, void*, const LibXR::Topic::MessageView<float>& msg)
     {
         printf("%.2f\n", *msg.data);
     },
-    nullptr);
+    static_cast<void*>(nullptr));
 
 auto cb2 = LibXR::Topic::Callback::Create(
     [](bool, void*, const LibXR::ConstRawData& raw)
     {
         // 原始 payload 视图
     },
-    nullptr);
+    static_cast<void*>(nullptr));
 
 topic.RegisterCallback(cb0);
 topic.RegisterCallback(cb1);

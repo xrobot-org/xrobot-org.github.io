@@ -6,10 +6,11 @@ sidebar_position: 6
 
 # Basic Programming (libxr)
 
-This chapter introduces LibXR's basic APIs: core components, data structures, middleware, OS abstractions, device drivers, and math and utilities.
+This chapter introduces LibXR's CMake configuration and basic APIs. The basic APIs cover core components, data structures, middleware, OS abstractions, device drivers, and math and utilities.
 
 ## Contents
 
+- [CMake Configuration](./cmake.md)
 - [Core Components](/docs/basic_coding/core)
 - [Data Structures](/docs/basic_coding/structure)
 - [Middleware](/docs/basic_coding/middleware)

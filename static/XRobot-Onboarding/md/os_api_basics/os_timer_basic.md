@@ -146,6 +146,6 @@ LibXR::Timer::Start(handle);  // 再次启动
    - **裸机环境**：Timer 依赖空闲时的 `RefreshTimerInIdle()` 刷新。
 
 ## 相关文档
-- [Timer（定时器）文档](https://xrobot-org.github.io/docs/basic_coding/system/timer)
-- [Timebase（时间基准）配置示例 · STM32](https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-timebase)
-- [Thread（线程）文档](https://xrobot-org.github.io/docs/basic_coding/system/thread)
+- [Timer（定时器）文档](https://xrobot.work/docs/basic_coding/system/timer)
+- [Timebase（时间基准）配置示例 · STM32](https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-timebase)
+- [Thread（线程）文档](https://xrobot.work/docs/basic_coding/system/thread)

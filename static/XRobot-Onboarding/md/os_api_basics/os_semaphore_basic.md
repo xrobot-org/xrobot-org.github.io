@@ -116,6 +116,6 @@ int main()
 3. 你能用自己的话解释：为什么在 ISR 里只能 `PostFromCallback(true)`，不能 `Wait()`；以及信号量和互斥锁的用途差异。
 
 ## 相关文档
-- [Semaphore（信号量）文档](https://xrobot-org.github.io/docs/basic_coding/system/semaphore)
-- [Callback（通用回调）文档](https://xrobot-org.github.io/docs/basic_coding/core/core-callback)
-- [Thread（线程）文档](https://xrobot-org.github.io/docs/basic_coding/system/thread)
+- [Semaphore（信号量）文档](https://xrobot.work/docs/basic_coding/system/semaphore)
+- [Callback（通用回调）文档](https://xrobot.work/docs/basic_coding/core/core-callback)
+- [Thread（线程）文档](https://xrobot.work/docs/basic_coding/system/thread)

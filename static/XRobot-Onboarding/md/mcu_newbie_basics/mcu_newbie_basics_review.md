@@ -41,8 +41,8 @@
    - 如果示例里已经有类似写法，可以先照着跑通，再按需要微调。
 2. 官方文档：
    - XRobot / LibXR 文档主页：
-     - https://xrobot-org.github.io/
-     - https://jiu-xiao.github.io/libxr/
+     - https://xrobot.work/
+     - https://xrobot.work/libxr/
    - 常见查找方式：
      - 按“类别”找：例如 basic_coding/driver/gpio、driver/uart、core-op、core-rw、core-rawdata 等。
      - 按“类名”找：在 API 参考中搜索 STM32GPIO、STM32UART、UART、GPIO 等关键字。

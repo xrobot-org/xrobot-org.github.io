@@ -240,12 +240,9 @@ struct SerialStateNotification
 - 将端点归还给 `EndpointPool`
 - 置端点指针为空
 
-派生类或上层适配类在 `UnbindEndpoints()` 时应确保：
-
-- 终止所有依赖端点对象的异步操作
-- 结束未完成的读写请求（成功或返回错误），避免上层一直等待
-
 `CDCUart::UnbindEndpoints()` 在调用 `CDCBase::UnbindEndpoints()` 之后，只清除零长度包标志和接收暂停状态（`recv_pause_` / `pending_data_`）；发送队列中尚未发出的数据保留，挂起的写请求不会以错误码结束。
+
+因此，需要跨断开/重连工作的上层应自己管理连接状态与等待时长，并在销毁相关对象前确保不再有回调链继续使用它们。
 
 ---
 

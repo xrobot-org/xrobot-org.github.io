@@ -1,12 +1,12 @@
 ## 参考资料
 - STM32 串口与终端代码生成（重点看“硬件串口 / USB CDC / 配置文件说明”）：
-  https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart
+  https://xrobot.work/docs/code_gen/stm32/stm32-code-gen-uart
 - Terminal 终端组件文档：
-  https://xrobot-org.github.io/docs/basic_coding/middleware/terminal
+  https://xrobot.work/docs/basic_coding/middleware/terminal
 - RamFS 内存文件系统文档：
-  https://xrobot-org.github.io/docs/basic_coding/middleware/ramfs
+  https://xrobot.work/docs/basic_coding/middleware/ramfs
 - LibXR C++ API 索引：
-  https://jiu-xiao.github.io/libxr/
+  https://xrobot.work/libxr/
 ## 本任务目标
 - 在“硬件串口已能正常发送文本”的基础上，通过修改配置文件 + 重新生成工程：
   - 可选：启用 USB CDC 虚拟串口（板子支持的话）。

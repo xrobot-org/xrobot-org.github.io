@@ -86,8 +86,8 @@ dir.Add(custom);
 
 // Run exec file multiple times and verify count
 for (int i = 1; i <= 5; ++i) {
-  exec_file->Run(0, nullptr);
-  ASSERT(data_file->GetData<int>() == i);
+  exec_file.Run(0, nullptr);
+  ASSERT(data_file.Data<int>() == i);
 }
 ```
 
@@ -112,7 +112,7 @@ for (int i = 1; i <= 5; ++i) {
 | Method | Description |
 |--------|-------------|
 | `Run(argc, argv)` | Run executable file (only for EXEC type) |
-| `GetData<T>()` | Get a type-safe reference to file data |
+| `Data<T>()` | Get a type-safe reference to file data |
 
 ### Dir Interface
 

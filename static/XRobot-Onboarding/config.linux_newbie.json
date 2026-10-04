@@ -13,35 +13,35 @@
         {
           "id": "linux_newbie_env_read_overview",
           "title": "【重要】LibXR 在 Linux 平台上的分层与职责",
-          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "link": "https://xrobot.work/docs/env_setup/env-setup-linux",
           "estimateMinutes": 15,
           "descMd": "md/linux_newbie_env/linux_newbie_env_read_overview.md"
         },
         {
           "id": "linux_newbie_env_setup",
           "title": "Linux 环境配置：编译器 / VS Code / Git",
-          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "link": "https://xrobot.work/docs/env_setup/env-setup-linux",
           "estimateMinutes": 20,
           "descMd": "md/linux_newbie_env/linux_newbie_env_setup.md"
         },
         {
           "id": "linux_newbie_basics_hello_cmake",
           "title": "第一个 LibXR CMake 工程：Hello LibXR（Linux）",
-          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "link": "https://xrobot.work/docs/env_setup/env-setup-linux",
           "estimateMinutes": 20,
           "descMd": "md/linux_newbie_env/linux_newbie_basics_hello_cmake.md"
         },
         {
           "id": "linux_newbie_basics_debug",
           "title": "在 VS Code 中调试第一个 LibXR 程序",
-          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "link": "https://xrobot.work/docs/env_setup/env-setup-linux",
           "estimateMinutes": 15,
           "descMd": "md/linux_newbie_env/linux_newbie_basics_debug.md"
         },
         {
           "id": "linux_newbie_env_review",
           "title": "小结：从环境到第一个可调试的 LibXR 工程",
-          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "link": "https://xrobot.work/docs/env_setup/env-setup-linux",
           "estimateMinutes": 10,
           "descMd": "md/linux_newbie_env/linux_newbie_env_review.md"
         }
@@ -63,21 +63,21 @@
         {
           "id": "linux_newbie_basics_fake_led",
           "title": "用一个布尔量当作“LED”：LibXR 上的第一个循环",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/system/thread",
+          "link": "https://xrobot.work/docs/basic_coding/system/thread",
           "estimateMinutes": 15,
           "descMd": "md/linux_newbie_basics/linux_newbie_basics_fake_led.md"
         },
         {
           "id": "linux_newbie_basics_terminal_ramfs",
           "title": "在 Linux 上启用 LibXR 终端（RamFS 命令行）",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/middleware/terminal",
+          "link": "https://xrobot.work/docs/basic_coding/middleware/terminal",
           "estimateMinutes": 20,
           "descMd": "md/linux_newbie_basics/linux_newbie_basics_terminal_ramfs.md"
         },
         {
           "id": "linux_newbie_basics_review",
           "title": "小结：从简单循环到终端的一条线",
-          "link": "https://xrobot-org.github.io/docs/basic_coding/middleware",
+          "link": "https://xrobot.work/docs/basic_coding/middleware",
           "estimateMinutes": 10,
           "descMd": "md/linux_newbie_basics/linux_newbie_basics_review.md"
         }

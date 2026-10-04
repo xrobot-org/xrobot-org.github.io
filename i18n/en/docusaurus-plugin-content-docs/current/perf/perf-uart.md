@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # UART Performance Testing
 
-This page measures the transmit/receive rate of the LibXR UART driver at 2–9 Mbaud and the thread scheduling during transfer.
+This page measures the transmit/receive rate of the LibXR UART driver at 2–9 Mbaud and the thread scheduling during transfer. The data are earlier measurements and apply only to the STM32F103C8, CH32V307VC, and STM32F407IG setups listed below; the test code below has been updated for the current LibXR, and the data were not remeasured.
 
 ## Test Environment
 

@@ -6,6 +6,8 @@ sidebar_position: 4
 
 # DAPLink（CMSIS-DAP v2 / SWD）性能测试
 
+> 本页保留原有 CH32V307 → STM32F401RC 测试结果。代码片段中的 USB 类构造已更新为当前显式端点接口；原始性能数字没有重新测量。
+
 ## 测试环境
 
 * Probe：自制 DAPLink（CMSIS-DAP v2）
@@ -28,11 +30,12 @@ static constexpr auto USB_OTG_HS_LANG_PACK =
           LibXR::USB::DescriptorStrings::Language::EN_US,
           "XRobot", "CMSIS-DAP", "XROBOT-XRDAP-");
 
-LibXR::USB::CDCUart cdc(128, 128, 3);
+using EP = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCUart cdc(EP::EP3, EP::EP4, EP::EP5, 128, 128, 3);
 
 LibXR::Debug::SwdGeneralGPIO<decltype(PA0), decltype(PA4)> swd(PA0, PA4, 0);
 
-LibXR::USB::DapLinkV2Class<decltype(swd)> dap(swd);
+LibXR::USB::DapLinkV2Class<decltype(swd)> dap(EP::EP1, EP::EP2, swd);
 
 LibXR::CH32USBOtgHS usb_dev_hs(
     ...

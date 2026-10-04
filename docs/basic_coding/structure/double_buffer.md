@@ -1,7 +1,7 @@
 ---
 id: double_buffer
 title: 双缓冲区
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # 双缓冲区（DoubleBuffer）

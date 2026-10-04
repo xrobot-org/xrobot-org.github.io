@@ -1,7 +1,7 @@
 ---
 id: lockfree_list
 title: Lock-Free List
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # LockFreeList
@@ -55,8 +55,8 @@ uint32_t Size();
 ### Usage Example
 
 ```cpp
-LibXR::LockFreeList list;
 LibXR::LockFreeList::Node<int> node1(123);
+LibXR::LockFreeList list;
 list.Add(node1);
 
 list.Foreach<int>([](int& val) {

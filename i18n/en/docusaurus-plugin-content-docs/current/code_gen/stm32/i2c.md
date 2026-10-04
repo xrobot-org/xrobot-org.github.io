@@ -10,7 +10,7 @@ In STM32CubeMX, the I2C runs in I2C mode (SMBus mode uses an SMBUS handle), with
 
 ## Example
 
-The last constructor argument is the minimum transfer size required before DMA is enabled.
+The last constructor argument is the DMA switching threshold. The relevant branch requires the transfer length to be **strictly greater** than this value. With threshold `3`, a three-byte transfer does not enter the DMA branch; four bytes does.
 
 ```cpp
 static STM32I2C i2c1(&hi2c1, i2c1_buf, 3);
@@ -30,7 +30,7 @@ I2C:
 
 - `buffer_size`: shared I2C transfer / receive buffer size
 - `dma_section`: linker section for the generated buffer declaration
-- `dma_enable_min_size`: minimum transfer byte count to enable DMA
+- `dma_enable_min_size`: DMA switching threshold; only a transfer longer than this value enters the DMA branch
 
 Generation rules:
 
