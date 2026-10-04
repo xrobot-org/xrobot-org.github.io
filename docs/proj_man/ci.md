@@ -178,7 +178,7 @@ jobs:
 | `default` | - | 137384 | 84 | 117172 | `CtrBoard-H7_ALL-default-v1.0.0.tar.gz` |
 
 - Commit `ad662b2` of QDU-Robomaster/bsp-dev-mc02
-- XRobot 1.0.0, libxr 6.0.0, LibXR `6c51bf4`
+- xrobot 1.0.0, libxr 6.0.0, LibXR `6c51bf4`
 - Image `ghcr.io/xrobot-org/docker-image-stm32:main`, toolchain `cmake/starm-clang.cmake`, build type `Debug`
 - `SHA256SUMS` lists every file of this release; `firmware-manifest.json` records the builds and the Module commits
 ```
