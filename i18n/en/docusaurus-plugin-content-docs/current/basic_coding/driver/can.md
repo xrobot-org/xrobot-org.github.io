@@ -187,7 +187,7 @@ static constexpr ErrorID ToErrorID(uint32_t id) noexcept;
 
 > Since physical CAN IDs are at most 11/29 bits, the `0xFFFF0000` virtual ID space does not overlap with real bus IDs and therefore cannot conflict.
 
-Typical usage (inside a driver when an error interrupt is detected):
+Typical usage (in a member function of the derived driver that handles the error interrupt):
 
 ```cpp
 LibXR::CAN::ClassicPack pack{};
@@ -195,7 +195,7 @@ pack.type = LibXR::CAN::Type::ERROR;
 pack.id   = LibXR::CAN::FromErrorID(LibXR::CAN::ErrorID::CAN_ERROR_ID_BUS_OFF);
 pack.dlc  = 0;
 pack.data[0] = 0;  // Optional: carry extra info if needed
-can.OnMessage(pack, /*in_isr=*/true);  // Driver dispatches via OnMessage()
+OnMessage(pack, /*in_isr=*/true);  // OnMessage is protected; call it from a member of the derived driver
 ```
 
 ---
@@ -214,10 +214,11 @@ Callbacks are triggered by `OnMessage(pack, in_isr)`, and internally invoked as:
 cb.Run(in_isr, pack);
 ```
 
-Therefore, user callbacks should be written to accept:
+User callbacks have the form `void(bool in_isr, ArgType arg, const ClassicPack &pack)` and are created with `Callback::Create(fun, arg)` (see [General Callback](../core/core-cb.md)):
 
-- `in_isr`: Whether the callback is invoked from ISR context.
-- `pack`: The received frame.
+- `in_isr`: whether the callback runs in ISR context;
+- `arg`: the argument bound when the callback was created;
+- `pack`: the received frame.
 
 > `pack` is a read-only reference. Do not store this reference for asynchronous use.
 
@@ -280,11 +281,14 @@ Example: subscribe to standard data frames with IDs in `[0x100, 0x1FF]`:
 LibXR::CAN &can = ...;
 
 can.Register(
-    LibXR::CAN::Callback(
-        [](bool in_isr, const LibXR::CAN::ClassicPack &pack) {
+    LibXR::CAN::Callback::Create(
+        [](bool in_isr, void *arg, const LibXR::CAN::ClassicPack &pack) {
           (void)in_isr;
+          (void)arg;
+          (void)pack;
           // Fast processing, no blocking
-        }),
+        },
+        static_cast<void *>(nullptr)),
     LibXR::CAN::Type::STANDARD,
     LibXR::CAN::FilterMode::ID_RANGE,
     0x100, 0x1FF);
@@ -294,15 +298,18 @@ Example: subscribe to all virtual error frames:
 
 ```cpp
 can.Register(
-    LibXR::CAN::Callback(
-        [](bool in_isr, const LibXR::CAN::ClassicPack &pack) {
+    LibXR::CAN::Callback::Create(
+        [](bool in_isr, void *arg, const LibXR::CAN::ClassicPack &pack) {
           (void)in_isr;
+          (void)arg;
           if (!LibXR::CAN::IsErrorId(pack.id)) {
             return;
           }
           auto err = LibXR::CAN::ToErrorID(pack.id);
+          (void)err;
           // Diagnostics based on err
-        }),
+        },
+        static_cast<void *>(nullptr)),
     LibXR::CAN::Type::ERROR,
     LibXR::CAN::FilterMode::ID_RANGE,
     LibXR::CAN::FromErrorID(LibXR::CAN::ErrorID::CAN_ERROR_ID_GENERIC),
@@ -319,9 +326,9 @@ can.Register(
 virtual ErrorCode AddMessage(const ClassicPack &pack) = 0;
 ```
 
-- **Transmit-path API**: called by the upper layer to send a `ClassicPack` onto the CAN bus.
+- Transmit API, called by the upper layer to hand a `ClassicPack` to the driver.
 - The actual sending mechanism is implementation-defined (direct mailbox, hardware queue, software queue, etc.).
-- The return value indicates whether the transmission request is accepted/successful (e.g., busy, queue full, invalid parameters).
+- The return value tells whether the frame was accepted into the transmit queue: the existing backends (STM32, CH32) return `FULL` when the queue is full, `ARG_ERR` for a frame of type `ERROR`, and `OK` once queued.
 
 #### Receive Dispatch Helper `OnMessage` (RX dispatch helper)
 
@@ -330,7 +337,7 @@ protected:
   void OnMessage(const ClassicPack &pack, bool in_isr);
 ```
 
-- **Dispatch helper**: called by the driver when a CAN frame is received, or when an error event is detected and represented as `Type::ERROR`.
+- Dispatch helper, called by the driver when a CAN frame is received, or when an error event is detected and represented as `Type::ERROR`.
 - Internally, dispatches to matching filters in the per-type lock-free list `subscriber_list_[]`, invoking callbacks as `cb.Run(in_isr, pack)`.
 
 ---
@@ -445,7 +452,7 @@ cb.Run(in_isr, pack);
 User callbacks should therefore follow:
 
 ```cpp
-[](bool in_isr, const LibXR::FDCAN::FDPack &pack) { ... }
+[](bool in_isr, void *arg, const LibXR::FDCAN::FDPack &pack) { ... }  // created with CallbackFD::Create(fun, arg)
 ```
 
 #### `FDCAN::Filter`
@@ -485,11 +492,14 @@ Example: subscribe to extended FD frames in `[0x18FF0000, 0x18FFFFFF]`:
 LibXR::FDCAN &fdcan = ...;
 
 fdcan.Register(
-    LibXR::FDCAN::CallbackFD(
-        [](bool in_isr, const LibXR::FDCAN::FDPack &pack) {
+    LibXR::FDCAN::CallbackFD::Create(
+        [](bool in_isr, void *arg, const LibXR::FDCAN::FDPack &pack) {
           (void)in_isr;
+          (void)arg;
+          (void)pack;
           // Fast processing, no blocking
-        }),
+        },
+        static_cast<void *>(nullptr)),
     LibXR::CAN::Type::EXTENDED,
     LibXR::CAN::FilterMode::ID_RANGE,
     0x18FF0000, 0x18FFFFFF);
@@ -505,8 +515,8 @@ fdcan.Register(
 virtual ErrorCode AddMessage(const FDPack &pack) = 0;
 ```
 
-- **Transmit-path API**: called by the upper layer to send an FD frame.
-- The mechanism and constraints are platform/driver-defined (busy, queue full, invalid length, etc.).
+- Transmit API, called by the upper layer to hand an `FDPack` to the driver.
+- The return value tells whether the frame was accepted into the transmit queue: `FULL` when the queue is full, `ARG_ERR` for type `ERROR`; the STM32 backend returns `FAILED` for remote frame types.
 
 #### Receive Dispatch Helper `OnMessage` (RX dispatch helper)
 

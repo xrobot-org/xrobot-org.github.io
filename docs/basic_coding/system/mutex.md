@@ -28,16 +28,18 @@ public:
   ~Mutex();
 
   ErrorCode Lock();     // 阻塞加锁
-  ErrorCode TryLock();  // 非阻塞尝试
+  [[nodiscard]] ErrorCode TryLock();  // 非阻塞尝试
   void Unlock();        // 解锁
 
   class LockGuard {
   public:
-    explicit LockGuard(Mutex& m);
+    LockGuard(Mutex& mutex);
     ~LockGuard();
   };
 };
 ```
+
+`Lock()` 成功返回 `OK`；底层加锁失败时，Linux、ThreadX 返回 `FAILED`，FreeRTOS、Webots 返回 `BUSY`。`TryLock()` 在锁已被占用时返回 `BUSY`。
 
 ## 使用示例
 

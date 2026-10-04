@@ -6,7 +6,7 @@ sidebar_position: 6
 
 # ASync (Asynchronous Task)
 
-`LibXR::ASync` provides a simple and low-overhead asynchronous execution capability for time-consuming operations using a **dedicated worker thread + counting semaphore**. Users can assign `Job` callbacks within tasks or interrupt handlers. The framework sequentially executes these in a background thread and updates status, without requiring users to manage thread lifecycles or complex queues.
+`LibXR::ASync` runs one time-consuming job asynchronously: threaded backends use a worker thread and a semaphore, threadless backends use a `Timer` task. A task or interrupt callback submits a `Job`, which runs in the background and updates the status; each instance accepts one job at a time.
 
 > **Typical use cases**: Trigger FFT computation after SPI sampling interrupt; submit OTA verification in main loop; report events to the cloud from GPIO ISR, etc.
 
@@ -14,32 +14,36 @@ sidebar_position: 6
 
 | Goal                  | Description                                                                                      |
 |-----------------------|--------------------------------------------------------------------------------------------------|
-| **Thread-exclusive**  | Each `ASync` instance creates one worker thread and wakes it up using a `Semaphore` to run `Job`, avoiding race conditions between tasks. |
+| **Single job** | On threaded backends each instance creates one worker thread, woken by a `Semaphore` to run the `Job`. |
 | **ISR-safe submission** | `AssignJobFromCallback()` can be called from interrupt or callback context using `Semaphore::PostFromCallback()` to safely wake up the thread. |
-| **Status queryable**  | `GetStatus()` returns `READY/BUSY/DONE`. After a task completes, the state auto-resets—suitable for polling or timeout detection. |
-| **Minimal dependency** | Only depends on `Thread` and `Semaphore`; can degrade into synchronous execution in bare-metal mode. |
-| **Minimal interface** | No use of templated queues or dynamic allocation. Uses `Callback<ASync*>` for `Job`, making it easy to bind member or free functions. |
+| **Queryable status** | `GetStatus()` returns `READY/BUSY/DONE`; reading `DONE` resets the status to `READY`, after which the next job can be submitted. |
+| **Minimal dependency** | Uses `Thread` and `Semaphore` on threaded backends; threadless backends run the job from a `Timer` task. |
+| **Callback interface** | Jobs are `Callback<ASync*>` objects created with `Job::Create()`, which allocates the callback block. |
 
 ## Core Interface
 
 ```cpp
 class ASync {
 public:
-  enum class Status : uint8_t { READY, BUSY, DONE };
+  enum class Status : uint32_t { READY = 0, BUSY = 1, DONE = UINT32_MAX };
 
   ASync(size_t stack_depth, Thread::Priority priority);
 
   using Job = LibXR::Callback<ASync*>;
   ErrorCode AssignJob(Job job);                       // Submit from task context
-  void       AssignJobFromCallback(Job job, bool isr);// Submit from ISR/callback context
-  Status     GetStatus();                             // Query status and auto-reset
+  ErrorCode  AssignJobFromCallback(Job job, bool in_isr); // Submit from ISR/callback context
+  Status     GetStatus();                             // Query status; reading DONE resets it to READY
 };
 ```
+
+See [General Callback](../core/core-cb.md) for creating a `Job`.
 
 ### Error Codes
 
 * `ErrorCode::OK`      Submission successful  
-* `ErrorCode::BUSY`    A task is already running  
+* `ErrorCode::BUSY`    The previous job is still running, or it finished and `GetStatus()` has not yet read `DONE`
+
+The job callback always receives `in_isr == false`.
 
 ## Usage Example
 
@@ -76,14 +80,14 @@ void Loop()
 
 ## Platform Adaptation
 
-`ASync` itself is OS-agnostic. All platform-specific differences are abstracted by `Thread` and `Semaphore` layers:
+On threaded backends `ASync` relies on:
 
-| Function      | Dependency Module              |
+| Function      | Dependency                     |
 |---------------|-------------------------------|
 | Thread creation | `Thread::Create()`            |
 | Task wakeup    | `Semaphore::Post/Wait`         |
 | ISR-compatible | `Semaphore::PostFromCallback()`|
 
-In bare-metal mode, `async.cpp` can be modified for **synchronous direct calls**: if the system lacks thread support, `AssignJob()` directly invokes `job.Run()`, making `ASync` a lightweight function call wrapper.
+On threadless backends such as none and webasm, `ASync` creates no worker thread; the constructor registers a 1 ms `Timer` task instead. Submission only records the job, which runs on a later timer refresh; refreshes are driven by the wait paths of `Thread::Sleep`, `Mutex`, and `Semaphore`. A running job delays other timer tasks.
 
 Although `Callback` design forbids blocking or delay, its interface and structure are reused here and renamed as `Job` to avoid confusion.

@@ -6,4 +6,4 @@ sidebar_position: 13
 
 # USB
 
-XRUSB 的当前使用说明优先看[文档](../../xrusb)；如果需要查看实现源码，再去对应的仓库或主线代码目录定位。
+LibXR 的 USB 设备协议栈 XRUSB 位于 `src/driver/usb/`，说明见 [XRUSB](../../xrusb)。

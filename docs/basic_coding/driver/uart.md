@@ -26,7 +26,7 @@ enum class Parity : uint8_t {
 struct Configuration {
   uint32_t baudrate;  // 波特率
   Parity parity;      // 校验模式
-  uint8_t data_bits;  // 数据位长度
+  uint8_t data_bits;  // 有效数据位数；按字节接收时只有低 data_bits 位有效
   uint8_t stop_bits;  // 停止位长度
 };
 ```
@@ -37,13 +37,15 @@ struct Configuration {
 template <typename ReadPortType = ReadPort, typename WritePortType = WritePort>
 UART(ReadPortType* read_port, WritePortType* write_port);
 
-virtual ErrorCode SetConfig(Configuration config) = 0;
+virtual ErrorCode SetConfig(Configuration config, bool in_isr = false) = 0;
 ```
 
 构造时传入读写端口指针（允许传入 `ReadPort/WritePort` 的派生类型）。对象内部会保存：
 
 - `ReadPort* read_port_`
 - `WritePort* write_port_`
+
+`SetConfig()` 的生效时机和允许的调用上下文由具体后端规定。
 
 ### 数据收发接口
 
@@ -57,14 +59,16 @@ ErrorCode Read(RawData data, OperationType&& op, bool in_isr = false);
 
 `Write` 与 `Read` 接口基于统一的 `Port + Operation` 抽象，支持阻塞、回调、轮询等模式，便于在主循环或异步环境中使用。
 
-- `OperationType` 需要是 `WriteOperation` / `ReadOperation`（或其派生/等价类型）。
+- `op` 为具名的 `WriteOperation` / `ReadOperation` 对象（或其派生类型），传临时对象无法编译。端口复制 `op`，它引用的回调、轮询状态或信号量须保持有效到操作完成（BLOCK 方式到调用返回）。
 - `in_isr` 指示是否在中断上下文中调用（会透传到端口的 `operator()`）。
+
+完成方式与返回值见 [IO 读写抽象](../core/core-rw.md)、[Operation 操作模型](../core/core-op.md) 和 [BLOCK 超时与完成交接](../../adv_coding/driver/block_timeout_semantics.md)，后端实现见[串口驱动设计](../../adv_coding/driver/uart_driver.md)。
 
 ## 说明
 
-- `UART::Parity` 当前只有 `NO_PARITY / EVEN / ODD` 三种取值；源码里仍保留 `Mark / Space` 的 TODO 注释，因此文档不应把这些模式写成已存在的通用接口能力。
-- `stop_bits` 当前只是一个原始 `uint8_t` 配置字段；基类接口本身没有再定义 `0.5 / 1.5` 这类统一枚举或跨平台保证。
-- `UART` 基类当前只是保存 `read_port_` / `write_port_` 指针并把 `Read()` / `Write()` 转发过去，不负责创建、拥有或释放这些端口对象；端口生命周期仍由调用方或具体平台实现管理。
+- `UART::Parity` 支持 `NO_PARITY`、`EVEN`、`ODD`。
+- `stop_bits` 是 `uint8_t` 类型的停止位个数，可接受的取值由各后端规定。
+- `UART` 基类保存 `read_port_` / `write_port_` 指针并转发 `Read()` / `Write()`；端口对象由调用方或平台实现创建和管理。
 
 ## 特性总结
 

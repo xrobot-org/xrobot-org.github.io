@@ -21,13 +21,12 @@ public:
 ```
 
 - `Write(voltage)` is a pure virtual function, and must be implemented by derived classes;
-- the base interface only guarantees that the argument type is `float`, and does not define one universal physical unit, reference voltage, or calibration rule;
-- in many concrete implementations this value is interpreted as a voltage target, but the actual unit and output range still depend on the backend;
+- `voltage` is in volts; the existing backends (STM32, ESP32) clamp it to `[0, reference voltage]` before output;
 - Returns `ErrorCode`, indicating success or failure of the operation;
 
 ## Example Usage
 
 ```cpp
-// Example: output one floating-point target value to the DAC
+// Example: output 1.23 V
 dac->Write(1.23f);
 ```

@@ -37,5 +37,5 @@ public:
 
 ## 说明
 
-- `PowerManager` 当前是一个非常窄的抽象面：只有 `Reset()`、`Shutdown()` 和默认退化为 `Reset()` 的 `JumpToBootloader()`。
-- 它不携带状态查询、事件回调、低功耗级别枚举等更丰富的统一策略接口；如果某个平台有这些能力，仍属于具体实现或更上层策略模块，而不是当前基类公共契约。
+- `PowerManager` 只有 `Reset()`、`Shutdown()` 和默认调用 `Reset()` 的 `JumpToBootloader()` 三个接口。
+- 状态查询、事件回调、低功耗级别等由具体平台实现或上层代码提供。

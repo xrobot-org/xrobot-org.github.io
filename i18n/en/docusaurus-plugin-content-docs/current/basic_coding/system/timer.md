@@ -14,7 +14,7 @@ sidebar_position: 7
 |---------------------|-----------------------------------------------------------------------------|
 | **Cross-platform**   | Timer decouples scheduling from OS and supports both multithreaded and bare-metal systems. |
 | **Multitasking**     | Supports concurrent periodic tasks with independent registration and control. |
-| **High Precision**   | 1ms precision using `Thread::SleepUntil`.                                 |
+| **1 ms tick** | The manager thread refreshes tasks every 1 ms with `Thread::SleepUntil`. |
 | **Flexible Interface** | Supports dynamic period changes and full task lifecycle operations.         |
 | **Thread-safe and Optional** | Manages its own thread in RTOS; in bare-metal, refresh hooks are integrated into Thread/Mutex/Semaphore wait paths. |
 
@@ -27,7 +27,7 @@ sidebar_position: 7
 | `static void Stop(TimerHandle handle)`                                                                 | Stop specified task.                                |
 | `static void SetCycle(TimerHandle handle, uint32_t cycle)`                                             | Modify task cycle.                                  |
 | `static void Add(TimerHandle handle)`                                                                  | Add task to the scheduler; in multithreaded builds, the first add also creates the manager thread. |
-| `static void Refresh()`                                                                                | Manually refresh tasks (usually auto-called).       |
+| `static void Refresh()`                                                                                | Advances one 1 ms tick: each enabled task's counter is incremented and the task runs when it reaches its cycle. Called every millisecond by the manager thread in multithreaded builds and by `RefreshTimerInIdle()` in threadless builds; application code normally does not call it. |
 | `static void RefreshTimerInIdle()`                                                                     | In bare-metal: auto-called during Thread/Mutex/Semaphore waits. |
 
 > **Note**: All timer periods are in **milliseconds**. Timers are scheduled automatically by a management thread in multithreaded systems. In bare-metal scenarios, timer refresh is integrated into `Thread` delays and current `Mutex` / `Semaphore` wait paths.
@@ -36,6 +36,7 @@ sidebar_position: 7
 
 ```cpp
 #include <timer.hpp>
+#include <cstdio>
 
 void PrintHello(int* value) {
     printf("Hello, value = %d\n", *value);
@@ -71,7 +72,7 @@ To port to a new platform, ensure only that Thread and Timebase are supported—
 * Each task is wrapped in a ControlBlock, managed via a List.
 * `CreateTask` supports argument-bound callbacks with type safety.
 * First `Add` auto-creates task list and management thread (in RTOS).
-* `Refresh` iterates enabled tasks and triggers them by cycle—no manual traversal.
+* Each `Refresh` call increments the counter of every enabled task and runs the task when the counter reaches its cycle.
 * In bare-metal mode, delay/wait calls auto-refresh timers.
 * Supports dynamic cycle change plus task start/stop during runtime.
 * Asserts guard against invalid operations such as adding the same task handle more than once.

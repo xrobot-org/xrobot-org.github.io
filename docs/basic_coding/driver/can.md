@@ -187,7 +187,7 @@ static constexpr ErrorID ToErrorID(uint32_t id) noexcept;
 
 > 由于标准 CAN ID 最大为 11/29 bit，`0xFFFF0000` 虚拟 ID 空间与真实总线 ID 不重叠，不会产生冲突。
 
-典型用法（驱动在检测到错误中断时）：
+典型用法（派生驱动类在错误中断处理的成员函数中）：
 
 ```cpp
 LibXR::CAN::ClassicPack pack{};
@@ -195,7 +195,7 @@ pack.type = LibXR::CAN::Type::ERROR;
 pack.id   = LibXR::CAN::FromErrorID(LibXR::CAN::ErrorID::CAN_ERROR_ID_BUS_OFF);
 pack.dlc  = 0;
 pack.data[0] = 0;  // 可选：用于携带附加信息（如实现需要）
-can.OnMessage(pack, /*in_isr=*/true);  // 由驱动在接收/错误路径中调用分发
+OnMessage(pack, /*in_isr=*/true);  // OnMessage 为 protected，在派生驱动的成员函数中调用
 ```
 
 ---
@@ -214,10 +214,11 @@ using Callback = LibXR::Callback<const ClassicPack &>;
 cb.Run(in_isr, pack);
 ```
 
-因此用户侧回调可按如下签名实现：
+用户侧回调的形式为 `void(bool in_isr, ArgType arg, const ClassicPack &pack)`，由 `Callback::Create(fun, arg)` 创建（见[通用回调](../core/core-cb.md)）：
 
-- `in_isr`：指示当前是否在中断上下文中调用。True if called in ISR context.
-- `pack`：接收到的帧。Received frame.
+- `in_isr`：当前是否在中断上下文中调用；
+- `arg`：创建回调时绑定的参数；
+- `pack`：接收到的帧。
 
 > `pack` 为只读引用，回调实现不得保存该引用用于异步访问。
 
@@ -286,11 +287,14 @@ void Register(Callback cb,
 LibXR::CAN &can = ...;
 
 can.Register(
-    LibXR::CAN::Callback(
-        [](bool in_isr, const LibXR::CAN::ClassicPack &pack) {
+    LibXR::CAN::Callback::Create(
+        [](bool in_isr, void *arg, const LibXR::CAN::ClassicPack &pack) {
           (void)in_isr;
+          (void)arg;
+          (void)pack;
           // 快速处理，不要阻塞
-        }),
+        },
+        static_cast<void *>(nullptr)),
     LibXR::CAN::Type::STANDARD,
     LibXR::CAN::FilterMode::ID_RANGE,
     0x100, 0x1FF);
@@ -300,15 +304,18 @@ can.Register(
 
 ```cpp
 can.Register(
-    LibXR::CAN::Callback(
-        [](bool in_isr, const LibXR::CAN::ClassicPack &pack) {
+    LibXR::CAN::Callback::Create(
+        [](bool in_isr, void *arg, const LibXR::CAN::ClassicPack &pack) {
           (void)in_isr;
+          (void)arg;
           if (!LibXR::CAN::IsErrorId(pack.id)) {
             return;
           }
           auto err = LibXR::CAN::ToErrorID(pack.id);
+          (void)err;
           // 根据 err 做诊断
-        }),
+        },
+        static_cast<void *>(nullptr)),
     LibXR::CAN::Type::ERROR,
     LibXR::CAN::FilterMode::ID_RANGE,
     LibXR::CAN::FromErrorID(LibXR::CAN::ErrorID::CAN_ERROR_ID_GENERIC),
@@ -325,8 +332,8 @@ can.Register(
 virtual ErrorCode AddMessage(const ClassicPack &pack) = 0;
 ```
 
-- **发送方向 API（Transmit path）**：由上层调用，用于将 `ClassicPack` 发送到 CAN 总线（具体实现由派生驱动决定：直接发送 / 入硬件 mailbox / 入软件队列）。
-- 返回值用于标识发送是否成功（例如：busy、队列满、参数非法等）。
+- 发送接口，由上层调用，把 `ClassicPack` 交给驱动发送（直接发送、写入硬件 mailbox 或写入软件队列，由派生驱动决定）。
+- 返回值表示帧是否已进入发送队列：现有后端（STM32、CH32）在队列已满时返回 `FULL`，帧类型为 `ERROR` 时返回 `ARG_ERR`，入队成功返回 `OK`。
 
 #### 接收分发 `OnMessage`（RX dispatch helper）
 
@@ -335,7 +342,7 @@ protected:
   void OnMessage(const ClassicPack &pack, bool in_isr);
 ```
 
-- **接收分发工具函数**：由底层驱动在收到 CAN 帧（或检测到错误事件并构造 `Type::ERROR`）后调用。
+- 接收分发函数，由驱动在收到 CAN 帧，或检测到错误事件并构造 `Type::ERROR` 帧后调用。
 - 内部按订阅过滤器分发帧：
   - `pack`：接收到的帧；
   - `in_isr`：指示当前是否在中断上下文中调用。
@@ -453,7 +460,7 @@ cb.Run(in_isr, pack);
 用户侧回调可按如下签名实现：
 
 ```cpp
-[](bool in_isr, const LibXR::FDCAN::FDPack &pack) { ... }
+[](bool in_isr, void *arg, const LibXR::FDCAN::FDPack &pack) { ... }  // 由 CallbackFD::Create(fun, arg) 创建
 ```
 
 #### FD 过滤器结构 `FDCAN::Filter`
@@ -495,11 +502,14 @@ void Register(CallbackFD cb,
 LibXR::FDCAN &fdcan = ...;
 
 fdcan.Register(
-    LibXR::FDCAN::CallbackFD(
-        [](bool in_isr, const LibXR::FDCAN::FDPack &pack) {
+    LibXR::FDCAN::CallbackFD::Create(
+        [](bool in_isr, void *arg, const LibXR::FDCAN::FDPack &pack) {
           (void)in_isr;
+          (void)arg;
+          (void)pack;
           // 快速处理，不要阻塞
-        }),
+        },
+        static_cast<void *>(nullptr)),
     LibXR::CAN::Type::EXTENDED,
     LibXR::CAN::FilterMode::ID_RANGE,
     0x18FF0000, 0x18FFFFFF);
@@ -515,8 +525,8 @@ fdcan.Register(
 virtual ErrorCode AddMessage(const FDPack &pack) = 0;
 ```
 
-- **发送方向 API（Transmit path）**：由上层调用，用于将 `FDPack` 发送到 CAN FD 总线（具体实现由派生驱动决定）。
-- 返回值用于标识发送是否成功（例如：busy、队列满、参数非法等）。
+- 发送接口，由上层调用，把 `FDPack` 交给驱动发送。
+- 返回值表示帧是否已进入发送队列：队列已满返回 `FULL`，帧类型为 `ERROR` 返回 `ARG_ERR`；STM32 后端对远程帧类型返回 `FAILED`。
 
 #### 接收分发 FD 消息 `OnMessage`（RX dispatch helper）
 
@@ -525,5 +535,5 @@ protected:
   void OnMessage(const FDPack &pack, bool in_isr);
 ```
 
-- **接收分发工具函数**：由底层驱动在收到 FD 帧后调用。
+- 接收分发函数，由驱动在收到 FD 帧后调用。
 - 内部按订阅过滤器分发帧，触发匹配的 FD 回调（`cb.Run(in_isr, pack)`）。

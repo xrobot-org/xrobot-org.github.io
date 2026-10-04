@@ -8,10 +8,7 @@ sidebar_position: 12
 
 `LibXR::Watchdog` provides a general-purpose abstract interface for watchdog functionality. It supports configuring the overflow timeout, auto-feed interval, and provides control methods like start, stop, and manual feeding. It is suitable for multi-threaded environments or timer-based task scheduling systems.
 
-In current mainline, hardware configuration and auto-feed scheduling are split into two layers:
-
-- `SetConfig(...)` only passes `timeout_ms / feed_ms` into the concrete platform implementation;
-- whether `ThreadFun()` / `TaskFun()` actually perform automatic feeding still depends on the public runtime members `auto_feed_` and `auto_feed_interval_ms`.
+In the existing backends (`STM32Watchdog`, `ESP32Watchdog`), `SetConfig()` sets the timeout and stores `feed_ms` as the auto-feed interval `auto_feed_interval_ms` (`0 < feed_ms <= timeout_ms` is required, otherwise `ARG_ERR`); `Start()` starts the watchdog and sets `auto_feed_`; `Stop()` clears `auto_feed_`. Both backend constructors already call `SetConfig()` and `Start()`.
 
 ## Interface Overview
 
@@ -51,12 +48,12 @@ static void TaskFun(Watchdog* wdg);
 - `ThreadFun`: Used in threaded environments for continuous auto-feeding;
 - `TaskFun`: Used in polling/timer task systems for periodic auto-feeding.
 
-Actual current helper semantics:
+Helper behavior:
 
 - `ThreadFun()` loops, sleeps with `LibXR::Thread::Sleep(auto_feed_interval_ms)`, and calls `Feed()` only when `auto_feed_ == true`.
 - `TaskFun()` does not loop; it only checks `auto_feed_` once for the current scheduling point and decides whether to call `Feed()`.
 
-So automatic feeding is not enabled by `SetConfig()` alone. The upper layer still needs to arrange a thread or periodic task and set `auto_feed_` / `auto_feed_interval_ms` explicitly.
+Automatic feeding is done by a thread running `ThreadFun()` or by `TaskFun()` called periodically from `Timer`. The STM32 IWDG cannot be stopped once started; `STM32Watchdog::Stop()` returns `NOT_SUPPORT` and stops automatic feeding.
 
 ## Feature Summary
 

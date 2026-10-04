@@ -13,30 +13,32 @@ sidebar_position: 3
 | Goal                 | Description                                                                 |
 |----------------------|-----------------------------------------------------------------------------|
 | **Cross-platform**    | Unified API hides `pthread`, `xTask`, `TX_THREAD`, etc.                    |
-| **Lightweight**       | Current mainline depends on C++20 plus optional RTOS headers; no-OS scenarios are still supported. |
-| **Priority Enum**     | Uses `enum class Priority { IDLE…REALTIME }`, mapped to platform-specific levels. |
+| **Lightweight**       | Depends on C++20 plus optional RTOS headers; also usable without an OS. |
+| **Priority Enum**     | Uses `enum class Priority { IDLE…REALTIME }`, mapped by each port to its native priority range without exposing OS constants. |
 | **Unified Timebase**  | All `Sleep` / `SleepUntil` use **milliseconds**; `GetTime()` returns milliseconds since boot. |
 
 ## Public Interface Overview
 
 | Method                                                                                                              | Description                                      |
 |---------------------------------------------------------------------------------------------------------------------|--------------------------------------------------|
-| `template <typename Arg> void Create(Arg arg, void (*func)(Arg), const char* name, size_t stack, Priority prio)`   | Create and start a thread with any function signature. |
+| `template <typename Arg> void Create(Arg arg, void (*func)(Arg), const char* name, size_t stack, Priority prio)`   | Create and start a thread. The thread function has the form `void(Arg)`; `stack` is the stack size in bytes (ignored on none and webasm); `prio` is mapped to the platform's priority range. |
 | `static Thread Current()`                                                                                           | Get current thread wrapper.                     |
 | `static uint32_t GetTime()`                                                                                         | Return milliseconds since system start (wraps at 32-bit). |
 | `static void Sleep(uint32_t ms)`                                                                                    | Block current thread for given milliseconds.     |
 | `static void SleepUntil(MillisecondTimestamp& last, uint32_t period)`                                               | Periodic delay with auto-updating `last`.        |
 | `static void Yield()`                                                                                               | Yield CPU voluntarily.                          |
 | `operator libxr_thread_handle()`                                                                                    | Implicitly convert to underlying thread handle.  |
+| `Thread(libxr_thread_handle handle)` | Construct a thread object from a native thread handle. |
+| `ErrorCode Join()` | Wait for the thread to finish; Linux and Webots backends only. |
 
 > **Note**: If the system does not support thread priority or real-time scheduling, the adaptation layer can safely downgrade without affecting upper-layer logic.
 
 ## Typical Usage
 
-The parameter type of the thread function must be consistent with the arg parameter type of the Create function; otherwise, it will not be recognized.
+The thread function has the form `void(ArgType)`; `arg` must have the same type as the function parameter, since `ArgType` is deduced from both. Mismatched types fail to compile.
 
 ```cpp
-#include <thread.hpp>
+#include <libxr.hpp>
 
 void Blink(int* arg) {
     auto last = LibXR::Timebase::GetMilliseconds();
@@ -57,14 +59,18 @@ int main() {
 }
 ```
 
+On the none and webasm backends, `Create()` calls `Blink` directly in the current context; since `Blink` does not return, the code after `Create()` never runs.
+
 ## Platform Adaptation Overview
 
 | Platform                | Header/Source Files           | Key Mapping                                               |
 |-------------------------|-------------------------------|-----------------------------------------------------------|
-| **Linux / POSIX**        | `thread.hpp` + `thread.cpp`  | `pthread_create`, `clock_nanosleep`, `sched_yield`       |
-| **FreeRTOS**             | `thread.hpp` + `thread.cpp`  | `xTaskCreate`, `vTaskDelay`, `xTaskGetTickCount`         |
-| **ThreadX (Azure RTOS)** | `thread.hpp` + `thread.cpp`  | `tx_thread_create`, `tx_thread_sleep`, `tx_thread_relinquish` |
-| **Bare-metal**           | `thread.hpp` + `thread.cpp`  | Polling `Timebase` + `Timer::RefreshTimerInIdle` for software delay |
+| **Linux / POSIX**        | `system/linux/thread.hpp` + `thread.cpp`    | `pthread_create`, `clock_nanosleep`, `sched_yield`       |
+| **FreeRTOS**             | `system/freertos/thread.hpp` + `thread.cpp` | `xTaskCreate`, `vTaskDelay`, `xTaskGetTickCount`; requires `configTICK_RATE_HZ == 1000` and `configMAX_PRIORITIES >= 6` (checked at compile time) |
+| **ThreadX (Azure RTOS)** | `system/threadx/thread.hpp` + `thread.cpp`  | `tx_thread_create`, `tx_thread_sleep`, `tx_thread_relinquish` |
+| **Bare-metal**           | `system/none/thread.hpp` + `thread.cpp`     | Polling `Timebase` + `Timer::RefreshTimerInIdle` for software delay |
+| **Webots** | `system/webots/thread.hpp` + `thread.cpp` | `pthread_create`; `Sleep` / `SleepUntil` wait for simulation-time notifications (`pthread_cond_timedwait`) |
+| **WebAssembly** | `system/webasm/thread.hpp` + `thread.cpp` | Same as bare-metal: `Create()` calls the thread function directly; delays poll `Timebase` and call `Timer::RefreshTimerInIdle` |
 
 To port to a new platform:
 

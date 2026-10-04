@@ -6,7 +6,7 @@ sidebar_position: 11
 
 # Timebase（时间基准）
 
-`LibXR::Timebase` 提供 LibXR 统一使用的时间基准契约，用于访问微秒级和毫秒级时间戳。它是超时处理、周期调度，以及 Topic、USB 等带时间语义模块的基础。
+`LibXR::Timebase` 提供 LibXR 统一使用的时间基准契约，用于访问微秒级和毫秒级时间戳。它是超时处理、周期调度，以及 Topic、USB 等带时间语义的组件的基础。
 
 ## 接口定义
 
@@ -45,4 +45,4 @@ protected:
 - `IsReady()` 用于检查当前平台时间基后端是否已经初始化完成。
 - `DelayMicroseconds()` 提供基于微秒时间基的忙等待辅助函数。
 - `LinuxTimebase`、`STM32Timebase`、`CH32Timebase`、`ESP32Timebase` 等平台后端通常在构造时完成硬件相关初始化、设置回绕范围，并通过 `SetReady()` 标记就绪。
-- 当前公共契约不再使用旧版“全局实例 + 虚函数 `_get_*()`”模型；静态取时接口由各平台源文件直接实现。
+- 静态取时接口 `GetMicroseconds()`、`GetMilliseconds()` 由各平台的时基源文件实现。

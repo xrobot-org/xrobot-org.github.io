@@ -56,6 +56,8 @@ virtual ErrorCode MemWrite(uint16_t slave_addr, uint16_t mem_addr,
 - `slave_addr`：从设备地址，**不带 R/W 位**。
 - `in_isr`：指示是否在中断上下文中发起/推进本次 I2C 操作（默认 `false`）。
 
+`ReadOperation` / `WriteOperation` 的完成方式见 [Operation 操作模型](../core/core-op.md) 和 [BLOCK 超时与完成交接](../../adv_coding/driver/block_timeout_semantics.md)。
+
 
 ## 特性总结
 

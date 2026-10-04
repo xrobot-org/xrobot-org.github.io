@@ -6,4 +6,4 @@ sidebar_position: 13
 
 # USB
 
-For current usage guidance, start from the XRUSB [documentation](../../xrusb). If you need implementation details, then follow the relevant repository or mainline source tree.
+LibXR's USB device stack, XRUSB, is in `src/driver/usb/`; see the [XRUSB documentation](../../xrusb).

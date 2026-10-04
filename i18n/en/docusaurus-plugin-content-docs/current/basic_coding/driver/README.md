@@ -6,15 +6,15 @@ sidebar_position: 5
 
 # Device Drivers
 
-This module summarizes LibXR's abstract interfaces for common hardware peripherals.
+This chapter summarizes LibXR's abstract interfaces for common hardware peripherals.
 
-The common properties of these device interfaces are:
+LibXR device interfaces share these properties:
 
-- **Platform Independent**: Abstract interfaces use unified naming and behavior, independent of low-level hardware registers or driver structures.
-- **Asynchronous Operation Support**: The common operation model is based on `ReadPort` / `WritePort`, and fits interrupt- and DMA-driven implementations.
-- **Type Safety**: Interface parameters and configuration structures use strong typing.
-- **Minimal Dependencies**: Core modules currently rely on C++20 features and basic LibXR components.
-- **Flexible Extension**: Each peripheral can be implemented according to platform capabilities, including shared-resource cases such as shared buses.
+- Abstract classes use unified naming and behavior; platform differences live in the backends.
+- Transfers describe completion with an `Operation` (blocking, callback, or polling): UART transfers go through `ReadPort` / `WritePort` queues, while each I2C or SPI transfer takes a `ReadOperation` / `WriteOperation` directly; backends may complete them from interrupts or DMA.
+- Interface parameters and configuration structures are strongly typed.
+- They depend on C++20 and basic LibXR components and run on bare metal and RTOSes.
+- Each peripheral is implemented according to platform capabilities, including shared resources such as shared buses.
 
 ## Contents
 
@@ -41,6 +41,6 @@ Many peripheral abstraction classes include some of the following building block
 - control interfaces such as `Enable()` / `Disable()` when the hardware model requires them
 - callback registration for event-driven paths such as interrupts or asynchronous completions
 
-Counterexamples in current mainline include `ADC`, `DAC`, `PowerManager`, `Timebase`, and `Flash`, which intentionally expose narrower, device-specific contracts.
+`ADC`, `DAC`, `PowerManager`, `Timebase`, and `Flash` expose only the few calls their devices need.
 
-Users do not need to care whether the backend is STM32UART, ESP32UART, or LinuxUART. Use the base class interface directly.
+Upper-layer code calls the interface through a base-class pointer or reference, so the same code works with `STM32UART`, `ESP32UART`, `LinuxUART`, and other backends.

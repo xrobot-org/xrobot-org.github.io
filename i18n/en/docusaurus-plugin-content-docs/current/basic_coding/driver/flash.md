@@ -6,7 +6,7 @@ sidebar_position: 9
 
 # Flash (Flash Interface)
 
-`LibXR::Flash` provides a cross-platform abstract interface for accessing flash memory, supporting block erase and write operations. It is suitable for non-volatile storage devices such as NOR/NAND Flash, EEPROM, and NVS.
+`LibXR::Flash` provides a cross-platform flash access interface for block erase and write. Existing backends are `STM32Flash`, `CH32Flash` (on-chip flash), and `LinuxBinaryFileFlash` (file-backed).
 
 ## Interface Definition
 
@@ -25,20 +25,19 @@ public:
   virtual ErrorCode Read(size_t offset, RawData data);
 
   // Get the minimum erasable block size
-  size_t MinEraseSize() const { return min_erase_size_; }
+  size_t MinEraseSize() const;
 
   // Get the minimum writable block size
-  size_t MinWriteSize() const { return min_write_size_; }
+  size_t MinWriteSize() const;
 
   // Get the size of the flash
-  size_t Size() const { return flash_area_.size_; }
+  size_t Size() const;
 };
-
 ```
 
 ## Usage Notes
 
 - Backends are typically organized around `MinWriteSize()` / `MinEraseSize()` granularity. Upper-layer layouts should be designed with those limits in mind, but the exact front-door acceptance rules remain backend-specific.
-- `Read()` already has a common default implementation in the base class; platform backends usually only need to implement `Erase()` and `Write()` unless they require special read behavior;
-- `flash_area_` points to the actual memory region or flash-mapped address used for storage;  
+- `flash_area` is the storage region this `Flash` object operates on; `Size()` returns its length;
+- `Read()` has a default implementation in the base class that copies from `flash_area`; when `flash_area` is directly addressable, a backend only implements `Erase()` and `Write()`;
 - This interface can be used as a foundation for implementing parameter storage, file systems, log management, and more.

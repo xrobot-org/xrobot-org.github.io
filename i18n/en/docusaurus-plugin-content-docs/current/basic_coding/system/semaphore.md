@@ -15,7 +15,7 @@ sidebar_position: 5
 | **Cross-platform** | Abstracts over Linux futex wait/wake, `SemaphoreHandle_t`, `TX_SEMAPHORE`, and similar primitives. |
 | **ISR-friendly** | Provides `PostFromCallback(bool in_isr)` to safely release from ISR/DMA callbacks with task switching. |
 | **Timeout support** | `Wait(timeout_ms)` supports millisecond-level timeout.                    |
-| **Lightweight**  | Current mainline depends on C++20 and optionally on RTOS headers.                       |
+| **Lightweight**  | Depends on C++20 and optionally on RTOS headers. |
 | **Observability** | `Value()` returns the current count, useful for debugging and performance monitoring. |
 
 ## Core Interface
@@ -23,11 +23,11 @@ sidebar_position: 5
 ```cpp
 class Semaphore {
 public:
-  explicit Semaphore(uint32_t init = 0);
+  Semaphore(uint32_t init_count = 0);
   ~Semaphore();
 
   void     Post();                    // Release from thread context
-  void     PostFromCallback(bool irq);// Release from ISR/callback context
+  void     PostFromCallback(bool in_isr);// Release from ISR/callback context
   ErrorCode Wait(uint32_t timeout=UINT32_MAX); // Blocking wait
   size_t   Value();                   // Current count
 };
@@ -37,5 +37,6 @@ public:
 
 * `ErrorCode::OK`       Operation successful  
 * `ErrorCode::TIMEOUT`  Wait timed out  
+* `ErrorCode::FAILED`  The underlying wait failed (Linux, ThreadX)
 
 > **⚠️ Note**: `Wait()` **must not** be called from an ISR.
