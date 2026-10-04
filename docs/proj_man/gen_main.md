@@ -1,10 +1,10 @@
 ---
 id: proj-man-gen-main
-title: 入口与生成
+title: 主函数生成
 sidebar_position: 3
 ---
 
-# 入口与生成
+# 主函数生成
 
 `xrobot gen` 读取选中的配置、入口源文件中的注册和锁定的模块头文件，生成 `User/xrobot_main.hpp`。生成结果是普通的 C++：一个 `XRobotMain` 函数，按配置顺序构造静态实例，然后进入监视循环。
 

@@ -1,10 +1,10 @@
 ---
 id: proj-man-gen-main
-title: Entry and Generation
+title: Main Function Generation
 sidebar_position: 3
 ---
 
-# Entry and Generation
+# Main Function Generation
 
 `xrobot gen` reads the selected configuration, the registrations in the entry source and the locked Module headers, and writes `User/xrobot_main.hpp`. The result is ordinary C++: one `XRobotMain` function that constructs static instances in configuration order and then runs the monitor loop.
 

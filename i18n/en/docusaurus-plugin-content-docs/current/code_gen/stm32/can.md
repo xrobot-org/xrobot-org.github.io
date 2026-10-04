@@ -41,4 +41,4 @@ Instances are keyed by their lower-case name. The upper-case keys of earlier ver
 - the transmit queue length comes from `CAN.<instance>.queue_size` or `FDCAN.<instance>.queue_size` and defaults to 5;
 - with XRobot integration (`--xrobot`), each FDCAN object also gets a `LibXR::CAN` reference, see [Integrate with XRobot](../xrobot_inter.md).
 
-After editing the file, run `libxr stm32 setup -d .` to regenerate the code.
+After editing the file, regenerate the code with the commands in [Regenerating the Code](./README.md#regenerating-the-code).

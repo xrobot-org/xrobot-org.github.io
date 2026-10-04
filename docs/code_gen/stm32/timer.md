@@ -42,4 +42,4 @@ software_timer:
 
 `priority` 写 0 到 4 或等级名（大小写不限），0 到 4 依次对应 `IDLE`、`LOW`、`MEDIUM`、`HIGH` 和 `REALTIME`，默认为 2（`MEDIUM`）。其他值使生成失败。终端和看门狗的 `thread_priority` 写法相同。
 
-修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。
+修改该文件后重新生成代码，命令见[重新生成代码](./README.md#重新生成代码)。

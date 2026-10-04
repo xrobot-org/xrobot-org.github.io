@@ -1,7 +1,7 @@
 ---
 id: con-guide
 title: 贡献指南
-sidebar_position: 11
+sidebar_position: 12
 ---
 
 # 贡献指南

@@ -116,7 +116,7 @@ cmake -S . -B build
 cmake --build build
 ```
 
-`CONTEXT_REF` 是被构建的分支或标签，`TARGET_REF` 是 PR 的目标分支（推送时即被推送的分支或标签）。STM32 BSP 不必自己写这些步骤：共享工作流 `bsp-stm32-ci.yml` 已包含它们，见 [BSP CI](./README.md#bsp-ci)。
+`CONTEXT_REF` 是被构建的分支或标签，`TARGET_REF` 是 PR 的目标分支（推送时即被推送的分支或标签）。STM32 BSP 不必自己写这些步骤：共享工作流 `bsp-stm32-ci.yml` 已包含它们，见 [BSP CI](./ci.md#bsp-ci)。
 
 ---
 
@@ -129,4 +129,4 @@ set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
 add_subdirectory(Middlewares/Third_Party/LibXR)
 ```
 
-STM32 工程中这一行由代码生成器写入，见 [与 XRobot 集成](../code_gen/xrobot_inter.md)。LibXR 随后包含 `Modules/CMakeLists.txt`，并检查 `User/xrobot_main.hpp`，见 [入口与生成](./gen_main.md#构建时检查)。
+STM32 工程中这一行由代码生成器写入，见 [与 XRobot 集成](../code_gen/xrobot_inter.md)。LibXR 随后包含 `Modules/CMakeLists.txt`，并检查 `User/xrobot_main.hpp`，见 [主函数生成](./gen_main.md#构建时检查)。

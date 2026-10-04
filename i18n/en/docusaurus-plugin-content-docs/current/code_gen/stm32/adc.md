@@ -51,4 +51,4 @@ ADC:
 - `dma_section`: The memory section where the DMA buffer is located.
 - `vref`: The reference voltage for the ADC, in volts.
 
-After editing the file, run `libxr stm32 setup -d .` to regenerate the code.
+After editing the file, regenerate the code with the commands in [Regenerating the Code](./README.md#regenerating-the-code).

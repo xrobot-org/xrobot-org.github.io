@@ -1,26 +1,18 @@
 ---
 id: proj-man
 title: 项目管理（XRobot）
-sidebar_position: 7
+sidebar_position: 6
 ---
 
 # 项目管理（XRobot）
 
-XRobot 是配合 LibXR 使用的模块管理工具。它负责拉取模块、把每个模块锁定到具体的提交，再根据 `User/` 下的 YAML 配置生成主函数 `XRobotMain`。
+XRobot 是配合 LibXR 使用的模块管理工具。它负责拉取模块、把每个模块锁定到具体的提交，再根据 `User/` 下的 YAML 配置生成主函数 `XRobotMain`。从零新建一个 BSP 并构建的完整步骤见[快速开始](../quick_start.md#新建-bsp)。
 
 ---
 
 ## 安装
 
-```bash
-pip install xrobot==1.0.0
-```
-
-BSP 使用的 XRobot 版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段中，安装时应与之一致。
-
-也可以用 `pipx install xrobot==1.0.0` 安装到隔离环境。不要同时用 pip 和 pipx 安装同一个包。
-
-在 `VS Code` 中可以安装插件 [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot)（2.0.0 起对应 XRobot 1.0）。插件显示 `xrobot describe` 的结果，所有修改都通过 `xrobot` 命令完成。
+pip 包 `xrobot` 的安装方法见[环境配置](../env_setup/README.md#安装)。BSP 使用的版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段中，安装时应与之一致，例如 `pipx install xrobot==1.0.0`。VS Code 扩展 `XRobot.xrobot` 显示 `xrobot describe` 的结果，所有修改都通过 `xrobot` 命令完成，见 [VS Code 扩展](../env_setup/README.md#vs-code-扩展)。
 
 ---
 
@@ -43,102 +35,11 @@ BSP 根目录是向上查找到的第一个包含 `Modules/modules.yaml` 的目�
 
 ---
 
-## 快速上手
-
-以 Linux 上的一个最小 BSP 为例：一个 LED 接在 `/dev/gpiochip0` 的 17 号线上，由模块 BlinkLED 控制闪烁。主机需要安装的软件包见 [Linux 环境配置](../env_setup/linux.md)。BSP 根目录下有 LibXR 子模块、`CMakeLists.txt` 和入口源文件 `User/main.cpp`：
-
-```bash
-git init
-git submodule add https://github.com/xrobot-org/libxr.git libxr
-xrobot init
-```
-
-`CMakeLists.txt` 在添加 LibXR 之前设置 `XROBOT_MODULES_DIR`，LibXR 据此加入模块并检查生成的头文件（见 [CMake 集成](./setup.md#cmake-集成)）：
-
-```cmake
-cmake_minimum_required(VERSION 3.19)
-project(blink CXX)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
-add_subdirectory(libxr)
-
-add_executable(blink User/main.cpp)
-target_include_directories(blink PRIVATE User)
-target_link_libraries(blink PRIVATE xr)
-```
-
-入口源文件构造 BSP 对象，用 `XR_REGISTER` 注册配置可以使用的对象，然后进入应用：
-
-```cpp
-#include "linux_gpio.hpp"
-#include "xrobot_main.hpp"
-
-int main()
-{
-  LibXR::PlatformInit();
-  static LibXR::LinuxGPIO LED_R("/dev/gpiochip0", 17);
-  LED_R.SetConfig({LibXR::GPIO::Direction::OUTPUT_PUSH_PULL, LibXR::GPIO::Pull::NONE});
-  XR_REGISTER(LED_R, LibXR::GPIO);
-  XROBOT_MAIN();
-}
-```
-
-加入模块并新增实例：
-
-```bash
-xrobot module add xrobot-org/BlinkLED@dev
-xrobot setup                              # 拉取、锁定、检查配置、生成头文件
-xrobot instance add xrobot-org/BlinkLED   # 新增实例 blinkled_0
-```
-
-`instance add` 按构造函数写出全部参数及源码中的默认值；没有默认值的依赖参数留空（`null`，表示“未填写”），并列出可以填写的已注册对象：
-
-```text
-$ xrobot instance add xrobot-org/BlinkLED
-已将 blinkled_0 添加到 User/xrobot.yaml；生成前请填写值为空的依赖参数
-  led（LibXR::GPIO&）：LED_R
-```
-
-将依赖参数 `led` 填写为已注册的 BSP 对象名：
-
-```bash
-xrobot instance set blinkled_0 args.led LED_R
-```
-
-`User/xrobot.yaml` 随之变为：
-
-```yaml
-modules:
-  - module: xrobot-org/BlinkLED
-    id: blinkled_0
-    args:
-      - led: LED_R
-      - blink_cycle: 250
-settings:
-  monitor_sleep_ms: 1000
-```
-
-生成，用原生工具构建，然后运行：
-
-```bash
-xrobot gen
-cmake -S . -B build
-cmake --build build
-./build/blink
-```
-
-STM32 BSP 的入口源文件 `User/app_main.cpp` 由代码生成器写出，见 [与 XRobot 集成](../code_gen/xrobot_inter.md)。
-
----
-
 ## 命令一览
 
 | 命令 | 作用 |
 | --- | --- |
-| `xrobot --version` | 显示安装的 XRobot 版本 |
+| `xrobot --version` | 显示安装的 xrobot 版本 |
 | `xrobot init` | 在当前目录创建 BSP 文件，写入 `.gitignore` 和 `.gitattributes` 条目 |
 | `xrobot setup [--no-line-directives]` | 解析并锁定模块，检查所有配置，重新生成 `User/xrobot_main.hpp` |
 | `xrobot gen [-c CONFIG] [--no-line-directives]` | 生成 `User/xrobot_main.hpp`（选中这份配置；`--no-line-directives` 不写 `#line`） |
@@ -158,148 +59,11 @@ STM32 BSP 的入口源文件 `User/app_main.cpp` 由代码生成器写出，见 
 
 ---
 
-## BSP CI
-
-STM32 BSP 的 CI 调用共享工作流 `xrobot-org/XRobot/.github/workflows/bsp-stm32-ci.yml`，BSP 只需写出工程名和要构建的配置：
-
-```yaml
-name: build
-on:
-  push: {branches: [master, dev], tags: ['v*']}
-  pull_request: {branches: [master, dev]}
-  release: {types: [published]}
-  workflow_dispatch:
-jobs:
-  build:
-    permissions: {contents: write}   # 把固件附到发布
-    uses: xrobot-org/XRobot/.github/workflows/bsp-stm32-ci.yml@v1
-    with:
-      project: DevC
-      configs: |
-        default
-        debug
-        full
-```
-
-检查作业和构建作业按 `Modules/modules.yaml` 的 `xrobot:` 和 `User/libxr_config.yaml` 的 `generator:` 固定的版本安装工具。检查作业执行第 1 至 4 步；各构建作业（第 5 步）与检查作业并行运行；发布作业（第 6 步）在检查作业和全部构建作业成功后运行：
-
-1. 重新生成 BSP 对象（`libxr parse`、`libxr gen`），检查 `User/app_main.cpp`、`User/app_main.h`、`User/flash_map.hpp` 和 `User/libxr_config.yaml` 与提交一致；
-2. 检查仓库内没有以 CRLF 存储的文本文件（`git ls-files --eol` 中的 `i/crlf`），否则失败并提示 `git add --renormalize .`，见 [`xrobot init`](#bsp-目录约定) 写入的 `.gitattributes`；
-3. `xrobot format --check` 检查配置格式；
-4. `xrobot setup --frozen` 按 lock 检出模块并检查每份配置；
-5. 对每份配置配置并构建；要发布的构建（见[固件发布](#固件发布)）打包固件（`.elf`、`.hex`、`.bin`、配置文件和记录构建信息的 `build-info.json`）并上传为构建产物；
-6. 打 `v*` tag 或发布 Release 时，一个作业下载全部构建产物，生成发布文件、校验和、清单和说明，并一次上传到 Release。
-
-| 输入 | 默认值 | 含义 |
-| --- | --- | --- |
-| `project` | 必填 | CMake 工程名，固件是 `build/<project>.elf` |
-| `configs` | `default` | 要构建的配置，每行一个；`default` 指 `User/xrobot.yaml`，其余名字对应 `<config-dir>/<名字>.yaml` |
-| `config-dir` | `User/RobotConfig` | 配置所在的目录 |
-| `toolchain` | `cmake/starm-clang.cmake` | CMake 工具链文件 |
-| `build-type` | `Release` | CMake 构建类型；为空时不设置 |
-| `presets` | 空 | 每行一个 CMake preset，用于有多个镜像的 BSP（如 OpenCR 的 app 和 bootloader）：每个 preset 都要有同名的配置 preset 和构建 preset，工作流依次 `cmake --preset`、`cmake --build --preset`，不再使用 `toolchain` 和 `build-type`；与 `configs` 的每一项各构建一次 |
-| `release-configs` | 空 | 发布到 Release 的配置，每行一个，必须出现在 `configs` 中；为空时按[固件发布](#固件发布)的默认规则 |
-| `image` | `ghcr.io/xrobot-org/docker-image-stm32:main` | 构建容器 |
-
-`XR_CONTEXT_REF` 和 `XR_RELEASE_REF`（`xrobot setup` 的 `--context-ref` 与 `--release-ref`）由工作流根据触发事件设置，BSP 不需要写。
-
-### 固件发布
-
-打 `v*` tag 或发布 Release 时，工作流上传固件。发布哪些配置按以下规则确定：
-
-- `configs` 只有 `default` 时，发布 `default`；
-- 否则发布除 `default` 外的每份配置；
-- 给出 `release-configs` 时，发布其中的配置，可以包含 `default`。
-
-使用 `presets` 时，每份发布的配置发布全部 preset 的镜像。
-
-发布的文件如下，`<tag>` 是 tag 名（如 `v1.2.0`），其中不能用于文件名的字符替换为 `-`：
-
-| 文件 | 内容 |
-| --- | --- |
-| `<project>-<config>[-<preset>]-<tag>.elf`、`.hex`、`.bin` | 每个构建的固件 |
-| `<project>-<config>-<tag>.yaml` | 这份配置的配置文件：`default` 是 `User/xrobot.yaml`，其余是 `<config-dir>/<名字>.yaml` |
-| `<project>-<config>-<tag>.tar.gz` | 这份配置的全部文件，位于归档内的 `<project>-<config>-<tag>/` 目录 |
-| `SHA256SUMS` | 上面每个文件的 SHA-256，可用 `sha256sum -c SHA256SUMS` 校验 |
-| `firmware-manifest.json` | 构建清单 |
-
-配置名和 preset 名以 `-` 连接成构建名（`<config>-<preset>`），构建名必须互不相同：`a-b` 加 `c` 与 `a` 加 `b-c` 得到同一个名字，工作流在规划阶段报错。
-
-各构建把文件上传为构建产物，之后由一个作业下载全部构建产物、生成上面的文件并一次上传，所以 `SHA256SUMS` 覆盖本次发布的每个文件。缺少某个构建产物，或各构建的提交、工具版本不一致时，该作业失败。
-
-`firmware-manifest.json` 记录 tag、提交、BSP 仓库、工程名、构建类型、工具链文件、镜像，XRobot 与 libxr 实际安装的版本和固定的版本，LibXR 子模块的提交，`xrobot.lock` 中每个模块的提交，以及每个构建的配置、preset、文件名和 `arm-none-eabi-size` 给出的 text、data、bss 大小。使用 `presets` 时，构建类型和工具链由 preset 决定，清单中为 `null`。以下是只构建 `default` 的 BSP 在 `v1.0.0` 上的清单：
-
-```json
-{
-  "schema": 1,
-  "tag": "v1.0.0",
-  "commit": "ad662b2bc410a440717f6a35e3f83a573f2422c5",
-  "repository": "xrobot-org/bsp-dev-mc02",
-  "project": "CtrBoard-H7_ALL",
-  "build_type": "Debug",
-  "toolchain": "cmake/starm-clang.cmake",
-  "image": "ghcr.io/xrobot-org/docker-image-stm32:main",
-  "tools": {
-    "xrobot": {
-      "version": "1.0.0",
-      "pin": "1.0.0"
-    },
-    "libxr": {
-      "version": "6.0.0",
-      "pin": "6.0.0"
-    }
-  },
-  "libxr_submodule": {
-    "path": "Middlewares/Third_Party/LibXR",
-    "commit": "6c51bf4084d983bc20309e63818ce104dc53f959"
-  },
-  "modules": {
-    "xrobot-org/BuzzerAlarm": "44424519645a0d9297d5a7bd57b8dd4e0c342e74"
-  },
-  "builds": [
-    {
-      "config": "default",
-      "preset": null,
-      "files": {
-        "elf": "CtrBoard-H7_ALL-default-v1.0.0.elf",
-        "hex": "CtrBoard-H7_ALL-default-v1.0.0.hex",
-        "bin": "CtrBoard-H7_ALL-default-v1.0.0.bin",
-        "config": "CtrBoard-H7_ALL-default-v1.0.0.yaml",
-        "archive": "CtrBoard-H7_ALL-default-v1.0.0.tar.gz"
-      },
-      "size": {
-        "text": 137384,
-        "data": 84,
-        "bss": 117172
-      }
-    }
-  ]
-}
-```
-
-推送 tag 时，工作流创建 Release，说明是各构建的大小表和工具版本：
-
-```markdown
-## CtrBoard-H7_ALL v1.0.0
-
-| Config | Preset | text | data | bss | Archive |
-| --- | --- | ---: | ---: | ---: | --- |
-| `default` | - | 137384 | 84 | 117172 | `CtrBoard-H7_ALL-default-v1.0.0.tar.gz` |
-
-- Commit `ad662b2` of xrobot-org/bsp-dev-mc02
-- XRobot 1.0.0, libxr 6.0.0, LibXR `6c51bf4`
-- Image `ghcr.io/xrobot-org/docker-image-stm32:main`, toolchain `cmake/starm-clang.cmake`, build type `Debug`
-- `SHA256SUMS` lists every file of this release; `firmware-manifest.json` records the builds and the Module commits
-```
-
-Release 已经有说明时（在网页上创建 Release 会同时推送 tag），保留原有说明。发布 Release 时，工作流只附加文件，说明保持原样。调用方的任务需要 `permissions: contents: write`，工作流才能创建 Release 并上传文件。
-
----
-
 ## 本章内容
 
 - [模块请求与锁定](./setup.md)：`modules.yaml`、ref 规则、`xrobot.lock`、`xrobot setup` 与发布门禁
-- [应用配置](./config.md)：配置格式、依赖绑定、结构体、常量、多产品
-- [入口与生成](./gen_main.md)：`XR_REGISTER`、`XROBOT_MAIN()`、生成的头文件与构建检查
-- [编写模块](./create_mod.md)：模块类与构造函数、manifest、模块 CI
-- [模块源](./src_man.md)：`sources.yaml`、`index.yaml` 与 `xrobot source`
+- [配置](./config.md)：配置格式、依赖绑定、结构体、常量、多份配置
+- [主函数生成](./gen_main.md)：`XR_REGISTER`、`XROBOT_MAIN()`、生成的头文件与构建检查
+- [编写模块](./create_mod.md)：模块类与构造函数、manifest
+- [源](./src_man.md)：`sources.yaml`、`index.yaml` 与 `xrobot source`
+- [CI 与固件发布](./ci.md)：模块 CI、STM32 BSP 的 CI 与固件发布

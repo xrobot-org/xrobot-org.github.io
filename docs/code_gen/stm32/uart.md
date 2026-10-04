@@ -149,19 +149,4 @@ Terminal:
 
 `Terminal` 的前四项是 `Terminal` 模板参数，依次为读取缓冲区大小、单行最大长度、最大参数个数和历史命令条数。`terminal_source` 非空时另外写入 `run_as_thread`（默认 `false`），它为 `true` 时再写入 `thread_stack_depth`（默认 1024）和 `thread_priority`（默认 3，即 `HIGH`，见[软件定时器](./timer.md)）。
 
----
-
-## 生成代码命令
-
-修改 `libxr_config.yaml` 后重新生成整个工程：
-
-```bash
-libxr stm32 setup -d .
-```
-
-只重新生成入口源文件时，先由 `.ioc` 写出 `.config.yaml`：
-
-```bash
-libxr parse -d .
-libxr gen -i .config.yaml -o User/app_main.cpp
-```
+修改该文件后重新生成代码，命令见[重新生成代码](./README.md#重新生成代码)。

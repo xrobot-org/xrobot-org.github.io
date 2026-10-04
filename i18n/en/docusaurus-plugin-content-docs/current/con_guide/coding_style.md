@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # Code Style
 
-This page summarizes the C++ code style currently used in the LibXR repository. Vendor and platform code under `driver/` and `system/` is not required to follow the naming rules below. For Python code, see [Python Code Style](./coding_style_python.md).
+This page summarizes the C++ code style currently used in the LibXR repository. Module and BSP repositories follow the same naming and layout; CI does not check their C++ formatting, and a BSP with its own `.clang-format` is formatted with that file. Vendor and platform code under `driver/` and `system/` is not required to follow the naming rules below. For Python code, see [Python Code Style](./coding_style_python.md).
 
 ## Naming
 
@@ -23,7 +23,7 @@ class Logger
 - Local variables, function parameters, and data members use `snake_case`. Data members end with `_`.
 
 ```cpp
-static inline bool initialized_ = false;
+static inline bool ready_ = false;
 ```
 
 - Macros, error codes, log macros, and enum values stay uppercase.
@@ -63,10 +63,13 @@ typedef RBTree<uint32_t>::Node<Block>* TopicHandle;
 - In `.cpp` files, include the corresponding header first, then system headers, then project headers.
 
 ```cpp
-#include "async.hpp"
+#include "raw_sequential.hpp"
+
+#include <cstddef>
+#include <cstdint>
 
 #include "libxr_def.hpp"
-#include "thread.hpp"
+#include "libxr_mem.hpp"
 ```
 
 - clang-format groups and sorts includes (`IncludeBlocks: Regroup`); within a group they are in alphabetical order.
@@ -74,6 +77,7 @@ typedef RBTree<uint32_t>::Node<Block>* TopicHandle;
 ```cpp
 #include "async.hpp"
 #include "database.hpp"
+#include "double_buffer.hpp"
 #include "event.hpp"
 ```
 
@@ -107,13 +111,16 @@ class Thread
 - Access specifiers are not indented further. Members are indented two spaces relative to the class body.
 
 ```cpp
-class Logger
+class Timebase
 {
  public:
-  static void Init();
+  // ...
+  [[nodiscard]] static bool IsReady() noexcept { return ready_; }
+  // ...
 
  private:
-  static inline bool initialized_ = false;
+  // ...
+  static inline bool ready_ = false;
 };
 ```
 
@@ -131,7 +138,7 @@ static void Sleep(uint32_t milliseconds);
 
 ```cpp
 inline constexpr size_t HW_CACHE_LINE_SIZE = (sizeof(void*) == 8) ? 64 : 32;
-static inline bool initialized_ = false;
+static inline bool ready_ = false;
 ```
 
 - `explicit`, `operator`, and `[[nodiscard]]` use their normal declaration positions.
@@ -139,7 +146,7 @@ static inline bool initialized_ = false;
 ```cpp
 explicit DatabaseRawSequential(Flash& flash, size_t max_buffer_size = 256);
 [[nodiscard]] ErrorCode TryLock();
-operator uint64_t() const;
+operator uint64_t() const { return microsecond_; }
 ```
 
 - `*` and `&` bind to the type: `const char* name`, `Flash& flash` (`PointerAlignment: Left` from the Google style).
@@ -150,9 +157,11 @@ operator uint64_t() const;
 
 ```cpp
 /**
- * @brief 发布一条日志 / Publish a log message
+ * @brief 发布一条字面量日志 / Publish one literal log message
  * @param level 日志级别 / Log level
  * @param file 来源文件名 / Source file name
+ * @param line 行号 / Line number
+ * @param args 格式参数 / Format arguments
  */
 ```
 
@@ -169,25 +178,52 @@ int ans = pthread_create(&this->thread_handle_, &attr, ThreadBlock::Port, block)
 
 ## Macros and Exceptions
 
-- Keep low-level helper macros in their existing macro form.
+- New helper constants and functions are preferably `constexpr` constants or template functions. Excerpt from `src/core/libxr_def.hpp`:
 
 ```cpp
+inline constexpr size_t HW_CACHE_LINE_SIZE = (sizeof(void*) == 8) ? 64 : 32;
+
+// ...
+
+template <typename OwnerType, typename MemberType>
+  requires MemberObjectPointer<OwnerType, MemberType>
+[[nodiscard]] inline OwnerType* ContainerOf(MemberType* ptr,
+                                            MemberType OwnerType::* member) noexcept
+{
+  return reinterpret_cast<OwnerType*>(reinterpret_cast<std::byte*>(ptr) -
+                                      OffsetOf(member));
+}
+```
+
+- Macros are used only where the preprocessor is needed, for example `UNUSED` and definitions that switch on the compiler. Excerpt from the same file:
+
+```cpp
+#ifndef UNUSED
+/// \brief 用于抑制未使用变量的警告 / Macro to suppress unused variable warnings
 #define UNUSED(_x) ((void)(_x))
-#define CONTAINER_OF(ptr, type, member) \
-  ((type*)((char*)(ptr) - OFFSET_OF(type, member)))  // NOLINT
+#endif
+
+// ...
+
+#if defined(_MSC_VER)
+#define LIBXR_NOINLINE __declspec(noinline)
+// ...
+#elif defined(__clang__) || defined(__GNUC__)
+#define LIBXR_NOINLINE __attribute__((noinline))
+// ...
+#endif
 ```
 
 - Apply `NOLINT` only at the exact location that needs it.
 
 ```cpp
-// NOLINTNEXTLINE
-goto add_again;
+goto out_ap_read;  // NOLINT
 ```
 
 - Conditional compilation stays explicit.
 
 ```cpp
-#if defined(LIBXR_SYSTEM_Linux) || defined(LIBXR_SYSTEM_Webots)
+#if defined(LIBXR_SYSTEM_POSIX_HOST)
 #include "linux_shared_topic.hpp"
 #endif
 ```
@@ -195,7 +231,15 @@ goto add_again;
 - Keep `extern "C"`, attributes, and platform macros in the existing direct style.
 
 ```cpp
-extern "C" __attribute__((weak)) void vApplicationStackOverflowHook(...);
+// NOLINTNEXTLINE
+extern "C" __attribute__((weak)) void vApplicationStackOverflowHook(TaskHandle_t xTask,
+                                                                    char* pcTaskName)
+{
+  static volatile const char* task_name = pcTaskName;
+  UNUSED(task_name);
+  UNUSED(xTask);
+  REQUIRE(false);
+}
 ```
 
 ## Test Code

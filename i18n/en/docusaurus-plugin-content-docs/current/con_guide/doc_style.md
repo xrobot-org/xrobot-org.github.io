@@ -80,7 +80,7 @@ A convention that needs its own explanation (for example the meaning of timestam
 
 - In a repository README, Chinese comes first and English follows, each in its own paragraphs. Chinese website pages live in `docs/`, English pages in `i18n/en/`.
 - Second-level headings of a repository README combine an emoji with Chinese and English, for example `## 🔧 安装 / Installation`.
-- Code blocks name their language. Commands start with `$ `, followed directly by their output.
+- Code blocks name their language. A command shown together with its output starts with `$ `, and the output follows directly; a block that lists only commands has no `$ `.
 - A Chinese line is not mechanically followed by an English line.
 
 Rejected:

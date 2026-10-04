@@ -16,6 +16,11 @@ The following all count as valid contributions.
 - concurrency, state-machine, and timeout behavior fixes
 - compile and build fixes
 
+## Modules
+
+- new Modules (see [Writing a Module](../proj_man/create_mod.md))
+- adding a Module to the official Source (see [Adding a Module](https://github.com/xrobot-org/xrobot-modules/blob/dev/README.md#添加模块--adding-a-module) in xrobot-modules)
+
 ## Documentation
 
 - API description fixes
@@ -31,12 +36,3 @@ The following all count as valid contributions.
 - performance regression results
 - platform matrix validation
 - minimal repro projects or repro scripts
-
-## Out of Scope for This Chapter
-
-- installation and usage tutorials
-- daily `XRobot` workflow
-- module development tutorials
-- detailed API manuals for a single driver or middleware component
-
-These belong in their respective chapters, not in the contribution guide.

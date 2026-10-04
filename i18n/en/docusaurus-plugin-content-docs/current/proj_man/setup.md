@@ -116,7 +116,7 @@ cmake -S . -B build
 cmake --build build
 ```
 
-`CONTEXT_REF` is the branch or tag being built; `TARGET_REF` is the pull request's base branch (for a push, the pushed branch or tag). An STM32 BSP does not need to write these steps: the shared workflow `bsp-stm32-ci.yml` contains them; see [BSP CI](./README.md#bsp-ci).
+`CONTEXT_REF` is the branch or tag being built; `TARGET_REF` is the pull request's base branch (for a push, the pushed branch or tag). An STM32 BSP does not need to write these steps: the shared workflow `bsp-stm32-ci.yml` contains them; see [BSP CI](./ci.md#bsp-ci).
 
 ---
 
@@ -129,4 +129,4 @@ set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
 add_subdirectory(Middlewares/Third_Party/LibXR)
 ```
 
-In an STM32 project the code generator writes this line; see [Integrate with XRobot](../code_gen/xrobot_inter.md). LibXR then includes `Modules/CMakeLists.txt` and checks `User/xrobot_main.hpp`; see [Entry and Generation](./gen_main.md#build-check).
+In an STM32 project the code generator writes this line; see [Integrate with XRobot](../code_gen/xrobot_inter.md). LibXR then includes `Modules/CMakeLists.txt` and checks `User/xrobot_main.hpp`; see [Main Function Generation](./gen_main.md#build-check).

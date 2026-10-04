@@ -1,7 +1,7 @@
 ---
 id: stm32-code-gen-watchdog
 title: Watchdog
-sidebar_position: 12
+sidebar_position: 13
 ---
 
 # Watchdog
@@ -58,13 +58,7 @@ The settings under `Watchdog` apply to all IWDG instances:
 - `run_as_thread`: with `true`, a thread feeds the watchdog in a loop at the instance's `feed_interval_ms`, and `thread_stack_depth` (default 1024) and `thread_priority` (default 3, that is `HIGH`; see [Software Timer](./timer.md)) are added;
 - `feed_interval_ms`: period of the timer task, 250 ms by default.
 
-## Regeneration Command
-
-After editing `libxr_config.yaml`, regenerate with:
-
-```bash
-libxr stm32 setup -d .
-```
+After editing the file, regenerate the code with the commands in [Regenerating the Code](./README.md#regenerating-the-code).
 
 ## Notes
 

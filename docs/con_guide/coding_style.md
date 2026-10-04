@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # 编码规范
 
-这里整理 LibXR 仓库当前采用的 C++ 代码写法。`driver/` 和 `system/` 中的厂商与平台代码不要求遵循下面的命名规则。Python 代码的写法见 [Python 编码规范](./coding_style_python.md)。
+这里整理 LibXR 仓库当前采用的 C++ 代码写法。模块和 BSP 仓库沿用同样的命名和版式；CI 不检查这两类仓库的 C++ 格式，带有 `.clang-format` 的 BSP 按该文件格式化。`driver/` 和 `system/` 中的厂商与平台代码不要求遵循下面的命名规则。Python 代码的写法见 [Python 编码规范](./coding_style_python.md)。
 
 ## 命名
 
@@ -23,7 +23,7 @@ class Logger
 - 局部变量、函数参数、数据成员使用 `snake_case`；数据成员以 `_` 结尾。
 
 ```cpp
-static inline bool initialized_ = false;
+static inline bool ready_ = false;
 ```
 
 - 宏、错误码、日志宏、枚举值保持全大写风格。
@@ -63,10 +63,13 @@ typedef RBTree<uint32_t>::Node<Block>* TopicHandle;
 - `.cpp` 先包含对应头文件，再包含系统头和项目头。
 
 ```cpp
-#include "async.hpp"
+#include "raw_sequential.hpp"
+
+#include <cstddef>
+#include <cstdint>
 
 #include "libxr_def.hpp"
-#include "thread.hpp"
+#include "libxr_mem.hpp"
 ```
 
 - include 由 clang-format 按分组排序（`IncludeBlocks: Regroup`），同一组内按字母顺序排列。
@@ -74,6 +77,7 @@ typedef RBTree<uint32_t>::Node<Block>* TopicHandle;
 ```cpp
 #include "async.hpp"
 #include "database.hpp"
+#include "double_buffer.hpp"
 #include "event.hpp"
 ```
 
@@ -107,13 +111,16 @@ class Thread
 - 访问说明符不额外缩进，成员相对类体缩进两空格。
 
 ```cpp
-class Logger
+class Timebase
 {
  public:
-  static void Init();
+  // ...
+  [[nodiscard]] static bool IsReady() noexcept { return ready_; }
+  // ...
 
  private:
-  static inline bool initialized_ = false;
+  // ...
+  static inline bool ready_ = false;
 };
 ```
 
@@ -131,7 +138,7 @@ static void Sleep(uint32_t milliseconds);
 
 ```cpp
 inline constexpr size_t HW_CACHE_LINE_SIZE = (sizeof(void*) == 8) ? 64 : 32;
-static inline bool initialized_ = false;
+static inline bool ready_ = false;
 ```
 
 - `explicit`、`operator`、`[[nodiscard]]` 等限定符按常规位置书写。
@@ -139,7 +146,7 @@ static inline bool initialized_ = false;
 ```cpp
 explicit DatabaseRawSequential(Flash& flash, size_t max_buffer_size = 256);
 [[nodiscard]] ErrorCode TryLock();
-operator uint64_t() const;
+operator uint64_t() const { return microsecond_; }
 ```
 
 - 指针和引用的 `*`、`&` 紧跟类型，写作 `const char* name`、`Flash& flash`（Google 风格的 `PointerAlignment: Left`）。
@@ -150,9 +157,11 @@ operator uint64_t() const;
 
 ```cpp
 /**
- * @brief 发布一条日志 / Publish a log message
+ * @brief 发布一条字面量日志 / Publish one literal log message
  * @param level 日志级别 / Log level
  * @param file 来源文件名 / Source file name
+ * @param line 行号 / Line number
+ * @param args 格式参数 / Format arguments
  */
 ```
 
@@ -169,25 +178,52 @@ int ans = pthread_create(&this->thread_handle_, &attr, ThreadBlock::Port, block)
 
 ## 宏与例外
 
-- 底层辅助宏继续保持现有写法，不额外改写成模板或内联函数。
+- 新增的辅助常量和函数优先写成 `constexpr` 常量或模板函数。以下节选自 `src/core/libxr_def.hpp`：
 
 ```cpp
+inline constexpr size_t HW_CACHE_LINE_SIZE = (sizeof(void*) == 8) ? 64 : 32;
+
+// ...
+
+template <typename OwnerType, typename MemberType>
+  requires MemberObjectPointer<OwnerType, MemberType>
+[[nodiscard]] inline OwnerType* ContainerOf(MemberType* ptr,
+                                            MemberType OwnerType::* member) noexcept
+{
+  return reinterpret_cast<OwnerType*>(reinterpret_cast<std::byte*>(ptr) -
+                                      OffsetOf(member));
+}
+```
+
+- 宏只用于需要预处理器的场合，例如 `UNUSED` 和按编译器切换的定义。以下节选自同一文件：
+
+```cpp
+#ifndef UNUSED
+/// \brief 用于抑制未使用变量的警告 / Macro to suppress unused variable warnings
 #define UNUSED(_x) ((void)(_x))
-#define CONTAINER_OF(ptr, type, member) \
-  ((type*)((char*)(ptr) - OFFSET_OF(type, member)))  // NOLINT
+#endif
+
+// ...
+
+#if defined(_MSC_VER)
+#define LIBXR_NOINLINE __declspec(noinline)
+// ...
+#elif defined(__clang__) || defined(__GNUC__)
+#define LIBXR_NOINLINE __attribute__((noinline))
+// ...
+#endif
 ```
 
 - `NOLINT` 只压在具体位置，不整段铺开。
 
 ```cpp
-// NOLINTNEXTLINE
-goto add_again;
+goto out_ap_read;  // NOLINT
 ```
 
 - 条件编译保持直接展开，不额外包装。
 
 ```cpp
-#if defined(LIBXR_SYSTEM_Linux) || defined(LIBXR_SYSTEM_Webots)
+#if defined(LIBXR_SYSTEM_POSIX_HOST)
 #include "linux_shared_topic.hpp"
 #endif
 ```
@@ -195,7 +231,15 @@ goto add_again;
 - `extern "C"`、属性和平台宏保持现有直接写法。
 
 ```cpp
-extern "C" __attribute__((weak)) void vApplicationStackOverflowHook(...);
+// NOLINTNEXTLINE
+extern "C" __attribute__((weak)) void vApplicationStackOverflowHook(TaskHandle_t xTask,
+                                                                    char* pcTaskName)
+{
+  static volatile const char* task_name = pcTaskName;
+  UNUSED(task_name);
+  UNUSED(xTask);
+  REQUIRE(false);
+}
 ```
 
 ## 测试代码

@@ -64,6 +64,19 @@ sidebar_position: 6
 * 基于 `ubuntu:24.04`
 * 预装 Webots R2025a、OpenVINO 2025.4 和 OpenCV 4.13.0
 
+## 镜像与 BSP、模板
+
+各仓库的 CI 使用以下镜像，本地构建这些仓库时可以使用同一镜像：
+
+| 仓库 | 镜像 |
+| --- | --- |
+| STM32 BSP（bsp-dev-c、bsp-dev-mc02、BSP-OpenCR-1.0、bsp_stm32f103），经共享工作流 `bsp-stm32-ci.yml` | `docker-image-stm32` |
+| 模块仓库，经共享工作流 `module-ci.yml` | `docker-image-linux` |
+| bsp-linux-autoaim、bsp-webots-autoaim | `docker-image-webots` |
+| CH32V203C8_LibXR_Template、CH32V307_LibXR_Template | `docker-image-ch32-riscv` |
+| HPM5301_LibXR_Template | `docker-image-hpm` |
+| MSPM0G3507_LibXR_Template | `docker-image-mspm0` |
+
 ## GHCR 拉取
 
 当前以 `GHCR` 为准：
@@ -76,7 +89,7 @@ sidebar_position: 6
 * `docker pull ghcr.io/xrobot-org/docker-image-mspm0:main`
 * `docker pull ghcr.io/xrobot-org/docker-image-hpm:main`
 
-## Docker Hub 镜像源
+## Docker Hub
 
 同名镜像也发布在 Docker Hub（`:latest`）：
 

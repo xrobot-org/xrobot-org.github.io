@@ -1,7 +1,7 @@
 ---
 id: stm32-code-gen-flash
 title: Flash Database
-sidebar_position: 1
+sidebar_position: 12
 ---
 
 # Flash Database
@@ -53,53 +53,12 @@ $ libxr gen -i .config.yaml -o User/app_main.cpp
 [ERROR] Generation failed: User\libxr_config.yaml: database.block_size 'wide' is not auto or a positive integer
 ```
 
-The following sections show how to create the Flash object and the database object in the User Code.
-
 ---
 
-## Creating a Flash Object
+## Creating the Objects in User Code
 
-The first parameter is the Flash address mapping table, the second parameter is the number of its entries, and the third parameter is the start address of the database storage area, which extends to the end of the Flash. The start address must be exactly the start of a sector; otherwise an assertion fails in the constructor. The third parameter is optional; without it the last two sectors are used, one for the main block and one for the backup block of the database.
+With `database.enable` set to `false`, the two objects can also be created in the User Code, written as in the generated code above; the third argument of `STM32Flash` can give the start address of the database storage area, which must be exactly the start of a sector and extends to the end of the Flash; without it the last two sectors are used (`0x080C0000` in the STM32F407IGH6 layout at the top). Keys and how to read and write them (`Database::Key`, `Set()`), `DatabaseRawSequential` and the recycle threshold are described in the middleware page [Flash Database](../../basic_coding/middleware/database.md).
 
-```cpp
-  // app_main.cpp
-  /* User Code Begin 3 */
-  STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER);
-  // Same as STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER, 0x080C0000);
-```
+Hand-written `flash` and `database` objects cannot be used together with `database.enable: true`: `app_main()` then already has the generated `static STM32Flash flash` and `static DatabaseRaw<...> database`, and objects of the same names in User Code 2 or 3 are in the same scope, which fails to compile as a redefinition.
 
----
-
-## Creating a Database Object
-
-Every series uses `DatabaseRaw<N>`. The template parameter `N` is the database's minimum write unit in bytes; it cannot be smaller than the Flash minimum write unit and is normally written as `STM32Flash::MIN_WRITE_SIZE`. The second parameter can be omitted; when more stale keys than this number (128 by default) are found at startup, the storage area is compacted once.
-
-```cpp
-LibXR::DatabaseRaw<STM32Flash::MIN_WRITE_SIZE> database(flash);
-```
-
-On G4, L4, H7 and similar series the Flash is programmed in double words or Flash words, and each unit can be written only once after an erase. Each key flag of `DatabaseRaw` occupies its own minimum write unit, and changing a flag writes a unit that has not been written yet, so these series use `DatabaseRaw<STM32Flash::MIN_WRITE_SIZE>` as well.
-
-The other backend, `DatabaseRawSequential`, writes only in address order. Its second parameter can be omitted and gives the maximum buffer size (256 bytes by default).
-
-```cpp
-LibXR::DatabaseRawSequential database(flash, 256);
-```
-
----
-
-## Creating a Database Key
-
-The first template argument is the data type stored in the key. The second is the key name, and the third is the default value. Keys can be implicitly cast to their value type or accessed via `key.data_`.
-
-```cpp
-Database::Key<uint32_t> key1(database, "key1", 0);
-```
-
----
-
-## Writing to the Database
-
-```cpp
-key1.Set(key1.data_ + 1);
-```
+When the User Code uses `FLASH_REGIONS`, `app_main.cpp` includes `flash_map.hpp` from the next generation on; to compile before that, write `#include "flash_map.hpp"` in User Code 1.

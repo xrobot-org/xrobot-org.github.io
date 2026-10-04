@@ -39,4 +39,4 @@ I2C:
 - `dma_section` 决定缓冲区所在的 section，见 [Cache](./cache.md)；
 - FMPI2C 外设不生成对象，`libxr parse` 给出警告；LibXR 没有 FMPI2C 驱动。
 
-修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。
+修改该文件后重新生成代码，命令见[重新生成代码](./README.md#重新生成代码)。

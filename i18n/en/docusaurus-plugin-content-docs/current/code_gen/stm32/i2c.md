@@ -39,4 +39,4 @@ Generation rules:
 - `dma_section` decides the section the buffer goes to, see [Cache](./cache.md);
 - FMPI2C peripherals get no object and `libxr parse` warns about them; LibXR has no FMPI2C driver.
 
-After editing the file, run `libxr stm32 setup -d .` to regenerate the code.
+After editing the file, regenerate the code with the commands in [Regenerating the Code](./README.md#regenerating-the-code).

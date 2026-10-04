@@ -1,7 +1,7 @@
 ---
 id: con-guide
 title: Contribution Guide
-sidebar_position: 11
+sidebar_position: 12
 ---
 
 # Contribution Guide

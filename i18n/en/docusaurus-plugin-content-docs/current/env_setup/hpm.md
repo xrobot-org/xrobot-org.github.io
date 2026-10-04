@@ -12,6 +12,24 @@ The template project is a starting point:
 
 - [HPM5301_LibXR_Template](https://github.com/xrobot-org/HPM5301_LibXR_Template)
 
+## Toolchain
+
+HPM projects use a RISC-V GCC toolchain with the compiler prefix `riscv32-unknown-elf-`. The HPM SDK reads the installation directory of the toolchain (the parent of `bin`) from the environment variable `GNURISCV_TOOLCHAIN_PATH`, and the compiler is `bin/riscv32-unknown-elf-gcc` inside it; without this variable, the CMake configuration fails with `GNURISCV_TOOLCHAIN_PATH is not set yet`.
+
+Sources of the toolchain:
+
+- Windows: HPMicro's development environment package [sdk_env](https://github.com/hpmicro/sdk_env); the toolchain goes into its `toolchains/` directory, and the command prompt opened by `start_cmd.cmd` sets `GNURISCV_TOOLCHAIN_PATH` and the other environment variables;
+- Linux x64: the `riscv32-unknown-elf` toolchain released by [hpm-linux-gcc-release v0.1.0](https://github.com/Jiu-xiao/hpm-linux-gcc-release/releases/tag/v0.1.0);
+- Docker: `ghcr.io/xrobot-org/docker-image-hpm:main` has that Linux toolchain (GCC 15.2.0) in `/opt/hpm-riscv32-unknown-elf` and records the path in the environment variable `XR_HPM_TOOLCHAIN_ROOT`; see [Docker Environment Setup](docker.md).
+
+The image does not set `GNURISCV_TOOLCHAIN_PATH`. Before building in the image, set it from `XR_HPM_TOOLCHAIN_ROOT`, as the CI of the template project does:
+
+```bash
+export GNURISCV_TOOLCHAIN_PATH="$XR_HPM_TOOLCHAIN_ROOT"
+cmake --preset release-flash-xip
+cmake --build --preset release-flash-xip
+```
+
 ## What Already Exists in Mainline
 
 According to the current `driver/hpm` directory in `libxr master`, the tree already contains these drivers:

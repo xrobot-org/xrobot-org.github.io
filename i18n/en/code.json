@@ -11,8 +11,11 @@
   "homepage.hero.lead": {
     "message": "A modular framework for robotics development, device interfaces, and engineering automation. LibXR provides core semantics, driver abstractions, and XRUSB; the CodeGenerator generates LibXR peripheral code from STM32CubeMX projects; XRobot manages Modules and generates the main function XRobotMain."
   },
+  "homepage.hero.cta.quickStart": {
+    "message": "Quick Start"
+  },
   "homepage.hero.cta.read": {
-    "message": "Start Reading"
+    "message": "Read the Docs"
   },
   "homepage.hero.cta.concept": {
     "message": "Read the Design Concepts"
@@ -20,14 +23,11 @@
   "homepage.hero.cta.demo": {
     "message": "Web Demo"
   },
-  "homepage.hero.cta.xrobot": {
-    "message": "Open XRobot"
-  },
   "homepage.versionCard.eyebrow": {
     "message": "Documentation Baseline"
   },
   "homepage.guide.onboarding.title": {
-    "message": "Onboarding Tasks"
+    "message": "Onboarding Tasks (Chinese)"
   },
   "homepage.guide.onboarding.desc": {
     "message": "Pick the right starting path by platform, then get familiar with XR design ideas and the basic coding style step by step."
@@ -42,118 +42,31 @@
     "message": "Document Entry Map"
   },
   "homepage.panel.title": {
-    "message": "Jump straight into the docs from the task at hand"
+    "message": "Enter the docs by project type"
+  },
+  "homepage.route.libxr.title": {
+    "message": "LibXR Only"
+  },
+  "homepage.route.libxr.desc": {
+    "message": "Use the LibXR core API, peripheral drivers, and middleware in an existing project."
+  },
+  "homepage.route.codegen.title": {
+    "message": "STM32 and the CodeGenerator"
+  },
+  "homepage.route.codegen.desc": {
+    "message": "Generate the peripheral objects and the entry function app_main from an STM32CubeMX project and add LibXR to its CMake build."
   },
   "homepage.route.xrobot.title": {
-    "message": "Project & Workflow"
+    "message": "XRobot BSP"
   },
   "homepage.route.xrobot.desc": {
     "message": "Fetching and locking Modules, configurations, and main function generation."
   },
-  "homepage.route.core.title": {
-    "message": "Core Semantics"
+  "homepage.route.port.title": {
+    "message": "Porting to a New Platform"
   },
-  "homepage.route.core.desc": {
-    "message": "Callbacks, events, messages, time, memory, and the foundational abstractions."
-  },
-  "homepage.route.driver.title": {
-    "message": "Drivers & XRUSB"
-  },
-  "homepage.route.driver.desc": {
-    "message": "Peripheral abstractions, platform implementations, and XRUSB as part of the driver layer."
-  },
-  "homepage.route.start.title": {
-    "message": "Environment & Getting Started"
-  },
-  "homepage.route.start.desc": {
-    "message": "Platform selection, tool installation, and environment setup."
-  },
-  "homepage.quick.eyebrow": {
-    "message": "Quick Paths"
-  },
-  "homepage.quick.title": {
-    "message": "Enter by common task"
-  },
-  "homepage.quick.desc": {
-    "message": "Documentation entry points by common task."
-  },
-  "homepage.path.intro.title": {
-    "message": "I am new to LibXR / XRobot"
-  },
-  "homepage.path.intro.desc": {
-    "message": "Start with the overall concepts, repository structure, and the smallest working path before deciding which layer to dive into."
-  },
-  "homepage.path.core.title": {
-    "message": "I want to port to a new hardware platform"
-  },
-  "homepage.path.core.desc": {
-    "message": "Start from driver abstractions, platform implementation, and basic peripheral capabilities to understand the board-level foundation first."
-  },
-  "homepage.path.driver.title": {
-    "message": "I need to work on device-side interfaces and links"
-  },
-  "homepage.path.driver.desc": {
-    "message": "Start from device interfaces, protocol stacks, and transport implementations, then look at communication, identification, and update-related content."
-  },
-  "homepage.path.usb.title": {
-    "message": "I want to get the project running quickly"
-  },
-  "homepage.path.usb.desc": {
-    "message": "First tell an XRobot BSP from a LibXR-only project; the Agent prompt on this page can classify the project."
-  },
-  "homepage.recent.eyebrow": {
-    "message": "Recent Direction"
-  },
-  "homepage.recent.title": {
-    "message": "Recent Development"
-  },
-  "homepage.recent.desc": {
-    "message": "Development directions that have recently started or are in progress."
-  },
-  "homepage.recent.core.title": {
-    "message": "Platform drivers cover STM32, CH32, ESP32, HPM, MSPM0, Linux, Webots, and WebAssembly"
-  },
-  "homepage.recent.core.desc": {
-    "message": "Each platform's drivers live in their own subdirectory under driver/ in LibXR."
-  },
-  "homepage.recent.linux.title": {
-    "message": "XRUSB already covers CDC, DAP, DFU, GSUSB, HID, and UAC"
-  },
-  "homepage.recent.linux.desc": {
-    "message": "XRUSB provides several USB device classes, each documented on its own page."
-  },
-  "homepage.recent.usb.title": {
-    "message": "The debug path supports SWD and JTAG, with the implementation split into layers"
-  },
-  "homepage.recent.usb.desc": {
-    "message": "The debug implementation covers GPIO-timed SWD and JTAG and the CMSIS-DAP v1/v2 device classes."
-  },
-  "homepage.focus.eyebrow": {
-    "message": "Focus Areas"
-  },
-  "homepage.focus.title": {
-    "message": "Enter by problem type"
-  },
-  "homepage.focus.desc": {
-    "message": "Common questions fall into three groups: runtime mechanisms, hardware integration, and project builds."
-  },
-  "homepage.focus.core.title": {
-    "message": "Runtime Mechanisms"
-  },
-  "homepage.focus.core.desc": {
-    "message": "How callbacks, events, messages, and middleware relate."
-  },
-  "homepage.focus.driver.title": {
-    "message": "Hardware Integration and Porting"
-  },
-  "homepage.focus.driver.desc": {
-    "message": "Drivers, platform implementations, XRUSB, and debug links."
-  },
-  "homepage.focus.project.title": {
-    "message": "Project Builds"
-  },
-  "homepage.focus.project.desc": {
-    "message": "Let the Agent identify the repository type first, then choose the workspace, platform-project, or driver entry path so the initialization flow starts from the right place."
+  "homepage.route.port.desc": {
+    "message": "The peripheral driver interfaces and their implementation on each platform."
   },
   "homepage.foot.eyebrow": {
     "message": "Project"

@@ -1,12 +1,12 @@
 ---
 id: env-setup
 title: Environment Setup
-sidebar_position: 4
+sidebar_position: 3
 ---
 
 # Environment Setup
 
-This chapter covers local environment setup for LibXR, CodeGenerator, and XRobot.
+This chapter has three parts: this page installs LibXR, CodeGenerator, XRobot and the VS Code extension; the platform pages cover each platform's toolchain and how LibXR is brought into it; [Docker Environment Setup](docker.md) lists the images with the toolchains preinstalled.
 
 ## Supported Platforms
 
@@ -54,12 +54,34 @@ pipx install libxr==6.0.0
 # Restart your terminal
 ```
 
-Install with `pip`:
+Installing with `pip` applies to Windows or to an activated virtual environment:
 
 ```bash
 pip install xrobot==1.0.0 libxr==6.0.0
 ```
 
+On Ubuntu 24.04 and other Debian-based distributions the system Python is managed by apt, and a plain `pip` install fails with `externally-managed-environment`. On these systems use `pipx` as above, or create a virtual environment first and use `pip` inside it:
+
+```bash
+sudo apt install python3-venv
+python3 -m venv .venv
+. .venv/bin/activate
+pip install xrobot==1.0.0 libxr==6.0.0
+```
+
 Use only one of these methods. With several installations present, the command line may run a different version than expected. `xrobot --version` and `libxr --version` show the versions in use.
 
-The XRobot version a BSP uses is recorded in the `xrobot:` field of `Modules/modules.yaml`; STM32 BSPs that use the CodeGenerator also record the libxr version in the `generator:` field of `User/libxr_config.yaml`. Install the same versions.
+The xrobot version a BSP uses is recorded in the `xrobot:` field of `Modules/modules.yaml`; STM32 BSPs that use the CodeGenerator also record the libxr version in the `generator:` field of `User/libxr_config.yaml`. Install the same versions.
+
+### VS Code Extension
+
+The VS Code extension [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot) adds two views to the activity bar, XRobot and LibXR. For a BSP with `Modules/modules.yaml`, the XRobot view shows its Modules, configurations and instances and makes changes through `xrobot` commands; for an STM32CubeMX project with an `.ioc` file at its root, the LibXR view shows `User/libxr_config.yaml` and the internal Flash layout and runs `libxr` commands.
+
+Extension 2.0.0 requires VS Code 1.108 or newer. The XRobot view needs xrobot 1.0.0 and `git`, the LibXR view needs libxr 6.0.0, both installed as in the previous section. The extension looks up these commands on `PATH`, in pip's per-user script directories and in the `xrobot.cli.extraPath` setting; when the commands are installed in a virtual environment, put the full path of its `bin` directory (`Scripts` on Windows) in `xrobot.cli.extraPath`.
+
+## Platforms
+
+- [STM32](stm32.md): CMake projects exported by STM32CubeMX, compilers and command-line builds
+- [CH32](ch32.md), [ESP32](esp32.md), [MSPM0](mspm0.md), [HPM](hpm.md): toolchains and how LibXR is brought into each platform
+- [Linux](linux.md): host compilers and the dependencies of the LibXR Linux drivers
+- [Docker](docker.md): images with the toolchains of each platform preinstalled
