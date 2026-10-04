@@ -10,30 +10,31 @@ For each independent watchdog (IWDG) enabled in CubeMX, the generator emits an `
 
 ## Watchdog Code Examples
 
-The following code comes from an STM32F746 project. The peripheral object section contains the watchdog object:
+The following code comes from an STM32F407 project. The `// Watchdog` section, after the terminal and the database, creates the watchdog object:
 
 ```cpp
-static STM32Watchdog iwdg(&hiwdg, 1000, 250);
+  static STM32Watchdog iwdg(&hiwdg, 1000, 250);
 ```
 
 The constructor takes the HAL handle, the timeout and the feed interval (ms). It computes the prescaler and reload values from the LSI clock and starts the watchdog.
 
-After the terminal configuration come the first feed and the timer task, which feeds the watchdog every 250 ms by default:
+Then come the first feed and the timer task, which feeds the watchdog every 250 ms by default:
 
 ```cpp
-iwdg.Feed();
-static auto iwdg_task = Timer::CreateTask(iwdg.TaskFun, reinterpret_cast<LibXR::Watchdog *>(&iwdg), 250);
-Timer::Add(iwdg_task);
-Timer::Start(iwdg_task);
+  iwdg.Feed();
+  static auto iwdg_task =
+      Timer::CreateTask(iwdg.TaskFun, reinterpret_cast<LibXR::Watchdog*>(&iwdg), 250);
+  Timer::Add(iwdg_task);
+  Timer::Start(iwdg_task);
 ```
 
 With `Watchdog.run_as_thread` set to `true`, a thread of its own feeds the watchdog instead:
 
 ```cpp
-iwdg.Feed();
-static LibXR::Thread iwdg_thread;
-iwdg_thread.Create(reinterpret_cast<LibXR::Watchdog *>(&iwdg), iwdg.ThreadFun, "iwdg_wdg", 1024,
-                    LibXR::Thread::Priority::HIGH);
+  iwdg.Feed();
+  static Thread iwdg_thread;
+  iwdg_thread.Create(reinterpret_cast<LibXR::Watchdog*>(&iwdg), iwdg.ThreadFun,
+                     "iwdg_wdg", 1024, Thread::Priority::HIGH);
 ```
 
 ## Configuration File
@@ -62,7 +63,7 @@ The settings under `Watchdog` apply to all IWDG instances:
 After editing `libxr_config.yaml`, regenerate with:
 
 ```bash
-libxr gen -i ./.config.yaml -o ./User/app_main.cpp
+libxr stm32 setup -d .
 ```
 
 ## Notes

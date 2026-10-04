@@ -21,7 +21,7 @@ PlatformInit();
 FreeRTOS 和 ThreadX 工程中传入线程优先级和栈深度：
 
 ```cpp
-PlatformInit(static_cast<uint32_t>(LibXR::Thread::Priority::MEDIUM), 1024);
+PlatformInit(static_cast<uint32_t>(Thread::Priority::MEDIUM), 1024);
 ```
 
 ## 线程优先级
@@ -42,7 +42,4 @@ software_timer:
 
 `priority` 写 0 到 4 或等级名（大小写不限），0 到 4 依次对应 `IDLE`、`LOW`、`MEDIUM`、`HIGH` 和 `REALTIME`，默认为 2（`MEDIUM`）。其他值使生成失败。终端和看门狗的 `thread_priority` 写法相同。
 
-可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`libxr stm32 setup -d .`  
-或  
-`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`
+修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。

@@ -6,7 +6,7 @@ sidebar_position: 9
 
 # I2C
 
-In STM32CubeMX, the I2C runs in I2C mode (SMBus mode uses an SMBUS handle), with the matching DMA channels and interrupts configured.
+In STM32CubeMX, the I2C runs in I2C mode, with the matching DMA channels and interrupts configured. An instance in SMBus mode uses an SMBUS handle; it gets no object, and `libxr parse` warns about it.
 
 ## Example
 
@@ -38,3 +38,5 @@ Generation rules:
 - `dma_enable_min_size` is the last argument of the `STM32I2C` constructor;
 - `dma_section` decides the section the buffer goes to, see [Cache](./cache.md);
 - FMPI2C peripherals get no object and `libxr parse` warns about them; LibXR has no FMPI2C driver.
+
+After editing the file, run `libxr stm32 setup -d .` to regenerate the code.

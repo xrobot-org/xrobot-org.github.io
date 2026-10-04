@@ -34,3 +34,5 @@ Generation rules:
 - without DMA on the transmit direction, the transmit buffer argument is `{nullptr, 0}`, and likewise for receive;
 - `dma_enable_min_size` is the last argument of the `STM32SPI` constructor;
 - `dma_section` decides the section the buffers go to, see [Cache](./cache.md).
+
+After editing the file, run `libxr stm32 setup -d .` to regenerate the code.

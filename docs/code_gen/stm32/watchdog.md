@@ -10,30 +10,31 @@ sidebar_position: 12
 
 ## 看门狗代码示例
 
-以下代码来自 STM32F746 工程。外设对象部分生成看门狗对象：
+以下代码来自 STM32F407 工程。生成的代码在终端和数据库之后的 `// Watchdog` 一节中创建看门狗对象：
 
 ```cpp
-static STM32Watchdog iwdg(&hiwdg, 1000, 250);
+  static STM32Watchdog iwdg(&hiwdg, 1000, 250);
 ```
 
 构造函数的参数是 HAL 句柄、溢出时间和喂狗间隔（毫秒）。构造函数按 LSI 时钟计算分频和重载值，然后启动看门狗。
 
-终端配置之后生成首次喂狗和定时器任务，默认每 250 ms 喂狗一次：
+随后是首次喂狗和定时器任务，默认每 250 ms 喂狗一次：
 
 ```cpp
-iwdg.Feed();
-static auto iwdg_task = Timer::CreateTask(iwdg.TaskFun, reinterpret_cast<LibXR::Watchdog *>(&iwdg), 250);
-Timer::Add(iwdg_task);
-Timer::Start(iwdg_task);
+  iwdg.Feed();
+  static auto iwdg_task =
+      Timer::CreateTask(iwdg.TaskFun, reinterpret_cast<LibXR::Watchdog*>(&iwdg), 250);
+  Timer::Add(iwdg_task);
+  Timer::Start(iwdg_task);
 ```
 
 `Watchdog.run_as_thread` 为 `true` 时，喂狗改由独立线程完成：
 
 ```cpp
-iwdg.Feed();
-static LibXR::Thread iwdg_thread;
-iwdg_thread.Create(reinterpret_cast<LibXR::Watchdog *>(&iwdg), iwdg.ThreadFun, "iwdg_wdg", 1024,
-                    LibXR::Thread::Priority::HIGH);
+  iwdg.Feed();
+  static Thread iwdg_thread;
+  iwdg_thread.Create(reinterpret_cast<LibXR::Watchdog*>(&iwdg), iwdg.ThreadFun,
+                     "iwdg_wdg", 1024, Thread::Priority::HIGH);
 ```
 
 ## 配置文件说明
@@ -62,7 +63,7 @@ Watchdog:
 修改 `libxr_config.yaml` 后，重新生成代码：
 
 ```bash
-libxr gen -i ./.config.yaml -o ./User/app_main.cpp
+libxr stm32 setup -d .
 ```
 
 ## 注意事项

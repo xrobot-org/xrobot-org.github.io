@@ -33,4 +33,4 @@ static STM32GPIO PA8(GPIOA, GPIO_PIN_8);
 ## Usage notes
 
 - after changing a pin mode in CubeMX, for example from a normal GPIO to EXTI, regenerate the code so that the constructor arguments follow;
-- with XRobot integration (`--xrobot`) each object is registered under the same name with `XR_REGISTER(<name>, LibXR::GPIO)`, and application configurations refer to it by that name.
+- with XRobot integration (`--xrobot`) each object is registered under the same name with `XR_REGISTER(<name>, LibXR::GPIO)`, and configurations refer to it by that name.

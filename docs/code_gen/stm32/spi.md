@@ -35,7 +35,4 @@ SPI:
 - `dma_enable_min_size` 作为 `STM32SPI` 构造函数的最后一个参数；
 - `dma_section` 决定缓冲区所在的 section，见 [Cache](./cache.md)。
 
-可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`libxr stm32 setup -d .`  
-或  
-`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`
+修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。

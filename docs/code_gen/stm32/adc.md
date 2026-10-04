@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # ADC
 
-强烈建议在STM32CubeMX里面开启dma传输。轮询模式下同一ADC的不同通道无法被多线程同时调用，可能会导致数据错误。
+ADC 建议在 STM32CubeMX 中开启 DMA 传输。轮询模式下，多个线程同时读取同一 ADC 的不同通道时可能得到错误的数据。
 
 ## DMA模式配置要求
 
@@ -33,7 +33,7 @@ UNUSED(adc3_adc_channel_8);
 
 轮询模式下会识别所有开启的通道，DMA模式下只会识别配置了Rank的通道。DMA模式下通道引用按Rank排列，`GetChannel(i)` 对应第 i+1 个Rank；同一通道配置在多个Rank时，之后的引用名带上Rank后缀，例如 `adc3_adc_channel_8_rank12`。开启 XRobot 集成（`--xrobot`）时，每个通道引用以同名注册为 `LibXR::ADC`。
 
-STM32ADC类并不是由ADC基类的派生，而是包含了多个由ADC基类派生的ADC通道对象。
+`STM32ADC` 包含多个通道对象，每个通道对象派生自 `LibXR::ADC`，由 `GetChannel(i)` 取得。
 
 ## 配置文件
 
@@ -49,7 +49,4 @@ ADC:
 
 其中`buffer_size`为每个通道的缓冲字节数，生成的 `uint16_t` 缓冲区有 `buffer_size / 2 × 通道数` 个元素（上例中 1 个通道，16 个元素）；`dma_section`为缓冲区所在的内存区域，`vref`为ADC参考电压，单位为V。
 
-可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`libxr stm32 setup -d .`  
-或  
-`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`
+修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。

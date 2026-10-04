@@ -14,19 +14,18 @@ After code generation, a file named `User/flash_map.hpp` will be created. This f
 // MCU: STM32F407IGH6
 
 #include "main.h"
-
 #include "stm32_flash.hpp"
 
 constexpr LibXR::FlashRegion FLASH_REGIONS[] = {
-  {0x08000000, 0x00004000, 4},
-  {0x08010000, 0x00010000, 1},
-  {0x08020000, 0x00020000, 7},
+    {0x08000000, 0x00004000, 4},
+    {0x08010000, 0x00010000, 1},
+    {0x08020000, 0x00020000, 7},
 };
 
 constexpr size_t FLASH_REGION_NUMBER = sizeof(FLASH_REGIONS) / sizeof(LibXR::FlashRegion);
 ```
 
-`libxr stm32 flash-info <model>` prints the layout of a model on its own. When no flash layout can be derived for the MCU, `libxr gen` logs a warning, generates no `flash_map.hpp`, leaves it out of the includes of `app_main.cpp`, and deletes a previously generated `flash_map.hpp`.
+`libxr stm32 flash-info <model>` prints the layout of a model on its own. `app_main.cpp` includes `flash_map.hpp` only when `database.enable` is `true` or the User Code uses `FLASH_REGIONS` or `FLASH_REGION_NUMBER`. When no flash layout can be derived for the MCU, `libxr gen` logs a warning, generates no `flash_map.hpp`, and deletes a previously generated `flash_map.hpp`.
 
 ---
 

@@ -6,7 +6,9 @@ sidebar_position: 2
 
 # 与XRobot集成
 
-加上 `--xrobot` 后，代码生成器在 `app_main.cpp` 中为每个生成的外设对象写一行 `XR_REGISTER(名字, 类型)`，并在 User Code 3 区域之后调用 `XROBOT_MAIN();`。加上 `--no-xrobot` 时不生成任何 XRobot 代码；两者都不写时，`libxr gen` 和 `libxr stm32 setup` 沿用已有 `app_main.cpp` 的选择，新工程不生成 XRobot 代码。应用配置按这些名字引用硬件，见 [项目管理（XRobot）](../proj_man/README.md)。
+加上 `--xrobot` 后，代码生成器在 `app_main.cpp` 中为每个生成的外设对象写一行 `XR_REGISTER(名字, 类型)`，并在 User Code 3 区域之后调用 `XROBOT_MAIN();`。加上 `--no-xrobot` 时不生成任何 XRobot 代码；两者都不写时，`libxr gen` 和 `libxr stm32 setup` 沿用已有 `app_main.cpp` 的选择，新工程不生成 XRobot 代码。配置按这些名字引用硬件，见 [项目管理（XRobot）](../proj_man/README.md)。
+
+已有工程改为 `--xrobot` 时，User Code 3 若仍是不带 `--xrobot` 时生成的默认循环，重新生成会清空这个循环，使其后的 `XROBOT_MAIN()` 能够执行；User Code 3 的其他内容保持不变。
 
 ## 示例
 
@@ -17,40 +19,55 @@ libxr parse -d . -o .config.yaml
 libxr gen -i .config.yaml -o User/app_main.cpp --xrobot --libxr-config User/libxr_config.yaml
 ```
 
-STM32F407 工程生成的 `app_main.cpp`（节选）：
+STM32F407 工程生成的 `app_main.cpp`（节选，省略处写作 `// ...`）：
 
 ```cpp
-#include "flash_map.hpp"
-#include "xrobot_main.hpp"
-......
+#include "app_main.h"
 
-extern "C" void app_main(void) {
-  ......
+#include "cdc_uart.hpp"
+#include "flash_map.hpp"
+// ...
+#include "xrobot_main.hpp"
+
+// ...
+
+extern "C" void app_main(void)
+{
+  // ...
+  // Hardware registration
   XR_REGISTER(power_manager, LibXR::PowerManager);
+
   XR_REGISTER(USER_KEY, LibXR::GPIO);
-  ......
+  // ...
+
   XR_REGISTER(spi1, LibXR::SPI);
+
   XR_REGISTER(usart1, LibXR::UART);
-  ......
+  // ...
+  XR_REGISTER(usb_otg_hs_cdc2, LibXR::UART);
+
+  // ...
   XR_REGISTER(can1, LibXR::CAN);
-  ......
+  XR_REGISTER(can2, LibXR::CAN);
+
   XR_REGISTER(ramfs, LibXR::RamFS);
+
   XR_REGISTER(terminal, LibXR::Terminal<32, 32, 5, 5>);
 
-  // clang-format on
-  // NOLINTEND
+  XR_REGISTER(database, LibXR::Database);
+
   /* User Code Begin 3 */
   /* User Code End 3 */
   XROBOT_MAIN();
 }
 ```
 
-- 名字就是生成的 C++ 对象名：GPIO 取 CubeMX 中的引脚标签（没有标签时由引脚名得到），外设取实例名（如 `spi1`、`usart1`）。
+- 名字就是生成的 C++ 对象名：GPIO 取 CubeMX 中的引脚标签（没有标签时由引脚名得到）；SPI、I2C、UART、CAN、FDCAN 取小写的实例名（如 `spi1`、`usart1`）；ADC 通道为 `<实例>_<通道>`（如 `adc3_adc_channel_8`），DAC 输出为 `<实例>_<通道>`（如 `dac1_out2`），PWM 为 `pwm_<定时器>_ch<通道>`；USB 的各路 CDC 为 `<USB 实例>_cdc`、`<USB 实例>_cdc2`……，注册为 `LibXR::UART`；看门狗取 IWDG 实例名（如 `iwdg`），注册为 `LibXR::Watchdog`。另外注册 `power_manager`（`LibXR::PowerManager`）；设置了 `terminal_source` 时注册 `ramfs` 和 `terminal`；`database.enable` 为 `true` 时注册 `database`（`LibXR::Database`）。
 - 每个名字只注册一种类型。FDCAN 对象 `fdcanN` 注册为 `LibXR::FDCAN`，同时生成引用 `LibXR::CAN& canN = fdcanN;` 并注册为 `LibXR::CAN`。芯片同时有 CAN 与 FDCAN 导致 `canN` 重名时，生成失败。
-- 需要注册更多对象（例如在 User Code 3 中创建的数据库或额外串口）时，在 User Code 3 中写 `XR_REGISTER`，这些内容在重新生成时保留。
+- 需要注册更多对象（例如在 User Code 3 中额外创建的串口）时，在 User Code 3 中写 `XR_REGISTER`，这些内容在重新生成时保留。数据库由 `libxr_config.yaml` 的 `database.enable` 生成并注册为 `database`，见 [Flash 数据库](./stm32/flash.md)。
 - `XROBOT_MAIN();` 由生成器维护。旧版本把它写在 User Code 3 中；若 User Code 区域中仍有该调用，生成器报告行号并停止、不写任何文件，删除该行后重新生成即可。
 
-`libxr stm32 cmake` 和 `libxr stm32 setup` 按 `User/app_main.cpp` 是否由 `--xrobot` 生成，在 `cmake/LibXR.CMake` 中设置或删除 `XROBOT_MODULES_DIR`，这一行写在 `add_subdirectory(Middlewares/Third_Party/LibXR)` 之前。已有的 `LibXR.CMake` 中没有这行 `add_subdirectory` 时，只给出警告，写出要加入的一行。
+`libxr stm32 cmake` 和 `libxr stm32 setup` 按 `User/app_main.cpp` 是否由 `--xrobot` 生成，在 `cmake/LibXR.CMake` 开头的 “Project settings” 块中加入或删除 `set(XROBOT_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Modules")`，加入时写在 `set(LIBXR_DRIVER st)` 之后。单独运行 `libxr gen` 不修改这个文件。
 
 ## 生成器版本
 
@@ -58,8 +75,17 @@ extern "C" void app_main(void) {
 
 ## 生成之后
 
+`libxr stm32 setup -d . --xrobot` 在入口源文件中写出注册代码和 `XROBOT_MAIN();`，并在 `cmake/LibXR.CMake` 中设置模块目录；`Modules/` 下的文件和 `User/xrobot.yaml` 由 XRobot 创建。BSP 根目录还没有 `Modules/modules.yaml` 时，按以下顺序完成 XRobot 的设置。以加入 BlinkLED 模块、LED 接在标签为 `LED_B` 的引脚上为例：
+
 ```bash
-xrobot setup      # 拉取模块、检查配置、生成 User/xrobot_main.hpp
+xrobot init                                     # 创建 Modules/modules.yaml、Modules/sources.yaml 和 User/xrobot.yaml
+xrobot module add xrobot-org/BlinkLED@dev       # 加入模块
+xrobot setup                                    # 拉取模块、检查配置、生成 User/xrobot_main.hpp
+xrobot instance add xrobot-org/BlinkLED         # 新增实例 blinkled_0
+xrobot instance set blinkled_0 args.led LED_B   # 依赖参数填写已注册的对象名
+xrobot gen                                      # 重新生成 User/xrobot_main.hpp
 ```
+
+各命令的说明见项目管理的[快速上手](../proj_man/README.md#快速上手)。模块的依赖参数为 `LibXR::RamFS&` 时，需要在 `User/libxr_config.yaml` 中设置 `terminal_source`（或运行 `libxr stm32 setup` 时给出 `-t`）；为 `LibXR::Database&` 时，需要设置 `database.enable: true`。修改后重新运行 `libxr stm32 setup -d .`，生成并注册 `ramfs` 或 `database`。没有这两个设置时，`xrobot instance add` 对这类参数没有可填写的对象。
 
 `User/xrobot_main.hpp` 由 XRobot 生成，见 [入口与生成](../proj_man/gen_main.md)。

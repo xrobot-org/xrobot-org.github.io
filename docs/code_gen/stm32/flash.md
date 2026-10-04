@@ -14,19 +14,18 @@ sidebar_position: 1
 // MCU: STM32F407IGH6
 
 #include "main.h"
-
 #include "stm32_flash.hpp"
 
 constexpr LibXR::FlashRegion FLASH_REGIONS[] = {
-  {0x08000000, 0x00004000, 4},
-  {0x08010000, 0x00010000, 1},
-  {0x08020000, 0x00020000, 7},
+    {0x08000000, 0x00004000, 4},
+    {0x08010000, 0x00010000, 1},
+    {0x08020000, 0x00020000, 7},
 };
 
 constexpr size_t FLASH_REGION_NUMBER = sizeof(FLASH_REGIONS) / sizeof(LibXR::FlashRegion);
 ```
 
-`libxr stm32 flash-info <型号>` 可以单独打印某个型号的布局。推算不出 MCU 型号的 Flash 布局时，`libxr gen` 给出警告，不生成 `flash_map.hpp`，`app_main.cpp` 也不 include 它，以前生成的 `flash_map.hpp` 被删除。
+`libxr stm32 flash-info <型号>` 可以单独打印某个型号的布局。`app_main.cpp` 只在 `database.enable` 为 `true`，或 User Code 中用到 `FLASH_REGIONS`、`FLASH_REGION_NUMBER` 时 include `flash_map.hpp`。推算不出 MCU 型号的 Flash 布局时，`libxr gen` 给出警告，不生成 `flash_map.hpp`，并删除以前生成的 `flash_map.hpp`。
 
 ## 创建Flash对象
 

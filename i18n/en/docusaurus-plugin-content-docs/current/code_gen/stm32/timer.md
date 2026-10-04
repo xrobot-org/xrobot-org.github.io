@@ -21,7 +21,7 @@ PlatformInit();
 In FreeRTOS and ThreadX projects, the thread priority and stack depth are passed:
 
 ```cpp
-PlatformInit(static_cast<uint32_t>(LibXR::Thread::Priority::MEDIUM), 1024);
+PlatformInit(static_cast<uint32_t>(Thread::Priority::MEDIUM), 1024);
 ```
 
 ## Thread Priority
@@ -42,7 +42,4 @@ software_timer:
 
 `priority` takes 0 to 4 or a level name in any case; 0 to 4 stand for `IDLE`, `LOW`, `MEDIUM`, `HIGH` and `REALTIME`, and the default is 2 (`MEDIUM`). Any other value stops generation. The `thread_priority` of the terminal and the watchdog takes the same values.
 
-The file can be edited directly. To apply the settings, regenerate the code with either command:  
-`libxr stm32 setup -d .`  
-or  
-`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`
+After editing the file, run `libxr stm32 setup -d .` to regenerate the code.

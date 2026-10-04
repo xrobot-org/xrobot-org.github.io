@@ -33,4 +33,4 @@ static STM32GPIO PA8(GPIOA, GPIO_PIN_8);
 ## 使用建议
 
 - 修改 CubeMX 中的引脚模式（例如普通 GPIO 改成 EXTI）后，重新生成代码，使构造参数同步变化；
-- 开启 XRobot 集成（`--xrobot`）时，每个对象以同名 `XR_REGISTER(<名字>, LibXR::GPIO)` 注册，应用配置按这个名字引用。
+- 开启 XRobot 集成（`--xrobot`）时，每个对象以同名 `XR_REGISTER(<名字>, LibXR::GPIO)` 注册，配置按这个名字引用。

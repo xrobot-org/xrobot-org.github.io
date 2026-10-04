@@ -36,7 +36,4 @@ DAC:
 - 构造参数取自 `DAC.<实例>.init_voltage`（默认 0.0）和 `DAC.<实例>.vref`（默认 3.3）；
 - 没有启用通道的 DAC 外设不生成对象。
 
-可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`libxr stm32 setup -d .`  
-或  
-`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`
+修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。

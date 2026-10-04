@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # ADC
 
-It is strongly recommended to enable DMA transfers in STM32CubeMX. In polling mode, different channels of the same ADC cannot be called by multiple threads simultaneously, which may lead to incorrect data.
+DMA transfers are recommended for the ADC in STM32CubeMX. In polling mode, threads reading different channels of the same ADC at the same time may get wrong data.
 
 ## DMA Mode Configuration Requirements
 
@@ -33,7 +33,7 @@ UNUSED(adc3_adc_channel_8);
 
 In polling mode, all enabled channels are recognized; in DMA mode, only channels with a configured Rank are recognized. In DMA mode the channel references follow the Ranks, `GetChannel(i)` being Rank i+1; when a channel is configured in several Ranks, the later references carry a Rank suffix, for example `adc3_adc_channel_8_rank12`. With XRobot integration (`--xrobot`), each channel reference is registered under the same name as `LibXR::ADC`.
 
-`STM32ADC` is not derived from the ADC base class. Instead, it contains multiple ADC channel objects that are derived from the base ADC class.
+`STM32ADC` contains several channel objects, each derived from `LibXR::ADC` and obtained with `GetChannel(i)`.
 
 ## Configuration File
 
@@ -51,7 +51,4 @@ ADC:
 - `dma_section`: The memory section where the DMA buffer is located.
 - `vref`: The reference voltage for the ADC, in volts.
 
-The file can be edited directly. To apply the updated configuration, regenerate the code with either of the following commands:  
-`libxr stm32 setup -d .`  
-or  
-`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`
+After editing the file, run `libxr stm32 setup -d .` to regenerate the code.

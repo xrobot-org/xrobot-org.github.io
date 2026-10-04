@@ -15,61 +15,58 @@ sidebar_position: 11
 硬件串口：
 
 ```cpp
-static STM32UART usart1(&huart1,
-            usart1_rx_buf, usart1_tx_buf, 5);
+  static STM32UART usart1(&huart1, usart1_rx_buf, usart1_tx_buf, 5);
 ```
 
 只接收的串口没有发送 DMA，发送缓冲区为 `{nullptr, 0}`：
 
 ```cpp
-static STM32UART usart3(&huart3,
-            usart3_rx_buf, {nullptr, 0}, 5);
+  static STM32UART usart3(&huart3, usart3_rx_buf, {nullptr, 0}, 5);
 ```
 
 USB CDC，OTG FS（STM32F407 工程）：
 
 ```cpp
-static constexpr auto USB_OTG_FS_LANG_PACK = LibXR::USB::DescriptorStrings::MakeLanguagePack(LibXR::USB::DescriptorStrings::Language::EN_US, "XRobot", "STM32 XRUSB USB_OTG_FS CDC Demo", "XRUSB-DEMO-");
-static LibXR::USB::CDCUart usb_otg_fs_cdc(LibXR::USB::Endpoint::EPNumber::EP1, LibXR::USB::Endpoint::EPNumber::EP1, LibXR::USB::Endpoint::EPNumber::EP2, 128, 128, 3);
-
-static STM32USBDeviceOtgFS usb_fs(
-    &hpcd_USB_OTG_FS,
-    256,
-    {usb_otg_fs_ep0_out_buf, usb_otg_fs_ep1_out_buf},
-    {{usb_otg_fs_ep0_in_buf, 8}, {usb_otg_fs_ep1_in_buf, 128}, {usb_otg_fs_ep2_in_buf, 16}},
-    USB::DeviceDescriptor::PacketSize0::SIZE_8,
-    0x1D50, 0x6199, 0x100,
-    {&USB_OTG_FS_LANG_PACK},
-    {{&usb_otg_fs_cdc}},
-    {reinterpret_cast<void *>(UID_BASE), 12}
-);
-usb_fs.Init(false);
-usb_fs.Start(false);
+  // USB OTG FS: 1 CDC
+  static constexpr auto usb_otg_fs_strings = USB::DescriptorStrings::MakeLanguagePack(
+      USB::DescriptorStrings::Language::EN_US, "XRobot",
+      "STM32 XRUSB USB_OTG_FS CDC Demo", "XRUSB-DEMO-");
+  static USB::CDCUart usb_otg_fs_cdc(USB::Endpoint::EPNumber::EP1,
+                                     USB::Endpoint::EPNumber::EP1,
+                                     USB::Endpoint::EPNumber::EP2, 128, 128, 3);
+  static STM32USBDeviceOtgFS usb_otg_fs(
+      &hpcd_USB_OTG_FS, 256, {usb_otg_fs_ep0_out_buf, usb_otg_fs_ep1_out_buf},
+      {{usb_otg_fs_ep0_in_buf, 8},
+       {usb_otg_fs_ep1_in_buf, 128},
+       {usb_otg_fs_ep2_in_buf, 16}},
+      USB::DeviceDescriptor::PacketSize0::SIZE_8, 0x1D50, 0x6199, 0x100,
+      {&usb_otg_fs_strings}, {{&usb_otg_fs_cdc}},
+      {reinterpret_cast<void*>(UID_BASE), 12});
+  usb_otg_fs.Init(false);
+  usb_otg_fs.Start(false);
 ```
 
-OTG HS 生成相同形式的代码，设备类型为 `STM32USBDeviceOtgHS`，对象名为 `usb_hs`，CDC 串口为 `usb_otg_hs_cdc`。
+OTG HS 生成相同形式的代码，设备类型为 `STM32USBDeviceOtgHS`，对象名为 `usb_otg_hs`，CDC 串口为 `usb_otg_hs_cdc`。
 
 USB CDC，FS 设备（STM32F103 工程）：
 
 ```cpp
-static constexpr auto USB_FS_LANG_PACK = LibXR::USB::DescriptorStrings::MakeLanguagePack(LibXR::USB::DescriptorStrings::Language::EN_US, "XRobot", "STM32 XRUSB USB CDC Demo", "XRUSB-DEMO-");
-static LibXR::USB::CDCUart usb_fs_cdc(LibXR::USB::Endpoint::EPNumber::EP1, LibXR::USB::Endpoint::EPNumber::EP1, LibXR::USB::Endpoint::EPNumber::EP2, 128, 128, 3);
-
-static STM32USBDeviceDevFs usb_fs(
-    &hpcd_USB_FS,
-    {
-        {usb_fs_ep0_in_buf, usb_fs_ep0_out_buf, 8, 8},
-        {usb_fs_ep1_in_buf, usb_fs_ep1_out_buf, 128, 128},
-        {usb_fs_ep2_in_buf, 16, true}
-    },
-    USB::DeviceDescriptor::PacketSize0::SIZE_8,
-    0x1D50, 0x6199, 0x100,
-    {&USB_FS_LANG_PACK},
-    {{&usb_fs_cdc}},
-    {reinterpret_cast<void *>(UID_BASE), 12}
-);
-usb_fs.Init(false);
-usb_fs.Start(false);
+  // USB FS: 1 CDC
+  static constexpr auto usb_fs_strings = USB::DescriptorStrings::MakeLanguagePack(
+      USB::DescriptorStrings::Language::EN_US, "XRobot", "STM32 XRUSB USB CDC Demo",
+      "XRUSB-DEMO-");
+  static USB::CDCUart usb_fs_cdc(USB::Endpoint::EPNumber::EP1,
+                                 USB::Endpoint::EPNumber::EP1,
+                                 USB::Endpoint::EPNumber::EP2, 128, 128, 3);
+  static STM32USBDeviceDevFs usb_fs(&hpcd_USB_FS,
+                                    {{usb_fs_ep0_in_buf, usb_fs_ep0_out_buf, 8, 8},
+                                     {usb_fs_ep1_in_buf, usb_fs_ep1_out_buf, 128, 128},
+                                     {usb_fs_ep2_in_buf, 16, true}},
+                                    USB::DeviceDescriptor::PacketSize0::SIZE_8, 0x1D50,
+                                    0x6199, 0x100, {&usb_fs_strings}, {{&usb_fs_cdc}},
+                                    {reinterpret_cast<void*>(UID_BASE), 12});
+  usb_fs.Init(false);
+  usb_fs.Start(false);
 ```
 
 `CDCUart` 用 EP1 收发数据、EP2 发送通知，后三个参数依次是 CDC 的接收 FIFO、发送 FIFO 和队列长度。设备构造函数的最后一个参数把 STM32 芯片唯一 ID（12 字节）作为 USB 序列号。USB 设备协议栈见 [XRUSB 协议栈](/docs/xrusb)。
@@ -79,22 +76,22 @@ usb_fs.Start(false);
 `terminal_source` 指定的串口作为标准输入输出，同时生成 RamFS 和 Terminal 对象，默认由软件定时器每 10 ms 运行一次终端：
 
 ```cpp
-STDIO::read_ = usart1.read_port_;
-STDIO::write_ = usart1.write_port_;
-
-static RamFS ramfs("XRobot");
-static Terminal<32, 32, 5, 5> terminal(ramfs);
-static auto terminal_task = Timer::CreateTask(terminal.TaskFun, &terminal, 10);
-Timer::Add(terminal_task);
-Timer::Start(terminal_task);
+  // Terminal on usart1
+  STDIO::read_ = usart1.read_port_;
+  STDIO::write_ = usart1.write_port_;
+  static RamFS ramfs("XRobot");
+  static Terminal<32, 32, 5, 5> terminal(ramfs);
+  static auto terminal_task = Timer::CreateTask(terminal.TaskFun, &terminal, 10);
+  Timer::Add(terminal_task);
+  Timer::Start(terminal_task);
 ```
 
 `Terminal.run_as_thread` 为 `true` 时，终端改为在独立线程中运行：
 
 ```cpp
-static LibXR::Thread term_thread;
-term_thread.Create(&terminal, terminal.ThreadFun, "terminal", 1024,
-                   LibXR::Thread::Priority::HIGH);
+  static Thread term_thread;
+  term_thread.Create(&terminal, terminal.ThreadFun, "terminal", 1024,
+                     Thread::Priority::HIGH);
 ```
 
 USB CDC 作为终端时，`terminal_source` 写 CDC 串口的名字，例如 `usb_otg_fs_cdc`。`terminal_source` 为空时不生成终端；它不是已生成的串口对象时，`libxr gen` 给出警告，不初始化终端；它是 `enable` 为 `false` 的 USB 外设的 CDC 串口时，警告写出要改为 `true` 的键。
@@ -120,9 +117,8 @@ USB:
     rx_fifo_size: 256
     tx_fifo_size: 128
     dma_section: ''
-    cdc_tx_fifo_size: 128
-    cdc_rx_fifo_size: 128
-    cdc_queue_size: 3
+    cdc:
+    - {tx_fifo_size: 128, rx_fifo_size: 128, queue_size: 3}
     vid: 7504
     pid: 24985
     bcd: 256
@@ -139,14 +135,14 @@ Terminal:
 
 `USART` 下的设置对 USART、UART 和 LPUART 都适用。`tx_buffer_size` 和 `rx_buffer_size` 是 DMA 缓冲区大小，`tx_queue_size` 是发送队列长度，`dma_section` 见 [高速缓存](./cache.md)。
 
-`USB` 下每个 USB 外设（`usb_fs`、`usb_otg_fs`、`usb_otg_hs`）有一组设置。首次生成时写入 `enable`：CubeMX 中为设备模式的外设为 `true`，主机模式的为 `false`；工程启用了 CubeMX 的 USB_DEVICE、USB_HOST 或 USBX 中间件时都为 `false`，这些中间件与 XRUSB 使用同一个外设，`libxr gen` 记录一条说明。`enable` 为 `false` 时不生成 USB 代码；为 `true` 时其余设置以默认值补齐：
+`USB` 下每个 USB 外设（`usb_fs`、`usb_otg_fs`、`usb_otg_hs`；CubeMX 中的 USB 和 USB_DRD_FS 都写作 `usb_fs`）有一组设置。首次生成时写入 `enable`：CubeMX 中为设备模式的外设为 `true`，主机模式的为 `false`；工程启用了 CubeMX 的 USB_DEVICE、USB_HOST 或 USBX 中间件时都为 `false`，这些中间件与 XRUSB 使用同一个外设，`libxr gen` 记录一条说明。`enable` 为 `false` 时不生成 USB 代码；为 `true` 时其余设置以默认值补齐：
 
 - `ep0_packet_size`：EP0 包大小，只能是 8、16、32 或 64，其他值给出警告并改为 8；
 - `tx_buffer_size`、`rx_buffer_size`：EP1 收发缓冲区大小；
 - `tx_fifo_size`：EP1 发送端点的硬件 FIFO 大小；
 - `rx_fifo_size`：OTG 外设共享的接收 FIFO 大小；
 - `dma_section`：端点缓冲区所在的链接段；
-- `cdc_tx_fifo_size`、`cdc_rx_fifo_size`、`cdc_queue_size`：`CDCUart` 的 FIFO 和队列长度；
+- `cdc`：每路 CDC 一项，每项的 `rx_fifo_size`、`tx_fifo_size`、`queue_size` 是该路 `CDCUart` 的接收 FIFO、发送 FIFO 和队列长度。第 N 路（N 从 1 起）生成 `<USB 实例>_cdc`、`<USB 实例>_cdc2`……，数据 IN 端点为 EP(2N−1)，通知端点为 EP(2N)；OTG 的数据 OUT 端点为 EP(N)，FSDEV 的数据 OUT 与数据 IN 使用同一个端点号。OTG 外设的 `rx_fifo_size` 至少为 64 ×（路数 + 1）。路数受 USB 外设的端点数限制，例如 STM32F407 的 USB_OTG_FS 含 EP0 共 4 个 IN 端点，只能容纳 1 路。旧版本的 `cdc_tx_fifo_size`、`cdc_rx_fifo_size`、`cdc_queue_size` 在重新生成时转换为 `cdc` 的一项；写 `cdc_count` 会使生成失败。
 - `vid`、`pid`、`bcd` 和三个描述符字符串，默认使用 1d50:6199。
 
 生成器补上的数值以十进制写入，例如默认的 vid 0x1D50 写作 `vid: 7504`；文件中已有的十六进制写法保持不变。CubeMX 中的 USB_DEVICE 等中间件不对应任何 USB 设置，也不生成代码。
@@ -157,16 +153,15 @@ Terminal:
 
 ## 生成代码命令
 
-修改 `libxr_config.yaml` 后，可使用以下任一命令重新生成代码：
+修改 `libxr_config.yaml` 后重新生成整个工程：
 
 ```bash
-# 重新生成整个工程
 libxr stm32 setup -d .
 ```
 
-或：
+只重新生成入口源文件时，先由 `.ioc` 写出 `.config.yaml`：
 
 ```bash
-# 只重新生成app_main.cpp
-libxr gen -i ./.config.yaml -o ./User/app_main.cpp
+libxr parse -d .
+libxr gen -i .config.yaml -o User/app_main.cpp
 ```

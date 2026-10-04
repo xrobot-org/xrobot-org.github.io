@@ -6,7 +6,7 @@ sidebar_position: 9
 
 # I2C
 
-在 STM32CubeMX 中，I2C 设为 I2C 模式（SMBus 模式使用 SMBUS 句柄），需要启用对应的 DMA 通道，并配置相关中断。
+在 STM32CubeMX 中，I2C 设为 I2C 模式，需要启用对应的 DMA 通道，并配置相关中断。SMBus 模式的实例使用 SMBUS 句柄，不生成对象，`libxr parse` 给出警告。
 
 ## 示例
 
@@ -39,7 +39,4 @@ I2C:
 - `dma_section` 决定缓冲区所在的 section，见 [Cache](./cache.md)；
 - FMPI2C 外设不生成对象，`libxr parse` 给出警告；LibXR 没有 FMPI2C 驱动。
 
-可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`libxr stm32 setup -d .`  
-或  
-`libxr gen -i ./.config.yaml -o ./User/app_main.cpp`
+修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。
