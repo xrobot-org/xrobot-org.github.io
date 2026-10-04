@@ -6,9 +6,7 @@ sidebar_position: 10
 
 # IO 读写抽象
 
-`libxr_rw.hpp` 定义通用的 `ReadPort` 与 `WritePort`，以统一接口封装异步、阻塞、轮询等 I/O 行为，完成反馈由 `Operation` 指定。驱动向 `ReadPort` 的接收队列写入数据，从 `WritePort` 取出待发送的数据，写法见[串口驱动设计](../../adv_coding/driver/uart_driver.md)。
-
-`ReadPort`、`WritePort` 和 `WritePort::Stream` 用原子状态和 `SPSCQueue` 管理软件侧的排队与完成通知；系统调用、DMA 启动和硬件访问由具体驱动完成。
+`libxr_rw.hpp` 定义通用的 `ReadPort` 与 `WritePort`，以统一接口封装异步、阻塞、轮询等 I/O 行为，完成反馈由 `Operation` 指定。本页介绍调用端口的接口，驱动后端一侧的接口见下文的[驱动后端接口](#驱动后端接口)。
 
 > 注意：`ReadPort` / `WritePort` 在构造时一次性分配内部队列，析构时不释放。
 
@@ -65,20 +63,6 @@ bool Readable() const;
 
 `Size()` 返回当前排队字节数，`EmptySize()` 返回空闲字节数，`Capacity()` 返回总容量。未绑定队列时三者都返回 0。`Readable()` 表示端口有接收队列，不表示此刻一定已经有数据。
 
-### 驱动向接收队列写数据
-
-`ReadPort` 不再绑定旧版 `ReadFun`。底层驱动在拿到 UART DMA、FIFO 或其他来源的数据后，通过：
-
-```cpp
-auto queue = read_port.GetReadQueue(in_isr);
-queue.PushBatch(data, size);
-queue.Publish();
-```
-
-把字节写入端口。`Publish()` 负责推进挂起读请求，并可能在当前上下文中触发完成回调。一次生产过程最后都要调用 `Publish()`；析构本身不会替代这一步。
-
-驱动需要串行化同一端口的生产入口。`Pipe` 的读端借用写端队列，不使用这套普通驱动生产接口。
-
 ### 清空已排队数据
 
 ```cpp
@@ -95,21 +79,7 @@ ErrorCode ClearQueuedData(bool in_isr = false);
 WritePort(size_t queue_size = 3, size_t buffer_size = 128);
 ```
 
-`queue_size` 是可排队的写请求数量，`buffer_size` 是字节缓存容量。普通驱动使用正的请求槽数；`Pipe` 使用 `queue_size == 0` 的入队完成模式。
-
-### 设置写入推进函数
-
-```cpp
-WritePort &operator=(WriteFun fun);
-```
-
-`WriteFun` 的签名是：
-
-```cpp
-using WriteFun = void (*)(WritePort& port, bool in_isr);
-```
-
-它只是通知底层“现在有已提交数据可以继续处理”，不通过返回值报告请求完成。普通驱动使用 `GetWriteQueue()` 消费已经发布的队头。
+`queue_size` 是可排队的写请求数量，`buffer_size` 是字节缓存容量。`queue_size` 为 0 的端口由 [Pipe](./core-pipe.md) 使用。
 
 ### 发起写入请求
 
@@ -138,19 +108,11 @@ size_t Capacity() const;
 bool Writable() const;
 ```
 
-`Size()`、`EmptySize()`、`Capacity()` 返回字节队列中已有的字节数（含 Stream 已追加未提交的字节）、空闲字节数和总容量。`Writable()` 表示存在字节队列且已经绑定 `WriteFun`，不预留请求槽或字节空间，因此不保证下一笔写一定能被接纳。
+`Size()`、`EmptySize()`、`Capacity()` 返回字节队列中已有的字节数（含 Stream 已追加未提交的字节）、空闲字节数和总容量。`Writable()` 表示存在字节队列且驱动已经绑定写入推进函数 `WriteFun`，不预留请求槽或字节空间，因此不保证下一笔写一定能被接纳。
 
-### 驱动消费已提交请求
+## 驱动后端接口
 
-普通后端使用：
-
-```cpp
-auto queue = write_port.GetWriteQueue(in_isr);
-```
-
-取得当前已发布队头的剩余数据，再通过 `PopAll()`、`PopWithWriter()` 或 `FailFront()` 推进这一笔请求。`WriteQueue` 析构时结算本次消费，只有整个请求被取走后才触发对应完成通知。
-
-同一个后端的 `GetWriteQueue()`、出队、析构结算和完成回调必须串行。驱动不能保留指向端口队列的裸指针给 DMA 稍后读取；在出队接口返回前，应把接受的数据放进自己能够持续持有的缓冲。
+驱动用 `ReadPort::GetReadQueue()` 写入收到的字节并调用 `Publish()`，为 `WritePort` 绑定 `WriteFun`，并在 `WriteFun` 或发送完成中断中用 `WritePort::GetWriteQueue()` 取出待发送的数据。这些接口的调用顺序、并发要求和 STM32 串口的示例见 [IO 完成语义与 Port 状态机](../../adv_coding/core/rw_semantics.md) 的 3.1 节和 4.2 节，串口驱动的整体结构见[串口驱动设计](../../adv_coding/driver/uart_driver.md)。
 
 ## STDIO 接口
 

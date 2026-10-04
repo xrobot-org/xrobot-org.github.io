@@ -13,7 +13,7 @@ LibXR device interfaces share these properties:
 - Abstract classes use unified naming and behavior; platform differences live in the backends.
 - Transfers describe completion with an `Operation` (blocking, callback, or polling): UART transfers go through `ReadPort` / `WritePort` queues, while each I2C or SPI transfer takes a `ReadOperation` / `WriteOperation` directly; backends may complete them from interrupts or DMA.
 - Interface parameters and configuration structures are strongly typed.
-- They depend on C++20 and basic LibXR components and run on bare metal and RTOSes.
+- They depend on C++20 and the LibXR core API and run on bare metal and RTOSes.
 - Each peripheral is implemented according to platform capabilities, including shared resources such as shared buses.
 
 ## Contents
@@ -32,6 +32,7 @@ LibXR device interfaces share these properties:
 - [Watchdog (Watchdog Timer)](./watchdog.md)
 - [USB (Universal Serial Bus)](./usb.md)
 - [Network and Wi-Fi](./network.md)
+- [Debug Interfaces (SWD / JTAG)](../../debug/README.md)
 
 ## Interface structure
 
@@ -41,6 +42,8 @@ Many peripheral abstraction classes include some of the following building block
 - `Read()` / `Write()` style data-transfer interfaces where the peripheral is stream- or transaction-oriented
 - control interfaces such as `Enable()` / `Disable()` when the hardware model requires them
 - callback registration for event-driven paths such as interrupts or asynchronous completions
+
+For `Read()` / `Write()` that go through `ReadPort` / `WritePort`, as on UART, when the call returns, what each return code means and how long buffers must stay valid are described in [IO Read/Write Abstraction](../core/core-rw.md); SPI and I2C transfers are described in the "Behavior" section of their pages.
 
 `ADC`, `DAC`, `PowerManager`, `Timebase`, and `Flash` expose only the few calls their devices need.
 

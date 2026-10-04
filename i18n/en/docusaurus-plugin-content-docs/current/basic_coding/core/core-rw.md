@@ -6,9 +6,7 @@ sidebar_position: 10
 
 # IO Read/Write Abstraction
 
-`libxr_rw.hpp` defines the generic `ReadPort` and `WritePort`, which wrap asynchronous, blocking and polling I/O behind one interface; the completion feedback is selected by `Operation`. A driver pushes received bytes into the `ReadPort` queue and takes pending data from the `WritePort`; see [UART Driver Design](../../adv_coding/driver/uart_driver.md).
-
-`ReadPort`, `WritePort` and `WritePort::Stream` use atomic state and `SPSCQueue` for software-side queuing and completion; system calls, DMA starts and hardware access are done by the concrete driver.
+`libxr_rw.hpp` defines the generic `ReadPort` and `WritePort`, which wrap asynchronous, blocking and polling I/O behind one interface; the completion feedback is selected by `Operation`. This page describes the interface for calling the ports; the driver-backend side is summarized in [Driver backend interface](#driver-backend-interface) below.
 
 > Note: `ReadPort` / `WritePort` allocate their internal queues once at construction and do not free them on destruction.
 
@@ -62,18 +60,6 @@ bool Readable() const;
 
 The first three return queued bytes, free bytes and total capacity, all 0 when no queue is bound. `Readable()` means a receive queue exists; it does not mean bytes are currently available.
 
-### Backend RX production
-
-`ReadPort` no longer binds the old `ReadFun`. A backend that has received bytes through DMA, FIFO, or another source writes them through a short-lived producer:
-
-```cpp
-auto queue = read_port.GetReadQueue(in_isr);
-queue.PushBatch(data, size);
-queue.Publish();
-```
-
-`Publish()` advances pending reads and can run completion callbacks in the current context. Call it at the end of every production scope; destruction does not publish automatically. Backends serialize producers for one port. A Pipe reader borrows the writer's queue and does not use this ordinary backend-production API.
-
 ### Clearing queued bytes
 
 ```cpp
@@ -90,21 +76,7 @@ This discards already queued receive bytes but does not cancel a pending read. I
 WritePort(size_t queue_size = 3, size_t buffer_size = 128);
 ```
 
-`queue_size` counts queued write requests and `buffer_size` counts payload bytes. Ordinary backends use a positive request capacity. Pipe uses `queue_size == 0` admission-completion mode.
-
-### Binding backend progress
-
-```cpp
-WritePort &operator=(WriteFun fun);
-```
-
-`WriteFun` is:
-
-```cpp
-using WriteFun = void (*)(WritePort& port, bool in_isr);
-```
-
-It is a progress notification and returns no completion result. Ordinary backends consume released requests through `GetWriteQueue()`.
+`queue_size` counts queued write requests and `buffer_size` counts payload bytes. A port with `queue_size == 0` is used by [Pipe](./core-pipe.md).
 
 ### Submitting a write
 
@@ -133,19 +105,11 @@ size_t Capacity() const;
 bool Writable() const;
 ```
 
-`Size()`, `EmptySize()` and `Capacity()` return queued bytes (including uncommitted Stream appends), free bytes and total capacity of the byte queue. `Writable()` means byte storage exists and `WriteFun` is bound. It does not reserve a request slot or byte capacity for the next call.
+`Size()`, `EmptySize()` and `Capacity()` return queued bytes (including uncommitted Stream appends), free bytes and total capacity of the byte queue. `Writable()` means byte storage exists and the driver has bound its progress function `WriteFun`. It does not reserve a request slot or byte capacity for the next call.
 
-### Backend consumption
+## Driver backend interface
 
-Ordinary backends obtain the released front through:
-
-```cpp
-auto queue = write_port.GetWriteQueue(in_isr);
-```
-
-They advance one request with `PopAll()`, `PopWithWriter()`, or `FailFront()`. Destruction of `WriteQueue` settles progress; completion fires only after the full request has been consumed.
-
-Backend consumption, settlement, and the completion callbacks it triggers must be serialized. Do not keep a raw pointer into the port queue for later DMA access; move accepted bytes into storage the backend can retain before the dequeue method returns.
+A driver writes received bytes with `ReadPort::GetReadQueue()` and calls `Publish()`, binds a `WriteFun` to the `WritePort`, and takes pending data with `WritePort::GetWriteQueue()` from `WriteFun` or its transmit-complete interrupt. The call order, the concurrency rules and an STM32 UART example are in sections 3.1 and 4.2 of [I/O Completion Semantics and Port State Machines](../../adv_coding/core/rw_semantics.md); the overall structure of a UART driver is in [UART Driver Design](../../adv_coding/driver/uart_driver.md).
 
 ## STDIO Interface
 

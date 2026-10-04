@@ -1,10 +1,10 @@
 ---
 id: core-coding
-title: Core Components
+title: Core API
 sidebar_position: 1
 ---
 
-# Core Components
+# Core API
 
 This chapter covers the LibXR core headers: data types, error handling, callbacks, read/write ports, timestamps and terminal formatting.
 

@@ -112,20 +112,4 @@ if (now == LibXR::ReadOperation::OperationPollingStatus::DONE) {
 
 ## `AsyncBlockWait`
 
-`operation.hpp` 还定义了供同步驱动使用的辅助类：
-
-```cpp
-class AsyncBlockWait;
-```
-
-同步驱动用它等待一次异步完成：
-
-- `Start(Semaphore&)`
-- `Wait(timeout)`
-- `TryPost(in_isr, ErrorCode)`
-- `Cancel()`
-
-语义要点：
-
-- 超时返回的等待者与之后的迟到完成脱钩；
-- 迟到完成只清除内部等待状态，不再唤醒已超时返回的调用方。
+`operation.hpp` 还定义驱动内部使用的 `AsyncBlockWait`，供不经过 `ReadPort` / `WritePort` 的驱动（如部分 SPI、I2C 驱动）实现 `BLOCK` 传输的等待与超时交接，见 [BLOCK 超时与完成交接](../../adv_coding/driver/block_timeout_semantics.md)。

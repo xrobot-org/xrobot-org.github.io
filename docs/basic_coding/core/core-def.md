@@ -74,18 +74,7 @@ constexpr bool SizeLimitCheck(SizeLimitMode mode, size_t limit, size_t size) noe
 
 ## 断言宏
 
-提供统一的运行时断言机制：
-
-- `ASSERT(x)`: 在调试模式下检查表达式是否为真，否则触发致命错误
-- `ASSERT_FROM_CALLBACK(x, in_isr)`：用于回调或 ISR，`in_isr` 传给 `libxr_fatal_error()`
-
-在 `LIBXR_DEBUG_BUILD` 编译宏启用时生效，触发时会调用：
-
-```cpp
-void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
-```
-
-可通过注册回调处理断言失败行为（详见 `libxr_assert.hpp`）。
+`libxr_def.hpp` 还定义 `ASSERT`、`REQUIRE`、`DEV_ASSERT` 三组检查宏，各自的生效条件、关闭时的行为和失败处理见[断言与错误处理](./core-assert.md)。
 
 ## 通用模板工具
 

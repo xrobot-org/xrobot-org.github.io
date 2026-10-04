@@ -74,18 +74,7 @@ This is a pure predicate only. It answers whether the requested size relation ho
 
 ## Assertion Macros
 
-Provides unified runtime assertions:
-
-- `ASSERT(x)`: Verifies the expression at runtime; triggers fatal error if false
-- `ASSERT_FROM_CALLBACK(x, in_isr)`: for callbacks or ISRs; `in_isr` is passed to `libxr_fatal_error()`
-
-These are only active when `LIBXR_DEBUG_BUILD` is defined. When triggered, the following function is called:
-
-```cpp
-void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
-```
-
-Assertion failures can be handled by a registered fatal callback (see Assertions and Error Handling).
+`libxr_def.hpp` also defines the three groups of check macros `ASSERT`, `REQUIRE` and `DEV_ASSERT`; when each is active, how it behaves when disabled, and how failures are handled are described in [Assertions and Error Handling](./core-assert.md).
 
 ## Generic Template Utilities
 

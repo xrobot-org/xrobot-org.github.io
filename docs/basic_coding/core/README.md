@@ -1,10 +1,10 @@
 ---
 id: core-coding
-title: 核心组件
+title: 核心 API
 sidebar_position: 1
 ---
 
-# 核心组件
+# 核心 API
 
 本章介绍 LibXR 的核心头文件：数据类型、错误处理、回调、读写端口、时间戳和终端格式等基础功能。
 
