@@ -19,6 +19,7 @@ LibXR 提供了两种轻量级的嵌入式键值数据库实现：`DatabaseRawSe
   - `DatabaseRawSequential`：顺序写入，适用于不支持逆序写入的 Flash；
   - `DatabaseRaw<MinWriteSize>`：面向最小写入单元受限的 Flash 后端，通过模板参数约束最小写入单元大小，并在构造时接收底层 `Flash` 与回收阈值；
 - 键值更新后会由数据库实现自动保存；`Restore()` 用于清空数据库并回到初始状态。
+- `DatabaseRaw` 的新增、更新和回收在任何时刻掉电，重新上电后每个键都是这次写入之前或之后的值；启动时完成或撤销被打断的写入，必要时整理一次存储区。
 
 ---
 

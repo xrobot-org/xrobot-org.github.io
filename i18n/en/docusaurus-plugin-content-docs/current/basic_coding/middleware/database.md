@@ -19,6 +19,7 @@ Both inherit from the abstract interface class `Database`, and are designed for 
   - `DatabaseRawSequential`: sequential write, suitable for Flash that does not support reverse overwrite;
   - `DatabaseRaw<MinWriteSize>`: for Flash backends constrained by minimum write-unit semantics, with the minimum write size expressed in the template parameter and the constructor taking the underlying `Flash` object plus a recycle threshold;
 - After a key value changes, the database implementation saves it automatically; `Restore()` clears the database and returns it to the initial state.
+- When `DatabaseRaw` loses power at any point of an add, update or recycle, each key holds its value from before or after that write once power returns; startup finishes or undoes the interrupted write and compacts the storage once when needed.
 
 ---
 
