@@ -66,16 +66,18 @@ $ libxr gen -i .config.yaml -o User/app_main.cpp
 
 ## 创建数据库对象
 
-对于STM32F1/F4等型号，使用 `DatabaseRaw<MinWriteSize>`。模板参数代表这条 raw 数据库后端所要求的最小写入单元大小。
+各系列都使用 `DatabaseRaw<N>`。模板参数 `N` 是数据库的最小写入单元，单位为字节，不能小于 Flash 的最小写入单元，一般写 `STM32Flash::MIN_WRITE_SIZE`。第二个参数可以省略，启动时失效的旧键数量超过它（默认 128）就整理一次存储区。
 
 ```cpp
-LibXR::DatabaseRaw<4> database(flash, 128);
+LibXR::DatabaseRaw<STM32Flash::MIN_WRITE_SIZE> database(flash);
 ```
 
-对于STM32G4/L4等flash不支持逆序写入的型号，请使用DatabaseRawSequential。第二个参数为可选，代表最大缓冲区大小。
+G4、L4、H7 等系列的 Flash 按双字或 Flash 字编程，每个单元擦除后只能写一次。`DatabaseRaw` 的每个键标志各占一个最小写入单元，修改标志时写入的是尚未写过的单元，所以这些系列同样使用 `DatabaseRaw<STM32Flash::MIN_WRITE_SIZE>`。
+
+另一种后端 `DatabaseRawSequential` 只按地址顺序写入。第二个参数可以省略，代表最大缓冲区大小（默认 256 字节）。
 
 ```cpp
-LibXR::DatabaseRawSequential database(flash, 128);
+LibXR::DatabaseRawSequential database(flash, 256);
 ```
 
 ## 创建数据库键值

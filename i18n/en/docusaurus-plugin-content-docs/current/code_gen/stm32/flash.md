@@ -72,16 +72,18 @@ The first parameter is the Flash address mapping table, the second parameter is 
 
 ## Creating a Database Object
 
-For STM32F1/F4 series devices, use `DatabaseRaw<MinWriteSize>`. The template parameter represents the minimum write-unit size required by that raw database backend.
+Every series uses `DatabaseRaw<N>`. The template parameter `N` is the database's minimum write unit in bytes; it cannot be smaller than the Flash minimum write unit and is normally written as `STM32Flash::MIN_WRITE_SIZE`. The second parameter can be omitted; when more stale keys than this number (128 by default) are found at startup, the storage area is compacted once.
 
 ```cpp
-LibXR::DatabaseRaw<4> database(flash, 128);
+LibXR::DatabaseRaw<STM32Flash::MIN_WRITE_SIZE> database(flash);
 ```
 
-For chips like STM32G4/L4 that do not support reverse overwrite in flash, use `DatabaseRawSequential`. The second parameter (optional) specifies the maximum buffer size.
+On G4, L4, H7 and similar series the Flash is programmed in double words or Flash words, and each unit can be written only once after an erase. Each key flag of `DatabaseRaw` occupies its own minimum write unit, and changing a flag writes a unit that has not been written yet, so these series use `DatabaseRaw<STM32Flash::MIN_WRITE_SIZE>` as well.
+
+The other backend, `DatabaseRawSequential`, writes only in address order. Its second parameter can be omitted and gives the maximum buffer size (256 bytes by default).
 
 ```cpp
-LibXR::DatabaseRawSequential database(flash, 128);
+LibXR::DatabaseRawSequential database(flash, 256);
 ```
 
 ---
