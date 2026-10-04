@@ -29,6 +29,34 @@ constexpr size_t FLASH_REGION_NUMBER = sizeof(FLASH_REGIONS) / sizeof(LibXR::Fla
 
 ---
 
+## Generated from libxr_config.yaml
+
+With `database.enable` set to `true` in `User/libxr_config.yaml`, `libxr gen` generates the Flash object and the database object in `app_main()`, and the database uses the last two sectors of the Flash; generated with `--xrobot`, the database is registered as `database` of type `LibXR::Database`:
+
+```yaml
+database:
+  enable: true
+  block_size: auto
+```
+
+```cpp
+  // Flash and database
+  static STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER);
+  static DatabaseRaw<STM32Flash::MIN_WRITE_SIZE> database(flash);
+```
+
+`block_size` gives the template argument of `DatabaseRaw`, the minimum write unit of the database in bytes, which must not be smaller than the minimum write unit of the Flash. The default `auto` generates `STM32Flash::MIN_WRITE_SIZE`, the minimum write unit of the Flash that LibXR derives from the HAL of the chip, such as 1 on F4, 2 on F1, 8 on G4 and 32 on H723; a positive integer is used as it is, e.g. `block_size: 32` generates `DatabaseRaw<32>`. Any other value stops the generation, e.g. `block_size: wide`:
+
+```bash
+$ libxr gen -i .config.yaml -o User/app_main.cpp
+[INFO] System: FreeRTOS
+[ERROR] Generation failed: User\libxr_config.yaml: database.block_size 'wide' is not auto or a positive integer
+```
+
+The following sections show how to create the Flash object and the database object in the User Code.
+
+---
+
 ## Creating a Flash Object
 
 The first parameter is the Flash address mapping table, the second parameter is the number of its entries, and the third parameter is the start address of the database storage area, which extends to the end of the Flash. The start address must be exactly the start of a sector; otherwise an assertion fails in the constructor. The third parameter is optional; without it the last two sectors are used, one for the main block and one for the backup block of the database.

@@ -254,6 +254,12 @@ In the settings block at the top of `cmake/LibXR.CMake`, `LIBXR_OPT_DEBUG` (defa
 
 ---
 
+## Build Output
+
+After each link of the application, `cmake/LibXR.CMake` makes `<project>.hex` (Intel HEX) and `<project>.bin` (binary image) from the ELF with the `CMAKE_OBJCOPY` of the toolchain file. The three files are in the same directory, `build/<preset>/` when built with a CubeMX preset; `<project>` is the `CMAKE_PROJECT_NAME` set in `CMakeLists.txt`. The `LibXR.CMake` of an existing project gains this step on the next run of `libxr stm32 cmake` or `libxr stm32 setup`.
+
+---
+
 ## Related Commands
 
 | Command                  | Description                                    |

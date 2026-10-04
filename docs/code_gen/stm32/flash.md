@@ -27,6 +27,32 @@ constexpr size_t FLASH_REGION_NUMBER = sizeof(FLASH_REGIONS) / sizeof(LibXR::Fla
 
 `libxr stm32 flash-info <型号>` 可以单独打印某个型号的布局。`app_main.cpp` 只在 `database.enable` 为 `true`，或 User Code 中用到 `FLASH_REGIONS`、`FLASH_REGION_NUMBER` 时 include `flash_map.hpp`。推算不出 MCU 型号的 Flash 布局时，`libxr gen` 给出警告，不生成 `flash_map.hpp`，并删除以前生成的 `flash_map.hpp`。
 
+## 由 libxr_config.yaml 生成
+
+`User/libxr_config.yaml` 中 `database.enable` 为 `true` 时，`libxr gen` 在 `app_main()` 中生成 Flash 对象和数据库对象，数据库使用 Flash 末尾的两个扇区；带 `--xrobot` 生成时，数据库以 `database` 注册为 `LibXR::Database`：
+
+```yaml
+database:
+  enable: true
+  block_size: auto
+```
+
+```cpp
+  // Flash and database
+  static STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER);
+  static DatabaseRaw<STM32Flash::MIN_WRITE_SIZE> database(flash);
+```
+
+`block_size` 决定 `DatabaseRaw` 的模板参数，即数据库的最小写入单元，单位为字节，不能小于 Flash 的最小写入单元。默认值 `auto` 生成 `STM32Flash::MIN_WRITE_SIZE`，即 LibXR 按芯片的 HAL 得出的 Flash 最小写入单元，例如 F4 为 1、F1 为 2、G4 为 8、H723 为 32；写成正整数时使用这个数，例如 `block_size: 32` 生成 `DatabaseRaw<32>`。其他值使生成停止，例如 `block_size: wide`：
+
+```bash
+$ libxr gen -i .config.yaml -o User/app_main.cpp
+[信息] 系统：FreeRTOS
+[错误] 生成失败：User\libxr_config.yaml：database.block_size 'wide' 不是正整数或 auto
+```
+
+以下各节是在 User Code 中自行创建 Flash 对象和数据库对象的写法。
+
 ## 创建Flash对象
 
 第一个参数是 Flash 地址映射表，第二个参数是表的项数，第三个参数是数据库存储区的起始地址，存储区一直到 Flash 末尾。起始地址须正好是某个扇区的起点，否则构造时断言失败。第三个参数可以省略，这时使用末尾两个扇区，数据库的主块和备份块各占一个。

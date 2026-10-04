@@ -252,6 +252,12 @@ libxr stm32 toolchain clang --picolibc
 
 ---
 
+## 构建产物
+
+应用每次链接之后，`cmake/LibXR.CMake` 用工具链文件中的 `CMAKE_OBJCOPY` 由 ELF 生成 `<工程名>.hex`（Intel HEX）和 `<工程名>.bin`（二进制镜像）。三个文件位于同一目录，用 CubeMX 的 preset 构建时为 `build/<preset>/`；`<工程名>` 是 `CMakeLists.txt` 中设置的 `CMAKE_PROJECT_NAME`。已有工程的 `LibXR.CMake` 在下次运行 `libxr stm32 cmake` 或 `libxr stm32 setup` 时加入这一步。
+
+---
+
 ## 相关命令
 
 | 命令                     | 功能说明                          |
