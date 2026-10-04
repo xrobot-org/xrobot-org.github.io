@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # 模块源
 
-模块源（catalog）是一个 `index.yaml`，列出模块和 BSP 的 Git 仓库。BSP 的 `Modules/sources.yaml` 组合多个模块源；`xrobot setup` 用它把 `owner/Repo` 解析为仓库地址。
+源是一个 `index.yaml`，列出模块和 BSP 的 Git 仓库。BSP 的 `Modules/sources.yaml` 组合多个源；`xrobot setup` 用它把 `owner/Repo` 解析为仓库地址。
 
 ---
 
@@ -45,7 +45,7 @@ bsps:
 
 - 包的标识是 `owner/Repo`。GitHub 地址直接给出标识；其他地址使用 `namespace/仓库名`，或在映射中写 `id`。
 - `bsps` 只用于发现 BSP 仓库，BSP 不能作为模块依赖。
-- `status` 取 `community`（默认）、`verified` 或 `official`，描述维护与验证情况；后两者必须写 `tested_ref` 和 `tested_libxr`，表示验证针对的版本，不代表之后的所有版本。
+- `status` 取 `community`（默认）、`verified` 或 `official`，描述维护与验证情况；后两者必须写 `tested_ref` 和 `tested_libxr`，表示验证针对的版本。
 - `mirror_of: <namespace>` 表示镜像源。列出镜像源后，`xrobot setup` 从镜像拉取源码，与镜像源的 `priority` 无关；`xrobot source get` 的 `repo` 显示镜像地址，`canonical` 和 `xrobot.lock` 记录原仓库地址。
 
 ---
@@ -57,15 +57,17 @@ bsps:
 ```bash
 xrobot source list                      # 所有包
 xrobot source list --type bsp           # 只列 BSP（或 --type module）
-xrobot source search STM32              # 在包信息中搜索
+xrobot source search BMI                # 列出条目中包含 BMI 的包
 xrobot source get xrobot-org/BlinkLED   # 包的地址、来源和状态
 xrobot source find xrobot-org/BlinkLED  # 包在所有源（含镜像）中的位置
 ```
 
+`list` 和 `search` 都接受 `--type module` 或 `--type bsp`。
+
 编辑：
 
 ```bash
-xrobot source create-sources                          # 写入只含官方源的 Modules/sources.yaml
+xrobot source create-sources                          # 写出只含官方源的 sources.yaml，覆盖原文件（-o 指定其他文件）
 xrobot source add-source https://example.com/index.yaml --priority 1
 xrobot source create-index -o my-index.yaml --namespace my-team [--mirror-of xrobot-org]
 xrobot source add-index https://github.com/my-team/MySensor.git --index my-index.yaml
@@ -73,10 +75,16 @@ xrobot source add-index https://github.com/my-team/MySensor.git --index my-index
 
 `add-source` 和 `add-index` 在列表末尾追加一项，文件的其余内容和注释保持不变。
 
-输出示例：
+`create-index` 不写 `-o` 时写出 `Modules/index.yaml`，`--namespace` 默认为 `local`；新文件含一项示例 `https://github.com/xrobot-org/BlinkLED.git` 和空的 `bsps`。
+
+只含官方源时的输出示例：
 
 ```text
 $ xrobot source list
+xrobot-org/AK8975 [module] https://github.com/xrobot-org/AK8975.git
+xrobot-org/ANOFlow [module] https://github.com/xrobot-org/ANOFlow.git
+xrobot-org/BMI088 [module] https://github.com/xrobot-org/BMI088.git
+xrobot-org/BMI270 [module] https://github.com/xrobot-org/BMI270.git
 xrobot-org/BlinkLED [module] https://github.com/xrobot-org/BlinkLED.git
 ...
 ```

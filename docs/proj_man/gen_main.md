@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # 入口与生成
 
-`xrobot gen` 读取选中的应用配置、入口源文件中的注册和锁定的模块头文件，生成 `User/xrobot_main.hpp`。生成结果是普通的 C++：一个 `XRobotMain` 函数，按配置顺序构造静态实例，然后进入监视循环。没有运行期的硬件容器、名字查找或应用管理器。
+`xrobot gen` 读取选中的配置、入口源文件中的注册和锁定的模块头文件，生成 `User/xrobot_main.hpp`。生成结果是普通的 C++：一个 `XRobotMain` 函数，按配置顺序构造静态实例，然后进入监视循环。
 
 ---
 
@@ -40,7 +40,7 @@ extern "C" void app_main()
 - 注册对象类型，不注册引用类型；名字不能重复，不能是 C++ 关键字或宏名。
 - `XR_REGISTER` 不能放在 `#if` / `#ifdef` 等条件编译块中，生成器不求值构建选项。
 - 注册的对象必须在 `XROBOT_MAIN()` 处可见，且生命周期覆盖整个应用。
-- 只有当前产品用到的注册对象会传给 `XRobotMain`；其余注册仍参与类型检查，不产生未使用变量警告。
+- 只有选中的配置用到的注册对象会传给 `XRobotMain`，由它的参数类型检查；其余注册展开为 `static_cast<void>(名字)`，不检查类型，也不产生未使用变量警告。
 
 STM32 BSP 的这些行由 `libxr gen --xrobot` 生成，见 [与 XRobot 集成](../code_gen/xrobot_inter.md)。
 
@@ -49,8 +49,8 @@ STM32 BSP 的这些行由 `libxr gen --xrobot` 生成，见 [与 XRobot 集成](
 ## 生成的头文件
 
 ```bash
-xrobot gen                                # 当前产品
-xrobot gen -c User/RobotConfig/hero.yaml  # 选择另一个产品
+xrobot gen                                # 选中的配置
+xrobot gen -c User/RobotConfig/debug.yaml # 选择另一份配置
 xrobot gen --no-line-directives           # 不写 #line 指令
 ```
 
@@ -108,15 +108,15 @@ xrobot gen --no-line-directives           # 不写 #line 指令
 
 （示例只列出了两个模块头文件的 `depends` 行；实际写出锁定的每个模块的头文件。）
 
-- 第一行写明由哪份配置生成。其后是一个 `#include` 块，按文件名排序，只含用到的模块和生成的代码需要的头文件。
-- 每个实例前有一行注释：`<id>: <owner/Repo>[<模板实参>] (<配置路径>:<行号>)`，实例之间空一行。编译错误落在头文件中时，注释给出 YAML 中的位置。
-- 实例是函数内 `static` 对象，按配置顺序在 `XRobotMain` 执行时构造，构造函数完成初始化，没有额外的 `Init()`/`Start()` 阶段。
+- 第一行写明由哪份配置生成。其后是 `#include` 行，按 clang-format 的分组方式排列：尖括号头文件一组、引号头文件一组，组间空一行，组内按文件名排序；只含用到的模块、`constexpr_includes` 中的头文件和生成的代码需要的头文件。
+- 每个实例前有一行注释：`<id>: <owner/Repo>[<模板实参>] (<相对 BSP 根目录的配置路径>:<行号>)`，实例之间空一行。编译错误落在头文件中时，注释给出 YAML 中的位置。
+- 实例是函数内 `static` 对象，按配置顺序在 `XRobotMain` 执行时构造，构造函数完成全部初始化。
 - 传给引用、`std::initializer_list` 或结构体参数的值写成紧邻实例之前的 `static const <类型> xr_<实例 id>_<参数名> = {…};`，与实例一样活到程序结束，所以模块可以保存对它的引用。结构体值每个字段一行、行尾带逗号，放不下的嵌套值和列表同样逐项分行；YAML 中写成 C++ 文本的值保持原样，只调整换行。标量、依赖的名字、`nullptr` 和 `&名字` 直接写在实参里。绑定到引用参数的名字或表达式（如 `Make()`）写成 `static const T& xr_… = 表达式;`，仍引用同一个对象，不复制。
-- `xr_` 前缀保留给生成器：实例 id 和 `XR_REGISTER` 的名字不能以 `xr_`（以及 `XR_`、`xrobot_`）开头，`gen` 会报错。两个实例会生成同一个静态变量名时也会报错，请给其中一个改 id。
-- 类型和取值由 C++ 编译器按隐式转换的规则检查，生成的代码不再为每个参数写 `static_assert`、`static_cast` 或转换函数。只有模块有几个能接受这些参数的构造函数时，才需要写出参数类型，使 YAML 的参数名选中的那个构造函数被调用：这时标量、指针和引用写成 `xrobot_generated::Implicit<类型>(值)`，头文件会定义这个函数；它是隐式转换，仍然拒绝向下转换，并对改变数值的常量给出编译警告。其他按值传递的类型写成 `static_cast<类型>(值)`。
+- `xr_` 前缀保留给生成器：实例 id 和 `XR_REGISTER` 的名字不能以 `xr_`（以及 `XR_`、`xrobot_`）开头，`gen` 会报错。两个实例会生成同一个静态变量名时也会报错，需要修改其中一个实例的 id。
+- 类型和取值由 C++ 编译器按隐式转换的规则检查。只有模块有几个能接受这些参数的构造函数时，才需要写出参数类型，使 YAML 的参数名选中的那个构造函数被调用：这时标量、指针和引用写成 `xrobot_generated::Implicit<类型>(值)`，头文件会定义这个函数；它是隐式转换，仍然拒绝向下转换，并对改变数值的常量给出编译警告。其他按值传递的类型写成 `static_cast<类型>(值)`。
 - `#line`：实例及其 `static` 变量的每行代码都对应到它来自的 YAML 行：`static` 变量的第一行对应参数所在的行，结构体的每个字段对应字段的键所在的行，右花括号对应它闭合的值所在的行（GCC 把初始化中的错误报在这里），构造调用的第一行对应实例所在的行，之后每行对应这一行第一个实参所在的行；一个 YAML 值拆成几行代码时，每行都对应这个值所在的行。`#line` 只写在编译器自己数出的行号对不上的地方，实例之后一条指回头文件。路径相对 BSP 根目录，与 `xrobot` 的报错一致，编辑器可以从工程目录直接打开编译错误中的位置。`--no-line-directives` 省略这些指令（`xrobot setup` 同样接受）。
-- 循环中按配置顺序调用每个实例的公有 `void OnMonitor()`（有才调用），然后休眠 `settings.monitor_sleep_ms` 毫秒。`OnMonitor` 的返回类型在 `gen` 时由模块头文件检查：明确不是 `void` 时报错；头文件无法判断（`auto`、类型别名、`using` 声明）时，循环前为这个实例写一条 `static_assert(std::is_void_v<decltype(x.OnMonitor())>);`。`XROBOT_MAIN()` 不返回，在调用它的线程中运行。
-- 文件末尾的 `// xrobot:` 行记录配置、生成时读取的全部输入（锁文件、入口源文件、模块头文件）和这些输入内容的摘要。LibXR 的 CMake 逐行匹配它们，与位置无关；摘要只取决于输入，与头文件本身的文本无关。模块头文件的 `depends` 行按相对路径的写法逐字符比较排序（大写字母在小写字母之前），所以同一个 BSP 在 Windows 和 Linux 上生成相同的头文件和摘要。
+- 循环中按配置顺序调用每个实例的公有 `void OnMonitor()`（有才调用），然后休眠 `settings.monitor_sleep_ms` 毫秒。`OnMonitor` 的返回类型在 `gen` 时由模块头文件检查：明确不是 `void` 时报错；头文件无法判断（`auto`、类型别名、`using` 声明）时，循环前为这个实例写一条 `static_assert(std::is_void_v<decltype(x.OnMonitor())>, "x.OnMonitor() must return void");`。`XROBOT_MAIN()` 不返回，在调用它的线程中运行。
+- 文件末尾的 `// xrobot:` 行记录配置、生成时读取的全部输入（lock、入口源文件、模块头文件）和这些输入内容的摘要。LibXR 的 CMake 逐行匹配它们，与位置无关；摘要只取决于输入，与头文件本身的文本无关。模块头文件的 `depends` 行按相对路径的写法逐字符比较排序（大写字母在小写字母之前），排序与平台无关；输入文件的字节相同时，Windows 和 Linux 生成相同的头文件和摘要。
 - 内容未变化时不重写文件。不要手动编辑该文件，也不要提交它。
 
 ---
@@ -135,4 +135,4 @@ LibXR 的 CMake 在 BSP 设置了 `XROBOT_MODULES_DIR` 时：
 
 ## IDE
 
-生成的文件与构建使用同一路径。语言服务器请使用 BSP 实际构建产生的 `compile_commands.json`。
+生成的文件与构建使用同一路径。语言服务器使用 BSP 实际构建产生的 `compile_commands.json`。

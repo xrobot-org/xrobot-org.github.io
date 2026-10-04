@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # 编写模块
 
-模块是一个 Git 仓库 `owner/Repo`，主头文件 `Repo.hpp` 声明同名的全局 C++ 类 `Repo`。它的公有构造函数就是接口：应用配置按参数名填写，生成器直接调用构造函数。模块不继承框架基类，也没有额外的初始化阶段。
+模块是一个 Git 仓库 `owner/Repo`，主头文件 `Repo.hpp` 声明同名的全局 C++ 类 `Repo`。它的公有构造函数就是接口：配置按参数名填写，生成器直接调用构造函数。
 
 ---
 
@@ -27,7 +27,7 @@ xrobot new-module MySensor --desc "IMU driver" \
 | `--template-arg` | 模块 CI 编译时使用的模板实参，每个重复一次；有默认值的模板参数可以不写 |
 | `--include` | 另外包含的头文件；`libxr.hpp` 和构造参数用到的 LibXR 硬件接口头文件（如 `i2c.hpp`）总会包含 |
 | `--depends` | 依赖 `owner/Repo[@ref]`，每个依赖写一次；默认 ref 为 `same-or-dev` |
-| `--out` | 输出目录，默认当前目录 |
+| `--out` | 在该目录下创建 `<NAME>/`，默认当前目录 |
 
 写文件前，`new-module` 按 `setup` 和 `instance add` 的规则检查拼好的头文件：参数要有名字，依赖在带默认值的参数之前，没有默认值的模板参数要有 `--template-arg`。检查不通过时报错，不创建任何文件。
 
@@ -105,9 +105,9 @@ xrobot setup
 xrobot instance add owner/MySensor
 ```
 
-在 BSP 的 `Modules/owner/MySensor/` 中直接修改并构建；保持修改未提交。准备好后在模块仓库中提交并推送到一个分支，然后在 BSP 中运行 `xrobot setup --update owner/MySensor` 更新锁文件。
+在 BSP 的 `Modules/owner/MySensor/` 中直接修改并构建；保持修改未提交。准备好后在模块仓库中提交并推送到一个分支，然后在 BSP 中运行 `xrobot setup --update owner/MySensor` 更新 lock。
 
-模块被加入 BSP 需要能在模块源中找到，见 [模块源](./src_man.md)。
+模块被加入 BSP 需要能在源中找到，见 [模块源](./src_man.md)。
 
 ---
 
@@ -133,6 +133,8 @@ jobs:
 
 工作流在 Linux 容器中解析模块依赖，运行 `xrobot check-module` 生成一个构造调用，然后用 LibXR 编译模块源文件和这个调用。依赖参数用 `void*` 占位，调用只编译、从不执行；`standalone: false` 的库只编译其头文件和源文件。
 
+`xrobot check-module` 像 `xrobot setup` 一样解析模块，会更新 `xrobot.lock` 和 `Modules/`；`-o FILE` 指定输出文件（默认 `module_check.cpp`），`--template-arg` 给出类模板的模板实参（每个写一次），`--offline` 只使用 `Modules/` 中已有的模块。
+
 | 输入 | 默认值 | 含义 |
 | --- | --- | --- |
 | `xrobot-ref` | `master` | 使用的 XRobot 版本 |
@@ -145,5 +147,3 @@ jobs:
 | `cmake-options` | 空 | 额外的 CMake 配置参数 |
 | `ctest-regex` | 空 | 非空时构建测试并运行匹配的 CTest |
 | `ctest-timeout` | `15` | 每个 CTest 测试的超时（秒） |
-
-编译通过不代表硬件验证。

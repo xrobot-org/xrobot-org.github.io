@@ -6,17 +6,17 @@ sidebar_position: 2
 
 # Application Configuration
 
-An application configuration describes one product: which Module instances are constructed, in which order, and the value of every constructor parameter. Every `*.yaml` under `User/` (including subdirectories) except `User/libxr_config.yaml` is an application configuration, and `xrobot setup` checks all of them.
+A configuration describes one product: which Module instances are constructed, in which order, and the value of every constructor parameter. Every `*.yaml` under `User/` (including subdirectories) except `User/libxr_config.yaml` is a configuration, and `xrobot setup` checks all of them.
 
 ---
 
 ## Selecting a Product
 
 ```bash
-xrobot gen -c User/RobotConfig/hero.yaml
+xrobot gen -c User/RobotConfig/debug.yaml
 ```
 
-`xrobot gen -c` generates `User/xrobot_main.hpp` for that configuration, which selects the product. The header's last lines record the configuration and every file generation read. `xrobot gen` without `-c` and `xrobot setup` keep the current selection, or use `User/xrobot.yaml` when nothing was generated yet. If the selected configuration has been deleted or renamed, these commands report an error and a configuration has to be selected again with `xrobot gen -c`.
+`xrobot gen -c` generates `User/xrobot_main.hpp` for that configuration, which selects that configuration. The header's last lines record the configuration and every file generation read. `xrobot gen` without `-c` and `xrobot setup` keep the current selection, or use `User/xrobot.yaml` when nothing was generated yet. If the selected configuration has been deleted or renamed, these commands report an error and a configuration has to be selected again with `xrobot gen -c`.
 
 ---
 
@@ -25,25 +25,28 @@ xrobot gen -c User/RobotConfig/hero.yaml
 ```yaml
 constexpr_namespace: BoardConfig        # default: ProjectConstexpr
 constexpr_includes:
-  - RMMotor.hpp
+  - <cstdint>
 constexprs:
-  YawFeedbackId:
-    type: uint16_t
-    value: 522
+  BlinkCycle:
+    type: uint32_t
+    value: 250
 modules:
   - module: xrobot-org/BlinkLED
     id: blink_led
     args:
       - led: LED_B
-      - blink_cycle: 250
-  - module: QDU-Robomaster/RMMotor
-    id: motor_yaw
+      - blink_cycle: BoardConfig::BlinkCycle
+  - module: xrobot-org/MadgwickAHRS
+    id: ahrs
     args:
-      - can_bus: can2
+      - ramfs: ramfs
       - param:
-          model: RMMotor::Model::MOTOR_GM6020
-          reverse: false
-          feedback_id: BoardConfig::YawFeedbackId
+          beta: 0.033
+          gyro_topic_name: "bmi088_gyro"
+          accl_topic_name: "bmi088_accl"
+          quaternion_topic_name: "ahrs_quaternion"
+          euler_topic_name: "ahrs_euler"
+          task_stack_depth: 1536
 settings:
   monitor_sleep_ms: 1000
 ```
@@ -72,10 +75,10 @@ A value without quotes or in single quotes is C++ code, written into the generat
 
 ```yaml
 - blink_cycle: 250
-- mode: CMD::Mode::CMD_OP_CTRL
+- gyro_freq: BMI088::GyroFreq::GYRO_2000HZ_BW532HZ
 - topic_name: "bmi088_gyro"
 - rotation: '{0.707, 0.0, 0.0, 0.707}'
-- referee: '&ref'
+- ramfs: '&ramfs'
 ```
 
 In the generated code `topic_name` is `"bmi088_gyro"`; the other values are as written. Code that YAML cannot take without quotes goes in single quotes, for example text starting with `{`, `[`, `&` or `*`; text in single quotes is not changed, and `''` stands for one single quote. Escapes in double quotes are resolved by YAML, and the result is written as a C++ string literal.
@@ -92,7 +95,7 @@ A reference or pointer parameter without a default is a dependency. Its value is
 
 - a name registered with `XR_REGISTER` in the entry source;
 - the `id` of an earlier instance;
-- `'&name'` (for a pointer parameter);
+- `'&name'` or `name` (for a pointer parameter; both pass the object's address);
 - `nullptr` (for a pointer parameter).
 
 An optional dependency is declared by the Module as a pointer parameter without a default; `nullptr` leaves it unused. A wrong name is reported with the candidates of the right type:
@@ -138,13 +141,13 @@ Each entry in `constexprs` becomes `inline constexpr <type> <name> = <value>;` i
 
 ## Editing Commands
 
-These commands keep comments and write the canonical layout that `xrobot format` enforces. Without `-c` they edit the selected product.
+These commands keep comments and write the canonical layout that `xrobot format` enforces. Without `-c`, `instance` edits the selected configuration, and `sync` and `format` process every configuration.
 
 ```bash
 xrobot instance add owner/Repo [--id ID] [--template-arg VALUE]...
                                               # writes every parameter with its default
 xrobot instance set ID args.led LED_B
-xrobot instance set ID args.param.reverse true
+xrobot instance set ID args.param.beta 0.05f
 xrobot instance set ID args.topic_name '"bmi088_gyro"'
 xrobot instance set ID template_args[0] float
 xrobot instance rename ID NEW_ID              # also renames references in the same config
@@ -153,9 +156,9 @@ xrobot sync [-c CONFIG]...
 xrobot format [--check] [-c CONFIG]...
 ```
 
-The `set` value is read like a value in the config: C++ code without quotes or in single quotes, a C++ string in double quotes. With `--json` the value is JSON whose strings are C++ text; the VS Code extension writes values this way. The path is `template_args[n]` or `args.<param>[.<field>|[n]]...`; an instance id is changed with `rename`, which also rewrites the references to it; `args` itself can be replaced by a whole list to switch to another constructor. `--if-match <sha256>` refuses the write if the file changed since it was read (the SHA-256 of the LF-normalized file).
+The `set` value is read like a value in the config: C++ code without quotes or in single quotes, a C++ string in double quotes. Windows PowerShell 5.1 drops the double quotes from an argument it passes to `xrobot`, so there the string in the example is written `'\"bmi088_gyro\"'`. With `--json` the value is JSON whose strings are C++ text; the VS Code extension writes values this way. The path is `template_args[n]` or `args.<param>[.<field>|[n]]...`; an instance id is changed with `rename`, which also rewrites the references to it; `args` itself can be replaced by a whole list to switch to another constructor. `--if-match <sha256>` refuses the write if the file changed since it was read (the SHA-256 of the LF-normalized file).
 
-`xrobot describe` prints, as JSON, everything generation reads and checks: the configurations and the selected product, header freshness, tool pins, locked Modules, constructor signatures, the fields a mapping must name, registrations with their types, the names each parameter can bind to, and diagnostics. The VS Code extension renders and edits configurations from it.
+`xrobot describe` prints, as JSON, everything generation reads and checks: the configurations and the selected one, header freshness, tool pins, locked Modules, constructor signatures, the fields a mapping must name, registrations with their types, the names each parameter can bind to, and diagnostics. The VS Code extension renders and edits configurations from it.
 
 ---
 

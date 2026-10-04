@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # Module Catalogs
 
-A catalog is an `index.yaml` that lists Module and BSP Git repositories. A BSP's `Modules/sources.yaml` combines several catalogs; `xrobot setup` uses them to map `owner/Repo` to a repository.
+A Source is an `index.yaml` that lists Module and BSP Git repositories. A BSP's `Modules/sources.yaml` combines several Sources; `xrobot setup` uses them to map `owner/Repo` to a repository.
 
 ---
 
@@ -24,7 +24,7 @@ sources:
 
 - `url` is an HTTP(S) address or a local path relative to `sources.yaml`.
 - When several Sources list a package, the smaller `priority` wins; equal priorities that name different repositories are an error. Mirror Sources take no part in this choice.
-- `xrobot init` writes the official catalog `https://xrobot.work/xrobot-modules/index.yaml`.
+- `xrobot init` writes the official Source `https://xrobot.work/xrobot-modules/index.yaml`.
 
 ---
 
@@ -45,7 +45,7 @@ bsps:
 
 - A package is identified as `owner/Repo`. A GitHub URL gives the identity directly; other URLs use `namespace/<repository name>`, or an explicit `id` in a mapping.
 - `bsps` is for discovering BSP repositories only; a BSP is never a Module dependency.
-- `status` is `community` (default), `verified` or `official` and describes maintenance and validation. The latter two require `tested_ref` and `tested_libxr`, the versions the validation applies to, not every later version.
+- `status` is `community` (default), `verified` or `official` and describes maintenance and validation. The latter two require `tested_ref` and `tested_libxr`, the versions the validation applies to.
 - `mirror_of: <namespace>` marks a mirror Source. Once a mirror is listed, `xrobot setup` fetches from it whatever its `priority`; `repo` in `xrobot source get` shows the mirror, while `canonical` and `xrobot.lock` keep the original repository URL.
 
 ---
@@ -57,15 +57,17 @@ Like the other commands, `xrobot source` finds the BSP at or above the current d
 ```bash
 xrobot source list                      # every package
 xrobot source list --type bsp           # BSPs only (or --type module)
-xrobot source search STM32              # search the package records
-xrobot source get xrobot-org/BlinkLED   # repository, catalog and status of a package
-xrobot source find xrobot-org/BlinkLED  # where a package appears in every catalog (mirrors included)
+xrobot source search BMI                # packages whose entry contains BMI
+xrobot source get xrobot-org/BlinkLED   # repository, Source and status of a package
+xrobot source find xrobot-org/BlinkLED  # where a package appears in every Source (mirrors included)
 ```
+
+`list` and `search` both take `--type module` or `--type bsp`.
 
 Editing:
 
 ```bash
-xrobot source create-sources                          # write Modules/sources.yaml with the official catalog
+xrobot source create-sources                          # write a sources.yaml with the official Source only, replacing the file (-o for another file)
 xrobot source add-source https://example.com/index.yaml --priority 1
 xrobot source create-index -o my-index.yaml --namespace my-team [--mirror-of xrobot-org]
 xrobot source add-index https://github.com/my-team/MySensor.git --index my-index.yaml
@@ -73,10 +75,16 @@ xrobot source add-index https://github.com/my-team/MySensor.git --index my-index
 
 `add-source` and `add-index` append one item to the list; the rest of the file and its comments stay as they are.
 
-Example output:
+Without `-o`, `create-index` writes `Modules/index.yaml`, and `--namespace` defaults to `local`; the new file holds one example entry `https://github.com/xrobot-org/BlinkLED.git` and an empty `bsps`.
+
+Example output with the official Source only:
 
 ```text
 $ xrobot source list
+xrobot-org/AK8975 [module] https://github.com/xrobot-org/AK8975.git
+xrobot-org/ANOFlow [module] https://github.com/xrobot-org/ANOFlow.git
+xrobot-org/BMI088 [module] https://github.com/xrobot-org/BMI088.git
+xrobot-org/BMI270 [module] https://github.com/xrobot-org/BMI270.git
 xrobot-org/BlinkLED [module] https://github.com/xrobot-org/BlinkLED.git
 ...
 ```

@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Entry and Generation
 
-`xrobot gen` reads the selected application configuration, the registrations in the entry source and the locked Module headers, and writes `User/xrobot_main.hpp`. The result is ordinary C++: one `XRobotMain` function that constructs static instances in configuration order and then runs the monitor loop. There is no runtime hardware container, name lookup or application manager.
+`xrobot gen` reads the selected configuration, the registrations in the entry source and the locked Module headers, and writes `User/xrobot_main.hpp`. The result is ordinary C++: one `XRobotMain` function that constructs static instances in configuration order and then runs the monitor loop.
 
 ---
 
@@ -40,7 +40,7 @@ Rules:
 - Register object types, not reference types. Names must be unique and cannot be C++ keywords or macro names.
 - `XR_REGISTER` cannot appear inside `#if` / `#ifdef` blocks; the generator does not evaluate build options.
 - Registered objects must be visible where `XROBOT_MAIN()` is called and must live as long as the application.
-- Only the registrations the selected product uses are passed to `XRobotMain`; the others are still type-checked and cause no unused-variable warnings.
+- Only the registrations the selected configuration uses are passed to `XRobotMain`, whose parameter types check them; the others expand to `static_cast<void>(name)`, which checks no type and causes no unused-variable warning.
 
 In STM32 BSPs these lines are written by `libxr gen --xrobot`; see [Integrate with XRobot](../code_gen/xrobot_inter.md).
 
@@ -49,8 +49,8 @@ In STM32 BSPs these lines are written by `libxr gen --xrobot`; see [Integrate wi
 ## The Generated Header
 
 ```bash
-xrobot gen                                # the selected product
-xrobot gen -c User/RobotConfig/hero.yaml  # select another product
+xrobot gen                                # the selected configuration
+xrobot gen -c User/RobotConfig/debug.yaml # select another configuration
 xrobot gen --no-line-directives           # leave out the #line directives
 ```
 
@@ -108,15 +108,15 @@ The generated header follows LibXR's `.clang-format` (Google based, column limit
 
 (The example lists the `depends` lines of two Module headers only; the real file lists the headers of every locked Module.)
 
-- The first line names the configuration the header was generated from. One `#include` block follows, sorted by file name, with only the Modules in use and the headers the generated code needs.
-- A comment precedes each instance: `<id>: <owner/Repo>[<template arguments>] (<config path relative to User/>:<line>)`, with one blank line between instances. When a compiler error lands in the header, the comment gives the position in the YAML.
-- Instances are function-local `static` objects, constructed in configuration order when `XRobotMain` runs. Constructors do all initialization; there is no extra `Init()`/`Start()` phase.
+- The first line names the configuration the header was generated from. The `#include` lines follow, grouped as clang-format does: angle-bracket headers, then quoted headers, with a blank line between the groups and each group sorted by file name; they hold only the Modules in use, the headers of `constexpr_includes` and the headers the generated code needs.
+- A comment precedes each instance: `<id>: <owner/Repo>[<template arguments>] (<config path relative to the BSP root>:<line>)`, with one blank line between instances. When a compiler error lands in the header, the comment gives the position in the YAML.
+- Instances are function-local `static` objects, constructed in configuration order when `XRobotMain` runs. The constructors do all initialization.
 - Values passed to reference, `std::initializer_list` or struct parameters are written as `static const <type> xr_<instance id>_<parameter> = {...};` right before the instance. They live as long as the instance, so a Module may keep a reference to them. Struct values have one field per line with a trailing comma, and nested values and lists that do not fit are broken per entry too; values written as C++ text in the YAML keep their tokens and only get new line breaks. Scalars, names of dependencies, `nullptr` and `&name` are written in the argument itself. A name or expression bound to a reference parameter (such as `Make()`) is written as `static const T& xr_... = expression;`, so it still refers to the same object instead of copying it.
-- The `xr_` prefix is reserved for the generator: instance ids and `XR_REGISTER` names cannot start with `xr_` (nor `XR_` or `xrobot_`), and `gen` reports an error. It also reports two instances that would produce the same static variable name; rename the id of one of them.
-- The C++ compiler checks types and values by its rules of implicit conversion; the generated code no longer writes a `static_assert`, `static_cast` or conversion function for every argument. Only when the Module has several constructors that could take the call is the parameter type written, so that the constructor the YAML's parameter names pick is the one called: scalars, pointers and references are then written `xrobot_generated::Implicit<type>(value)`, a function the header defines. It converts implicitly, so downcasts are still rejected and the compiler still warns about constants that change value. Other types passed by value get `static_cast<type>(value)`.
+- The `xr_` prefix is reserved for the generator: instance ids and `XR_REGISTER` names cannot start with `xr_` (nor `XR_` or `xrobot_`), and `gen` reports an error. It also reports two instances that would produce the same static variable name; one of the ids then has to change.
+- The C++ compiler checks types and values by its rules of implicit conversion. Only when the Module has several constructors that could take the call is the parameter type written, so that the constructor the YAML's parameter names pick is the one called: scalars, pointers and references are then written `xrobot_generated::Implicit<type>(value)`, a function the header defines. It converts implicitly, so downcasts are still rejected and the compiler still warns about constants that change value. Other types passed by value get `static_cast<type>(value)`.
 - `#line`: every line of an instance and its `static` variables is mapped to the YAML line it comes from: the first line of a `static` variable to the line of its argument, each field of a struct to the line of the field's key, a closing brace to the line of the value it closes (GCC reports errors in an initializer there), the first line of the constructor call to the line of the instance, and each later line to the line of its first argument; when one YAML value takes several lines of code, each of them maps to the line of that value. A `#line` is written only where the line the compiler counts by itself would differ, and one after the instance points back into the header. Paths are relative to the BSP root, as in the errors of `xrobot`, so an editor opens the location of a compiler error from the project folder. `--no-line-directives` leaves them out (`xrobot setup` accepts it too).
-- The loop calls each instance's public `void OnMonitor()` (where one exists) in configuration order, then sleeps `settings.monitor_sleep_ms` milliseconds. The return type of `OnMonitor` is checked by `gen` from the Module header: one that is certainly not `void` is an error; when the header cannot tell (`auto`, a type alias, a `using` declaration), a `static_assert(std::is_void_v<decltype(x.OnMonitor())>);` for that instance precedes the loop. `XROBOT_MAIN()` does not return and runs in the calling thread.
-- The `// xrobot:` lines at the end of the file record the configuration, every input generation read (lock, entry source, Module headers) and a digest of their content. LibXR's CMake matches them by line wherever they are, and the digest depends only on the inputs, not on the text of the header. The `depends` lines of the Module headers are sorted by comparing the characters of their relative paths (uppercase before lowercase), so one BSP generates the same header and digest on Windows and Linux.
+- The loop calls each instance's public `void OnMonitor()` (where one exists) in configuration order, then sleeps `settings.monitor_sleep_ms` milliseconds. The return type of `OnMonitor` is checked by `gen` from the Module header: one that is certainly not `void` is an error; when the header cannot tell (`auto`, a type alias, a `using` declaration), a `static_assert(std::is_void_v<decltype(x.OnMonitor())>, "x.OnMonitor() must return void");` for that instance precedes the loop. `XROBOT_MAIN()` does not return and runs in the calling thread.
+- The `// xrobot:` lines at the end of the file record the configuration, every input generation read (lock, entry source, Module headers) and a digest of their content. LibXR's CMake matches them by line wherever they are, and the digest depends only on the inputs, not on the text of the header. The `depends` lines of the Module headers are sorted by comparing the characters of their relative paths (uppercase before lowercase), so the order does not depend on the platform; with byte-identical inputs, Windows and Linux generate the same header and digest.
 - An unchanged result is not rewritten. Do not edit or commit the file.
 
 ---
@@ -135,4 +135,4 @@ The check follows content: a new file time alone (after a git checkout or a copy
 
 ## IDE
 
-The generated file keeps the path the build uses. Point the language server at the `compile_commands.json` produced by the BSP's actual build.
+The generated file keeps the path the build uses. The language server uses the `compile_commands.json` produced by the BSP's actual build.

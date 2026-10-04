@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Writing a Module
 
-A Module is a Git repository `owner/Repo` whose primary header `Repo.hpp` declares a plain global C++ class `Repo`. Its public constructor is the interface: application configurations fill its parameters by name and the generator calls it directly. A Module does not inherit a framework base class and has no extra initialization phase.
+A Module is a Git repository `owner/Repo` whose primary header `Repo.hpp` declares a plain global C++ class `Repo`. Its public constructor is the interface: configurations fill its parameters by name and the generator calls it directly.
 
 ---
 
@@ -27,7 +27,7 @@ xrobot new-module MySensor --desc "IMU driver" \
 | `--template-arg` | A template argument the Module CI compiles with; repeat per argument; template parameters with defaults may be left out |
 | `--include` | Another header to include; `libxr.hpp` and the headers of the LibXR hardware interfaces the constructor uses (such as `i2c.hpp`) are always included |
 | `--depends` | A dependency `owner/Repo[@ref]`; repeat per dependency; the default ref is `same-or-dev` |
-| `--out` | Output directory, default the current directory |
+| `--out` | Parent folder in which `<NAME>/` is created, default the current directory |
 
 Before writing anything, `new-module` checks the assembled header with the rules of `setup` and `instance add`: every parameter has a name, dependencies come before parameters with defaults, and a template parameter without a default has a `--template-arg`. When the check fails it reports the error and creates nothing.
 
@@ -107,7 +107,7 @@ xrobot instance add owner/MySensor
 
 Edit and build directly in the BSP's `Modules/owner/MySensor/`, keeping the changes uncommitted. When they are ready, commit and push them to a branch of the Module repository, then run `xrobot setup --update owner/MySensor` in the BSP to update the lock.
 
-To be added to a BSP, the Module must be listed in a catalog; see [Module Catalogs](./src_man.md).
+To be added to a BSP, the Module must be listed in a Source; see [Module Catalogs](./src_man.md).
 
 ---
 
@@ -133,6 +133,8 @@ jobs:
 
 In a Linux container the workflow resolves the Module's dependencies, runs `xrobot check-module` to write one constructor call, and compiles the Module sources and that call against LibXR. Dependencies are `void*` placeholders; the call is compiled, never executed. For a `standalone: false` library, only its headers and sources are compiled.
 
+`xrobot check-module` resolves Modules as `xrobot setup` does and updates `xrobot.lock` and `Modules/`; `-o FILE` names the output file (default `module_check.cpp`), `--template-arg` gives one template argument of a class template (once per argument), and `--offline` uses only the Modules already in `Modules/`.
+
 | Input | Default | Meaning |
 | --- | --- | --- |
 | `xrobot-ref` | `master` | XRobot version used |
@@ -145,5 +147,3 @@ In a Linux container the workflow resolves the Module's dependencies, runs `xrob
 | `cmake-options` | empty | Extra CMake configure options |
 | `ctest-regex` | empty | When set, build tests and run the matching CTest tests |
 | `ctest-timeout` | `15` | Per-test CTest timeout in seconds |
-
-A successful compile is not hardware verification.
