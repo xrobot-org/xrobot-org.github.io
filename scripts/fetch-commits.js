@@ -3,9 +3,9 @@ const path = require('path');
 const axios = require('axios');
 
 const repos = {
-  XRobot: {repo: 'xrobot-org/XRobot', ref: 'XRobot2.0'},
-  LibXR: {repo: 'Jiu-xiao/libxr', ref: 'master'},
-  CodeGen: {repo: 'Jiu-xiao/LibXR_CppCodeGenerator', ref: 'master'},
+  XRobot: {repo: 'xrobot-org/XRobot', ref: 'master'},
+  LibXR: {repo: 'xrobot-org/libxr', ref: 'master'},
+  CodeGen: {repo: 'xrobot-org/LibXR_CppCodeGenerator', ref: 'master'},
 };
 
 (async () => {

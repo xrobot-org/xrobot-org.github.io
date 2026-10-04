@@ -6,18 +6,12 @@ sidebar_position: 3
 
 # Middleware
 
-This module summarizes the middleware components in LibXR used for system services, communication management, and terminal interaction.
+This section covers the LibXR middleware for system services, communication, and terminal interaction.
 
-## Features
-
-- **Unified Abstraction**: Provides core middleware functions such as event handling, logging, topic publishing, and virtual terminals.
-- **Multiple Operation Models**: Supports synchronous, asynchronous, queued, and callback-based modes for different scenarios.
-- **High Performance**: Heavily utilizes lock-free lists and queues internally to ensure concurrent performance.
-- **Embedded Adaptation**: Supports flash minimum write unit constraints and key-value storage on memory-constrained devices.
+The middleware consists of logging, events, messaging (in-process Topic, packet packing and parsing, Linux shared-memory Topic), a Flash key-value database, an in-memory file system, and a command-line terminal. Topic supports synchronous, asynchronous, queued, and callback subscribers; the database adapts to different Flash minimum write units.
 
 ## Contents
 
-- [Application Framework](./app-framework.md)
 - [Logger System](./logger.md)
 - [Event System](./event.md)
 - [Message System](/docs/basic_coding/middleware/message)

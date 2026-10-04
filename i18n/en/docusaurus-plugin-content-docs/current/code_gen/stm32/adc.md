@@ -6,11 +6,11 @@ sidebar_position: 5
 
 # ADC
 
-It is strongly recommended to enable DMA transfers in STM32CubeMX. In polling mode, different channels of the same ADC cannot be called by multiple threads simultaneously, which may lead to incorrect data.
+DMA transfers are recommended for the ADC in STM32CubeMX. In polling mode, threads reading different channels of the same ADC at the same time may get wrong data.
 
 ## DMA Mode Configuration Requirements
 
-* Configure the ADC conversion sequence (Rank), ensuring each channel has exactly one corresponding Rank.
+* Configure the ADC conversion sequence (Rank).
 * Enable Continuous Conversion Mode and DMA Continuous Requests.
 * Set DMA to Circular mode.
 
@@ -25,17 +25,15 @@ The code generator will read the enabled channels for each ADC peripheral and th
 
 ```cpp
 // Create the ADC object
-STM32ADC adcX(&hadcX, adcX_buf, {ADC_CHANNEL_1, ADC_CHANNEL_2, ...}, 3.3);
-
-// Retrieve each ADC channel object
-auto adcX_adc_channel_1 = adcX.GetChannel(0);
-auto adcX_adc_channel_2 = adcX.GetChannel(1);
-...
+static STM32ADC adc3(&hadc3, adc3_buf, {ADC_CHANNEL_8}, 3.3);
+// One reference per channel, named <ADC instance>_<channel>
+static auto& adc3_adc_channel_8 = adc3.GetChannel(0);
+UNUSED(adc3_adc_channel_8);
 ```
 
-In polling mode, all enabled channels are recognized; in DMA mode, only channels with a configured Rank are recognized.
+In polling mode, all enabled channels are recognized; in DMA mode, only channels with a configured Rank are recognized. In DMA mode the channel references follow the Ranks, `GetChannel(i)` being Rank i+1; when a channel is configured in several Ranks, the later references carry a Rank suffix, for example `adc3_adc_channel_8_rank12`. With XRobot integration (`--xrobot`), each channel reference is registered under the same name as `LibXR::ADC`.
 
-`STM32ADC` is not derived from the ADC base class. Instead, it contains multiple ADC channel objects that are derived from the base ADC class.
+`STM32ADC` contains several channel objects, each derived from `LibXR::ADC` and obtained with `GetChannel(i)`.
 
 ## Configuration File
 
@@ -44,16 +42,13 @@ After the code is generated, an ADC configuration section will appear in the `Us
 ```yaml
 ADC:
   adcX:
-    buffer_size: 32 # Default per-channel buffer size; generated uint16_t storage scales with active channel/Rank count
+    buffer_size: 32
     dma_section: ''
     vref: 3.3
 ```
 
-- `buffer_size`: Base ADC buffer size. The generated `uint16_t` storage is expanded according to the number of active DMA channels/Ranks.
+- `buffer_size`: Buffer bytes per channel. The generated `uint16_t` buffer holds `buffer_size / 2 × channel count` elements (16 for the single channel above).
 - `dma_section`: The memory section where the DMA buffer is located.
 - `vref`: The reference voltage for the ADC, in volts.
 
-You can modify this file directly. To apply the updated configuration, run either of the following commands to regenerate the code:  
-`xr_cubemx_cfg -d .`  
-or  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+After editing the file, run `libxr stm32 setup -d .` to regenerate the code.

@@ -6,14 +6,13 @@ sidebar_position: 2
 
 # Data Structures
 
-This module summarizes the general-purpose data structures used in LibXR for task scheduling, data communication, and resource management.
+This chapter covers the general-purpose data structures LibXR uses for task scheduling, data communication and resource management.
 
 ## Features
 
-- **Platform Independent**: All interfaces are abstracted to be platform-agnostic and portable.
-- **Memory Controllable**: Most structures support external buffers or fixed capacity to avoid runtime allocation.
-- **Thread/Interrupt Safe**: Some structures are designed with mutexes or lock-free algorithms, suitable for multithreading or interrupt contexts.
-- **Clear Structure**: Each structure encapsulates a base node, template node, and core operation interfaces for easy extensibility.
+- Interfaces are platform-independent.
+- Capacity is fixed at construction. `SPSCQueue`, `MPMCQueue` and `Stack` allocate their storage at construction; `Queue` and `ObjectPool` can use caller-provided storage and `DoubleBuffer` uses only caller-provided storage; nodes of `List`, `LockFreeList` and `RBTree` are owned by the caller. Reads and writes after construction do not allocate.
+- `Stack`, `List` and `RBTree` use a mutex and cannot be used in interrupts; `SPSCQueue` and `LockFreeList` are lock-free; `MPMCQueue` supports multiple producers and consumers.
 
 ## Contents
 

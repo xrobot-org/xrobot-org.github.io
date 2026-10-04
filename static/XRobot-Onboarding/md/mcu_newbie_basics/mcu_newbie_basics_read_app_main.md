@@ -4,7 +4,7 @@
 - 在合适的位置主动接入 app_main()：在 main()（或 FreeRTOS 默认任务入口）中包含 app_main.h 并调用 app_main()，形成完整的启动链路。
 ## 前置条件
 - 已经有一个可以在 VS Code 中正常编译的 STM32 CMake 工程。
-- 已经在该工程上运行过一次 LibXR 的代码生成流程（例如使用 xr_cubemx_cfg），并确认工程仍然可以编译通过。
+- 已经在该工程上运行过一次 LibXR 的代码生成流程（例如使用 libxr stm32 setup），并确认工程仍然可以编译通过。
 - 工程中已经出现 User/app_main.cpp 和 app_main.h 等文件。
 ## 步骤 1：整体看一眼工程结构
 1. 在 VS Code 中打开 STM32 工程根目录。

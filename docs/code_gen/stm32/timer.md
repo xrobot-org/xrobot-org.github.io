@@ -8,7 +8,7 @@ sidebar_position: 3
 
 LibXR实现了一个轻量级的软件定时器，即使在裸机环境下也可以使用。
 
-对于非裸机环境，软定时器需要指定线程优先级和堆栈深度。
+在 FreeRTOS 和 ThreadX 中，软件定时器运行在独立线程中，需要指定线程优先级和栈深度。
 
 ## 示例
 
@@ -18,31 +18,21 @@ LibXR实现了一个轻量级的软件定时器，即使在裸机环境下也可
 PlatformInit();
 ```
 
-对于RTOS环境，需要传入线程优先级和堆栈深度:
+FreeRTOS 和 ThreadX 工程中传入线程优先级和栈深度：
 
 ```cpp
-PlatformInit(2, 1024);
+PlatformInit(static_cast<uint32_t>(Thread::Priority::MEDIUM), 1024);
 ```
 
-第一个参数为线程优先级，第二个参数为堆栈深度。
+## 线程优先级
 
-对于线程优先级有如下定义：
+生成的代码用 `LibXR::Thread::Priority` 的等级表示线程优先级，从低到高依次为 `IDLE`、`LOW`、`MEDIUM`、`HIGH` 和 `REALTIME`。软件定时器、终端线程和看门狗线程都使用这种写法。
 
-```cpp
-  enum class Priority : uint8_t
-  {
-    IDLE = 0,      ///< 空闲优先级 Idle priority
-    LOW = 1,       ///< 低优先级 Low priority
-    MEDIUM = 2,    ///< 中等优先级 Medium priority
-    HIGH = 3,      ///< 高优先级 High priority
-    REALTIME = 4,  ///< 实时优先级 Realtime priority
-    NUMBER = 5     ///< 优先级数量 Number of priority levels
-  };
-```
+LibXR 按 RTOS 的优先级数把等级换算为 RTOS 优先级。FreeRTOS 中步长为 `(configMAX_PRIORITIES - 1) / 5`，`IDLE` 为 0，`LOW` 到 `REALTIME` 依次为步长的 1 到 4 倍。例如 `configMAX_PRIORITIES` 为 7 时 `MEDIUM` 是 2，为 56（CubeMX 中 CMSIS_V2 的默认值）时 `MEDIUM` 是 22。ThreadX 中数值越小优先级越高，`REALTIME` 为 1，`HIGH` 到 `IDLE` 依次为步长的 1 到 4 倍，步长为 `(TX_MAX_PRIORITIES - 1) / 5`。
 
 ## 配置文件
 
-对于非裸机环境，会在`User/libxr_config.yaml`中生成如下配置:
+`User/libxr_config.yaml` 中的 `software_timer` 设置这两个参数，裸机环境下不使用：
 
 ```yaml
 software_timer:
@@ -50,7 +40,6 @@ software_timer:
   stack_depth: 1024
 ```
 
-可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`xr_cubemx_cfg -d .`  
-或  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+`priority` 写 0 到 4 或等级名（大小写不限），0 到 4 依次对应 `IDLE`、`LOW`、`MEDIUM`、`HIGH` 和 `REALTIME`，默认为 2（`MEDIUM`）。其他值使生成失败。终端和看门狗的 `thread_priority` 写法相同。
+
+修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。

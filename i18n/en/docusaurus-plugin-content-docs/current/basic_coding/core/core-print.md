@@ -1,24 +1,24 @@
 ---
 id: core-print
 title: Compile-Time Formatting
-sidebar_position: 9
+sidebar_position: 8
 ---
 
 # Compile-Time Formatting
 
-`print.hpp` provides a formatting and output layer in current mainline that is independent from `STDIO`, under:
+`print.hpp` provides a compile-time formatting and output layer, independent of `STDIO`, under:
 
 ```cpp
 namespace LibXR::Print
 ```
 
-It is a shared compile-time formatting surface that can be reused by:
+It is a shared compile-time formatting layer reused by:
 
 - I/O paths such as `STDIO::Printf`
 - `RuntimeStringView::Reformat / Reprintf`
 - higher-level modules such as `Logger`
 
-Current mainline supports two source-format frontends:
+Two source-format frontends are supported:
 
 - brace style: `LibXR::Format<"...">`
 - printf style: `LibXR::Print::Printf::Build<"...">()`
@@ -37,24 +37,24 @@ ErrorCode Write(std::string_view text);
 
 So any object that provides `Write(std::string_view)` and returns something convertible to `ErrorCode` can be used as a print sink.
 
-This is why current mainline can write formatted output both to real I/O and to test sinks, memory buffers, or retained string builders.
+So formatted output can go to real I/O, test sinks, memory buffers or strings.
 
 ---
 
 ## 2. Brace-style frontend: `LibXR::Format<Source>`
 
 ```cpp
-constexpr LibXR::Format<"x={:+05d} {:#x} {}"> format{};
+constexpr LibXR::Format<"x={:+05d} {:x} {}"> format{};
 ```
 
-`Format<Source>` parses a brace-style literal at compile time and exposes several static interfaces used in current mainline:
+`Format<Source>` parses a brace-style literal at compile time and provides:
 
-- `ArgumentCount()`: how many call-site arguments are actually referenced
-- `Matches<Args...>()`: whether a given argument-type list is compatible with the format
+- `ArgumentCount()` (static): how many call-site arguments are actually referenced
+- `Matches<Args...>()` (static): whether a given argument-type list is compatible with the format
 - `Compiled<Args...>`: the compiled result after binding concrete argument types
-- `WriteTo(sink, args...)`: direct output into an `OutputSink`
+- `WriteTo(sink, args...)` (const member function): writes into an `OutputSink` and returns `ErrorCode`
 
-Current mainline also supports explicit argument reordering, for example:
+With the CMake option `LIBXR_PRINT_ENABLE_EXPLICIT_ARGUMENT_INDEXING=1`, explicit argument reordering is supported (off by default; disabled use is a compile error):
 
 ```cpp
 LibXR::Format<"{1} {0}">
@@ -67,10 +67,10 @@ but mixing automatic and manual indexing is a compile-time error.
 ## 3. printf-style frontend: `Print::Printf`
 
 ```cpp
-constexpr auto format = LibXR::Print::Printf::Build<"%+05d %#x %s">();
+constexpr auto format = LibXR::Print::Printf::Build<"%+05d %x %s">();
 ```
 
-`Printf::Build<Source>()` parses a printf-style literal at compile time and returns a compiled-format object. Current mainline also provides:
+`Printf::Build<Source>()` parses a printf-style literal at compile time and returns a compiled-format object. Also provided:
 
 - `Printf::Matches<Source, Args...>()`
 - `Printf::Compiled<Source>`
@@ -81,6 +81,7 @@ Its failures are also pushed to compile time whenever possible, including:
 - unsupported length modifiers
 - dynamic width / precision using `*`
 - mixing positional and sequential arguments
+- format features disabled in the current configuration, e.g. the `#` flag needs `LIBXR_PRINT_ENABLE_ALTERNATE=1` (off by default)
 
 > The current implementation is a compile-time literal path, not a traditional runtime `printf` parser for arbitrary format strings.
 
@@ -90,7 +91,7 @@ Its failures are also pushed to compile time whenever possible, including:
 
 ### 4.1 Write into any sink
 
-Current mainline exposes these convenience wrappers:
+Convenience wrappers:
 
 - `ErrorCode Write(sink, format, args...)`
 - `ErrorCode FormatTo(sink, format, args...)`
@@ -101,7 +102,7 @@ These sink-writing paths return only sink-side `ErrorCode`, not a written-length
 
 ### 4.2 Write into a bounded char buffer
 
-Current mainline also exposes bounded-buffer helpers:
+Bounded-buffer helpers:
 
 - `int FormatIntoBuffer(buffer, capacity, format, args...)`
 - `int FormatIntoBuffer<"...">(buffer, capacity, args...)`
@@ -135,22 +136,22 @@ struct Sink
 };
 
 Sink sink;
-constexpr LibXR::Format<"x={:+05d} {:#x} {}"> format{};
-LibXR::Print::FormatTo(sink, format, 7, 42U, "ok");
+constexpr LibXR::Format<"x={:+05d} {:x} {}"> format{};
+ErrorCode ec = LibXR::Print::FormatTo(sink, format, 7, 42U, "ok");  // "x=+0007 2a ok"
 ```
 
 ### 5.2 printf-style output to a sink
 
 ```cpp
 Sink sink;
-LibXR::Print::PrintfTo<"%+05d %#x %s">(sink, 7, 42U, "ok");
+ErrorCode ec = LibXR::Print::PrintfTo<"%+05d %x %s">(sink, 7, 42U, "ok");  // "+0007 2a ok"
 ```
 
 ### 5.3 Output to a bounded char buffer
 
 ```cpp
 char buffer[16] = {};
-int written = LibXR::Print::PrintfIntoBuffer<"%d %s">(buffer, sizeof(buffer), 123, "xy");
+int written = LibXR::Print::PrintfIntoBuffer<"%d %s">(buffer, sizeof(buffer), 123, "xy");  // written == 6, buffer == "123 xy"
 ```
 
 If `buffer` is too small, `written` still reports the full text length, while `buffer` keeps only the first `capacity - 1` visible characters and appends `\0` automatically.
@@ -161,10 +162,10 @@ If `buffer` is too small, `written` still reports the full text length, while `b
 
 `STDIO::Printf` is one upper-layer entry point, but it is not the whole formatting system.
 
-The current relationship is more accurately:
+The relationship is:
 
 - `Print` provides compile-time format parsing and output contracts
 - `STDIO::Printf` reuses that layer and sends the result to the global `STDIO` write endpoint
 - `RuntimeStringView` also reuses it, but retains the result inside its own string storage
 
-If you only want to emit debug text through the global output, `STDIO::Printf` from [core-rw](./core-rw.md) is the most direct choice. If you want to write formatted output into a custom sink or a bounded memory buffer, use the `Print::*` APIs on this page directly.
+Use `STDIO::Printf` from [core-rw](./core-rw.md) for debug text on the global output; use the `Print::*` APIs on this page to write into a custom sink or a bounded buffer.

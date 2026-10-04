@@ -49,7 +49,7 @@ LibXR::LinuxSharedTopic<Frame> topic("vision_frame", config);
 ASSERT(topic.Valid());
 ```
 
-You can also specify a domain name or `Topic::Domain` explicitly:
+A domain name or `Topic::Domain` can also be passed explicitly:
 
 ```cpp
 LibXR::LinuxSharedTopic<Frame> topic("vision_frame", "vision", config);
@@ -94,6 +94,8 @@ enum class LinuxSharedSubscriberMode : uint8_t
 
 ## Subscriber Usage
 
+A subscriber constructed by name attaches to an existing shared topic; if the publisher has not created the topic yet, the constructed subscriber is invalid (`Valid()` is `false`).
+
 ### Pattern 1: `Wait()` and read through the subscriber
 
 ```cpp
@@ -113,7 +115,7 @@ if (sub.Wait(1000) == ErrorCode::OK) {
 In this form:
 
 - `GetData()` returns a read-only pointer to the currently held slot
-- you must call `Release()` when done
+- `Release()` is called after use
 
 ### Pattern 2: receive through a `SharedData` handle
 
@@ -161,43 +163,45 @@ if (topic.CreateData(data) == ErrorCode::OK) {
 }
 ```
 
-This path is useful when the payload is large and you want to avoid an extra copy before publishing.
+This path suits large payloads, as it avoids one extra copy before publishing.
 
 ## Useful Observability APIs
 
 ### Publisher side
 
-- `Valid()`
-- `GetError()`
-- `GetSubscriberNum()`
-- `GetPublishFailedNum()`
-- `Remove(name)`
+- `Valid()`: whether the topic was opened successfully
+- `GetError()`: error code from the open stage
+- `GetSubscriberNum()`: number of active subscribers
+- `GetPublishFailedNum()`: accumulated publish failures
+- `Remove(name)`: remove the backing shared-memory object
 
 ### Subscriber side
 
-- `Valid()`
-- `GetPendingNum()`
-- `GetDropNum()`
-- `GetSequence()`
+- `Valid()`: whether the subscriber is valid
+- `GetPendingNum()`: queued messages waiting to be consumed
+- `GetDropNum()`: accumulated dropped messages
+- `GetSequence()`: sequence number of the current message
+- `GetTimestamp()`: timestamp of the current message
 
 ### SharedData handle
 
-- `Valid()` / `Empty()`
-- `GetSequence()`
-- `GetData()`
-- `Reset()`
+- `Valid()` / `Empty()`: whether the handle holds a slot
+- `GetSequence()`: message sequence number
+- `GetTimestamp()`: message timestamp (subscriber-side handles)
+- `GetData()`: payload pointer
+- `Reset()`: release the slot
 
 ## Compared to normal `Topic`
 
 - normal `Topic` is for in-process publish-subscribe
 - `LinuxSharedTopic<T>` is for Linux host inter-process transport
-- normal `Topic` is an in-process exact-typed dispatch path and no longer stores a built-in latest payload cache
+- normal `Topic` is an in-process exact-typed dispatch path and does not store a built-in latest payload cache
 - `LinuxSharedTopic<T>` payloads live in fixed shared-memory slots
 - normal `Topic` focuses on subscription semantics
 - `LinuxSharedTopic<T>` adds per-subscriber queue policy and `BALANCE_RR`
 
 ## Usage Guidance
 
-- if your modules are inside one process, prefer normal `Topic`
-- use `LinuxSharedTopic<T>` when you need Linux host IPC with larger payloads
+- modules inside one process use normal `Topic`
+- `LinuxSharedTopic<T>` is for Linux host IPC with larger payloads
 - treat slot lifetime carefully, especially in the `Wait() + GetData() + Release()` form

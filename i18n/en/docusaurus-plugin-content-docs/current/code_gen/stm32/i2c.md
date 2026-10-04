@@ -6,16 +6,14 @@ sidebar_position: 9
 
 # I2C
 
-In STM32CubeMX, the matching I2C DMA channels and interrupts should be configured.
-
-From the current generator’s perspective, this page mainly covers two generated parameters: the **shared buffer size** and the **DMA enable threshold**.
+In STM32CubeMX, the I2C runs in I2C mode, with the matching DMA channels and interrupts configured. An instance in SMBus mode uses an SMBUS handle; it gets no object, and `libxr parse` warns about it.
 
 ## Example
 
-The last constructor argument is the DMA switching threshold. The relevant branch requires the transfer length to be **strictly greater** than this value.
+The last constructor argument is the DMA switching threshold. The relevant branch requires the transfer length to be **strictly greater** than this value. With threshold `3`, a three-byte transfer does not enter the DMA branch; four bytes does.
 
 ```cpp
-STM32I2C i2c1(&hi2c1, i2c1_buf, 3);
+static STM32I2C i2c1(&hi2c1, i2c1_buf, 3);
 ```
 
 ## Configuration File
@@ -32,10 +30,13 @@ I2C:
 
 - `buffer_size`: shared I2C transfer / receive buffer size
 - `dma_section`: linker section for the generated buffer declaration
-- `dma_enable_min_size`: minimum transfer byte count to enable DMA
+- `dma_enable_min_size`: DMA switching threshold; only a transfer longer than this value enters the DMA branch
 
-Current generation details:
+Generation rules:
 
-- the generator emits one shared buffer per I2C instance, for example `i2c1_buf`;
-- `dma_enable_min_size` is currently emitted directly as the last argument of `STM32I2C(..., dma_enable_min_size)`;
-- `dma_section` only affects where the buffer declaration is placed, and does not change the `STM32I2C` constructor shape itself.
+- each I2C instance gets one buffer shared by transmit and receive, for example `i2c1_buf`, of `buffer_size` bytes;
+- `dma_enable_min_size` is the last argument of the `STM32I2C` constructor;
+- `dma_section` decides the section the buffer goes to, see [Cache](./cache.md);
+- FMPI2C peripherals get no object and `libxr parse` warns about them; LibXR has no FMPI2C driver.
+
+After editing the file, run `libxr stm32 setup -d .` to regenerate the code.

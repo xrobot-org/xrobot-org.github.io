@@ -6,12 +6,12 @@ sidebar_position: 2
 
 # 数据打包与解析
 
-当前 `Message` 模块提供两条和链路相关的能力：
+`Topic` 提供两项与链路相关的功能：
 
-- `Topic::PackData()` / `Topic::PackRaw()`：把一条消息按当前 topic 的运行时契约打成 packet；
+- `Topic::PackData()` / `Topic::PackRaw()`：把一条消息按 topic 的运行时契约打成 packet；
 - `Topic::Server`：把收到的字节流解析成 packet，再投递回已注册的 topic。
 
-这条路径现在只关心：
+打包和解析使用以下信息：
 
 - topic 名称 CRC32；
 - payload 固定长度；
@@ -36,11 +36,11 @@ topic.PackData(36.5, packet, LibXR::MicrosecondTimestamp(123456));
 topic.PackData(36.5, packet);
 ```
 
-`PackData()` 直接拿你传入的 payload 打包，不要求先 `Publish()`。
+`PackData()` 直接打包传入的 payload，与 `Publish()` 相互独立。
 
 ## 用 raw payload 打包
 
-有时你手里已经是按当前 topic 契约组织好的字节块，这时可以用 `PackRaw()`：
+已有按 Topic 类型契约排列的字节块时，使用 `PackRaw()`：
 
 ```cpp
 double value = 72.72;
@@ -51,7 +51,7 @@ topic.PackRaw(LibXR::ConstRawData(value),
               LibXR::MicrosecondTimestamp(6006));
 ```
 
-当前 `PackRaw()` 的边界：
+`PackRaw()` 的约束：
 
 - `data.size_` 必须等于该 topic 的 `PayloadSize()`；
 - 输出缓冲区至少要容纳 `PACK_BASE_SIZE + payload_size`；
@@ -59,17 +59,17 @@ topic.PackRaw(LibXR::ConstRawData(value),
 - 尺寸不对返回 `ErrorCode::SIZE_ERR`；
 - 输出缓冲区不够返回 `ErrorCode::NO_BUFF`。
 
-## 当前 packet 格式
+## packet 格式
 
-当前头部固定为 `16` 字节，完整 packet 额外再跟一个尾部 `CRC8`：
+头部固定为 `16` 字节，完整 packet 额外再跟一个尾部 `CRC8`：
 
 | 字段 | 字节数 | 说明 |
 |------|--------|------|
-| `prefix` | 1 | 固定前缀，当前为 `0x5A` |
+| `prefix` | 1 | 固定前缀 `0x5A` |
 | `data_len_raw` | 3 | 小端 24 位 payload 长度 |
 | `topic_name_crc32` | 4 | topic 名称 CRC32 键 |
 | `timestamp_us_raw` | 6 | 小端 48 位微秒时间戳 |
-| `version` | 1 | 当前协议版本，主线为 `0x01` |
+| `version` | 1 | 协议版本 `0x01` |
 | `pack_header_crc8` | 1 | 头部 CRC8 |
 | `payload` | N | 负载字节 |
 | trailing `crc8` | 1 | 整包尾 CRC8 |
@@ -80,7 +80,7 @@ topic.PackRaw(LibXR::ConstRawData(value),
 LibXR::Topic::PACK_BASE_SIZE + payload_size
 ```
 
-其中当前 `PACK_BASE_SIZE = 17`。
+其中 `PACK_BASE_SIZE = 17`。
 
 ## 解析字节流
 
@@ -99,7 +99,7 @@ size_t delivered = server.ParseData(LibXR::ConstRawData(packet));
 server.ParseDataFromCallback(LibXR::ConstRawData(packet), true);
 ```
 
-当前 `Server` 的职责是：
+`Server` 的处理步骤：
 
 - 在输入流中同步到下一条 packet 起点；
 - 校验头部和尾部 CRC；
@@ -112,21 +112,21 @@ server.ParseDataFromCallback(LibXR::ConstRawData(packet), true);
 server.Register(topic);
 ```
 
-注册时主线会检查两件事：
+注册时检查两项条件（`ASSERT`，只在 Debug 构建下生效）：
 
-- `payload_size + PACK_BASE_SIZE` 必须装得进 `Server` 的内部暂存缓冲区；
+- `payload_size + PACK_BASE_SIZE` 不超过 `Server` 的缓冲区长度；
 - `payload_alignment <= CACHE_LINE_SIZE`。
 
-所以 `Server(buffer_length)` 里的 `buffer_length` 不是随便写的，它决定了这台解析器最多能接住多大的 packet。
+`Server(buffer_length)` 的 `buffer_length` 同时是内部字节队列的容量：它决定能接收的最大 packet，也限制每次 `ParseData()` 传入的数据量。一次传入的数据超过队列剩余空间时，这批数据整体丢弃。
 
 ## 解析时的兼容规则
 
-当前 `Server` 的 packet 到 topic 发布之间还有一条兼容边界：
+`Server` 把 packet 发布到 Topic 时，按以下规则处理长度不一致的 payload：
 
 - 如果收到的 payload **短于** topic 固定大小，只保证前缀部分有效，后半段未定义；
 - 如果收到的 payload **长于** topic 固定大小，只保留前缀部分，多余字节直接截断。
 
-这条规则是为了兼容长度有偏差的上游，不是为了鼓励随意混用不同 payload 契约。
+这条规则用于兼容 payload 长度有偏差的上游。
 
 ## 当前不会做的事
 
@@ -180,10 +180,10 @@ server.ParseData(LibXR::ConstRawData(packet));
 | 接口 | 作用 |
 |------|------|
 | `PackedData<T>` | 一条完整 packet 的强类型字节布局 |
-| `PackData()` | 用当前 topic 契约打包强类型 payload |
-| `PackRaw()` | 用当前 topic 契约打包 raw payload |
+| `PackData()` | 用 topic 契约打包强类型 payload |
+| `PackRaw()` | 用 topic 契约打包 raw payload |
 | `Server::Register()` | 注册可接收 packet 的 topic |
 | `Server::ParseData()` | 普通上下文解析输入字节流 |
 | `Server::ParseDataFromCallback()` | 回调 / ISR 路径解析输入字节流 |
 
-如果你的场景是“进程内直接发订阅”，优先看 [`Topic` 页面](./topic.md)。如果你的场景是“Linux 进程间共享大 payload”，优先看 [`LinuxSharedTopic`](./linux-shared-topic.md)。
+进程内的发布订阅见 [`Topic` 页面](./topic.md)，Linux 进程间共享大 payload 见 [`LinuxSharedTopic`](./linux-shared-topic.md)。

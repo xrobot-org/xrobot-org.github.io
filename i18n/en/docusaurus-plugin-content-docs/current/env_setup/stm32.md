@@ -18,6 +18,11 @@ Windows:
 
 - [git](https://git-scm.com/)
 - [python](https://www.python.org/downloads/)
+- [STM32CubeMX](https://www.st.com/en/development-tools/stm32cubemx.html)
+- CMake and Ninja
+- the compiler `arm-none-eabi-gcc` (GNU Tools for STM32) or `starm-clang` (ST Arm Clang)
+
+CMake, Ninja and the compilers can be downloaded by `STMicroelectronics.stm32-vscode-extension` into `%LOCALAPPDATA%\stm32cube\bundles`, or installed with `STM32CubeCLT`. For command-line builds, the directories of these tools must be on `PATH`, see the section "CLion / Command-Line Builds" below.
 
 Linux:
 
@@ -35,7 +40,7 @@ Recommended extensions:
 - `STMicroelectronics.stm32-vscode-extension`
 - [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot)
 
-`XRobot.xrobot` provides a GUI view for code-generation configuration inside the workspace.
+`XRobot.xrobot` provides two views: the LibXR view works on STM32CubeMX projects, edits `User/libxr_config.yaml` and runs the `libxr` command; the XRobot view shows the Modules, configurations and instances of a BSP and changes Modules and instances through `xrobot` commands.
 
 ## Toolchain Choice
 
@@ -44,33 +49,33 @@ Current recommended compiler choices are still:
 - `gcc`
 - `starm-clang`
 
-If you want to cooperate with `clangd`, `CLion`, or command-line-driven builds, prefer **pure gcc** or **pure starm-clang**. Do not default to the mixed `Hybrid` mode.
+For `clangd`, `CLion` or command-line builds, pure gcc or pure starm-clang is recommended; the mixed `Hybrid` mode is not.
 
 `clangd` is still not reliable with ST-ARM-CLANG's `--multi-lib-config`. In `Hybrid` mode, `compile_commands.json` often ends up carrying extra arguments that make IDE behavior worse.
 
-If you explicitly choose `starm-clang`, `picolibc` is the current recommended standard-library configuration. The available `STARM_TOOLCHAIN_CONFIG` values remain `STARM_HYBRID`, `STARM_NEWLIB`, and `STARM_PICOLIBC`, but current docs do not recommend staying on `STARM_HYBRID` by default.
+With `starm-clang`, `picolibc` is the recommended C library. `STARM_TOOLCHAIN_CONFIG` in `starm-clang.cmake` accepts `STARM_HYBRID`, `STARM_NEWLIB` and `STARM_PICOLIBC`; `STARM_HYBRID` is not recommended.
 
 ## CLion / Command-Line Builds
 
-If you are not using the VS Code plugin flow and want to drive the build yourself in `CLion` or the shell, configure the environment like this.
+For builds from the command line or in `CLion`, configure the environment as follows.
 
 On Windows, you usually need relevant toolchain paths in `PATH`. Installing `STM32CubeCLT` can simplify some of this.
 
-```bash
+```powershell
 # gcc
-set PATH=%PATH%;C:\Users\$env:USERNAME\AppData\Local\stm32cube\bundles\gnu-tools-for-stm32\${version}\bin
+$env:PATH += ";$env:LOCALAPPDATA\stm32cube\bundles\gnu-tools-for-stm32\<version>\bin"
 
 # starm-clang
-set PATH=%PATH%;C:\Users\$env:USERNAME\AppData\Local\stm32cube\bundles\st-arm-clang\${version}\bin;
+$env:PATH += ";$env:LOCALAPPDATA\stm32cube\bundles\st-arm-clang\<version>\bin"
 ```
 
-Environment variables:
+When `STARM_TOOLCHAIN_CONFIG` is `STARM_HYBRID`, `starm-clang.cmake` also reads these two environment variables:
 
 Windows:
 
 ```powershell
-$env:GCC_TOOLCHAIN_ROOT = "C:\Users\$env:USERNAME\AppData\Local\stm32cube\bundles\gnu-tools-for-stm32\${version}\bin"
-$env:CLANG_GCC_CMSIS_COMPILER = "C:\Users\$env:USERNAME\AppData\Local\stm32cube\bundles\st-arm-clang\${version}"
+$env:GCC_TOOLCHAIN_ROOT = "$env:LOCALAPPDATA\stm32cube\bundles\gnu-tools-for-stm32\<version>\bin"
+$env:CLANG_GCC_CMSIS_COMPILER = "$env:LOCALAPPDATA\stm32cube\bundles\st-arm-clang\<version>"
 ```
 
 Linux:
@@ -80,7 +85,7 @@ export GCC_TOOLCHAIN_ROOT=/opt/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/
 export CLANG_GCC_CMSIS_COMPILER=/opt/st-arm-clang
 ```
 
-Select the toolchain with `-DCMAKE_TOOLCHAIN_FILE="cmake/gcc-arm-none-eabi.cmake"` or `-DCMAKE_TOOLCHAIN_FILE="cmake/starm-clang.cmake"`. For `starm-clang.cmake`, you can also keep using `-DSTARM_TOOLCHAIN_CONFIG=STARM_NEWLIB` or `-DSTARM_TOOLCHAIN_CONFIG=STARM_PICOLIBC` to choose the C library.
+Select the toolchain with `-DCMAKE_TOOLCHAIN_FILE="cmake/gcc-arm-none-eabi.cmake"` or `-DCMAKE_TOOLCHAIN_FILE="cmake/starm-clang.cmake"`. The C library of `starm-clang.cmake` is set by its `set(STARM_TOOLCHAIN_CONFIG ...)` line, which overrides `-DSTARM_TOOLCHAIN_CONFIG=...` on the command line; edit that line, or run `libxr stm32 toolchain clang --newlib` / `--picolibc`.
 
 ## Common Problems
 
@@ -95,12 +100,12 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
 ### Switching toolchains
 
-If you already use the code-generation toolchain, `xr_stm32_toolchain_switch` can switch the toolchain and C library directly:
+With libxr installed, `libxr stm32 toolchain` switches the toolchain of the default preset of an STM32CubeMX project and the C library of starm-clang, for example:
 
 ```bash
-xr_stm32_toolchain_switch gcc
-xr_stm32_toolchain_switch clang --newlib
-xr_stm32_toolchain_switch clang --picolibc
+libxr stm32 toolchain gcc
+libxr stm32 toolchain clang --newlib
+libxr stm32 toolchain clang --picolibc
 ```
 
-That command edits `CMakePresets.json` and `cmake/starm-clang.cmake` directly. Restart `VS Code` afterwards so the new configuration is picked up cleanly.
+The command replaces `toolchainFile` of the default preset in `CMakePresets.json` and, when a C library is chosen, rewrites the `set(STARM_TOOLCHAIN_CONFIG ...)` line in `cmake/starm-clang.cmake`. When the toolchain changes, it deletes the `build/` and `cmake-build*` directories configured with the old toolchain. Restart `VS Code` afterwards so the new configuration is picked up.

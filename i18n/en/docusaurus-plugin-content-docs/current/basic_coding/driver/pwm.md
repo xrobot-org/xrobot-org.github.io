@@ -38,7 +38,7 @@ public:
 - Provides enable and disable methods for state control and power management;  
 - Platform-specific logic handles signal output, while upper layers use a consistent interface.
 
-## Current interface boundaries
+## Notes
 
 - `SetDutyCycle(float value)` currently documents the common `0.0 ~ 1.0` duty-cycle expression only at the interface-comment level; if a specific backend clamps, quantizes, or rejects out-of-range values, that behavior remains backend-specific.
 - `Configuration` currently contains only `frequency`; duty cycle is not configured through `SetConfig()`, but through the separate `SetDutyCycle()` path.

@@ -38,4 +38,4 @@ protected:
 - `IsReady()` reports whether the active platform backend has finished initialization.
 - `DelayMicroseconds()` provides a small busy-wait helper built on the microsecond timebase.
 - Platform backends such as `LinuxTimebase`, `STM32Timebase`, `CH32Timebase`, and `ESP32Timebase` typically initialize hardware state in their constructors, call `ConfigureWrapRange(...)`, then mark the backend ready with `SetReady()`.
-- The static timestamp getters are implemented by platform source files. The current public contract does not use the old global-instance plus virtual `_get_*()` model.
+- The static getters `GetMicroseconds()` and `GetMilliseconds()` are implemented in each platform's timebase source file.

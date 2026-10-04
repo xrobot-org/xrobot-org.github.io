@@ -4,7 +4,9 @@ title: Welcome
 sidebar_position: 1
 ---
 
-This documentation provides a modular introduction to the environment setup, basic usage, and advanced features of LibXR, CodeGenerator, and XRobot. If you have any questions, feel free to submit an issue in the corresponding repository or send email.
+# Welcome
+
+This documentation covers the environment setup, basic usage and advanced usage of LibXR, CodeGenerator and XRobot. Questions can be filed as issues in the corresponding repository or raised in the QQ group 608182228.
 
 ## Getting Started
 
@@ -12,8 +14,12 @@ This documentation provides a modular introduction to the environment setup, bas
 
 * [XRUSB](../docs/xrusb): The USB protocol stack built into LibXR.
 
-* [CodeGenerator](../docs/code_gen): Automatically generates C++ initialization code for peripherals, CMake files, and related assets.
+* [CodeGenerator](../docs/code_gen): generates the peripheral objects and the entry function `app_main` from an STM32CubeMX project and adds LibXR to the project's CMake build.
 
-* [XRobot](../docs/proj_man): Package, source, and dependency management; module parameter management and instantiation; and function entry generation.
+* [XRobot](../docs/proj_man): the Module manager and main function generator for LibXR; it fetches Modules, locks each one to a commit, and generates the main function `XRobotMain` from the configurations under `User/`.
+
+## Learning Path and Onboarding
+
+[XRobot Onboarding](https://xrobot.work/XRobot-Onboarding/)
 
 ![XRobot Logo](/img/XRobot.png)

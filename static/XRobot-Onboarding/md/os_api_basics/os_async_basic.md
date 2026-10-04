@@ -119,7 +119,7 @@ LibXR::ASync::Job g_async_job = LibXR::ASync::Job::Create(HeavyCalc, &g_arg);
 // 5. 模拟传感器中断服务程序：在 ISR 中提交 Job
 void SensorISR()
 {
-    // 在中断/回调上下文提交任务，isr = true
+    // 本例由主循环模拟调用，in_isr 传 false；在真实的中断服务程序中传 true
     g_async_worker.AssignJobFromCallback(g_async_job, false);
 }
 

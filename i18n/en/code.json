@@ -9,7 +9,7 @@
     "message": "XRobot / LibXR"
   },
   "homepage.hero.lead": {
-    "message": "A modular framework for robotics development, device interfaces, and engineering automation. XRobot covers package management, project layout, and code generation, while LibXR provides core semantics, driver abstractions, and XRUSB."
+    "message": "A modular framework for robotics development, device interfaces, and engineering automation. LibXR provides core semantics, driver abstractions, and XRUSB; the CodeGenerator generates LibXR peripheral code from STM32CubeMX projects; XRobot manages Modules and generates the main function XRobotMain."
   },
   "homepage.hero.cta.read": {
     "message": "Start Reading"
@@ -48,7 +48,7 @@
     "message": "Project & Workflow"
   },
   "homepage.route.xrobot.desc": {
-    "message": "Package management, project management, code generation, and the day-to-day development flow."
+    "message": "Fetching and locking Modules, configurations, and main function generation."
   },
   "homepage.route.core.title": {
     "message": "Core Semantics"
@@ -66,7 +66,7 @@
     "message": "Environment & Getting Started"
   },
   "homepage.route.start.desc": {
-    "message": "Platform selection, environment setup, and the first demo."
+    "message": "Platform selection, tool installation, and environment setup."
   },
   "homepage.quick.eyebrow": {
     "message": "Quick Paths"
@@ -75,7 +75,7 @@
     "message": "Enter by common task"
   },
   "homepage.quick.desc": {
-    "message": "This section answers not \"how the docs are divided\", but \"what problem you are solving right now\"."
+    "message": "Documentation entry points by common task."
   },
   "homepage.path.intro.title": {
     "message": "I am new to LibXR / XRobot"
@@ -99,7 +99,7 @@
     "message": "I want to get the project running quickly"
   },
   "homepage.path.usb.desc": {
-    "message": "First determine whether this is an XRobot workspace or a plain LibXR project. If you want the Agent to identify the entry path first, use the prompt on the homepage."
+    "message": "First tell an XRobot BSP from a LibXR-only project; the Agent prompt on this page can classify the project."
   },
   "homepage.recent.eyebrow": {
     "message": "Recent Direction"
@@ -108,49 +108,49 @@
     "message": "Recent Development"
   },
   "homepage.recent.desc": {
-    "message": "This section shows directions that have recently started or are actively moving, so you can quickly see which capabilities are being expanded."
+    "message": "Development directions that have recently started or are in progress."
   },
   "homepage.recent.core.title": {
-    "message": "Platform drivers already cover MSPM0, HPM, ESP, CH32, and STM32"
+    "message": "Platform drivers cover STM32, CH32, ESP32, HPM, MSPM0, Linux, Webots, and WebAssembly"
   },
   "homepage.recent.core.desc": {
-    "message": "The current mainline already contains multiple platform-driver directories. Before diving in, identify which implementation line your repository and target chip actually use."
+    "message": "Each platform's drivers live in their own subdirectory under driver/ in LibXR."
   },
   "homepage.recent.linux.title": {
     "message": "XRUSB already covers CDC, DAP, DFU, GSUSB, HID, and UAC"
   },
   "homepage.recent.linux.desc": {
-    "message": "Device-side support is no longer a single protocol path. Before entering the XRUSB docs, confirm which device class you actually need."
+    "message": "XRUSB provides several USB device classes, each documented on its own page."
   },
   "homepage.recent.usb.title": {
-    "message": "The debug path is centered on SWD, with the implementation already split into clearer layers"
+    "message": "The debug path supports SWD and JTAG, with the implementation split into layers"
   },
   "homepage.recent.usb.desc": {
-    "message": "In the current docs and code, the most relevant pieces are SWD, GPIO timing implementations, and the CMSIS-DAP device class. Do not assume there is already a complete JTAG workflow."
+    "message": "The debug implementation covers GPIO-timed SWD and JTAG and the CMSIS-DAP v1/v2 device classes."
   },
   "homepage.focus.eyebrow": {
     "message": "Focus Areas"
   },
   "homepage.focus.title": {
-    "message": "First decide what kind of problem you are solving"
+    "message": "Enter by problem type"
   },
   "homepage.focus.desc": {
-    "message": "Most problems fall into these three categories: understanding the mechanisms, connecting hardware, or getting the project running."
+    "message": "Common questions fall into three groups: runtime mechanisms, hardware integration, and project builds."
   },
   "homepage.focus.core.title": {
-    "message": "When you are figuring out how the system works"
+    "message": "Runtime Mechanisms"
   },
   "homepage.focus.core.desc": {
-    "message": "Start from callbacks, events, messages, and middleware relationships, and understand the internal runtime first."
+    "message": "How callbacks, events, messages, and middleware relate."
   },
   "homepage.focus.driver.title": {
-    "message": "When you are wiring hardware and doing platform bring-up"
+    "message": "Hardware Integration and Porting"
   },
   "homepage.focus.driver.desc": {
-    "message": "Start from drivers, platform implementation, XRUSB, and debug links to understand how boards, peripherals, and interfaces are brought in."
+    "message": "Drivers, platform implementations, XRUSB, and debug links."
   },
   "homepage.focus.project.title": {
-    "message": "When you are trying to get the project running"
+    "message": "Project Builds"
   },
   "homepage.focus.project.desc": {
     "message": "Let the Agent identify the repository type first, then choose the workspace, platform-project, or driver entry path so the initialization flow starts from the right place."
@@ -162,7 +162,7 @@
     "message": "Project Background & Community"
   },
   "homepage.foot.desc": {
-    "message": "This section holds the project background, how to contribute, and community entry points, so you can understand the project itself before going deeper into the technical material."
+    "message": "Project background, how to contribute, and community entry points."
   },
   "theme.ErrorPageContent.title": {
     "message": "This page crashed.",

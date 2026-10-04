@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # CDC 设备协议栈
 
-本节介绍 XRUSB 的 **USB CDC ACM（虚拟串口）** 设备类实现，重点覆盖：
+本节介绍 XRUSB 的 USB CDC ACM（虚拟串口）设备类实现，重点覆盖：
 
 - 描述符组织方式（IAD + Communication Interface + Data Interface）
 - 端点资源申请、配置与回调分发
@@ -31,8 +31,8 @@ sidebar_position: 1
 
 - 端点资源申请与配置（Data IN / Data OUT / Comm IN）
 - IAD + 通信接口 + 数据接口的配置描述符块填充
-- CDC ACM 标准类请求处理（`GET_LINE_CODING` / `SET_LINE_CODING` / `SET_CONTROL_LINE_STATE`）
-- 通过回调将 **控制线变化（DTR/RTS）**、**线路参数变化（Line Coding）** 通知给上层
+- CDC ACM 标准类请求处理（`GET_LINE_CODING` / `SET_LINE_CODING` / `SET_CONTROL_LINE_STATE` / `SEND_BREAK`；`SEND_BREAK` 只回复 ZLP）
+- 通过回调将控制线变化（DTR/RTS）、线路参数变化（Line Coding）通知给上层
 - 提供收发完成钩子（`OnDataOutComplete` / `OnDataInComplete`）供派生类实现具体数据通路
 
 `CDCBase` 不直接实现数据通路；派生类需要实现：
@@ -52,22 +52,23 @@ virtual void OnDataInComplete(bool in_isr, ConstRawData& data) = 0;
 - `Write()`：向主机发送 IN 数据
 - `SetConfig()`：把 UART 配置映射到 CDC Line Coding，并发送一次 Serial State 通知
 
-它内部使用 `LibXR::ReadPort` / `LibXR::WritePort` 做软件缓冲与写队列管理，并在端点回调中完成数据入队/出队；同时包含背压与 pending 缓存机制，在 RX 队列空间不足时暂停 OUT re-arm，待上层消费后恢复。
+它内部使用 `LibXR::ReadPort` / `LibXR::WritePort` 做软件缓冲与写队列管理，并在端点回调中完成数据入队/出队；RX 队列空间不足时，暂存本次收到的数据并暂停 OUT 接收；上层读走数据后，再写入暂存数据并重新启动接收。
 
 ### `LibXR::USB::CDCToUart`
 
-`CDCToUart` 继承自 `CDCUart`，用于把 **USB CDC 虚拟串口** 与一个“外部 `LibXR::UART` 实例”做双向桥接：
+`CDCToUart` 继承自 `CDCUart`，用于把 USB CDC 虚拟串口与一个“外部 `LibXR::UART` 实例”做双向桥接：
 
 - CDC RX → UART TX：CDC 收到的 OUT 数据写入 UART
 - UART RX → CDC TX：UART 收到的数据写入 CDC
 
-实现方式为“回调链泵送（pump）”：每次一侧写完成后触发对侧下一次读/写，从而持续搬运。
+实现方式为回调链：一侧的写操作完成后启动下一次读，从而持续转发数据。
 
 注意事项：
 
 - 构造函数会进行动态内存分配（为 RX/TX 临时缓存申请堆内存）。
-- 被桥接 UART 的写队列容量需要满足 `rx_buffer_size`（代码内有 `ASSERT(uart_.write_port_->Capacity() >= rx_buffer_size)`）。
+- 被桥接 UART 写端口的容量不能小于 `rx_buffer_size`（构造函数中有断言）。
 - 该类在构造结束时会各自挂起一次 CDC 读与 UART 读（`Read({nullptr,0}, ...)`）以进入回调链。
+- 构造函数用 `SetOnSetLineCodingCallback()` 注册了自己的回调，把主机设置的 Line Coding 转发给被桥接 UART 的 `SetConfig()`；对 `CDCToUart` 再调用 `SetOnSetLineCodingCallback()` 会替换这一转发。
 
 ### `LibXR::USB::CDCWriteTest` / `LibXR::USB::CDCReadTest`
 
@@ -82,7 +83,7 @@ virtual void OnDataInComplete(bool in_isr, ConstRawData& data) = 0;
 
 ### 接口（Interface）
 
-CDC ACM 设备以 **两接口（Communication + Data）** 的方式呈现，并带 IAD（Interface Association Descriptor），便于主机将其识别为一个 CDC 复合功能。
+CDC ACM 设备以两接口（Communication + Data）的方式呈现，并带 IAD（Interface Association Descriptor），便于主机将其识别为一个 CDC 复合功能。
 
 - 通信接口（Communication Interface）：包含 1 个 Interrupt IN 端点（Notification Endpoint）
 - 数据接口（Data Interface）：包含 1 个 Bulk OUT + 1 个 Bulk IN（数据收发）
@@ -107,7 +108,7 @@ CDC ACM 设备以 **两接口（Communication + Data）** 的方式呈现，并�
 
 Comm IN 端点最大包大小固定为 16 字节；Serial State 通知本身为 10 字节结构（见下文）。
 
-Data IN、Data OUT 和 Comm IN 的端点号在构造 `CDCBase` / `CDCUart` / `CDCToUart` / 测试类时显式指定；当前接口不再自动分配端点号。
+构造 `CDCBase` 派生类时依次给出端点号：数据 IN、数据 OUT、通知 IN。数据 IN 与数据 OUT 可以使用同一个端点号（例如都用 EP1），通知端点使用另一个端点号。`CDCUart`、`CDCWriteTest`、`CDCReadTest` 的构造函数末尾还有两个接口字符串参数，默认为 `"XRUSB CDC Control"` 和 `"XRUSB CDC Data"`；`CDCToUart` 没有这两个参数。
 
 ### 速度与最大包大小
 
@@ -140,7 +141,7 @@ bool IsRtsSet() const;
 
 工程建议：
 
-- 将 **DTR** 视作“主机串口已打开/准备通信”的关键信号
+- 将 DTR 视作“主机串口已打开/准备通信”的关键信号
 - DTR 断开时避免继续发送，避免上层阻塞或无意义的队列堆积
 
 ### Line Coding（波特率/校验/停止位/数据位）
@@ -212,9 +213,9 @@ struct SerialStateNotification
 
 ## 初始化与资源释放行为
 
-### Init 行为
+### 绑定端点
 
-`CDCBase::BindEndpoints(endpoint_pool, start_itf_num)` 的关键行为：
+`CDCBase::BindEndpoints(endpoint_pool, start_itf_num, in_isr)` 的关键行为：
 
 - 清零 `control_line_state_`
 - 通过 `EndpointPool` 申请三个端点并完成 `Configure`
@@ -229,9 +230,9 @@ struct SerialStateNotification
 - OUT 端点预接收长度此处使用 `MaxPacketSize()` 作为首包接收长度，用于尽快进入持续接收循环
 - `CDCBase` 不对收到的数据做缓存；派生类需在 `OnDataOutComplete` 中消费并重启 OUT 传输（或按自身策略重启）
 
-### Deinit 行为
+### 解绑端点
 
-`CDCBase::UnbindEndpoints(endpoint_pool)` 的关键行为：
+`CDCBase::UnbindEndpoints(endpoint_pool, in_isr)` 的关键行为：
 
 - `inited_ = false`
 - 清零 `control_line_state_`
@@ -239,7 +240,7 @@ struct SerialStateNotification
 - 将端点归还给 `EndpointPool`
 - 置端点指针为空
 
-`CDCUart::UnbindEndpoints()` 还会清除 ZLP 状态以及 RX 背压/暂存状态（`recv_pause_`、`pending_data_`）。当前实现**不会**遍历 `WritePort` 中所有请求并统一以 `INIT_ERR` 完成，也不会把“USB 断开”自动转换成端口级取消。
+`CDCUart::UnbindEndpoints()` 在调用 `CDCBase::UnbindEndpoints()` 之后，只清除零长度包标志和接收暂停状态（`recv_pause_` / `pending_data_`）；发送队列中尚未发出的数据保留，挂起的写请求不会以错误码结束。
 
 因此，需要跨断开/重连工作的上层应自己管理连接状态与等待时长，并在销毁相关对象前确保不再有回调链继续使用它们。
 
@@ -252,13 +253,15 @@ struct SerialStateNotification
 ```cpp
 #include "cdc_uart.hpp"
 
-using EP = LibXR::USB::Endpoint::EPNumber;
-LibXR::USB::CDCUart cdc_uart(EP::EP1, EP::EP1, EP::EP2,
-                              /*rx*/256, /*tx*/256, /*tx_queue*/8);
+using EPNumber = LibXR::USB::Endpoint::EPNumber;
+
+// 数据 IN EP1，数据 OUT EP1，通知 IN EP2
+LibXR::USB::CDCUart cdc_uart(EPNumber::EP1, EPNumber::EP1, EPNumber::EP2,
+                             /*rx*/ 256, /*tx*/ 256, /*tx_queue*/ 8);
 
 // 设备构造时把 &cdc_uart 放入 class 列表：{{&cdc_uart}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 ```
 
 可选：监听主机对 Line Coding / DTR/RTS 的变化：
@@ -291,11 +294,12 @@ cdc_uart.SetOnSetControlLineStateCallback(
 ```cpp
 #include "cdc_to_uart.hpp"
 
-extern LibXR::UART& uart1;  // 你的硬件/外设 UART 实例
+extern LibXR::UART& uart1;  // 被桥接的硬件 UART
 
-using EP = LibXR::USB::Endpoint::EPNumber;
 LibXR::USB::CDCToUart cdc_to_uart(
-  EP::EP1, EP::EP1, EP::EP2,
+  LibXR::USB::Endpoint::EPNumber::EP1,  // 数据 IN
+  LibXR::USB::Endpoint::EPNumber::EP1,  // 数据 OUT
+  LibXR::USB::Endpoint::EPNumber::EP2,  // 通知 IN
   uart1,
   /*rx_buffer_size*/ 128,
   /*tx_buffer_size*/ 128,
@@ -303,8 +307,8 @@ LibXR::USB::CDCToUart cdc_to_uart(
 );
 
 // 设备构造时把 &cdc_to_uart 放入 class 列表：{{&cdc_to_uart}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 ```
 
 ### 吞吐测试
@@ -313,16 +317,16 @@ LibXR::USB::CDCToUart cdc_to_uart(
 
 ```cpp
 #include "cdc_test.hpp"
-using EP = LibXR::USB::Endpoint::EPNumber;
-LibXR::USB::CDCWriteTest cdc_write_test(EP::EP1, EP::EP1, EP::EP2);
+using EPNumber = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCWriteTest cdc_write_test(EPNumber::EP1, EPNumber::EP1, EPNumber::EP2);
 ```
 
 读测试：
 
 ```cpp
 #include "cdc_test.hpp"
-using EP = LibXR::USB::Endpoint::EPNumber;
-LibXR::USB::CDCReadTest cdc_read_test(EP::EP1, EP::EP1, EP::EP2);
+using EPNumber = LibXR::USB::Endpoint::EPNumber;
+LibXR::USB::CDCReadTest cdc_read_test(EPNumber::EP1, EPNumber::EP1, EPNumber::EP2);
 ```
 
 同样通过 USB Device 的 class 列表传入即可。

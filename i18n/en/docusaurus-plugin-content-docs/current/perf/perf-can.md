@@ -1,12 +1,10 @@
 ---
 id: perf-can
-title: CAN Performance Test
+title: CAN/CAN FD Performance Test
 sidebar_position: 2
 ---
 
 # CAN/CAN FD Performance Test
-
-> This page records one specific board-level loopback benchmark. It should not be read as a universal current-mainline performance guarantee for every MCU, every transmit/receive path, or every bus-load shape.
 
 ## Test Environment
 
@@ -53,19 +51,19 @@ while (true)
   Thread::Sleep(1000);
   speed = counter;
   counter = 0;
-  XR_LOG_DEBUG("speed: %d", speed);
+  XR_LOG_DEBUG("speed: %u", speed);
 }
 ```
 
 ## Test Results
 
-Bit stuffing is estimated at 5%.
+Bus load is computed from the frame bits plus a 3-bit interframe space, without bit stuffing.
 
 ### Standard Frame (8-byte data)
 
 8917 packets/s, 108 bits per frame, data segment rate[^1] = 0.57 Mbps, bus load ≈ 100%
 
-Ideal case: `64 / 108 * 1Mbps / 105% = 0.564 Mbps`
+Upper bound without bit stuffing: `64 / (108 + 3) × 1 Mbps ≈ 0.577 Mbps`
 
 ### Extended Frame (8-byte data)
 
@@ -91,10 +89,4 @@ Ideal case: `64 / 108 * 1Mbps / 105% = 0.564 Mbps`
 
 ## Summary
 
-This test shows that in the specific scenario of **STM32H750 (480 MHz) + board-level FDCAN1/FDCAN2 loopback + the exact callback-forwarding test shape shown above**, the current-mainline FDCAN driver can reach throughput close to the theoretical limit.
-
-Reading boundaries:
-
-- the result depends directly on the tested platform, HAL/FDCAN configuration, the “forward on receive” callback shape, and CPU clock;
-- it should not be extrapolated directly to other MCUs, other FIFO/filter setups, real application workloads, or multi-task contention scenarios;
-- if you need a performance conclusion for your own target, use this page as a test pattern and re-run it on the actual board.
+On STM32H750 (480 MHz), with FDCAN1 and FDCAN2 connected on the board and each receive callback forwarding the frame, both classic and FD frames keep the bus load close to 100%.

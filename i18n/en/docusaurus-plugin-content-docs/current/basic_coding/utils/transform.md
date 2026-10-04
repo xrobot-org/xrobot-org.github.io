@@ -6,9 +6,9 @@ sidebar_position: 2
 
 # Transform
 
-`transform.hpp` provides the current mainline geometry foundation types in LibXR, including position, direction, Euler angles, rotation matrices, quaternions, and rigid transforms.
+`transform.hpp` provides the geometry foundation types in LibXR, including position, direction, Euler angles, rotation matrices, quaternions, and rigid transforms.
 
-These types are currently gated by `LIBXR_NO_EIGEN`:
+These types are gated by `LIBXR_NO_EIGEN`:
 
 - when `LIBXR_NO_EIGEN` is not defined, the types are available
 - when `LIBXR_NO_EIGEN` is defined, the whole header body is excluded from compilation
@@ -29,7 +29,7 @@ So `Position<>`, `Quaternion<>`, `Transform<>`, and similar shorthand forms all 
 
 `Position` derives from `Eigen::Matrix<Scalar, 3, 1>` and represents a 3D position vector.
 
-Current mainline provides, among others:
+Common operations include:
 
 - construction from `(x, y, z)`, `Eigen::Matrix<3,1>`, or a 3-element array
 - rotation by `RotationMatrix` / `Quaternion`
@@ -40,7 +40,7 @@ Current mainline provides, among others:
 
 `Axis` also derives from `Eigen::Matrix<Scalar, 3, 1>` and is used for direction or unit-axis values.
 
-Current mainline provides three convenience constructors:
+Three convenience constructors are provided:
 
 - `Axis<>::X()`
 - `Axis<>::Y()`
@@ -55,13 +55,13 @@ Default behavior:
 - `ToRotationMatrix()` defaults to `ToRotationMatrixZYX()`
 - `ToQuaternion()` defaults to `ToQuaternionZYX()`
 
-If your project depends on a fixed Euler order, it is better to call the explicit `XYZ / XZY / YXZ / YZX / ZXY / ZYX` variants rather than relying on defaults.
+Projects that depend on a fixed Euler order call the explicit `XYZ / XZY / YXZ / YZX / ZXY / ZYX` variants instead of relying on the defaults.
 
 ### 1.4 `RotationMatrix<Scalar>`
 
 `RotationMatrix` derives from `Eigen::Matrix<Scalar, 3, 3>` and defaults to the identity matrix.
 
-Current mainline supports:
+Supported operations:
 
 - construction from `Eigen::Matrix<3,3>`, `Eigen::Quaternion`, `LibXR::Quaternion`, and arrays
 - multiplication with `Position`, `Eigen::Matrix<3,1>`, and another `RotationMatrix`
@@ -74,7 +74,7 @@ Current mainline supports:
 
 `Quaternion` derives from `Eigen::Quaternion<Scalar>` and defaults to the identity quaternion `(1, 0, 0, 0)`.
 
-Current mainline supports:
+Supported operations:
 
 - construction from `(w, x, y, z)`, rotation matrices, Eigen quaternions, and 4-element arrays
 - quaternion addition, subtraction, multiplication, and division
@@ -92,26 +92,26 @@ Again, `-q` here means conjugate / inverse-rotation semantics, not per-component
 - `rotation`: `Quaternion<Scalar>`
 - `translation`: `Position<Scalar>`
 
-Current mainline provides:
+It provides:
 
 - an identity default transform
 - `Transform(rotation, translation)` construction
 - assignment helpers for setting rotation or translation individually
-- `operator+` for the current transform-composition behavior
-- `operator-` for the current relative-transform shortcut behavior
+- `a + b` composes two transforms: rotation `qa * qb`, translation `pa + qa * pb`
+- `a - b`: rotation `qa * qb⁻¹`, translation `pa - pb`; the translations are subtracted directly, so `(a + b) - b` generally differs from `a`
 
 ---
 
 ## 2. Relationship with Eigen
 
-This group is not designed to hide Eigen completely. Instead, current mainline adds a thin LibXR-oriented layer on top of Eigen.
+`Position`, `Axis`, `RotationMatrix`, and `Quaternion` derive from the corresponding Eigen types, and `EulerAngle` converts to and from `Eigen::Matrix<Scalar, 3, 1>`; on top of that they add LibXR construction forms and operators.
 
-That gives it two visible characteristics:
+As a result:
 
 - direct construction from Eigen types and straightforward conversion back to Eigen forms
 - LibXR-specific convenience behavior such as `Axis::X()`, default `ZYX` conversions, and shorthand transform composition operators
 
-If your project already uses Eigen heavily, these types can be treated as the geometry layer that fits naturally with the rest of LibXR.
+Code that already uses Eigen can pass these objects directly to functions taking the corresponding Eigen types.
 
 ---
 
@@ -136,6 +136,6 @@ auto t_body_tool = t_body_world + t_world_tool;
 
 ## 4. Usage guidance
 
-- If you need one consistent attitude representation, pick a primary representation at module boundaries, for example quaternions internally and Euler angles only for UI / configuration.
+- For one consistent attitude representation, fix a primary representation at module boundaries, for example quaternions internally and Euler angles only for UI / configuration.
 - If Euler order matters, prefer explicit calls such as `ToEulerAngleZYX()` or `ToQuaternionXYZ()` instead of the default helpers.
 - If the build uses `LIBXR_NO_EIGEN`, these types should not appear in public interfaces.

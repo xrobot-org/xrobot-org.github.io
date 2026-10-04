@@ -6,16 +6,14 @@ sidebar_position: 8
 
 # SPI
 
-需要在STM32CubeMX中开启对应的dma通道，然后使能SPI中断。
-
-对当前 generator 来说，这一页主要覆盖的是**缓冲区声明 + 实例构造参数**。是否真的生成 DMA 缓冲区，取决于 CubeMX 中该 SPI 实例的 `DMA_TX / DMA_RX` 是否启用。
+需要在STM32CubeMX中开启对应的dma通道，然后使能SPI中断。发送和接收的 DMA 缓冲区只在 CubeMX 中为该方向开启了 DMA 时生成。
 
 ## 示例
 
 最后一个参数是 DMA 切换阈值，相关判断使用**严格大于**。阈值为 `3` 时，等于 3 字节并不会进入该 DMA 分支。
 
 ```cpp
-STM32SPI spi1(&hspi1, spi1_rx_buf, spi1_tx_buf, 3);
+static STM32SPI spi1(&hspi1, spi1_rx_buf, spi1_tx_buf, 3);
 ```
 
 ## 配置文件
@@ -31,13 +29,10 @@ SPI:
     dma_enable_min_size: 3
 ```
 
-当前生成逻辑要点：
+生成规则：
 
-- `DMA_TX` 未启用时，构造参数中的 TX buffer 会退化成 `{nullptr, 0}`；
-- `DMA_RX` 未启用时，RX buffer 会退化成 `{nullptr, 0}`；
-- `dma_enable_min_size` 当前会直接作为 `STM32SPI(..., dma_enable_min_size)` 的最后一个参数生成。
+- 发送方向没有 DMA 时，构造参数中的发送缓冲区为 `{nullptr, 0}`，接收方向同理；
+- `dma_enable_min_size` 作为 `STM32SPI` 构造函数的最后一个参数；
+- `dma_section` 决定缓冲区所在的 section，见 [Cache](./cache.md)。
 
-可直接修改该文件。如需应用更新配置，请执行以下任一命令以重新生成代码：  
-`xr_cubemx_cfg -d .`  
-或  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp`
+修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。

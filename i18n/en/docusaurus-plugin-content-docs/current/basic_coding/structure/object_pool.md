@@ -1,22 +1,24 @@
 ---
 id: object_pool
 title: RAII Object Pool
-sidebar_position: 8
+sidebar_position: 7
 ---
 
 # ObjectPool
 
-`object_pool.hpp` provides a family of free-index-queue-based RAII slot pools in current mainline. The core template is:
+`object_pool.hpp` provides a family of RAII slot pools built on a free-index queue. The core template is:
 
 ```cpp
 LibXR::BasicObjectPool<Data, FreeQueue>
 ```
 
-and the three currently exported aliases are:
+and three aliases:
 
 - `LibXR::ObjectPool<Data, IndexType>`: backed by `Queue<IndexType>`
 - `LibXR::SPSCObjectPool<Data, IndexType>`: backed by `SPSCQueue<IndexType>`
 - `LibXR::MPMCObjectPool<Data, IndexType>`: backed by `MPMCQueue<IndexType>`
+
+This family is built around:
 
 - acquiring one exclusive slot through `Acquire()`
 - returning that slot automatically through a move-only `Handle`
@@ -35,7 +37,7 @@ and the three currently exported aliases are:
 - `Pop(ValueType&)`
 - `Size()`
 
-That is why current mainline can directly reuse ordinary `Queue`, `SPSCQueue`, and `MPMCQueue` as free-index managers.
+So the ordinary `Queue`, `SPSCQueue` and `MPMCQueue` can all serve as the free-index queue.
 
 ### 1.2 Move-only `Handle`
 
@@ -46,29 +48,32 @@ On successful acquisition, the pool returns a move-only `Handle` instead of a ra
 - `Get()`, `operator->()`, and `operator*()` provide access to the object in the slot
 - `Index()` returns the owned slot index
 - `Reset()` returns the slot early if needed
+- `Valid()` tells whether the handle owns a slot
 
 ---
 
-## 2. Construction forms in current mainline
+## 2. Construction forms
 
-`BasicObjectPool` currently supports four construction patterns:
+`BasicObjectPool` supports four construction patterns:
 
-1. **internal queue + internal slots**
-2. **internal queue + external slots**
-3. **external queue + internal slots**
-4. **external queue + external slots**
+1. internal queue + internal slots
+2. internal queue + external slots
+3. external queue + internal slots
+4. external queue + external slots
 
 Practical meaning:
 
-- if you want the simplest usage, choose internal queue / internal slots
+- internal queue and internal slots: the pool allocates both
 - if slot storage must live in caller-controlled memory, provide external `slots`
-- if you want to reuse or precisely control the queue behavior, provide an external `free_queue`
+- to reuse or precisely control the queue, provide an external `free_queue`
 
-When an external `free_queue` is used, the current implementation requires:
+When an external `free_queue` is used:
 
 - the queue must be empty when passed in
 - it must be dedicated to the pool
 - its capacity must be at least `slot_count`
+
+Constructors with internal slots require `Data` to be default-constructible; `IndexType` must be an unsigned integer type.
 
 ---
 
@@ -84,6 +89,8 @@ Behavior notes:
 - success returns `ErrorCode::OK`
 - when no free slot is available, the result comes from the underlying queue pop failure, commonly `ErrorCode::EMPTY`
 - the slot is also returned automatically when the handle is destroyed
+- `Acquire()` expects a handle that owns no slot (asserted in Debug builds)
+- all handles must be returned before the pool is destroyed (Debug builds assert `EmptySize() == Size()`), so the pool must outlive its handles
 
 ### 3.2 Capacity queries
 
@@ -157,5 +164,3 @@ To return early:
 ```cpp
 handle.Reset();
 ```
-
----

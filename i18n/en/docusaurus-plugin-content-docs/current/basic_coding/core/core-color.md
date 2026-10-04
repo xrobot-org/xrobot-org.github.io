@@ -1,12 +1,12 @@
 ---
 id: core-color
 title: Terminal Colors and Formatting
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # Terminal Colors and Formatting
 
-This page maps to `libxr_color.hpp`, which provides the current mainline enums and ANSI escape-string tables for terminal text styles, control sequences, foreground colors, background colors, and a few commonly used presets. It mainly serves terminal output, Logger, serial debug terminals, and similar text-oriented paths.
+`libxr_color.hpp` provides enums and ANSI escape-string tables for terminal text styles, control sequences, foreground and background colors, and common presets, used by terminal output, Logger and serial debug terminals.
 
 ## Text Style `TextStyle`
 
@@ -108,10 +108,10 @@ Corresponding ANSI strings: `LIBXR_PRESET_STR[]`
 
 ```cpp
 std::cout
-    << LIBXR_TEXT_STYLE_STR[static_cast<uint8_t>(LibXR::TextStyle::BOLD)]
-    << LIBXR_FOREGROUND_STR[static_cast<uint8_t>(LibXR::Foreground::GREEN)]
+    << LibXR::LIBXR_TEXT_STYLE_STR[static_cast<uint8_t>(LibXR::TextStyle::BOLD)]
+    << LibXR::LIBXR_FOREGROUND_STR[static_cast<uint8_t>(LibXR::Foreground::GREEN)]
     << "This is bold green text!"
-    << LIBXR_TERMINAL_CONTROL_STR[static_cast<uint8_t>(LibXR::TerminalControl::RESET)];
+    << LibXR::LIBXR_TERMINAL_CONTROL_STR[static_cast<uint8_t>(LibXR::TerminalControl::RESET)];
 ```
 
-The current Logger path also uses this surface directly: it selects a foreground color from `LIBXR_FOREGROUND_STR[]` by log level, then appends `TerminalControl::RESET` at the end of the rendered line.
+The Logger uses these tables: it selects a foreground color from `LIBXR_FOREGROUND_STR[]` by log level, then appends `TerminalControl::RESET` at the end of the rendered line.

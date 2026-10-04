@@ -12,11 +12,11 @@ Official entry:
 
 - [ESP-IDF Getting Started](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/index.html)
 
-If your target is actually `ESP32-C3 / S3 / C6`, switch to the corresponding chip-specific getting-started page.
+For `ESP32-C3 / S3 / C6` and other chips, see the getting-started page of that chip.
 
 ## Project Integration
 
-LibXR still integrates on ESP32 through [`cmake/esp32.cmake`](https://github.com/Jiu-xiao/libxr/blob/master/cmake/esp32.cmake), but the precondition is explicit: it **must** run inside an ESP-IDF component project.
+LibXR still integrates on ESP32 through [`cmake/esp32.cmake`](https://github.com/xrobot-org/libxr/blob/master/cmake/esp32.cmake), but the precondition is explicit: it **must** run inside an ESP-IDF component project.
 
 For a standard ESP-IDF `Hello World` style project, finish `idf_component_register(...)` in `main/CMakeLists.txt` first, then append:
 
@@ -24,25 +24,20 @@ For a standard ESP-IDF `Hello World` style project, finish `idf_component_regist
 include(path_to_libxr/cmake/esp32.cmake)
 ```
 
-Replace `path_to_libxr` with your actual LibXR path, and keep this line after `idf_component_register(...)`.
+`path_to_libxr` is the path of LibXR; the line goes after `idf_component_register(...)`.
 
 ## What `esp32.cmake` Does
 
-The current script directly does all of the following:
+The script does the following:
 
-- sets `LIBXR_SYSTEM=freertos`
-- sets `LIBXR_DRIVER=esp`
-- enables `LIBXR_STATIC_BUILD`
-- adds `libxr` as a subdirectory if target `xr` does not already exist
-- links official ESP-IDF targets such as `idf::freertos`, `idf::driver`, `idf::hal`, `idf::usb`, `idf::esp_timer`, `idf::esp_event`, `idf::esp_netif`, `idf::esp_wifi`, `idf::esp_adc`, and `idf::nvs_flash`
-- automatically links split driver targets such as `idf::esp_driver_gpio` and `idf::esp_driver_ledc` when the current IDF version exposes them
+- sets `LIBXR_SYSTEM=freertos` and `LIBXR_DRIVER=esp`, and turns on `LIBXR_STATIC_BUILD`
+- when `LIBXR_SINGLE_CORE` is not defined, sets it from `CONFIG_SOC_CPU_CORES_NUM` and `CONFIG_FREERTOS_UNICORE`: `OFF` on a multi-core chip without `CONFIG_FREERTOS_UNICORE`, `ON` otherwise
+- adds LibXR with `add_subdirectory` when target `xr` does not exist yet
+- links `xr` to the IDF components that exist: `idf::freertos`, `idf::driver`, `idf::hal`, `idf::usb`, `idf::esp_hw_support`, `idf::esp_timer`, `idf::esp_event`, `idf::esp_netif`, `idf::esp_wifi`, `idf::esp_adc`, `idf::nvs_flash`, and the split `idf::esp_driver_gpio` and `idf::esp_driver_ledc` of newer IDF versions
+- finally links `xr` to the current component (`target_link_libraries(${COMPONENT_LIB} PUBLIC xr)`), which is why the `include` line goes after `idf_component_register(...)`
 
-It also explicitly checks for `idf::freertos` and fails immediately when that target is missing. This script is not intended for a plain standalone CMake project outside the ESP-IDF build model.
+The script checks that `idf::freertos` exists and fails otherwise, so it works only in a component built by `idf.py`.
 
 ## Current Environment Note
 
-The current `docker-image-esp32` ships with `ESP-IDF v5.4.1` preinstalled. If your local environment uses a newer stable `5.x` release, the overall integration model still applies, but the exact component split and directory layout should follow your actual installed IDF.
-
-## Notes
-
-The ESP32 line is documented around the official `ESP-IDF + CMake + idf.py` workflow. There is no separate parallel environment flow maintained outside that model.
+The `docker-image-esp32` image ships `ESP-IDF v5.4.1`. Newer stable `5.x` releases use the same integration; the component split and directory layout follow the installed IDF.

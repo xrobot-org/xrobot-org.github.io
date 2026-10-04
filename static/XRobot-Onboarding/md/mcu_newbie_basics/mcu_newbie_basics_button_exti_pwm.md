@@ -20,7 +20,7 @@
    - 根据硬件电路选择上拉或下拉，例如：
      - 按键一端接地，未按下时希望为高电平，则配置为上拉输入。
 2. 重新生成 STM32CubeMX 代码，并重新运行 LibXR 代码生成：
-   - 在 STM32 工程根目录运行一遍代码生成流程（例如 xr_cubemx_cfg -d .）。
+   - 在 STM32 工程根目录运行一遍代码生成流程（例如 libxr stm32 setup -d .）。
    - 打开 User/app_main.cpp，找到新生成的按键对象，例如：STM32GPIO USER_KEY(USER_KEY_GPIO_Port, USER_KEY_Pin);
 3. 在 app_main() 中使用轮询读取按键：
    - 在 app_main() 的主循环所在 User Code 区块中：

@@ -9,7 +9,7 @@
 - 建立基本印象：一个 STM32GPIO 对象对应一个实际引脚，写 true/false 控制亮灭，延时用 LibXR::Thread::Sleep 控制节奏。
 ## 前置条件
 - 已完成「认识生成后的 LibXR 工程并接入 app_main()」，当前工程可以正常构建和下载。
-- 在 STM32CubeMX 的 .ioc 中，已经为某个实际连在 LED 上的引脚配置了输出模式（例如配置为 GPIO_Output），并在修改 .ioc 后重新跑过一次代码生成工具（如 xr_cubemx_cfg）。
+- 在 STM32CubeMX 的 .ioc 中，已经为某个实际连在 LED 上的引脚配置了输出模式（例如配置为 GPIO_Output），并在修改 .ioc 后重新跑过一次代码生成工具（如 libxr stm32 setup）。
 - User/app_main.cpp 中可以找到由 LibXR 为该引脚生成的 STM32GPIO 对象。
 ## 步骤 1：确认 LED 对应的 GPIO 对象
 1. 在 STM32CubeMX 中打开 .ioc，确认：

@@ -6,23 +6,19 @@ sidebar_position: 6
 
 # 数学与工具
 
-本模块汇总 LibXR 当前主线中直接公开给用户的轻量状态工具与几何/运动学工具。
+本节汇总 LibXR 的工具和数学类型。
 
-## 特点
-
-- **面向基础能力**：既包含不依赖平台的 `Flag` 状态工具，也包含位置、姿态、惯性、运动学链等数学类型。
-- **与主线导出一致**：本目录对应 `libxr.hpp` 当前直接导出的 `flag / transform / inertia / kinematic` 相关接口。
-- **编译边界清晰**：除 `Flag` 外，其余页面对应的类型都受 `LIBXR_NO_EIGEN` 控制；禁用 Eigen 时，这些类型不会参与编译。
+`libxr.hpp` 导出 `Flag`、`Transform`、`Inertia` 和 `Kinematic`；`SerializedService`、`PID`、`CycleValue`、`FloatEncoder` 和 CRC 类按各页面示例分别包含 `serialized_service.hpp`、`pid.hpp`、`cycle_value.hpp`、`float_encoder.hpp` 和 `crc.hpp`。`Transform`、`Inertia`、`Kinematic` 基于 Eigen，定义 `LIBXR_NO_EIGEN` 时这三组类型不参与编译。
 
 ## 目录
 
-- [Flag（轻量标志位）](./flag.md)
-- [Transform（坐标与姿态变换）](./transform.md)
-- [Inertia（惯性与质心）](./inertia.md)
-- [Kinematic（运动学链）](./kinematic.md)
-- [SerializedService（串行服务）](./serialized_service.md)
-- [PID 控制器](./pid.md)
-- [周期角度与数值编码](./value_encoding.md)
-- [CRC 校验](./crc.md)
+- [Flag（轻量标志位）](./flag.md)：原子标志、普通标志，以及进入作用域时改写、离开时恢复标志的 `ScopedRestore`。
+- [Transform（坐标与姿态变换）](./transform.md)：位置、方向轴、欧拉角、旋转矩阵、四元数和刚体变换。
+- [Inertia（惯性与质心）](./inertia.md)：惯性张量 `Inertia` 和质心 `CenterOfMass`，支持平移、旋转和质心合成。
+- [Kinematic（运动学链）](./kinematic.md)：串联关节的运动学链，包括正运动学、雅可比伪逆逆运动学、惯性分布和质心计算。
+- [SerializedService（串行服务）](./serialized_service.md)：合并多个入口的事件，同一时刻只由一个调用者执行处理函数。
+- [PID 控制器](./pid.md)：比例、积分、反馈微分和前馈，带积分限幅、输出限幅和周期角度误差。
+- [周期角度与数值编码](./value_encoding.md)：`CycleValue` 处理周期角度，`FloatEncoder` 把有限区间内的浮点数量化为整数码。
+- [CRC 校验](./crc.md)：`CRC8`、`CRC16`、`CRC32`、`CRC64` 的计算，以及 CRC8/16/32 对尾部校验值的验证。
 
 更多接口说明见各页面。

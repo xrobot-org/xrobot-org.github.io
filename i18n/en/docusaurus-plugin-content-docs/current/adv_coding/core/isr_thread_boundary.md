@@ -8,8 +8,8 @@ sidebar_position: 2
 
 For the basic background, see [Design Concepts](/en/docs/concept),
 [ASync](/en/docs/basic_coding/system/async), and
-[Semaphore](/en/docs/basic_coding/system/semaphore). This page goes straight to the boundaries that
-are easiest to get wrong in the implementation.
+[Semaphore](/en/docs/basic_coding/system/semaphore). This page describes how work is divided between
+ISRs, callbacks, and threads.
 
 ## Concurrency on a single-core MCU
 
@@ -31,13 +31,12 @@ allocation, or anything that only works if thread wakeup order happens to line u
 
 ## Why `mutex` is not the default
 
-Many people reach for `mutex` first, but it is not the default primitive for ISR-task exchange. The
-reason is simple: ISR must stay non-blocking, and many RTOSes do not allow taking a `mutex` inside
-ISR at all. Even if you force it with a critical section, the result often degenerates into
-unbounded interrupt-off time. A more practical default is: use `mutex` or bounded critical sections
-between tasks, and prefer `FromISR` primitives, `SPSC ring`, mailbox, or sequence-based handoff
-between ISR and task. Heavier CAS/lock-free structures only make sense when measurement shows they
-are worth it.
+LibXR does not use a `mutex` by default for exchange between an ISR and a task: an ISR must not
+block, most RTOSes do not allow taking a `mutex` in an ISR, and wrapping it in a critical section
+makes interrupt-off time hard to bound. Tasks use a `mutex` or bounded critical sections among
+themselves; between an ISR and a task, `FromISR` primitives, an SPSC ring, a mailbox, or a sequence
+counter come first. Heavier CAS/lock-free structures are used only when measurement shows a
+benefit.
 
 ## The role of atomics
 
@@ -59,10 +58,9 @@ ISR get pushed down into ordinary callbacks.
 
 ## Why `BLOCK` cannot enter ISR
 
-`BLOCK` inside ISR is a hard error, not a style issue. `BLOCK` eventually reaches a wait path such
-as `sem->Wait(...)`. Once that is placed in ISR, the system boundary is gone. The proper split is
-always: ISR only posts work, advances state, and wakes; the actual waiting for a result belongs to a
-thread context. `Operation::UpdateStatus()` can use `PostFromCallback(in_isr)` to keep completion
+Using `BLOCK` inside an ISR is an error: `BLOCK` eventually reaches a wait path such as
+`sem->Wait(...)`, and waiting inside an ISR breaks this boundary. An ISR only posts work, advances
+state, and wakes; waiting for a result happens in thread context. `Operation::UpdateStatus()` can use `PostFromCallback(in_isr)` to keep completion
 notification callback-safe, but that does not make `BLOCK` itself valid in ISR.
 
 ## Freshness-first paths
@@ -77,15 +75,15 @@ allowed", "overflow / drop counters must be exposed".
 
 ## Where `ASync` fits
 
-`ASync` should also be read in terms of this boundary. It does not make a long task safe simply by
-moving it elsewhere. It is closer to a unified submission surface: do the short handoff in
-callback or ISR, then defer the rest. Threaded systems run the job on a worker thread; no-thread
-implementations run it from a later software-`Timer` refresh. The submission semantics stay the
-same, but bare metal does not gain an independent background thread.
+`ASync` is the common submission interface in this division: a callback or ISR performs only the
+short handoff and passes the remaining work to `ASync` with `AssignJobFromCallback(job, in_isr)`. On
+systems with threads a worker thread runs the job; on systems without threads
+(`LIBXR_NOT_SUPPORT_MUTI_THREAD`) a software Timer runs it in normal context, and a long job delays
+other callbacks on the same Timer.
 
 ## A practical rule of thumb
 
-To make a quick engineering decision, ask three things:
+Three questions decide where a step belongs:
 
 - is this step part of hardware handoff
 - is its execution time short and bounded

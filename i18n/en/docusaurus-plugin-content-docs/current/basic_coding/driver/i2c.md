@@ -55,6 +55,8 @@ virtual ErrorCode MemWrite(uint16_t slave_addr, uint16_t mem_addr,
 - `slave_addr`: target I2C slave address, **without the R/W bit**.
 - `in_isr`: whether this I2C operation is initiated/progressed in ISR context (default `false`).
 
+See [Operation Model](../core/core-op.md) and [BLOCK Timeout and Completion Handoff](../../adv_coding/driver/block_timeout_semantics.md) for completion modes of `ReadOperation` / `WriteOperation`.
+
 ## Feature Summary
 
 - Supports reading and writing I2C devices and their registers;  

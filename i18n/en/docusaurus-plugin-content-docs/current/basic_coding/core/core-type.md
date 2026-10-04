@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Raw Data and Type Identification
 
-This module provides the `RawData` and `ConstRawData` classes for encapsulating raw data, along with the `TypeID` utility for type identification without relying on RTTI. These tools are useful for data description and cross-module data transfer in embedded environments.
+`libxr_type.hpp` provides the raw data views `RawData` and `ConstRawData` and the RTTI-free type identifier `TypeID`, used to pass raw data between interfaces.
 
 ---
 
@@ -22,10 +22,10 @@ A generic data wrapper that stores a pointer and size in bytes.
 
 - `RawData(void* addr, size_t size)` – Specify address and size directly.
 - `RawData()` – Default constructor for empty data.
-- `RawData(T&)` – Construct from a **writable** object, referencing its address.
+- `RawData(T&)` – Construct from a **writable** object, referencing its address, with size `sizeof(T)`; `std::string` and `std::string_view` are not accepted.
 - `RawData(char*)` – Construct from a C-style string (excluding the trailing `\0`).
 - `RawData(char (&str)[N])` – Construct from a writable char array, trimming at most one trailing `\0`.
-- `RawData(std::string&)` – Construct from a **writable** `std::string`.
+- `explicit RawData(std::string&)` – Construct from a writable `std::string`, viewing its text.
 
 ### Fields
 
@@ -44,13 +44,14 @@ Read-only data wrapper, similar to `RawData` but with an immutable address:
 
 ### Constructors
 
-- Supports construction from arbitrary objects, `RawData`, `char* / const char*`, `std::string`, `std::string_view`, and char arrays.
+- Constructible from arbitrary objects (except `std::string` and `std::string_view`), `RawData`, `char* / const char*` and char arrays; `std::string` and `std::string_view` convert only explicitly (the constructors are `explicit`).
 - Ensures `addr_` is of type `const void*`, suitable for read-only views.
 
 Additional notes:
 
 - Char-array construction currently trims **at most one trailing `\0`**, not every zero byte in the array.
 - `char* / const char*` construction uses `std::strlen(...)`, so it expects a NUL-terminated string.
+- `std::string` and `std::string_view` do not convert implicitly to `ConstRawData` or `RawData`: passing one directly to such a parameter or initializing with `=` fails to compile. A text view must be written explicitly as `LibXR::ConstRawData(text)` (a writable `std::string` also as `LibXR::RawData(text)`), with size `text.size()`.
 
 ### Fields
 
@@ -89,4 +90,4 @@ Useful for type registration, dispatching, or distinguishing types without runti
 
 - Passing raw data via generic interfaces, data buffers, or IPC mechanisms
 - Uniquely identifying types in RTTI-less environments (e.g., embedded registries, plugin systems)
-- Wrapping and passing structs via components like `LibXR::Topic`
+- Passing structs with `LibXR::Topic`

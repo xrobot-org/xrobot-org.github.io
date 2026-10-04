@@ -6,11 +6,11 @@ sidebar_position: 5
 
 # 编码规范
 
-这里整理仓库当前采用的代码写法。
+这里整理 LibXR 仓库当前采用的 C++ 代码写法。`driver/` 和 `system/` 中的厂商与平台代码不要求遵循下面的命名规则。Python 代码的写法见 [Python 编码规范](./coding_style_python.md)。
 
 ## 命名
 
-- 类型、类、结构体、枚举类型、成员函数使用 `PascalCase`。
+- 类型、类、结构体、枚举类型、成员函数和自由函数使用 `PascalCase`。
 
 ```cpp
 class Logger
@@ -47,8 +47,7 @@ enum class ErrorCode : int8_t
 ```cpp
 namespace LibXR
 {
-}
-
+// ...
 }  // namespace LibXR
 ```
 
@@ -70,12 +69,12 @@ typedef RBTree<uint32_t>::Node<Block>* TopicHandle;
 #include "thread.hpp"
 ```
 
-- 头文件中的 include 保持现有顺序，不为整理做无关重排。
+- include 由 clang-format 按分组排序（`IncludeBlocks: Regroup`），同一组内按字母顺序排列。
 
 ```cpp
-#include "app_framework.hpp"
 #include "async.hpp"
 #include "database.hpp"
+#include "event.hpp"
 ```
 
 - 头文件统一使用 `#pragma once`。
@@ -103,7 +102,7 @@ class Thread
 
 - 列宽和换行交给仓库中的 `.clang-format` 处理；当前配置基于 `Google`，`ColumnLimit` 为 `90`。
 
-- 允许为可读性保留现有空行和局部排版，不为了追求机械一致而改动无关段落。
+- 连续空行最多保留一行，其余版式以 clang-format 的结果为准；需要保留手工排版的段落用 `// clang-format off` 和 `// clang-format on` 包围。
 
 - 访问说明符不额外缩进，成员相对类体缩进两空格。
 
@@ -128,10 +127,10 @@ class Logger
 static void Sleep(uint32_t milliseconds);
 ```
 
-- `constexpr`、`static constexpr`、`static inline` 继续按现有习惯使用。
+- `inline constexpr`、`static constexpr`、`static inline` 继续按现有习惯使用。
 
 ```cpp
-static constexpr size_t LIBXR_CACHE_LINE_SIZE = (sizeof(void*) == 8) ? 64 : 32;
+inline constexpr size_t HW_CACHE_LINE_SIZE = (sizeof(void*) == 8) ? 64 : 32;
 static inline bool initialized_ = false;
 ```
 
@@ -143,7 +142,7 @@ explicit DatabaseRawSequential(Flash& flash, size_t max_buffer_size = 256);
 operator uint64_t() const;
 ```
 
-- 指针和引用的空格风格以局部文件现有写法为准。仓库里同时存在 `const char*` 和 `const char *`，不要为了统一这一点扩大改动范围。
+- 指针和引用的 `*`、`&` 紧跟类型，写作 `const char* name`、`Flash& flash`（Google 风格的 `PointerAlignment: Left`）。
 
 ## 注释
 
@@ -182,8 +181,7 @@ int ans = pthread_create(&this->thread_handle_, &attr, ThreadBlock::Port, block)
 
 ```cpp
 // NOLINTNEXTLINE
-static void Publish(LogLevel level, const char* file, uint32_t line, const char* fmt,
-                    ...);
+goto add_again;
 ```
 
 - 条件编译保持直接展开，不额外包装。
@@ -202,25 +200,31 @@ extern "C" __attribute__((weak)) void vApplicationStackOverflowHook(...);
 
 ## 测试代码
 
-- `test/` 下的代码可以比公共头文件更直接，允许使用局部宏、数组字面量和较紧凑的测试驱动写法。
+- `test/` 下的代码可以比公共头文件更直接，允许使用测试专用的宏、数组字面量和较紧凑的测试驱动写法。
 
 ```cpp
-#define TEST_STEP(_arg)                                \
-  do                                                   \
-  {                                                    \
-    test_name = _arg;                                  \
+#define TEST_ASSERT(condition)                                                          \
+  do                                                                                    \
+  {                                                                                     \
+    if (!(condition))                                                                   \
+    {                                                                                   \
+      std::fprintf(stderr, "%s:%d: test failed: %s\n", __FILE__, __LINE__, #condition); \
+      std::abort();                                                                     \
+    }                                                                                   \
   } while (0)
 ```
 
 - 但命名、括号风格和基本版式仍然保持与主代码一致。
+- 测试放在哪里、测什么、怎样确认每个测试都有作用，见[测试规范](./testing.md)。
 
 ## clang-format
 
 - 仓库根目录已有 `.clang-format`。
-- CI 使用 `clang-format 21.1.8`，检查入口是：
+- CI 使用 `clang-format 21.1.8` 检查 `driver/`、`src/`、`system/` 和 `test/` 下的全部 C/C++ 源文件，检查入口是：
 
 ```bash
 tools/format_cpp_files.sh --check
 ```
 
-- 默认检查 `driver/`、`src/`、`system/` 和 `test/` 下的 C/C++ 文件；也可以传入具体文件。
+- 不带 `--check` 时脚本就地格式化；后面列出文件时只处理这些文件。
+- CMake 文件由 `tools/format_cmake_files.sh --check` 检查，CI 使用 `cmakelang[YAML]==0.6.13`。

@@ -1,10 +1,15 @@
 name: Deploy Docusaurus to GitHub Pages
 
+# dev and pull requests are built; master is built and deployed to GitHub Pages.
 on:
   push:
     branches:
-      - main
-      - XRobot2.0
+      - master
+      - dev
+  pull_request:
+    branches:
+      - master
+      - dev
   workflow_dispatch:
 
 permissions:
@@ -13,7 +18,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -36,11 +41,13 @@ jobs:
         run: npm run build
 
       - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./build
 
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
     needs: build
     runs-on: ubuntu-latest
     environment:

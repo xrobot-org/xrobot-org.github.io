@@ -8,13 +8,13 @@ sidebar_position: 1
 
 `LibXR::Flag` 提供一组非常轻量的布尔状态工具，适合表达“忙闲”、“请求待处理”、“某事件是否发生过”这类简单状态。
 
-当前主线提供三部分内容：
+`Flag` 包含三部分：
 
 - `Flag::Atomic`：原子标志位，适合线程 / 多核 / ISR 共享状态。
 - `Flag::Plain`：普通标志位，不提供并发保护。
 - `Flag::ScopedRestore<FlagT>`：作用域恢复辅助器，进入作用域时改写标志，离开作用域时恢复旧值。
 
-> `Flag` 不是互斥锁，也不是自旋锁；它只负责保存和交换一个布尔状态，不提供临界区互斥语义。
+`Flag` 只保存和交换一个布尔值；需要互斥访问时使用 [Mutex](../system/mutex.md)。
 
 ---
 
@@ -102,4 +102,4 @@ LibXR::Flag::Plain in_callback;
 - 单线程局部状态：优先用 `Flag::Plain`。
 - 需要“进入作用域改写，退出自动恢复”：配合 `ScopedRestore` 使用。
 
-如果你真正需要的是互斥访问而不是简单状态标记，应使用 [Mutex](../system/mutex.md) 或其他同步原语，而不是 `Flag`。
+需要互斥访问时，使用 [Mutex](../system/mutex.md) 或其他同步原语。

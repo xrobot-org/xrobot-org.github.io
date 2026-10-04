@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # BLOCK 超时与完成交接
 
-这页讨论的不是 `SPI / I2C / UART` 的接口列表，而是 `BLOCK` 超时在异步完成路径里的实际含义。问题的核心始终是同一个：调用者已经不等了，底层还会不会继续完成；如果会，这次完成还能不能再去唤醒旧 waiter、访问旧 buffer。
+本文说明异步完成路径中 `BLOCK` 超时的含义：调用者停止等待之后，底层是否还会完成；如果会，这次完成是否还能唤醒原来的等待者、访问原来的缓冲区。
 
 ## 1. `BLOCK timeout` 的真实含义
 
@@ -20,7 +20,7 @@ sidebar_position: 4
 
 ## 2. 为什么要有 detach 语义
 
-如果 timeout 后只把等待状态粗暴清零，会遇到一个典型问题：
+如果超时后只把等待状态清零，会出现以下问题：
 
 1. 调用者已经返回 `TIMEOUT`；
 2. 老的底层完成稍后到来；
@@ -28,7 +28,7 @@ sidebar_position: 4
 
 所以等待路径要先把“这次 waiter 还属不属于当前调用者”说清楚。`AsyncBlockWait` 用 `DETACHED` 表达 timeout 已经分离 waiter；`WritePort` 也有自己的 `BLOCK_DETACHED` / `BLOCK_RETIRE_WAITING` 来处理“调用已返回，但请求还在队列里”的情况。
 
-detach 的目标不是假装底层工作消失了，而是让迟到完成知道：旧 waiter 已经不能再被唤醒。
+detach 让迟到完成知道旧 waiter 已经不能再被唤醒，底层工作本身仍会继续。
 
 ## 3. `AsyncBlockWait` 解决什么问题
 
@@ -43,9 +43,11 @@ detach 的目标不是假装底层工作消失了，而是让迟到完成知道�
 | `CLAIMED` | 完成方已经认领通知 |
 | `DETACHED` | timeout 已经把 waiter 分离 |
 
-`Start(sem)` 先把 waiter 挂成 `PENDING`。完成方只有成功做出 `PENDING -> CLAIMED`，才写入结果并 post；timeout 方则在仍是 `PENDING` 时切到 `DETACHED`。如果完成先 claim，`Wait()` 即使最初那次有限等待已经超时，也要继续等这次已经归属当前调用的 post，再返回最终结果。
+`Start(sem)` 先把 waiter 挂成 `PENDING`。完成方（`TryPost(...)`）只有成功做出 `PENDING -> CLAIMED`，才写入结果并 post；timeout 方则在仍是 `PENDING` 时切到 `DETACHED`。如果完成先 claim，`Wait()` 即使最初那次有限等待已经超时，也要继续等这次已经归属当前调用的 post，再返回最终结果。迟到完成看到 `DETACHED` 时只把状态清回 `IDLE`，不再 post。
 
-这个模型解决的是 waiter ownership，不负责自动 stop DMA，也不保证 caller buffer 已经安全。
+`Cancel()` 在硬件启动失败时把状态清回 `IDLE`，不发送通知。`AsyncBlockWait` 不检查上一次传输是否结束：`Start()` 总是进入 `PENDING`，若旧传输的迟到完成在此之后到达，会认领新的等待者。因此驱动在调用 `Start()` 前须确认硬件空闲，例如 `STM32SPI` 在 HAL 状态不是 `HAL_SPI_STATE_READY` 时返回 `BUSY`。
+
+这个模型只处理 waiter 的归属；停止 DMA、保证 caller buffer 的状态由具体驱动负责。
 
 ---
 
@@ -66,13 +68,13 @@ detach 的目标不是假装底层工作消失了，而是让迟到完成知道�
 
 ### 4.2 把旧 semaphore token 当成本次完成
 
-如果一个 semaphore 被重复用于多次等待，而调用路径只把 `sem->Wait(...) == OK` 当成成功，上一次遗留的 token 就可能被误认成当前完成。
+如果一个 semaphore 被重复用于多次 `BLOCK` 调用，而等待路径只把 `sem->Wait(timeout) == OK` 当成成功，上一次残留的 token 就可能被误认成当前完成。
 
-正确做法是由请求状态先确认“这次 wake 到底属于谁”。`AsyncBlockWait` 要求状态已经是 `CLAIMED`；端口自己的 BLOCK 路径也有对应的 ownership phase。semaphore 是唤醒通道，不是请求身份本身。
+正确做法是由请求状态先确认“这次 wake 到底属于谁”：等待状态须已由本次操作的完成方切换为 `CLAIMED`（`AsyncBlockWait` 的 `CLAIMED`，或端口的 `BLOCK_CLAIMED`）。semaphore 是唤醒通道，不是请求身份本身。
 
 ### 4.3 timeout 后只返回，不处理所有权
 
-这类实现表面最简单，后果却最难排。timeout 返回之后，老完成路径还可能修改共享状态、继续 post，甚至覆盖新 waiter 的 ownership。
+超时返回之后，旧的完成路径仍可能修改共享状态、再次 post 信号量，甚至覆盖新等待者的归属。
 
 因此 timeout 返回前至少要完成一件事：要么安全取消这次软件请求，要么把 waiter detach，让迟到完成静默退出；如果完成已经 claim，则等这次交接结束。
 
@@ -107,21 +109,21 @@ detach 的目标不是假装底层工作消失了，而是让迟到完成知道�
 
 读端口借用的是调用者接收缓冲区。timeout 后最重要的事情，是返回之前结束对这块缓冲区的访问，所以它可以取消尚未完成的软件读，并在必要时等待已经 claim 的处理方退出。
 
-写端在接纳时已经复制源数据，caller 的源 buffer 可以在调用返回后复用。因此 timeout 面对的是另一件事：**队列里的旧请求怎样继续退休，同时不再碰旧 waiter 的 semaphore。** 这就是 `BLOCK_DETACHED` / `BLOCK_RETIRE_WAITING` 存在的原因。
+写端在接纳时已经复制源数据，caller 的源 buffer 可以在调用返回后复用。因此 timeout 处理的是另一件事：队列里的旧请求怎样继续退出，同时不再触碰旧 waiter 的 semaphore。`BLOCK_DETACHED` / `BLOCK_RETIRE_WAITING` 用于这种情况。
 
-不要把“读 timeout 后 buffer 安全”和“写 timeout 后传输撤销”混成同一个保证。后者并不存在。
+读端超时保证返回后接收缓冲区不再被访问；写端超时不撤销已经接纳的传输。
 
-## 7. 清队列和硬件 abort 不是一回事
+## 7. 清队列与硬件 abort
 
 `ReadPort::ClearQueuedData()` 只清已经排队的字节，有活动请求时返回 `BUSY`。它不取消挂起请求，也不停止 UART/DMA。
 
 具体驱动如果提供重新配置、abort 或复位路径，需要自己保证：旧 DMA 已经停稳，旧 completion 不会再访问已经释放的外部缓冲，端口/等待器状态也已经完成交接。软件队列清空只是其中一个动作。
 
-这和 timeout 的本质是一致的：最危险的从来不是“返回了哪个错误码”，而是返回之后还有谁可能继续动旧状态。
+这与 timeout 的问题相同：关键在于返回之后还有谁可能继续修改旧状态。
 
 ## 8. 一个实用判断标准
 
-看某个 `BLOCK` 驱动路径写得对不对，先问几件事：
+检查一个 `BLOCK` 驱动路径时确认以下几点：
 
 - waiter 是不是在硬件可能完成之前就挂好；
 - timeout 后，完成所有权有没有明确 detach 或安全取消；
@@ -129,5 +131,3 @@ detach 的目标不是假装底层工作消失了，而是让迟到完成知道�
 - 成功返回时 caller-visible buffer 是否已经更新；
 - timeout 返回后还有没有 DMA/ISR 可能访问 caller-owned storage；
 - 对写事务，调用者是否知道 timeout 后请求仍可能执行。
-
-这些问题都能给出清楚答案，`BLOCK` 语义才真正站得住。

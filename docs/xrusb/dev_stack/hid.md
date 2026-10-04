@@ -6,11 +6,11 @@ sidebar_position: 2
 
 # HID 设备协议栈
 
-本节介绍 XRUSB 的 **USB HID（Human Interface Device）** 设备类实现与扩展方式，覆盖：
+本节介绍 XRUSB 的 USB HID（Human Interface Device）设备类实现与扩展方式，覆盖：
 
 - HID 模板化基类 `LibXR::USB::HID<REPORT_DESC_LEN, TX_REPORT_LEN, RX_REPORT_LEN>`
 - 自动生成配置描述符块（Interface + HID Descriptor + Endpoint Descriptors）
-- 可选 **Interrupt OUT**（Output Report over Interrupt OUT）
+- 可选 Interrupt OUT（Output Report over Interrupt OUT）
 - 标准请求 `GET_DESCRIPTOR`（HID / Report Descriptor）
 - HID 类请求（`GET_REPORT/SET_REPORT/GET_IDLE/SET_IDLE/GET_PROTOCOL/SET_PROTOCOL`）处理框架
 - Input Report 发送与 IN/OUT 完成回调
@@ -31,6 +31,19 @@ sidebar_position: 2
 - `RX_REPORT_LEN`：Output Report 最大长度（Interrupt OUT 端点最大包长）
   - 若需要使用 OUT 中断端点，除设置合适的 `RX_REPORT_LEN` 外，还需要在构造时显式启用 `enable_out_endpoint`
 
+构造函数：
+
+```cpp
+HID(Endpoint::EPNumber in_ep_num, Endpoint::EPNumber out_ep_num,
+    bool enable_out_endpoint = false, uint8_t in_ep_interval = 10,
+    uint8_t out_ep_interval = 10,
+    const char* interface_string = DEFAULT_INTERFACE_STRING);  // "XRUSB HID"
+```
+
+- `out_ep_num`：不启用 OUT 端点时传 `Endpoint::EPNumber::EP_INVALID`
+- `in_ep_interval` / `out_ep_interval`：写入端点描述符的 `bInterval`；基类默认 10，`HIDMouse`、`HIDKeyboard`、`HIDGamepadT` 默认 1
+- 派生类：`HIDMouse(in_ep_num, in_ep_interval = 1, interface_string)`、`HIDKeyboard(in_ep_num, out_ep_num, enable_out_endpoint = false, in_ep_interval = 1, out_ep_interval = 1, interface_string)`、`HIDGamepadT(in_ep_num, interface_string)`
+
 基类提供：
 
 - 端点申请与配置：Interrupt IN（必选）+ Interrupt OUT（可选）
@@ -46,7 +59,7 @@ sidebar_position: 2
 
 ### 2.1 Interface
 
-HID 基类贡献 **1 个 HID 接口**，不使用 IAD：
+HID 基类贡献 1 个 HID 接口，不使用 IAD：
 
 - `bInterfaceClass = 0x03`（HID）
 - `bNumEndpoints = 1`（仅 IN）或 `2`（IN + OUT）
@@ -182,13 +195,13 @@ IN 发送完成后会触发 `OnDataInComplete(in_isr, data)`，典型用途：
 
 ### 7.1 `HIDMouse`
 
-- 标准 Boot 鼠标
+- 报告格式与 HID Boot 鼠标相同
 - Input Report：常见为 4 字节（Buttons + X + Y + Wheel）
 - 仅启用 IN 端点
 
 ### 7.2 `HIDKeyboard`
 
-- 标准 Boot 键盘
+- 报告格式与 HID Boot 键盘相同
 - Input Report：常见为 8 字节（Modifier + Reserved + 6 KeyCodes）
 - 可选启用 OUT 端点（例如 1 字节 LED）
 - 也可兼容主机通过控制端点下发 LED（`SET_REPORT`）
@@ -206,7 +219,7 @@ IN 发送完成后会触发 `OnDataInComplete(in_isr, data)`，典型用途：
 - Input Report 与 Report Descriptor 在编译期固化
 - 通常提供便捷发送接口用于更新轴值与按键位图
 
-当前主线中还直接提供了两个常用别名：
+另有两个常用别名：
 
 - `HIDGamepad = HIDGamepadT<0, 2047, 1>`
 - `HIDGamepadBipolar = HIDGamepadT<-2048, 2047, 1>`
@@ -224,12 +237,11 @@ IN 发送完成后会触发 `OnDataInComplete(in_isr, data)`，典型用途：
 ```cpp
 #include "hid_mouse.hpp"
 
-using EP = LibXR::USB::Endpoint::EPNumber;
-LibXR::USB::HIDMouse hid_mouse(EP::EP1);
+LibXR::USB::HIDMouse hid_mouse(LibXR::USB::Endpoint::EPNumber::EP1);
 
 // usb_dev class list: {{&hid_mouse}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 
 hid_mouse.Move(LibXR::USB::HIDMouse::LEFT, 10, 0);
 hid_mouse.Release();
@@ -240,9 +252,9 @@ hid_mouse.Release();
 ```cpp
 #include "hid_keyboard.hpp"
 
-// enable_out_endpoint=true 可启用 OUT 中断端点接收 LED（可选）
-using EP = LibXR::USB::Endpoint::EPNumber;
-LibXR::USB::HIDKeyboard hid_kbd(EP::EP1, EP::EP1, true);
+// IN 与 OUT 都用 EP1；第三个参数 true 启用 OUT 中断端点接收 LED（可选）
+LibXR::USB::HIDKeyboard hid_kbd(LibXR::USB::Endpoint::EPNumber::EP1,
+                                LibXR::USB::Endpoint::EPNumber::EP1, true);
 
 // 发送：Shift + A
 hid_kbd.PressKey({LibXR::USB::HIDKeyboard::KeyCode::A},
@@ -266,11 +278,10 @@ hid_kbd.SetOnLedChangeCallback(
 ```cpp
 #include "hid_gamepad.hpp"
 
-using EP = LibXR::USB::Endpoint::EPNumber;
-LibXR::USB::HIDGamepad gamepad(EP::EP1);
+LibXR::USB::HIDGamepad gamepad(LibXR::USB::Endpoint::EPNumber::EP1);
 gamepad.Send(1024, 1024, 1024, 1024, LibXR::USB::HIDGamepad::BTN1);
 
-LibXR::USB::HIDGamepadBipolar bipolar_gamepad(EP::EP2);
+LibXR::USB::HIDGamepadBipolar bipolar_gamepad(LibXR::USB::Endpoint::EPNumber::EP2);
 bipolar_gamepad.SendAxes(0, -512, 512, 0);
 ```
 

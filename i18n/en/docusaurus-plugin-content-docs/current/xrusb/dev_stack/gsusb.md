@@ -6,23 +6,23 @@ sidebar_position: 4
 
 # GSUSB Device Stack
 
-This document describes XRUSB’s **GSUSB (Linux `gs_usb`)** device class implementation: `LibXR::USB::GsUsbClass<CanChNum>`.
+This document describes XRUSB’s GSUSB (Linux `gs_usb`) device class implementation: `LibXR::USB::GsUsbClass<CanChNum>`.
 
-This device class targets **USB-to-CAN** usage in the Linux/SocketCAN ecosystem. It uses a **Vendor Interface + Bulk IN/OUT** transport model and implements the commonly used control plane and data plane of the `gs_usb` protocol.
+This device class targets USB-to-CAN usage in the Linux/SocketCAN ecosystem. It uses a Vendor Interface + Bulk IN/OUT transport model and implements the commonly used control plane and data plane of the `gs_usb` protocol.
 
 Supported capabilities:
 
-- **Classic CAN**: up to 8 bytes of data
-- **CAN FD (optional)**: up to 64 bytes of data; DLC mapping follows the FD table
-- **TX echo**: echoes back `echo_id` for host-side TX buffer tracking
-- **Optional timestamp field**: `timestamp_us` (4 bytes) appended to the end of the wire frame, sourced from the low 32 bits of `LibXR::Timebase::GetMicroseconds()`
-- **Multi-channel**: the number of channels is fixed at compile time by the template parameter `CanChNum`
+- Classic CAN: up to 8 bytes of data
+- CAN FD (optional): up to 64 bytes of data; DLC mapping follows the FD table
+- TX echo: echoes back `echo_id` for host-side TX buffer tracking
+- Optional timestamp field: `timestamp_us` (4 bytes) appended to the end of the wire frame, sourced from the low 32 bits of `LibXR::Timebase::GetMicroseconds()`
+- Multi-channel: the number of channels is fixed at compile time by the template parameter `CanChNum`
 
 ---
 
 ## 1. Class and construction
 
-In `GsUsbClass<CanChNum>`, `CanChNum` is the compile-time CAN channel count (`1..255`). Channel indices are exposed as `uint8_t`. At construction, you must provide a list of channel object pointers whose **count equals `CanChNum`**.
+In `GsUsbClass<CanChNum>`, `CanChNum` is the compile-time CAN channel count (`1..255`). Channel indices are exposed as `uint8_t`. The constructor takes a list of channel object pointers whose count equals `CanChNum`.
 
 This class supports both Classic CAN and FDCAN (with FD capability enabled) via different constructors.
 
@@ -36,14 +36,15 @@ GsUsbClass(Endpoint::EPNumber data_in_ep_num,
            size_t echo_queue_size = 32,
            LibXR::GPIO* identify_gpio = nullptr,
            std::initializer_list<LibXR::GPIO*> termination_gpios = {},
-           LibXR::Database* database = nullptr);
+           LibXR::Database* database = nullptr,
+           const char* interface_string = DEFAULT_INTERFACE_STRING);  // "XRUSB GS USB"
 ```
 
 Notes:
 
 - `cans`: list of Classic CAN pointers; the count must equal `CanChNum`
-- Default endpoint numbers are **EP1 (IN) / EP2 (OUT)** to satisfy constraints of some older kernels/drivers regarding endpoint layout
-- The Linux `gs_usb` driver often matches devices via a **VID:PID whitelist** and may require `bInterfaceNumber == 0`. It is recommended to place this class as the first interface in the configuration
+- Endpoint numbers are required; older kernel `gs_usb` drivers use fixed EP1 IN / EP2 OUT, so these numbers keep compatibility with them
+- The Linux `gs_usb` driver often matches devices via a VID:PID whitelist and may require `bInterfaceNumber == 0`. It is recommended to place this class as the first interface in the configuration
 
 ### 1.2 FDCAN constructor (FD enabled)
 
@@ -55,13 +56,13 @@ GsUsbClass(Endpoint::EPNumber data_in_ep_num,
            size_t echo_queue_size = 32,
            LibXR::GPIO* identify_gpio = nullptr,
            std::initializer_list<LibXR::GPIO*> termination_gpios = {},
-           LibXR::Database* database = nullptr);
+           LibXR::Database* database = nullptr,
+           const char* interface_string = DEFAULT_INTERFACE_STRING);  // "XRUSB GS USB"
 ```
 
 Notes:
 
 - `fd_cans`: list of FDCAN pointers; the count must equal `CanChNum`
-- If the driver does not restrict endpoint numbers, IN/OUT endpoint numbers must be specified explicitly
 - Whether FD is truly usable depends on both device-side FD support and whether the host enables FD mode for the channel via the control plane
 
 ---
@@ -70,12 +71,12 @@ Notes:
 
 ### 2.1 Interface descriptor
 
-`GsUsbClass` exposes **one interface** and does not use an IAD. The interface class/subclass/protocol are fixed to `0xFF/0xFF/0xFF` (Vendor Specific), with 2 endpoints.
+`GsUsbClass` exposes one interface and does not use an IAD. The interface class/subclass/protocol are fixed to `0xFF/0xFF/0xFF` (Vendor Specific), with 2 endpoints.
 
 ### 2.2 Bulk endpoints
 
-- **Bulk OUT**: Host → Device (host sends CAN/FD frames; carries `echo_id` for TX echo)
-- **Bulk IN**: Device → Host (device reports RX frames/error frames, plus TX echo replies)
+- Bulk OUT: Host → Device (host sends CAN/FD frames; carries `echo_id` for TX echo)
+- Bulk IN: Device → Host (device reports RX frames/error frames, plus TX echo replies)
 
 The maximum transfer length is determined by the underlying `Endpoint` implementation; configuration uses `UINT16_MAX` as an upper bound.
 
@@ -98,14 +99,14 @@ struct WireHeader {
 
 Conventions:
 
-- For **RX frames** reported by the device, `ECHO_ID_RX = 0xFFFFFFFF` is used
-- If the host sends a frame with `echo_id != 0xFFFFFFFF`, the device generates a corresponding **TX echo** event and sends it back
+- For RX frames reported by the device, `ECHO_ID_RX = 0xFFFFFFFF` is used
+- If the host sends a frame with `echo_id != 0xFFFFFFFF`, the device generates a corresponding TX echo event and sends it back
 
 Payload and length:
 
-- Classic CAN: payload is fixed at **8 bytes**
-- CAN FD: payload is fixed at **64 bytes**
-- Optional timestamp: if enabled for the channel, append **4 bytes `timestamp_us`** (microseconds, low 32 bits) after the payload
+- Classic CAN: payload is fixed at 8 bytes
+- CAN FD: payload is fixed at 64 bytes
+- Optional timestamp: if enabled for the channel, append 4 bytes `timestamp_us` (microseconds, low 32 bits) after the payload
 
 Total length:
 
@@ -133,7 +134,7 @@ Initialization typically includes:
 - Register endpoint callbacks:
   - OUT complete: parse host wire frames
   - IN complete: attempt to continue sending the next frame
-- Reset runtime state and keep the OUT endpoint armed whenever possible (to avoid host “stalling” on sends)
+- Reset runtime state and keep the OUT endpoint armed so the host can send continuously
 - Register CAN RX callbacks (enqueue received frames/error frames and trigger transmission)
 
 ### 4.2 UnbindEndpoints
@@ -161,13 +162,13 @@ After receiving one OUT frame, the device:
 
 Device-to-host traffic comes from two sources:
 
-1. **TX echo (higher priority)**: used by the host to track transmit completion
-2. **RX reports**: Classic/FD frames received by the channels, plus optional error frames
+1. TX echo (higher priority): used by the host to track transmit completion
+2. RX reports: Classic/FD frames received by the channels, plus optional error frames
 
 Transmission policy:
 
 - A send is started only when the IN endpoint is idle
-- Dequeue order: **echo first, then RX reports**
+- Dequeue order: echo first, then RX reports
 - The IN complete callback triggers the next send attempt for continuous output
 
 ---
@@ -231,8 +232,8 @@ Dev gsusb(/*in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
           /*db*/&db);
 
 // USB device class list: {{&gsusb}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 ```
 
 ### 9.2 FDCAN (1 channel)
@@ -245,4 +246,4 @@ Dev gsusb(/*in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
           {&fdcan1});
 ```
 
-On Linux, the device is typically enumerated by the `gs_usb` driver as a SocketCAN interface (e.g., `can0`). You can then use `ip link set can0 up type can bitrate ...` or tools like `cansend`/`candump` for transmit/receive.
+On Linux, the device is typically enumerated by the `gs_usb` driver as a SocketCAN interface (e.g., `can0`). `ip link set can0 up type can bitrate ...` and tools such as `cansend` / `candump` then transmit and receive.

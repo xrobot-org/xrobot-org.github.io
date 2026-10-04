@@ -13,7 +13,7 @@ sidebar_position: 3
 | 目标         | 说明                                                                                  |
 | ---------- | ----------------------------------------------------------------------------------- |
 | **跨平台**    | 统一 API 隐藏 `pthread`, `xTask`, `TX_THREAD` 等差异。 |
-| **轻量可裁剪**  | 当前主线依赖 C++20 与可选 RTOS 头文件；可在无 OS 场景开启。                            |
+| **轻量可裁剪**  | 依赖 C++20 与可选的 RTOS 头文件，也可用于无 OS 场景。 |
 | **优先级枚举**  | 采用 `enum class Priority { IDLE…REALTIME }`，由每个移植层映射到本地优先级区间，避免直接暴露 OS 常量。           |
 | **时间基准统一** | 所有 `Sleep` / `SleepUntil` 以 **毫秒** 为单位，`GetTime()` 返回系统启动后的毫秒计数，方便跨平台超时逻辑。          |
 
@@ -21,22 +21,24 @@ sidebar_position: 3
 
 | 方法                                                                                                               | 作用                                                 |
 | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `template <typename Arg> void Create(Arg arg, void (*func)(Arg), const char* name, size_t stack, Priority prio)` | 创建并启动线程，支持任意函数签名；栈深、优先级参数由各平台解释。                   |
+| `template <typename Arg> void Create(Arg arg, void (*func)(Arg), const char* name, size_t stack, Priority prio)` | 创建并启动线程。线程函数的形式为 `void(Arg)`；`stack` 为栈大小（字节，none、webasm 后端忽略），`prio` 由各平台映射到本地优先级。 |
 | `static Thread Current()`                                                                                        | 获取当前线程对象包装。                                        |
 | `static uint32_t GetTime()`                                                                                      | 返回自启动以来的毫秒计数（32 位环绕）。                              |
 | `static void Sleep(uint32_t ms)`                                                                                 | 阻塞当前线程指定毫秒。                                        |
 | `static void SleepUntil(MillisecondTimestamp& last, uint32_t period)`                                            | 周期性延时，常用于固定周期循环。`last` 在函数内自动更新。                   |
 | `static void Yield()`                                                                                            | 主动让出 CPU，调用底层 `sched_yield()` / `taskYIELD()` 等实现。 |
 | `operator libxr_thread_handle()`                                                                                 | 隐式转换为底层线程句柄，供与平台 API 交互。                           |
+| `Thread(libxr_thread_handle handle)` | 由底层线程句柄构造线程对象。 |
+| `ErrorCode Join()` | 等待线程结束，仅 Linux、Webots 后端提供。 |
 
 > **提示**：若系统不支持线程优先级或实时调度，可在移植层内部降级处理，不影响上层逻辑。
 
 ## 典型用法
 
-线程函数的参数一定要与 `Create` 函数的 `arg` 参数类型一致，否则无法识别。
+线程函数的形式为 `void(ArgType)`，`arg` 的类型须与线程函数参数类型相同，`ArgType` 由二者推导，类型不一致时编译失败。
 
 ```cpp
-#include <thread.hpp>
+#include <libxr.hpp>
 
 void Blink(int* arg) {
     auto last = LibXR::Timebase::GetMilliseconds();
@@ -57,14 +59,18 @@ int main() {
 }
 ```
 
+在 none、webasm 后端上，`Create()` 在当前上下文直接调用 `Blink`；`Blink` 不返回，`Create()` 之后的代码不会执行。
+
 ## 平台适配概览
 
 | 平台                       | 头/源文件                       | 关键映射                                                          |
 | ------------------------ | --------------------------- | ------------------------------------------------------------- |
 | **Linux / POSIX**        | `system/linux/thread.hpp` + `thread.cpp`    | `pthread_create`, `clock_nanosleep`, `sched_yield`            |
-| **FreeRTOS**             | `system/freertos/thread.hpp` + `thread.cpp` | `xTaskCreate`, `vTaskDelay`, `xTaskGetTickCount`              |
+| **FreeRTOS**             | `system/freertos/thread.hpp` + `thread.cpp` | `xTaskCreate`, `vTaskDelay`, `xTaskGetTickCount`；要求 `configTICK_RATE_HZ == 1000`、`configMAX_PRIORITIES >= 6`（编译期检查） |
 | **ThreadX (Azure RTOS)** | `system/threadx/thread.hpp` + `thread.cpp`  | `tx_thread_create`, `tx_thread_sleep`, `tx_thread_relinquish` |
 | **None（单线程/裸机）**   | `system/none/thread.hpp` + `thread.cpp`     | 轮询 `Timebase` + `Timer::RefreshTimerInIdle` 实现软延时      |
+| **Webots** | `system/webots/thread.hpp` + `thread.cpp` | `pthread_create`；`Sleep` / `SleepUntil` 等待仿真时间通知（`pthread_cond_timedwait`） |
+| **WebAssembly** | `system/webasm/thread.hpp` + `thread.cpp` | 与 None 相同：`Create()` 直接调用线程函数，延时期间轮询 `Timebase` 并调用 `Timer::RefreshTimerInIdle` |
 
 移植新平台时，仅需：
 

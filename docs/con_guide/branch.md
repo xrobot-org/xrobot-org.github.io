@@ -8,6 +8,10 @@ sidebar_position: 3
 
 贡献时默认从当前主开发分支拉出工作分支，不直接在主分支上修改。一个分支只处理一个主题，不在同一分支上长期堆叠多个无关任务。
 
+## dev 与 master
+
+xrobot-org 与 QDU-Robomaster 的官方仓库（包括本文档网站）使用两条长期分支：`dev` 接收 PR，`master` 只从 `dev` 合入，用于发布。工作分支从 `dev` 拉出，PR 提交到 `dev`。本网站的 `master` 更新后自动部署到 xrobot.work，`dev` 和 PR 只做构建检查。
+
 ## 分支
 
 - 分支名直接反映改动主题。

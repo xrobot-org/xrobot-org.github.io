@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Inertia
 
-`inertia.hpp` currently exposes two physical-value types in mainline:
+`inertia.hpp` provides two types:
 
 - `LibXR::Inertia<Scalar>`: rigid-body inertia tensor plus mass
 - `LibXR::CenterOfMass<Scalar>`: center-of-mass position plus mass
@@ -19,7 +19,7 @@ Like the types described on the [Transform](./transform.md) page, this group is 
 
 ### 1.1 Data layout
 
-`Inertia<Scalar>` currently exposes two public pieces of data:
+`Inertia<Scalar>` exposes two public pieces of data:
 
 - `data[9]`: the 3x3 inertia tensor
 - `mass`: the mass value
@@ -31,7 +31,7 @@ Default construction initializes:
 
 ### 1.2 Construction forms
 
-Current mainline supports these main construction forms:
+The main construction forms are:
 
 - `Inertia(mass, data[9])`
 - `Inertia(mass, matrix[3][3])`
@@ -39,9 +39,9 @@ Current mainline supports these main construction forms:
 - `Inertia(mass, xx, yy, zz, xy, yz, xz)`
 - `Inertia(mass, Eigen::Matrix<Scalar, 3, 3>)`
 
-The 6-value and explicit-component forms are convenient when inertia is already available as principal and cross terms.
+The 6-value and 7-argument forms take the principal moments and products of inertia in the order `xx, yy, zz, xy, yz, xz` and store the negated products as off-diagonal elements (for example, element `(0, 1)` is `-xy`); the 9-element array, 3x3 array, and Eigen matrix forms store the full tensor as given.
 
-### 1.3 Main operations in current mainline
+### 1.3 Main operations
 
 - conversion to `Eigen::Matrix<Scalar, 3, 3>`
 - `operator()(i, j)` for element access
@@ -63,7 +63,7 @@ Its public data members are:
 - `position`
 - `mass`
 
-Current mainline supports these common construction forms:
+Common construction forms:
 
 - `CenterOfMass(mass, Position)`
 - `CenterOfMass(mass, Eigen::Matrix<3,1>)`
@@ -99,6 +99,6 @@ LibXR::CenterOfMass<> cog(rotated, pose);
 
 ## 4. Usage guidance
 
-- If you only need geometry and pose, `Transform / Quaternion / RotationMatrix` are enough; use `Inertia` only when mass distribution, center of mass, or inertia conversion matters.
+- For geometry and pose only, `Transform / Quaternion / RotationMatrix` are enough; `Inertia` is needed when mass distribution, center of mass, or inertia conversion matters.
 - `Translate()` and `Rotate()` return new inertia objects, which fits transformation-chain style calculations well.
 - When the build disables Eigen through `LIBXR_NO_EIGEN`, these types are unavailable and should not be part of public module boundaries.

@@ -35,7 +35,7 @@ public:
 - Can be applied in scenarios such as power button handling, remote commands, low battery strategies, etc.;  
 - The specific behavior is implemented by the platform, while the interface remains consistent to facilitate portability and abstraction.
 
-## Current interface boundaries
+## Notes
 
-- `PowerManager` is currently a very narrow abstraction surface: only `Reset()`, `Shutdown()`, and `JumpToBootloader()` with the default fallback to `Reset()`.
-- It does not currently define richer common policy surfaces such as state queries, event callbacks, or standardized low-power mode enums. If a platform offers those capabilities, they still belong to the concrete implementation or to a higher-level policy layer rather than to this base-class contract.
+- `PowerManager` has three calls: `Reset()`, `Shutdown()`, and `JumpToBootloader()`, which calls `Reset()` by default.
+- State queries, event callbacks, and low-power levels are left to concrete platform implementations or upper-layer code.

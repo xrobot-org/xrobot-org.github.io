@@ -1,51 +1,59 @@
 ---
 id: core-string
-title: Fixed-Length String
-sidebar_position: 5
+title: Runtime String
+sidebar_position: 6
 ---
 
-# RuntimeStringView
+# Runtime String
 
-The current public runtime string utility is `LibXR::RuntimeStringView<...>` from `libxr_string.hpp`. The older `String<N>` API has been removed from current source.
+`libxr_string.hpp` provides `LibXR::RuntimeStringView<Source, Args...>`, a runtime-built, retained NUL-terminated string for module names, topic names and runtime-formatted results that are built once or rewritten repeatedly.
 
-`RuntimeStringView` is intended for module names, topic names, device paths, and formatted text that is created during initialization or on first formatting and then retained. It stores NUL-terminated text and reuses prepared storage for later rewrites.
+- The text is kept in internal storage and can be read repeatedly through `View()` / `CStr()`.
+- A formatted instance allocates capacity from a compile-time upper bound before its first rewrite and reuses that storage.
 
-## Plain text construction
+## Two construction paths
+
+1. Plain text copy / concatenation
 
 ```cpp
 LibXR::RuntimeStringView<> topic_name("camera/front");
 LibXR::RuntimeStringView<> path("/dev/", "ttyUSB0");
 ```
 
-This path copies/concatenates text. Character pointers must reference valid NUL-terminated strings.
+This path accepts text inputs only; numbers go through the rewrite path below. Character pointers must reference valid NUL-terminated strings.
 
-## Formatted rewrites
+2. Formatted rewrite
 
 ```cpp
 LibXR::RuntimeStringView<"camera_{}", unsigned int> name;
-name.Reformat(7U);
+if (name.Reformat(7U) != LibXR::ErrorCode::OK) {
+  // handle the failure
+}
+// name.View() == "camera_7"
 
 LibXR::RuntimeStringView<"frame_%03u", unsigned int> frame;
-frame.Reprintf(5U);
+if (frame.Reprintf(5U) != LibXR::ErrorCode::OK) {
+  // handle the failure
+}
+// frame.View() == "frame_005"
 ```
 
-- `Reformat(...)` uses brace formatting;
-- `Reprintf(...)` uses printf-style formatting;
-- rewrite argument types match template `Args...`;
-- runtime strings are not formatted arguments; concatenate runtime text through the plain-text path.
+- `Reformat(...)` uses brace-style formatting.
+- `Reprintf(...)` uses printf-style formatting.
+- The argument types of a rewrite call must match `Args...` exactly.
 
-## Common accessors
+## Semantics
+
+- Formatted arguments must be value types with a statically bounded size; runtime string arguments are rejected at compile time, and text concatenation uses the plain `RuntimeStringView<>` constructors.
+- The destructor does not free the allocated storage; the type suits names and formatted results allocated once and reused.
+- `Status()` reports the latest construction or rewrite result; after a failure the visible text is empty.
+- Copy construction and all assignments are deleted; move construction takes over the storage and leaves the source empty.
+
+## Common access APIs
 
 - `std::string_view View() const`
 - `const char* CStr() const`
 - `size_t Size() const`
 - `bool Empty() const`
 - `ErrorCode Status() const`
-
-A formatting failure clears the visible string; check the result or `Status()`.
-
-## Storage semantics
-
-Formatted storage is prepared from a compile-time capacity bound and reused on later rewrites. Destruction currently does not free allocated storage, so the type is aimed at long-lived retained names/text rather than a short-lived general-purpose string container.
-
-Use a standard-library owning string for ordinary automatic reclamation, or an application-owned fixed character array with `Print::*IntoBuffer()` when fixed capacity is required.
+- Implicit conversion to `std::string_view` and `const char*`.

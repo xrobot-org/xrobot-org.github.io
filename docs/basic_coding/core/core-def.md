@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # 公共定义
 
-本模块提供 LibXR 中最基础的宏、常量、错误码及通用模板函数，广泛用于其他模块的实现。它避免平台差异、简化编码，并为调试与运行时检查提供基础设施。
+`libxr_def.hpp` 提供 LibXR 中最基础的宏、常量、错误码及通用模板函数，其他头文件都依赖它。
 
 ## 数学与物理常量
 
@@ -22,8 +22,8 @@ sidebar_position: 1
 
 ## 对齐与缓存行定义
 
-- `HW_CACHE_LINE_SIZE`: 硬件缓存行大小，64 位平台通常为 64 字节，32 位平台通常为 32 字节。
-- `CONCURRENCY_ALIGNMENT`: 并发结构使用的对齐粒度；单核与多核配置下可能不同。
+- `HW_CACHE_LINE_SIZE`：硬件缓存行大小，指针为 8 字节的平台取 64，其余取 32。
+- `CONCURRENCY_ALIGNMENT`：并发结构使用的对齐粒度。`LIBXR_SINGLE_CORE` 为真时取 `sizeof(size_t)`，否则取 `HW_CACHE_LINE_SIZE`；CMake 中 linux、webots、windows 平台默认 `LIBXR_SINGLE_CORE=OFF`，其余平台默认 `ON`。
 - `CACHE_LINE_SIZE`: 面向旧代码保留的缓存行别名。
 - `ALIGN_SIZE`: 平台自然对齐大小，当前取 `sizeof(void*)`。
 
@@ -64,7 +64,7 @@ sidebar_position: 1
 - `MORE`: 大于或等于参考值  
 - `NONE`: 不限制尺寸
 
-当前主线还直接提供：
+尺寸检查函数：
 
 ```cpp
 constexpr bool SizeLimitCheck(SizeLimitMode mode, size_t limit, size_t size) noexcept;
@@ -77,7 +77,7 @@ constexpr bool SizeLimitCheck(SizeLimitMode mode, size_t limit, size_t size) noe
 提供统一的运行时断言机制：
 
 - `ASSERT(x)`: 在调试模式下检查表达式是否为真，否则触发致命错误
-- `ASSERT_FROM_CALLBACK(x, in_isr)`: 用于回调上下文的断言检查
+- `ASSERT_FROM_CALLBACK(x, in_isr)`：用于回调或 ISR，`in_isr` 传给 `libxr_fatal_error()`
 
 在 `LIBXR_DEBUG_BUILD` 编译宏启用时生效，触发时会调用：
 
@@ -89,22 +89,24 @@ void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
 
 ## 通用模板工具
 
-除基础枚举与常量外，当前主线还直接提供：
+此外还提供：
 
 - `OffsetOf(member)`：通过成员指针计算成员偏移量；
 - `ContainerOf(ptr, member)`：通过成员指针恢复所属对象指针；
 - `MemberObjectPointer` / `CommonOrdered` 这类 concept 约束。
 
-这些接口当前主要服务于底层容器、驱动胶水层和零 RTTI 的对象回溯路径。
+这些接口主要用于底层容器和驱动代码中由成员指针恢复所属对象。
 
 ## 通用模板函数
 
 ```cpp
-template <typename T1, typename T2>
-constexpr auto LibXR::max(T1 a, T2 b) -> common_type<T1, T2>::type;
+template <typename LeftType, typename RightType>
+  requires CommonOrdered<LeftType, RightType>
+constexpr auto LibXR::max(LeftType a, RightType b) -> std::common_type_t<LeftType, RightType>;
 
-template <typename T1, typename T2>
-constexpr auto LibXR::min(T1 a, T2 b) -> common_type<T1, T2>::type;
+template <typename LeftType, typename RightType>
+  requires CommonOrdered<LeftType, RightType>
+constexpr auto LibXR::min(LeftType a, RightType b) -> std::common_type_t<LeftType, RightType>;
 ```
 
-用于计算任意类型的最大/最小值，支持整数、浮点等常见数值类型。
+两个参数须有公共类型且可比较大小，返回值为公共类型，例如 `LibXR::max(3, 4.5)` 返回 4.5（`double`）。

@@ -6,27 +6,25 @@ sidebar_position: 1
 
 # STM32 USB 实现
 
-STM32一共有四种USB设备，如下所示。可以参考代码生成工具自动生成的CDC代码，了解USB设备的端点配置。  
-在 STM32 平台上，**设备序列号建议使用芯片内置 UID（Unique ID），在构造函数最后以十六进制数组形式传入。**
+STM32 有三种 USB 设备控制器，见下表。完整的端点配置可以参考[代码生成工具](/docs/code_gen/stm32/stm32-code-gen-uart)生成的 CDC 代码。  
+设备序列号建议使用芯片内置 UID：把 UID 的地址和长度作为构造函数的最后一个参数传入，协议栈将其转换为十六进制字符串追加在 Serial 前缀之后。
 
-| 当前主线路径 | 对应类 | 角色 | 说明 |
+| 控制器 | 对应类 | 角色 | 说明 |
 | ------------ | ------ | ---- | ---- |
 | `USB_BASE / FSDEV` | `LibXR::STM32USBDeviceDevFs` | 从机 | FSDEV / DRD FS 的设备侧路径 |
 | `USB_OTG_FS` | `LibXR::STM32USBDeviceOtgFS` | 主机/从机中的设备侧 | OTG FS 设备路径 |
 | `USB_OTG_HS` | `LibXR::STM32USBDeviceOtgHS` | 主机/从机中的设备侧 | OTG HS 设备路径 |
 
-由于STM32的USB_DEVICE_FS不支持DMA，所以硬件双缓冲的加速作用并不高于LibXR的软件双缓冲区。而且会大量占用宝贵的PMA内存，不推荐使用硬件双缓冲。
-
 ## `STM32USBDeviceDevFs`
 
 `STM32USBDeviceDevFs` 支持两种端点声明方式，缓冲区端点号自动递增：
 
-1. `{usb_fs_ep0_in_buf, usb_fs_ep0_out_buf, 8, 8}`：声明一个双向端点，无法使用硬件双缓冲
+1. `{usb_fs_ep0_in_buf, usb_fs_ep0_out_buf, 8, 8}`：声明一个双向端点
     - usb_fs_ep0_in_buf: EP0 IN软件缓冲区数组
-    - usb_fs_ep0_out_buf: EP0 OUT软件缓冲区大小
+    - usb_fs_ep0_out_buf: EP0 OUT软件缓冲区数组
     - 8: EP0 IN硬件RAM大小
     - 8: EP0 OUT硬件RAM大小
-2. `{usb_fs_ep2_in_buf, 16, true}`：声明一个单向端点 ~~使用硬件双缓冲~~
+2. `{usb_fs_ep2_in_buf, 16, true}`：声明一个单向端点
     - usb_fs_ep2_in_buf: EP2 IN软件缓冲区数组
     - 16: EP2 IN硬件RAM大小
     - bool: 是in方向
@@ -49,7 +47,7 @@ STM32USBDeviceDevFs usb_fs(
     {&USB_FS_LANG_PACK},
     /* Classes */
     {{&usb_fs_cdc}},
-    /* Serial Number UID（从 STM32 UID 读取的十六进制字节数组） */
+    /* Serial Number UID（STM32 UID 原始字节的地址和长度） */
     {reinterpret_cast<void *>(UID_BASE), 12}
 );
 ```
@@ -80,11 +78,11 @@ STM32USBDeviceOtgFS usb_fs(
     {&USB_OTG_FS_LANG_PACK},
     /* Classes */
     {{&usb_otg_fs_cdc}},
-    /* Serial Number UID（从 STM32 UID 读取的十六进制字节数组） */
+    /* Serial Number UID（STM32 UID 原始字节的地址和长度） */
     {reinterpret_cast<void *>(UID_BASE), 12}
 );
-usb_fs.Init();
-usb_fs.Start();
+usb_fs.Init(false);
+usb_fs.Start(false);
 ```
 
 ## 运行
@@ -92,6 +90,6 @@ usb_fs.Start();
 添加以下语句即可。
 
 ```cpp
-usb_fs.Init();
-usb_fs.Start();
+usb_fs.Init(false);
+usb_fs.Start(false);
 ```

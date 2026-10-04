@@ -6,9 +6,9 @@ sidebar_position: 2
 
 # Transform（坐标与姿态变换）
 
-`transform.hpp` 提供了 LibXR 当前主线中的一组几何基础类型，包括位置、方向、欧拉角、旋转矩阵、四元数与刚体变换。
+`transform.hpp` 提供 LibXR 的几何基础类型，包括位置、方向、欧拉角、旋转矩阵、四元数与刚体变换。
 
-这些类型当前都受 `LIBXR_NO_EIGEN` 控制：
+这些类型受 `LIBXR_NO_EIGEN` 控制：
 
 - 未定义 `LIBXR_NO_EIGEN` 时，相关类型可用；
 - 定义 `LIBXR_NO_EIGEN` 时，整个头文件内容不会参与编译。
@@ -29,7 +29,7 @@ using DefaultScalar = LIBXR_DEFAULT_SCALAR;
 
 `Position` 继承自 `Eigen::Matrix<Scalar, 3, 1>`，表示三维位置向量。
 
-当前主线提供的常见能力包括：
+提供的常见能力包括：
 
 - 通过 `(x, y, z)`、`Eigen::Matrix<3,1>` 或长度为 3 的数组构造；
 - 通过 `RotationMatrix` / `Quaternion` 做旋转；
@@ -40,7 +40,7 @@ using DefaultScalar = LIBXR_DEFAULT_SCALAR;
 
 `Axis` 同样继承自 `Eigen::Matrix<Scalar, 3, 1>`，用于表达方向或单位轴。
 
-当前主线提供了三个便捷静态构造：
+提供三个便捷静态构造：
 
 - `Axis<>::X()`
 - `Axis<>::Y()`
@@ -61,7 +61,7 @@ using DefaultScalar = LIBXR_DEFAULT_SCALAR;
 
 `RotationMatrix` 继承自 `Eigen::Matrix<Scalar, 3, 3>`，默认构造为单位阵。
 
-当前主线支持：
+支持：
 
 - 从 `Eigen::Matrix<3,3>`、`Eigen::Quaternion`、`LibXR::Quaternion`、数组构造；
 - 与 `Position`、`Eigen::Matrix<3,1>`、其他 `RotationMatrix` 相乘；
@@ -74,7 +74,7 @@ using DefaultScalar = LIBXR_DEFAULT_SCALAR;
 
 `Quaternion` 继承自 `Eigen::Quaternion<Scalar>`，默认构造为单位四元数 `(1, 0, 0, 0)`。
 
-当前主线支持：
+支持：
 
 - 从 `(w, x, y, z)`、旋转矩阵、Eigen 四元数、长度为 4 的数组构造；
 - 四元数加减乘除；
@@ -92,26 +92,26 @@ using DefaultScalar = LIBXR_DEFAULT_SCALAR;
 - `rotation`：`Quaternion<Scalar>`
 - `translation`：`Position<Scalar>`
 
-当前主线提供：
+提供：
 
 - 默认单位变换；
 - `Transform(rotation, translation)` 构造；
 - 用 `operator=` 单独设置旋转或平移分量；
-- `operator+` 进行当前实现定义下的变换组合；
-- `operator-` 进行当前实现定义下的相对变换计算。
+- `a + b` 组合两个变换：旋转为 `qa * qb`，平移为 `pa + qa * pb`；
+- `a - b`：旋转为 `qa * qb⁻¹`，平移为 `pa - pb`。平移直接相减，因此 `(a + b) - b` 一般不等于 `a`。
 
 ---
 
 ## 2. 与 Eigen 的关系
 
-这一组类型是在 Eigen 之上补一层更贴近机器人 / 嵌入式用法的轻量封装，并不会把 Eigen 封死。
+`Position`、`Axis`、`RotationMatrix`、`Quaternion` 继承自对应的 Eigen 类型，`EulerAngle` 可以与 `Eigen::Matrix<Scalar, 3, 1>` 互相转换，在此之上补充 LibXR 约定的构造方式和运算符。
 
-因此它们具有两个明显特点：
+因此：
 
 - 可直接从 Eigen 类型构造，或转换回 Eigen 类型；
 - 默认接口会额外提供一些 LibXR 约定的快捷操作，例如 `Axis::X()`、默认 `ZYX` 旋转顺序、`Transform` 的组合写法等。
 
-如果工程本身已经大量使用 Eigen，可以把这些类型理解为“与 LibXR 其他模块配套的几何壳层”。
+已经使用 Eigen 的代码可以直接把这些对象传给接受对应 Eigen 类型的函数。
 
 ---
 

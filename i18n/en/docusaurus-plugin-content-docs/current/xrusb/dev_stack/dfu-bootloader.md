@@ -1,7 +1,7 @@
 ---
 id: xrusb-dev-stack-dfu-bootloader
 title: DFU Bootloader
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # DFU Bootloader Device Stack
@@ -26,18 +26,18 @@ Constructor:
 ```cpp
 LibXR::USB::DfuBootloaderBackend backend(
     flash,
-    image_base,
+    image_offset,
     image_limit,
     seal_offset,
     jump_to_app,
-    jump_ctx,
+    jump_app_ctx,
     true);
 ```
 
 Parameters:
 
 - `flash`: underlying `Flash` instance
-- `image_base`: start address of the image region
+- `image_offset` (named `image_base` in `DfuBootloaderClass`): start offset of the image region inside the `flash` object, not an absolute address
 - `image_limit`: total image-region size
 - `seal_offset`: offset of the seal record inside the image region
 - `jump_to_app`: callback used to jump into the application firmware
@@ -55,7 +55,7 @@ LibXR::USB::DfuBootloaderClass dfu_bl(
     image_limit,
     seal_offset,
     jump_to_app,
-    jump_ctx,
+    jump_app_ctx,
     true,
     "XRUSB DFU");
 ```
@@ -69,7 +69,7 @@ Internally, the class combines:
 
 ## 2. Interface and Descriptors
 
-`DfuBootloaderClass` contributes **one DFU interface** only, does not use an IAD, and does not allocate additional data endpoints. All data moves over control transfers.
+`DfuBootloaderClass` contributes one DFU interface only, does not use an IAD, and does not allocate additional data endpoints. All data moves over control transfers.
 
 - `GetInterfaceCount() = 1`
 - `HasIAD() = false`
@@ -88,13 +88,13 @@ The DFU Functional Descriptor fields are reported from backend `DFUCapabilities`
 
 The current default alias `DfuBootloaderClass` uses a maximum transfer block size of `4096` bytes, and that value is written into `wTransferSize`.
 
-In addition to the optional WebUSB BOS capability, the bootloader DFU path also exposes a **WinUSB MS OS 2.0** descriptor set by default through `DfuInterfaceClassBase`, using device-scoped WinUSB metadata unless overridden in the constructor.
+In addition to the optional WebUSB BOS capability, the bootloader DFU path also exposes a WinUSB MS OS 2.0 descriptor set by default through `DfuInterfaceClassBase`, using device-scoped WinUSB metadata unless overridden in the constructor.
 
 ---
 
 ## 3. Supported Requests and Behavior
 
-Current mainline supports:
+Supported requests:
 
 | Request | Behavior |
 | ---- | ---- |
@@ -152,7 +152,7 @@ dfu_bl.Process();
 - pending writes
 - manifest processing
 
-So this path also does not require a dedicated background thread, but **it must be called continuously from the main loop or a periodic task**. If nothing calls it, the host may see `GETSTATUS` transitions, but actual writes and manifest completion will not keep advancing.
+`Process()` must be called continuously from the main loop or a periodic task. Without it, the host sees `GETSTATUS` stay in a waiting state, and writes and manifest do not proceed.
 
 If `autorun` is enabled, a ready image still needs to be consumed explicitly at the upper layer:
 
@@ -178,7 +178,7 @@ static void JumpToApp(void*)
 
 LibXR::USB::DfuBootloaderClass dfu_bl(
     flash,
-    APP_IMAGE_BASE,
+    APP_IMAGE_OFFSET,  // offset inside the flash object
     APP_IMAGE_LIMIT,
     APP_SEAL_OFFSET,
     JumpToApp,
@@ -186,8 +186,8 @@ LibXR::USB::DfuBootloaderClass dfu_bl(
     true);
 
 // USB class list: {{&dfu_bl}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 
 for (;;)
 {

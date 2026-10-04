@@ -8,7 +8,7 @@ sidebar_position: 3
 
 LibXR provides a lightweight software timer that can even be used in bare-metal environments.
 
-For non-bare-metal environments (e.g., with an RTOS), the software timer requires specifying thread priority and stack depth.
+With FreeRTOS and ThreadX, the software timer runs in a thread of its own, which needs a thread priority and a stack depth.
 
 ## Example
 
@@ -18,31 +18,21 @@ For bare-metal systems, the following code will be generated without any paramet
 PlatformInit();
 ```
 
-For RTOS environments, you need to provide thread priority and stack depth:
+In FreeRTOS and ThreadX projects, the thread priority and stack depth are passed:
 
 ```cpp
-PlatformInit(2, 1024);
+PlatformInit(static_cast<uint32_t>(Thread::Priority::MEDIUM), 1024);
 ```
 
-The first parameter is the thread priority, and the second is the stack depth.
+## Thread Priority
 
-Thread priorities are defined as follows:
+The generated code expresses thread priorities as levels of `LibXR::Thread::Priority`, from low to high `IDLE`, `LOW`, `MEDIUM`, `HIGH` and `REALTIME`. The software timer, the terminal thread and the watchdog thread all use this form.
 
-```cpp
-  enum class Priority : uint8_t
-  {
-    IDLE = 0,      ///< Idle priority
-    LOW = 1,       ///< Low priority
-    MEDIUM = 2,    ///< Medium priority
-    HIGH = 3,      ///< High priority
-    REALTIME = 4,  ///< Realtime priority
-    NUMBER = 5     ///< Number of priority levels
-  };
-```
+LibXR converts the levels to RTOS priorities by the RTOS priority count. On FreeRTOS the step is `(configMAX_PRIORITIES - 1) / 5`; `IDLE` is 0 and `LOW` to `REALTIME` are 1 to 4 steps. With a `configMAX_PRIORITIES` of 7, for example, `MEDIUM` is 2, and with 56 (the CubeMX default for CMSIS_V2) it is 22. On ThreadX lower numbers are higher priorities: `REALTIME` is 1 and `HIGH` to `IDLE` are 1 to 4 steps, the step being `(TX_MAX_PRIORITIES - 1) / 5`.
 
 ## Configuration File
 
-For non-bare-metal systems, the following configuration will be generated in `User/libxr_config.yaml`:
+`software_timer` in `User/libxr_config.yaml` sets these two arguments; bare-metal projects do not use it:
 
 ```yaml
 software_timer:
@@ -50,5 +40,6 @@ software_timer:
   stack_depth: 1024
 ```
 
-You can modify this file directly. To apply updated settings, run `xr_cubemx_cfg -d .` or  
-`xr_gen_code_stm32 -i ./.config.yaml -o ./User/app_main.cpp` to regenerate the code.
+`priority` takes 0 to 4 or a level name in any case; 0 to 4 stand for `IDLE`, `LOW`, `MEDIUM`, `HIGH` and `REALTIME`, and the default is 2 (`MEDIUM`). Any other value stops generation. The `thread_priority` of the terminal and the watchdog takes the same values.
+
+After editing the file, run `libxr stm32 setup -d .` to regenerate the code.

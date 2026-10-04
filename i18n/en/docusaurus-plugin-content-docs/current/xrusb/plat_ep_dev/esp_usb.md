@@ -82,7 +82,7 @@ Notes:
 
 `ESP32CDCJtag` lives in `driver/esp/esp_cdc_jtag.*`. It derives from `LibXR::UART` and wraps the chip’s built-in `USB Serial/JTAG` controller as a UART backend.
 
-This path is not part of the generic XRUSB device-controller implementation, so it does **not** participate in:
+This path is not part of the generic XRUSB device-controller implementation, so it does not participate in:
 
 - `USB::DeviceCore`
 - `EndpointPool`

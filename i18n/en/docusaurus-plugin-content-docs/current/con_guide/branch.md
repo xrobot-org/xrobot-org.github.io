@@ -8,6 +8,10 @@ sidebar_position: 3
 
 Contributions should start from the current main development branch. Do not work directly on the main branch. One branch should only carry one topic.
 
+## dev and master
+
+The official repositories of xrobot-org and QDU-Robomaster, including this documentation website, use two long-lived branches: `dev` receives pull requests, and `master` only merges from `dev` for releases. Work branches start from `dev`, and pull requests target `dev`. For this website, an update of `master` deploys to xrobot.work; `dev` and pull requests are only built.
+
 ## Branches
 
 - Branch names should reflect the change topic directly.

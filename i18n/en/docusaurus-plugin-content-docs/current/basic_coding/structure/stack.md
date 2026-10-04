@@ -1,7 +1,7 @@
 ---
 id: stack
 title: Stack
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 # Stack
@@ -58,7 +58,7 @@ s.Pop(value);  // value == 2
 - This stack uses a mutex for protection, making it suitable for multithreaded use but not for interrupt contexts.
 - For ultra-high performance needs, consider using a lock-free structure instead.
 - Index-based access still requires careful bounds handling; the current `operator[](int32_t index)` negative-index rule is “offset downward from the current top”, not “index from the storage tail”.
-- The current header does not add an explicit destructor around the internal `new Data[depth]` allocation, so do not assume richer ownership or cleanup behavior than the code provides.
+- The internal array is allocated at construction and is not freed when the `Stack` is destroyed, so the class suits long-lived objects.
 
 ## Typical Applications
 

@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # LinuxSharedTopic 设计
 
-基础用法见基础消息系统里的“共享内存 Topic（Linux）”页面。本文说明它与普通 `Topic` 的分工，以及当前实现的取舍。
+基础用法见 [共享内存 Topic（Linux）](/docs/basic_coding/middleware/message/message-linux-shared-topic)。本文说明它与普通 `Topic` 的分工，以及当前实现的取舍。
 
 ## 1. 为什么不直接改 `Topic`
 
@@ -31,21 +31,21 @@ sidebar_position: 2
 
 ---
 
-## 3. 为什么 hot path 用 `atomic + futex`
+## 3. 为什么热路径用 `atomic + futex`
 
 这条实现的关键约束是：
 
-- hot path 不走 mutex
+- 热路径（发布与接收）不使用 mutex
 - publish / consume 侧尽量只做原子状态推进
 - 等待路径再用 futex 睡眠
 
-它的目标不是完全无等待，而是把 mutex 从 publish/consume 热路径里拿掉，把真正的等待收拢到 futex 睡眠那一层。
+发布和接收路径只做原子状态推进，需要等待时才通过 futex 睡眠。
 
 ## 4. 为什么用 refcount reclaim，而不是覆盖写
 
 共享内存队列的一个危险场景是：publisher 想继续写，但某个 subscriber 还没读完旧数据。
 
-这里用 refcounted slot reclamation，slot 用尽时对 publisher 施加 backpressure，而不是 overwrite-in-use。代价是高压下 publisher 可能因 slot 耗尽而失败；好处是不会在 subscriber 仍持有数据时把 payload 覆盖掉。这是安全优先的取舍。
+这里按引用计数回收 slot：slot 用尽时发布失败，对发布者形成反压，不覆盖仍被订阅者持有的数据。代价是高压下 publisher 可能因 slot 耗尽而失败；好处是不会在 subscriber 仍持有数据时把 payload 覆盖掉。这是安全优先的取舍。
 
 ---
 
@@ -89,16 +89,16 @@ sidebar_position: 2
 行为边界：
 
 - 一个 publish 最多只投给一个 balanced subscriber
-- 只要组内还有别的成员能接，full member 会被跳过
+- 组内还有其他成员能接收时，队列已满的成员会被跳过
 - balanced group 存在但没有任何 member 能接时，整个 publish 失败
 
 它的语义是“一组 worker 共享消费同一 topic”，不是“广播之后顺便轮流处理”。
 
 ---
 
-## 8. 为什么需要 stale subscriber / publisher takeover
+## 8. 失效订阅者回收与发布者接管
 
-共享内存 IPC 容易残留两类垃圾：
+进程异常退出后，共享内存中可能遗留两类状态：
 
 - 死掉的 subscriber 还占着 slot
 - 死掉的 publisher 留下旧 segment
@@ -107,8 +107,6 @@ sidebar_position: 2
 
 - dead subscriber recycle：subscriber 侧跟踪 owner identity
 - stale publisher takeover：publisher 侧在 create-side reopen 时回收死进程遗留的 segment
-
-没有这一步，Linux IPC 跑久了会出现“逻辑上没人用了，但共享状态还卡着”的问题。
 
 ---
 
@@ -144,5 +142,3 @@ standard-case 的 `latency_avg` 容易受 scheduler 和启动 backlog 污染：�
 - MCU 侧 ISR 驱动路径
 - 进程内轻量 publish/subscribe
 - payload 不是 trivially copyable
-
-它是主机 IPC 的专门实现，不是普通 `Topic` 的升级版。

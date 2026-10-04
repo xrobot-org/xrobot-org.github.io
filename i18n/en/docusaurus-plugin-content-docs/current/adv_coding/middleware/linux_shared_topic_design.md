@@ -6,7 +6,8 @@ sidebar_position: 2
 
 # LinuxSharedTopic Design
 
-For the basic API, see the "Shared-Memory Topic (Linux)" page in the basic message-system section.
+For the basic API, see
+[Shared-Memory Topic (Linux)](/en/docs/basic_coding/middleware/message/message-linux-shared-topic).
 The material below covers the boundary between `LinuxSharedTopic<T>` and ordinary `Topic`, and the
 tradeoffs behind the current implementation.
 
@@ -88,7 +89,36 @@ Under a slow-subscriber overload, the two modes behave differently:
 
 The choice is about whether the system values complete delivery more than freshness and throughput.
 
-## 7. Handle and shared-layout lifetime
+## 7. `BALANCE_RR` semantics
+
+`BALANCE_RR` forms a separate balanced subscriber group; it is not a cursor added to the broadcast
+path.
+
+- one publish is delivered to at most one balanced subscriber;
+- a member whose queue is full is skipped while another member can accept;
+- when a balanced group exists but no member can accept, the whole publish fails.
+
+The group shares the consumption of one topic among several workers.
+
+## 8. Stale subscriber recycling and publisher takeover
+
+After a process exits abnormally, shared memory can retain two kinds of state: a dead subscriber
+still holding slots, and a segment left by a dead publisher. Each subscriber slot records its owner
+identity (PID and process start time), so slots of dead subscribers are recycled; when the
+publisher creates the topic and finds a segment left by a dead process, it reclaims that segment.
+
+## 9. Why `latency_avg` is often not meaningful on its own
+
+The standard-case `latency_avg` is easily skewed by the scheduler and the startup backlog: when the
+publisher starts sending before the subscriber has settled into waiting, the average includes time
+spent queued and differs from the latency of a single delivery.
+
+Two measurements are more meaningful:
+
+- saturated-throughput queueing latency: queueing behavior when the system is fully loaded
+- single-outstanding one-way latency: the path of one message from publish until a wait returns it
+
+## 10. Handle and shared-layout lifetime
 
 A raw payload pointer is valid only while its data handle remains valid. Handles obtained through a
 subscriber also depend on that subscriber slot. On an orderly shutdown, release active data first,
@@ -98,9 +128,16 @@ Every process also needs the same understanding of `T` layout, ABI, and shared-m
 Use fixed-layout payloads; process-private pointers and owning objects such as `std::string` do not
 become valid cross-process state merely because the outer object lives in shared memory.
 
-## 8. Positioning
+## 11. Where it fits
 
-`LinuxSharedTopic<T>` is the right tool when the requirement is inter-process communication, large
-shared payloads, and zero-copy read-side behavior. Ordinary `Topic` remains the in-process,
-lightweight publish-subscribe path. The two are related by topic semantics, but they are not the
-same transport model.
+Suitable for:
+
+- sharing large payloads between processes on a Linux host
+- explicit subscriber policies (`FULL / DROP_OLD / RR`)
+- avoiding extra user-space payload copies
+
+Not suitable for:
+
+- ISR-driven paths on an MCU
+- lightweight in-process publish/subscribe
+- payloads that are not trivially copyable

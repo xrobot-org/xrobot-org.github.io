@@ -30,7 +30,7 @@
 ## 二、重新运行 CodeGenerator，找到 STM32UART 对象
 1. 在工程根目录重新生成 LibXR 相关代码：
    - 回到 VS Code，确认当前打开的是 STM32 工程根目录（包含 .ioc 和 CMakeLists.txt 的那一层）。
-   - 打开终端，在根目录执行一次完整的代码生成流程，例如：xr_cubemx_cfg -d .。
+   - 打开终端，在根目录执行一次完整的代码生成流程，例如：libxr stm32 setup -d .。
    - 生成结束后重新构建工程，确保仍然可以通过编译。
 2. 在 app_main.cpp 中找到硬件串口对象：
    - 打开 User/app_main.cpp，搜索 "STM32UART"。

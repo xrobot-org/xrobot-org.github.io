@@ -23,6 +23,7 @@ set(LIBXR_SYSTEM linux CACHE STRING "" FORCE)
 set(LIBXR_DRIVER linux CACHE STRING "" FORCE)
 add_subdirectory(libxr)
 
+add_executable(app main.cpp)
 target_link_libraries(app PRIVATE xr)
 ```
 
@@ -88,13 +89,13 @@ LIBXR_DEFAULT_SCALAR
 
 ## XRobot 模块
 
-在引入 LibXR 前设置 `XROBOT_MODULES_DIR`：
+在引入 LibXR 前设置 `XROBOT_MODULES_DIR`（需要 CMake 3.19 或更新）：
 
 ```cmake
 set(XROBOT_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Modules")
 add_subdirectory(libxr)
 ```
 
-LibXR 会检查该目录下各模块的 `CMakeLists.txt` 并依次包含。
+LibXR 随后包含该目录下由 `xrobot setup` 生成的 `CMakeLists.txt`，并检查 `User/xrobot_main.hpp`，见 XRobot 的 [CMake 集成](../proj_man/setup.md)。
 
 更换系统、驱动、编译器或 SDK 后，建议使用新的 build 目录，避免旧 CMake cache 保留上一套探测结果。

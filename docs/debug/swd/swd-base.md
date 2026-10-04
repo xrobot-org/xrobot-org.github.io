@@ -6,13 +6,13 @@ sidebar_position: 1
 
 # SWD 基类（`LibXR::Debug::Swd`）
 
-本文档描述 `LibXR::Debug::Swd`：一个面向 **SWD 探针/链路后端** 的抽象基类。它提供最小的链路控制接口、一次传输原语（`Transfer()`），以及在其之上构建的 **WAIT 重试封装** 与 **DP/AP 辅助函数**，用于被更上层（例如 CMSIS-DAP、调试器、烧录器）复用。
+本文档描述 `LibXR::Debug::Swd`：一个面向 SWD 探针和链路后端的抽象基类。它提供最小的链路控制接口、一次传输原语（`Transfer()`），以及在其之上构建的 WAIT 重试封装与 DP/AP 辅助函数，用于被更上层（例如 CMSIS-DAP、调试器、烧录器）复用。
 
 ---
 
 ## 1. 设计定位
 
-`Swd` 的定位是“**可移植的 SWD 事务层抽象**”：
+`Swd` 是可移植的 SWD 事务层抽象：
 
 - 由派生类实现硬件相关部分：GPIO/USART/SPI/bitbang、时序、端点驱动、并发策略等。
 - 基类负责通用逻辑：

@@ -2,21 +2,5 @@
   "version.label": {
     "message": "Next",
     "description": "The label for version current"
-  },
-  "sidebar.docs.category.Environment Setup": {
-    "message": "Environment Setup",
-    "description": "The label for category Environment Setup in sidebar docs"
-  },
-  "sidebar.docs.category.Code Generation": {
-    "message": "Code Generation",
-    "description": "The label for category Code Generation in sidebar docs"
-  },
-  "sidebar.docs.category.STM32 Code Generation": {
-    "message": "STM32 Code Generation",
-    "description": "The label for category STM32 Code Generation in sidebar docs"
-  },
-  "sidebar.docs.category.Project Management (XRobot)": {
-    "message": "Project Management (XRobot)",
-    "description": "The label for category Project Management (XRobot) in sidebar docs"
   }
 }

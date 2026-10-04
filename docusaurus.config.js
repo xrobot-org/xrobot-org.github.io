@@ -7,7 +7,6 @@ module.exports = {
   baseUrl: '/',
   trailingSlash: false,
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
   onDuplicateRoutes: 'warn',
   favicon: 'img/XRobot.png',
 
@@ -24,6 +23,9 @@ module.exports = {
 
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
   },
 
   i18n: {
@@ -41,7 +43,7 @@ module.exports = {
       /** @type {import('@cmfcmf/docusaurus-search-local').PluginOptions} */
       ({
         indexDocs: true,
-        indexBlog: true,
+        indexBlog: false,
         indexPages: false,
         language: ['en', 'zh'],
       }),
@@ -57,7 +59,8 @@ module.exports = {
         docs: {
           routeBasePath: '/docs',
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/xrobot-org/xrobot-org.github.io/edit/XRobot2.0/',
+          editUrl: 'https://github.com/xrobot-org/xrobot-org.github.io/edit/dev/',
+          editLocalizedFiles: true,
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -94,7 +97,7 @@ module.exports = {
           items: [
             {
               label: '入门',
-              to: '/',
+              to: '/docs/intro',
             },
             {
               label: 'LibXR 类文档',
@@ -118,15 +121,19 @@ module.exports = {
               href: 'https://github.com/xrobot-org',
             },
             {
+              label: 'XRobot',
+              href: 'https://github.com/xrobot-org/XRobot',
+            },
+            {
               label: 'LibXR',
-              href: 'https://github.com/Jiu-xiao/libxr',
+              href: 'https://github.com/xrobot-org/libxr',
             },
             {
               label: 'CodeGenerator',
-              href: 'https://github.com/Jiu-xiao/LibXR_CppCodeGenerator',
+              href: 'https://github.com/xrobot-org/LibXR_CppCodeGenerator',
             },
             {
-              label: 'QDU Robomaster未来战队',
+              label: 'QDU RoboMaster 未来战队',
               href: 'https://github.com/QDU-Robomaster',
             }
           ],

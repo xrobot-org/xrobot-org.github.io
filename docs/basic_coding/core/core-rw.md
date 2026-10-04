@@ -1,16 +1,16 @@
 ---
 id: core-rw
 title: IO 读写抽象
-sidebar_position: 8
+sidebar_position: 10
 ---
 
 # IO 读写抽象
 
-本模块定义了通用的 `ReadPort` 与 `WritePort` 接口类，用于跨平台封装异步、阻塞、轮询等多种 I/O 行为，并通过 `Operation` 模型绑定完成反馈机制。适配不同底层驱动时，只需实现对应的读写函数并赋值给端口对象，即可获得完整的异步 I/O 能力。
+`libxr_rw.hpp` 定义通用的 `ReadPort` 与 `WritePort`，以统一接口封装异步、阻塞、轮询等 I/O 行为，完成反馈由 `Operation` 指定。驱动向 `ReadPort` 的接收队列写入数据，从 `WritePort` 取出待发送的数据，写法见[串口驱动设计](../../adv_coding/driver/uart_driver.md)。
 
-`ReadPort`、`WritePort` 和 `WritePort::Stream` 的当前主线实现主要由原子状态机与 `SPSCQueue` 这类无锁数据结构组织其**软件侧排队与完成交接**。但它们只是 I/O 抽象层本身的实现方式，不应被扩大表述成“整个读写路径绝不会发生系统调用”这样的跨后端保证；真正的系统调用、DMA 启动或硬件访问仍取决于具体驱动的接收生产路径和 `WriteFun` 后端。
+`ReadPort`、`WritePort` 和 `WritePort::Stream` 用原子状态和 `SPSCQueue` 管理软件侧的排队与完成通知；系统调用、DMA 启动和硬件访问由具体驱动完成。
 
-> 注意：`ReadPort` / `WritePort` 的默认构造会在内部创建无锁队列与缓存（构造期一次性分配/初始化），用于承载数据与写入元信息。
+> 注意：`ReadPort` / `WritePort` 在构造时一次性分配内部队列，析构时不释放。
 
 ## 核心类型
 
@@ -32,7 +32,7 @@ typedef Operation<ErrorCode> WriteOperation;
 ### 初始化
 
 ```cpp
-ReadPort(size_t buffer_size = 128);
+explicit ReadPort(size_t buffer_size = 128);
 ```
 
 构造函数创建接收字节队列，默认容量为 128 字节。容量为 0 时不分配队列，端口不具备读能力。
@@ -49,7 +49,8 @@ ErrorCode operator()(RawData data, ReadOperation &op, bool in_isr = false);
 - `data.size_ == 0` 时表示等待“队列中至少有一个字节”，成功后不消费数据；
 - 非 `BLOCK` 返回 `OK` 表示请求已接纳，完成可能就在本次调用内，也可能稍后由接收数据推进；
 - `BLOCK` 返回 `OK` 时数据已经完成交接；
-- 请求超过端口容量返回 `SIZE_ERR`，当前请求处理权被占用时返回 `BUSY`。
+- 请求超过端口容量返回 `SIZE_ERR`，当前请求处理权被占用时返回 `BUSY`，未绑定队列返回 `NOT_SUPPORT`，`BLOCK` 超时返回 `TIMEOUT`；
+- `BLOCK` 只能在线程中调用；在它返回前，同一端口不能再发起读请求或调用 `ClearQueuedData()`，也不能与未完成的非 `BLOCK` 读重叠。
 
 接收缓冲区和回调/轮询对象要保持有效直到完成。`BLOCK` 的缓冲区至少保持到函数返回。
 
@@ -118,12 +119,13 @@ ErrorCode operator()(ConstRawData data, WriteOperation &op, bool in_isr = false)
 
 端口在接纳请求时把整段源数据复制进内部字节队列，所以函数返回后源缓冲区即可复用。
 
-- 非 `BLOCK` 返回 `OK` 表示接纳成功；
+- 非 `BLOCK` 返回 `OK` 表示接纳成功；`BLOCK` 返回完成结果，超时返回 `TIMEOUT`，已入队的数据仍会发送（见 [BLOCK 超时与完成交接](../../adv_coding/driver/block_timeout_semantics.md)）；
 - 请求槽或字节空间不足返回 `FULL`；
 - 生产者状态冲突返回 `BUSY`；
 - 没有写能力返回 `NOT_SUPPORT`；
 - 单次请求不会部分接纳；
-- `data.size_ == 0` 在能力检查后直接成功，不触发后端通知。
+- `data.size_ == 0` 在能力检查后直接成功，不触发后端通知；
+- `BLOCK` 只能在线程中调用，同一端口的 `BLOCK` 与非 `BLOCK` 写入不得重叠。
 
 写完成的边界是“后端已经接收整个请求”，不是“物理线路已经发送完”。例如 UART 驱动可以在数据已经复制进 active/pending DMA 缓冲后完成 `WriteOperation`，而 DMA 与 UART 线路仍在继续发送。
 
@@ -136,7 +138,7 @@ size_t Capacity() const;
 bool Writable() const;
 ```
 
-`Writable()` 表示存在字节队列且已经绑定 `WriteFun`，不预留请求槽或字节空间，因此不保证下一笔写一定能被接纳。
+`Size()`、`EmptySize()`、`Capacity()` 返回字节队列中已有的字节数（含 Stream 已追加未提交的字节）、空闲字节数和总容量。`Writable()` 表示存在字节队列且已经绑定 `WriteFun`，不预留请求槽或字节空间，因此不保证下一笔写一定能被接纳。
 
 ### 驱动消费已提交请求
 
@@ -152,14 +154,15 @@ auto queue = write_port.GetWriteQueue(in_isr);
 
 ## STDIO 接口
 
-LibXR 提供了一个全局 `STDIO` 接口，可绑定 `ReadPort` / `WritePort` 实例并使用 `Printf(...)` 接口输出调试信息。
+LibXR 提供全局 `STDIO`，绑定 `ReadPort` / `WritePort` 后可用 `Printf` 或 `Print` 输出调试信息。
 
 ```cpp
-LibXR::STDIO::write_ = &uart.write_port_;
+LibXR::STDIO::write_ = uart.write_port_;
 LibXR::STDIO::Printf<"Hello, %d">(123);
+LibXR::STDIO::Print<"Hello, {}">(123);
 ```
 
-当前实现里，`Printf` 通过共享的 STDIO 写会话和内部互斥来完成格式化与串行化输出，并根据是否配置 `STDIO::write_stream_` 决定走普通写入或流式批量写入路径。
+`Printf` / `Print` 在内部互斥锁保护下格式化并写入 `STDIO::write_`，只能在线程中调用。返回值为实际提交的字节数，输出超过写端口当前空闲空间时截断；`write_` 未设置或不可写、格式化或提交失败时返回 -1。设置了 `STDIO::write_stream_` 时写入该流，否则每次调用使用一个临时的 `WritePort::Stream`。
 
 ## 用例示例
 
@@ -179,12 +182,12 @@ uart.Read(buffer, op_cb);
 
 ## WritePort::Stream 批量写入接口
 
-`WritePort::Stream` 提供了类似 C++ 标准流的链式批量写入能力，适合高吞吐、大包或连续多块数据写入场景。其目标是 **一次性锁定端口资源、批量写入数据、降低队列压力和碎片化**。
+`WritePort::Stream` 把多段数据合并成一次写入请求提交，适合连续写入多块数据。
 
 ### 主要特性
 
-- **流式链式写入**：支持多次 `<<` 操作，将多段数据批量追加到写缓存中。
-- **自动批量提交**：析构时会自动提交未提交的数据，也可随时调用 `Commit()` 手动提交。
+- 多次 `<<` 或 `Write()` 把数据追加到同一批次。
+- `Commit()` 提交当前批次；析构时自动提交。
 
 ### 示例用法
 
@@ -206,25 +209,22 @@ public:
     Stream(WritePort* port, WriteOperation op);
     ~Stream();
     Stream& operator<<(const ConstRawData& data);
-    ErrorCode Commit();
+    [[nodiscard]] ErrorCode Write(ConstRawData data);
+    [[nodiscard]] ErrorCode Write(std::string_view text);
+    [[nodiscard]] ErrorCode Commit();
+    [[nodiscard]] ErrorCode Acquire();
+    [[nodiscard]] size_t EmptySize() const;
 };
 ```
 
 语义要点：
 
-- `Stream(WritePort*, WriteOperation)`：构造时尝试获取写锁，并检查写入元信息队列是否至少还剩 1 个空位；若未获取到锁或队列空间不足，则该 Stream 处于未锁定状态。
-- `operator<<`：若处于未锁定状态，会再次尝试获取写锁；未成功则本次 `<<` 不会写入数据。若已锁定且剩余容量允许（`size_ + data.size_ <= cap_`），则把数据追加进写缓存；超出容量时不会进行部分写入（直接忽略该段追加）。
-- `Commit()`：把当前累积的数据作为一条写入提交，并释放这一批次的生产者所有权；后续继续写入时需要重新获取。提交后 `size_` 清零。
-- `~Stream()`：析构时若有未提交数据会自动提交，随后释放写锁。
+- 构造时尝试取得端口写入权，失败不报告；可调用 `Acquire()` 检查或重试。`Acquire()` 成功或已持有时返回 `OK`，端口为空返回 `PTR_NULL`，不支持写入返回 `NOT_SUPPORT`，端口被占用返回 `BUSY`，请求队列无空位返回 `FULL`。
+- `Write()` 追加数据并返回结果，空间不足时返回 `FULL`，本次不部分追加，已追加的数据保留。`<<` 与 `Write()` 相同，但不报告失败。
+- `Commit()` 提交当前批次并释放写入权；之后的 `<<` / `Write()` 重新取得写入权，开始新批次。空批次只完成非 BLOCK 通知。
+- 析构时若持有写入权，行为同 `Commit()`，但结果被丢弃。
+- 只在线程中使用，完成通知的 `in_isr` 为 false。
 
 ---
 
 `ReadPort` 与 `WritePort` 是 LibXR IO 抽象层的核心接口，提供统一的数据缓冲与完成反馈机制，适用于串口、网络、文件系统等多种数据流场景。
-
-## 当前实现边界
-
-- `ReadPort(buffer_size)` 只有在 `buffer_size > 0` 时才分配接收队列；未绑定时 `Size()` / `EmptySize()` / `Capacity()` 返回 0，`Readable()` 返回 `false`。
-- `WritePort(queue_size, buffer_size)` 的字节队列和请求元信息是两种独立容量；`Pipe` 使用 `queue_size == 0` 的特殊模式，不建立请求元信息队列。
-- `BLOCK` 只能在线程上下文使用。同一端口的 `BLOCK` 与尚未完成的非 `BLOCK` 操作不能重叠。
-- 读 timeout 会安全结束尚未完成的软件读；写 timeout 不撤回已经排队的字节，底层仍可能继续发送。详细交接见 [BLOCK 超时与完成交接](../../adv_coding/driver/block_timeout_semantics.md)。
-- 端口只管理软件侧排队与请求完成。DMA 停机、UART 线路排空、设备断开等硬件状态由具体驱动定义。

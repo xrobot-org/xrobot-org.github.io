@@ -8,7 +8,7 @@ sidebar_position: 1
 
 基础 API 说明见 [DoubleBuffer（双缓冲区）](/docs/basic_coding/structure/double_buffer)。
 
-这里讨论的不是数据结构接口，而是它在驱动里的作用。双缓冲的价值在于把硬件传输、下一块数据准备和上层提交这三件事错开：只要当前块还在总线上，驱动就可以准备下一块，完成中断到来时只做切换和续传，从而缩短空窗、稳定时序。
+本文说明 `DoubleBuffer` 在驱动中的作用。双缓冲的价值在于把硬件传输、下一块数据准备和上层提交这三件事错开：只要当前块还在总线上，驱动就可以准备下一块，完成中断到来时只做切换和续传，从而缩短空窗、稳定时序。
 
 ---
 
@@ -28,9 +28,7 @@ sidebar_position: 1
 
 ## 3. 串口驱动里的双缓冲
 
-`STM32UART` 和 `CH32UART` 的 TX 都直接建立在 `DoubleBuffer` 上。写路径的形状基本一致：如果 DMA 空闲，当前请求直接写进 active 区并立刻启动；如果 DMA 正忙，则写进 pending 区，记录长度并标记可切换，等待发送完成中断接手。中断里首先根据 `pending_len` 判断是否有下一块可发；只要有，就切换到新的 active block 并立即续上 DMA，再处理上一块的硬件收尾。这条顺序不能反过来。先续上总线，再做后续状态更新，是串口高频路径里最关键的安排。
-
-这里还要区分端口完成和 DMA 完成：应用的 `WriteOperation` 可以在整笔数据已经被驱动复制到 active/pending 稳定缓冲后完成，而此时 DMA 和线路仍可能继续发送。因此双缓冲的发送完成 ISR 负责的是硬件 block 切换，不是所有上层写请求唯一的“完成时刻”。
+`STM32UART` 和 `CH32UART` 的 TX 都直接建立在 `DoubleBuffer` 上。写路径的形状基本一致：如果 DMA 空闲，当前请求直接写进 active 区并立刻启动；如果 DMA 正忙，则写进 pending 区，记录长度并标记可切换，等待发送完成中断接手。写请求在复制进 active 或 pending 区时即完成，此时 DMA 和线路可能仍在发送。发送完成中断先用 `HasPending()` 判断 pending 区是否有数据，有则 `Switch()` 并立即启动下一次 DMA，再从队列取下一笔请求填入新的 pending 区。
 
 ---
 
@@ -46,7 +44,7 @@ sidebar_position: 1
 
 ## 5. 两类常见用法
 
-这里大致有两类用法。第一类是驱动内部拷贝型，典型如 `STM32UART`、`CH32UART`、`ESP32UART` 和 `ESP32CDCJtag`：用户数据先进入队列，再由驱动拷进 active/pending buffer，硬件只看驱动内部的双缓冲。第二类是直接缓冲暴露型，典型如 USB Endpoint 和 SPI 零拷贝传输：上层可以直接接触底层缓冲区，驱动只负责 block 交接和状态推进。这两类路径使用的是同一个数据结构，但目标不同，前者重在统一和清晰，后者重在减少额外拷贝。
+这里大致有两类用法。第一类是驱动内部拷贝型，典型如 `STM32UART`、`CH32UART` 和 `ESP32UART` 的 GDMA 路径：用户数据先进入队列，再由驱动拷进 active/pending buffer，硬件只看驱动内部的双缓冲。第二类是直接缓冲暴露型，典型如 USB Endpoint 和 SPI 零拷贝传输：上层可以直接接触底层缓冲区，驱动只负责 block 交接和状态推进。这两类路径使用的是同一个数据结构，但目标不同，前者重在统一和清晰，后者重在减少额外拷贝。
 
 ---
 
@@ -56,27 +54,15 @@ sidebar_position: 1
 
 ```mermaid
 stateDiagram-v2
-  [*] --> RUN
+  [*] --> TX_Awrite_Bsend
+  state "TX: A写入 / B发送" as TX_Awrite_Bsend
+  state "TX: B写入 / A发送" as TX_Bwrite_Asend
 
-  state RUN {
-    %% ================= TX(发送) =================
-    [*] --> TX_Awrite_Bsend
-    state "TX: A写入 / B发送" as TX_Awrite_Bsend
-    state "TX: B写入 / A发送" as TX_Bwrite_Asend
-
-    TX_Awrite_Bsend --> TX_Bwrite_Asend: 发送完成（切到A发送，B空闲→写入）
-    TX_Bwrite_Asend --> TX_Awrite_Bsend: 发送完成（切到B发送，A空闲→写入）
-
-    --
-    %% ================= RX(接收/读) =================
-    [*] --> RX_Arecv_Bread
-    state "RX: A接收 / B供应用读" as RX_Arecv_Bread
-    state "RX: B接收 / A供应用读" as RX_Brecv_Aread
-
-    RX_Arecv_Bread --> RX_Brecv_Aread: A满/空闲中断（交付A给应用，切B为接收）
-    RX_Brecv_Aread --> RX_Arecv_Bread: B满/空闲中断（交付B给应用，切A为接收）
-  }
+  TX_Awrite_Bsend --> TX_Bwrite_Asend: 发送完成（切到A发送，B空闲→写入）
+  TX_Bwrite_Asend --> TX_Awrite_Bsend: 发送完成（切到B发送，A空闲→写入）
 ```
+
+串口接收使用一块循环 DMA 缓冲区，不经过 `DoubleBuffer`。
 
 这个图里的关键点是：
 
@@ -86,6 +72,6 @@ stateDiagram-v2
 
 ---
 
-## 6. 什么时候适合用双缓冲
+## 7. 什么时候适合用双缓冲
 
 双缓冲最适合硬件传输和 CPU 准备数据可以并行、单次传输不大但连续不断、ISR 里需要尽快续上传输的场景。反过来说，如果接口本身很慢、负载很低，或者上层一次只偶尔发几个字节，双缓冲未必有明显收益，反而会徒增状态管理。

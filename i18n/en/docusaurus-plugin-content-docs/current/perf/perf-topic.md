@@ -12,10 +12,10 @@ The original cross-framework latency benchmark remains available at:
 
 The current LibXR repository also contains host-side `LinuxSharedTopic` benchmarks under `test/automatic/middleware/message/topic/`:
 
-- `linux_shm_bench.cpp`: continuous publication, reporting publish rate, receive latency, and errors;
-- `linux_shm_latency_bench.cpp`: waits for receive acknowledgement per message and measures handoff latency;
-- `linux_shm_overload_bench.cpp`: compares FULL and DROP_OLD with a slow subscriber;
-- `linux_shm_subscriber_modes_bench.cpp`: compares broadcast, drop-old, and load-balanced subscriber modes.
+- `bench_standard.cpp`: continuous publication, reporting publish rate, receive latency, and errors;
+- `bench_latency.cpp`: waits for receive acknowledgement per message and measures handoff latency;
+- `bench_overload.cpp`: compares FULL and DROP_OLD with a slow subscriber;
+- `bench_modes.cpp`: compares broadcast, drop-old, and load-balanced subscriber modes.
 
 Keep the two data paths separate when reading results. In-process `Topic::Publish()` dispatches synchronously in the publisher context, while `LinuxSharedTopic` hands shared payload slots and descriptors between processes. Match payload size, subscription mode, and consumer work before comparing them.
 

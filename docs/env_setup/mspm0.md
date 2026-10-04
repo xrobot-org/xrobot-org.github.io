@@ -1,14 +1,12 @@
 ---
 id: env-setup-mspm0
-title: MSPM0环境配置
-sidebar_position: 3
+title: MSPM0 环境配置
+sidebar_position: 3.5
 ---
 
 # MSPM0 环境配置
 
 当前默认使用 GNU Arm Embedded Toolchain，编译器前缀为 `arm-none-eabi-`。目前没有验证在 TI Arm Clang 工具链下的兼容性。
-
-当前 `driver/mspm0/CMakeLists.txt` 已把 `GPIO / PWM / Timebase / UART / SPI / I2C` 以及共享 GROUP1 中断与原子适配源文件一起加入默认 MSPM0 驱动构建。
 
 如果只是想快速开始，推荐直接使用 XRobot 的 MSPM0 Docker 镜像：`ghcr.io/xrobot-org/docker-image-mspm0:main`。
 
@@ -37,29 +35,36 @@ include("${CMAKE_SOURCE_DIR}/cmake/LibXR.CMake")
 * 根 `CMakeLists.txt` 负责最终应用目标、用户源文件、链接选项和后处理
 * `cmake/LibXR.CMake` 负责 LibXR 平台选择、SDK 路径检查、SysConfig 输出检查，以及给 `xr` 目标补齐 MSPM0 相关依赖
 
-## 目录结构约定
+## 目录结构
 
-推荐采用下面的目录结构：
+模板工程 [MSPM0G3507 LibXR Template](https://github.com/xrobot-org/MSPM0G3507_LibXR_Template) 的目录结构如下：
 
 ```text
 .
 |-- CMakeLists.txt
+|-- CMakePresets.json
 |-- cmake/
-|   `-- LibXR.CMake
+|   |-- LibXR.CMake
+|   `-- arm-none-eabi-gcc.cmake
+|-- Core/
+|-- User/
 |-- libxr/
 |-- mspm0-sdk/
-|-- src/
+|-- scripts/
+|   `-- fetch-mspm0-sdk.sh
 `-- sysconfig/
 ```
 
 其中：
 
-* `libxr/` 是 LibXR 源码目录
-* `mspm0-sdk/` 是 TI MSPM0 SDK 根目录
-* `src/` 是应用层源文件
-* `sysconfig/` 保存 SysConfig 生成的配置文件
+* `libxr/` 是 LibXR 子模块
+* `mspm0-sdk/` 是 TI MSPM0 SDK 子模块
+* `User/` 是应用源文件（`main.c`、`app_main.cpp`）
+* `Core/` 是 syscalls 桩函数和栈保留链接脚本
+* `sysconfig/` 保存 SysConfig 工程及其生成的文件
+* `scripts/fetch-mspm0-sdk.sh` 只获取构建需要的 SDK 文件
 
-如果你的 SDK 不在仓库内，也可以把 `MSPM0_SDK_DIR` 改到其他位置。
+SDK 不在仓库内时，把 `MSPM0_SDK_DIR` 指向 SDK 所在目录。
 
 ## SysConfig 输出要求
 
@@ -80,7 +85,7 @@ CMake 侧通常需要能找到这些文件：
 
 如果项目采用自动发现方式，那么根工程里不需要手工写死 `ti_msp_dl_config.c` 这类具体文件名，只需要保证生成文件位于 `sysconfig/` 目录即可。
 
-如果你修改了 `.syscfg` 文件，需要先重新生成这些输出，再重新执行 CMake 构建。
+修改 `.syscfg` 文件后，先重新生成这些输出，再执行 CMake 构建。
 
 ## 芯片型号相关项
 
@@ -93,9 +98,9 @@ CMake 侧通常需要能找到这些文件：
 
 MSPM0 工程里，很多编译问题本质上都是“芯片型号相关文件没有同步替换”。
 
-## 当前主线已接入的 MSPM0 驱动范围
+## MSPM0 驱动
 
-默认 MSPM0 驱动列表包含：
+`driver/mspm0/CMakeLists.txt` 把以下驱动加入构建：
 
 - `mspm0_gpio.*`
 - `mspm0_pwm.*`
@@ -127,34 +132,16 @@ cmake --build build
 
 ## Docker 构建
 
-如果不希望在本机单独安装工具链，可以直接用 Docker。
-
-PowerShell：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\docker_build.ps1
-```
-
-Bash：
+镜像 `ghcr.io/xrobot-org/docker-image-mspm0:main` 提供 `arm-none-eabi-gcc`、CMake 和 Ninja。模板工程中的构建命令：
 
 ```bash
-bash ./tools/docker_build.sh
+git submodule update --init libxr
+sh scripts/fetch-mspm0-sdk.sh
+docker run --rm -v "$PWD:/work" -w /work ghcr.io/xrobot-org/docker-image-mspm0:main \
+  bash -c 'cmake --preset release && cmake --build --preset release'
 ```
 
-PowerShell 脚本支持：
-
-```powershell
-.\tools\docker_build.ps1 -Image ghcr.io/xrobot-org/docker-image-mspm0:main -BuildType Release -BuildDir build -CCompiler arm-none-eabi-gcc -CxxCompiler arm-none-eabi-g++ -AsmCompiler arm-none-eabi-gcc
-```
-
-Bash 脚本支持这些环境变量：
-
-* `XROBOT_MSPM0_IMAGE`
-* `BUILD_TYPE`
-* `BUILD_DIR`
-* `C_COMPILER`
-* `CXX_COMPILER`
-* `ASM_COMPILER`
+产物为 `build/release/ti_mspm0_libxr_dev.elf`、`.hex` 和 `.bin`。
 
 ## 常见问题
 

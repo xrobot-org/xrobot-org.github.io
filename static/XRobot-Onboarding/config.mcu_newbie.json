@@ -40,7 +40,7 @@
         },
         {
           "id": "mcu_newbie_code_gen_stm32",
-          "title": "使用 xr_cubemx_cfg 生成 STM32 初始化代码",
+          "title": "使用 libxr stm32 setup 生成 STM32 初始化代码",
           "link": "https://xrobot.work/docs/code_gen/stm32",
           "estimateMinutes": 15,
           "descMd": "md/mcu_newbie_env/mcu_newbie_code_gen_stm32.md"

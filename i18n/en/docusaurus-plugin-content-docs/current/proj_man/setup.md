@@ -1,95 +1,132 @@
 ---
 id: proj-man-setup
-title: One-Click Setup
-sidebar_position: 5
+title: Module Requests and the Lock
+sidebar_position: 1
 ---
 
-# One-Click Setup
+# Module Requests and the Lock
 
-`xrobot_setup` checks configuration files, fetches modules, generates `xrobot_main.hpp`, and refreshes `Modules/CMakeLists.txt`:
-
-- Check if configuration files exist (`modules.yaml` / `sources.yaml`)
-- Fetch all module repositories
-- Automatically generate the main function code (`xrobot_main.hpp`)
-- Generate build configuration (`Modules/CMakeLists.txt`)
+`Modules/modules.yaml` states which Modules a BSP needs. `xrobot setup` resolves them to exact commits in `xrobot.lock`, checks the Modules out, checks every configuration and regenerates `User/xrobot_main.hpp`.
 
 ---
 
-## 1. Quick Start
+## modules.yaml
 
-Just one command:
-
-```bash
-$ xrobot_setup
-Starting XRobot auto-configuration...
-[INFO] Created default Modules/modules.yaml
-Please edit this file; each line should be a full module name like:
-  - xrobot-org/BlinkLED
-  - your-namespace/YourModule@dev
-[INFO] Created default Modules/sources.yaml
-Please configure sources index.yaml for official or custom/private mirrors.
-Default official source already included.
-
-$ xrobot_setup
-Starting XRobot auto-configuration...
-[EXEC] xrobot_init_mod --config Modules/modules.yaml --directory Modules --sources Modules/sources.yaml
-[INFO] Cloning new module: xrobot-org/BlinkLED
-Cloning into 'Modules/BlinkLED'...
-remote: Enumerating objects: 37, done.
-remote: Counting objects: 100% (37/37), done.
-remote: Compressing objects: 100% (25/25), done.
-remote: Total 37 (delta 11), reused 33 (delta 10), pack-reused 0 (from 0)
-Receiving objects: 100% (37/37), 7.48 KiB | 2.49 MiB/s, done.
-Resolving deltas: 100% (11/11), done.
-[SUCCESS] All modules and their dependencies processed.
-[INFO] Created default Modules/CMakeLists.txt: Modules/CMakeLists.txt
-[EXEC] xrobot_gen_main --output User/xrobot_main.hpp
-Discovered modules: BlinkLED
-[INFO] Successfully parsed manifest for BlinkLED
-[INFO] Writing configuration to User/xrobot.yaml
-[SUCCESS] Generated entry file: User/xrobot_main.hpp
-
-All done! Main function generated at: User/xrobot_main.hpp
+```yaml
+xrobot: 1.0.0
+modules:
+  - xrobot-org/BlinkLED@dev
+  - xrobot-org/BMI088@same-or-dev
+  - id: xrobot-org/MadgwickAHRS
+    ref: 286cc8935c9349c1d5c0446f6f5e957083465ee2
+    context_ref: refs/heads/feature/new-api
 ```
 
----
+- `xrobot:` pins the tool version (a release version or a 40-hex commit).
+- `modules` lists only direct requests; dependencies come recursively from each Module header's manifest.
+- Each entry is `owner/Repo[@ref]` or a mapping with `id`, `ref` and `context_ref`; `owner/Repo` must be listed in a [Source](./src_man.md).
 
-## 2. Automated Steps
-
-| Step                  | Description                                                                          |
-|-----------------------|--------------------------------------------------------------------------------------|
-| Initialize config     | Automatically generate `Modules/modules.yaml` and `sources.yaml` if not exist       |
-| Fetch modules         | Run `xrobot_init_mod` to download all module repositories listed in modules.yaml    |
-| Generate main function| Run `xrobot_gen_main` to generate main function header from `xrobot.yaml`           |
-| Build config          | Automatically generate `Modules/CMakeLists.txt` with all module build files included|
-
----
-
-## 3. Default File Structure
-
-After execution, the following structure will be created:
+These commands edit the file and keep its comments:
 
 ```bash
-Modules/
-├── BlinkLED/
-│   ├── BlinkLED.hpp
-│   ├── CMakeLists.txt
-├── modules.yaml
-├── sources.yaml
-├── CMakeLists.txt  <-- Auto-generated global module build entry
-
-User/
-├── xrobot.yaml      <-- Module instance configuration
-├── xrobot_main.hpp  <-- Auto-generated main function entry
+xrobot module add owner/Repo@ref
+xrobot module remove owner/Repo
 ```
+
+Without `@ref`, `xrobot module add` writes `@same-or-dev`.
+
+### Ref Rules
+
+| ref | Meaning |
+| --- | --- |
+| omitted | The remote default branch |
+| branch / tag / commit | That commit; write `refs/heads/...` or `refs/tags/...` when a name is both a branch and a tag |
+| `same-or-dev` | The Module branch named like the BSP's current branch, otherwise `dev`; on a BSP tag, the identical tag |
+| `same` | The branch or tag with the same name must exist |
+
+`same` / `same-or-dev` use the BSP repository's current branch as context. A detached checkout (such as CI) passes the logical ref with `--context-ref refs/heads/<branch>` (or `refs/tags/<tag>`). `context_ref` in a request sets the context for that Module and its dependencies, for example to test a Module at a PR commit while its dependencies follow the PR's branch.
 
 ---
 
-## 4. Default Output Paths
+## xrobot.lock
 
-In the default workspace layout, configuration and generated files are written to:
+The lock records, for every Module in the dependency closure, the repository, the requested ref, what it resolved to, and the commit. Local repository paths are stored relative to the lock. Once written, the lock is authoritative: the same lock checks out the same Module code on a feature branch, after its merge, and in CI.
 
-- `Modules/modules.yaml`
-- `Modules/sources.yaml`
-- `User/xrobot.yaml`
-- `User/xrobot_main.hpp`
+The lock is written by `xrobot setup`, says so in its first line, and is not edited by hand. After a change to `modules.yaml`, `xrobot setup` updates the lock, and both are committed together.
+
+| Command | Effect |
+| --- | --- |
+| `xrobot setup` | Keeps locked commits; added, removed or changed requests change only those entries |
+| `xrobot setup --update MODULE...` | Re-resolves the named Modules |
+| `xrobot setup --update` | Re-resolves every Module |
+| `xrobot setup --frozen` | Restores exactly the lock; fails if `modules.yaml` no longer matches it or the installed XRobot differs from `xrobot:` |
+| `xrobot setup --offline` | Uses only local checkouts and commits, without network access; needs `xrobot.lock`, and `modules.yaml` must match it |
+| `xrobot setup --context-ref REF` | Sets the BSP context for `same` / `same-or-dev` |
+| `xrobot setup --release-ref REF` | Refuses commits that are not released for the target line (see below) |
+| `xrobot setup --no-line-directives` | Leaves the `#line` directives out of the regenerated header |
+
+`--update` cannot be combined with `--frozen` or `--offline`. It also runs `xrobot sync` on every configuration and prints the changes.
+
+Modules are checked out at their locked commits (detached HEAD). A Module already at its locked commit keeps its uncommitted changes. When a Module has to move to another commit, `xrobot setup` stops with an explanation if the Module has uncommitted changes or its HEAD is a local commit that is on no remote branch or tag. While developing a Module inside a BSP, keep the changes uncommitted; when they are ready, push them to a branch of the Module and run `xrobot setup --update <Module>`.
+
+Setup also fails when two selected Modules define the same global Module class, when dependencies form a cycle, or when one Module resolves to different commits.
+
+---
+
+## Setup Steps
+
+1. Compares the installed XRobot with `xrobot:`: a difference is a warning, and an error with `--frozen`; a commit in `xrobot:` is not compared;
+2. resolves the Modules as described above, writes `xrobot.lock` and checks the Modules out into `Modules/<owner>/<Repo>/`;
+3. writes `Modules/CMakeLists.txt`;
+4. checks every configuration under `User/` (except `User/libxr_config.yaml`);
+5. regenerates `User/xrobot_main.hpp` for the selected configuration (default `User/xrobot.yaml`).
+
+Example output:
+
+```text
+$ xrobot setup
+Resolved 1 Module commit
+Checked 1 config; generated User/xrobot_main.hpp for User/xrobot.yaml
+```
+
+`Modules/<owner>/<Repo>/`, `Modules/CMakeLists.txt` and `User/xrobot_main.hpp` are not committed.
+
+---
+
+## Release Gate
+
+BSPs and official Modules share one branch model: `dev` receives changes; `master` is the stable line and is updated only by pull requests from `dev`. `--release-ref` names the BSP's target:
+
+| `--release-ref` | Every locked commit must be on |
+| --- | --- |
+| `refs/heads/dev` | the Module's `dev` |
+| `refs/heads/master`, `refs/heads/main`, `refs/tags/...` | the Module's `master` (or `main`) |
+| any other branch (such as `refs/heads/feature-x`) | not checked |
+
+Explicitly requested tags count as released; a third-party Module without that line can only be pinned by an explicit commit. A commit that was not merged, or was merged by squash or rebase, is not on the target line: merge the Module first, then run `xrobot setup --update <Module> --context-ref refs/heads/<target>`.
+
+The same rule applies to the tools: `xrobot:` in `Modules/modules.yaml` must be present, and `generator:` in `User/libxr_config.yaml` is checked when it is written; a commit pin must be on the tool repository's matching line, and a release version passes.
+
+Typical BSP CI steps:
+
+```bash
+xrobot format --check
+xrobot setup --frozen --context-ref "$CONTEXT_REF" --release-ref "$TARGET_REF"
+cmake -S . -B build
+cmake --build build
+```
+
+`CONTEXT_REF` is the branch or tag being built; `TARGET_REF` is the pull request's base branch (for a push, the pushed branch or tag). An STM32 BSP does not need to write these steps: the shared workflow `bsp-stm32-ci.yml` contains them; see [BSP CI](./README.md#bsp-ci).
+
+---
+
+## CMake Integration
+
+The BSP sets `XROBOT_MODULES_DIR` to its `Modules` directory before adding LibXR (CMake 3.19 or newer is required):
+
+```cmake
+set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
+add_subdirectory(Middlewares/Third_Party/LibXR)
+```
+
+In an STM32 project the code generator writes this line; see [Integrate with XRobot](../code_gen/xrobot_inter.md). LibXR then includes `Modules/CMakeLists.txt` and checks `User/xrobot_main.hpp`; see [Entry and Generation](./gen_main.md#build-check).

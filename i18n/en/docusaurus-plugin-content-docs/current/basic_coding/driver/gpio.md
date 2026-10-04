@@ -72,11 +72,7 @@ using Callback = LibXR::Callback<>;
 ErrorCode RegisterCallback(Callback callback); // Register interrupt handler
 ```
 
-Current implementation semantics:
-
-- `RegisterCallback(...)` only stores the callback into `callback_` and returns `ErrorCode::OK`;
-- it does **not** configure the pin direction for you and does not automatically call `EnableInterrupt()`;
-- to actually receive interrupt callbacks, the platform implementation still needs the correct `SetConfig(...)` and `EnableInterrupt()` sequence.
+`RegisterCallback()` only stores the callback in `callback_` and returns `ErrorCode::OK`. Receiving interrupt callbacks also requires an interrupt direction set through `SetConfig()` and a call to `EnableInterrupt()`.
 
 ## Feature Summary
 

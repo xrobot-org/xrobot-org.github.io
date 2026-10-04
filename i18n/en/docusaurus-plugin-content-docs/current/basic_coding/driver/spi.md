@@ -100,6 +100,8 @@ virtual ErrorCode MemRead(uint16_t reg,
 - `in_isr` indicates whether this SPI operation is initiated/progressed in ISR context (forwarded to the underlying implementation).
 - `GetConfig()` returns the currently stored configuration reference; `IsDoubleBuffer()` only reflects whether `config_.double_buffer` is currently enabled.
 
+See [Operation Model](../core/core-op.md) and [BLOCK Timeout and Completion Handoff](../../adv_coding/driver/block_timeout_semantics.md) for completion modes of `OperationRW`.
+
 ### Operation Struct
 
 ```cpp
@@ -117,9 +119,9 @@ struct ReadWriteInfo {
 - Provides full-duplex transfer APIs together with buffer helpers such as `GetRxBuffer()` / `GetTxBuffer()`, `SwitchBuffer()`, and `SetActiveLength()` when double-buffered paths are used.
 - A generic operation model (`OperationRW = WriteOperation`) supporting synchronous, callback, and polling modes.
 
-## Semantic boundaries
+## Notes
 
 - `ReadAndWrite(...)`, `Transfer(...)`, `MemRead(...)`, and `MemWrite(...)` are abstract behaviors that platform implementations must provide; this page does not assume all backends share the same register protocol or DMA organization.
 - In the current implementation, `GetRxBuffer()` / `GetTxBuffer()` return the constructor-provided `rx_buffer_ / tx_buffer_` when double buffering is disabled, and the current active half when it is enabled.
 - `SwitchBuffer()` only changes internal `DoubleBuffer` state when `double_buffer == true`; otherwise it is a no-op.
-- `SetActiveLength()` / `GetActiveLength()` currently operate only on the transmit-side `double_buffer_tx_` auxiliary length field; they do not imply a standalone universal transfer-length metadata protocol.
+- `SetActiveLength()` / `GetActiveLength()` currently operate only on the transmit-side `double_buffer_tx_` auxiliary length field.

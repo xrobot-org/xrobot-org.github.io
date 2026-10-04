@@ -6,23 +6,23 @@ sidebar_position: 4
 
 # GSUSB 设备协议栈
 
-本文档描述 XRUSB 的 **GSUSB（Linux `gs_usb`）** 设备类实现：`LibXR::USB::GsUsbClass<CanChNum>`。
+本文档描述 XRUSB 的 GSUSB（Linux `gs_usb`）设备类实现：`LibXR::USB::GsUsbClass<CanChNum>`。
 
-该设备类面向 Linux/SocketCAN 生态的 **USB-to-CAN** 使用方式，采用 **Vendor Interface + Bulk IN/OUT** 的传输模型，实现 `gs_usb` 协议常用控制面与数据面。
+该设备类面向 Linux/SocketCAN 生态的 USB-to-CAN 使用方式，采用 Vendor Interface + Bulk IN/OUT 的传输模型，实现 `gs_usb` 协议常用控制面与数据面。
 
 支持能力：
 
-- **经典 CAN（Classic CAN）**：最大 8 字节数据
-- **CAN FD（可选）**：最大 64 字节数据区，DLC 映射遵循 FD 表
-- **TX echo**：回送 `echo_id`，用于主机侧 TX buffer 跟踪
-- **可选时间戳字段**：`timestamp_us`（4 字节）追加在 wire frame 末尾，数值来自 `LibXR::Timebase::GetMicroseconds()` 的低 32 位
-- **多通道**：通道数由模板参数 `CanChNum` 编译期固定
+- 经典 CAN（Classic CAN）：最大 8 字节数据
+- CAN FD（可选）：最大 64 字节数据区，DLC 映射遵循 FD 表
+- TX echo：回送 `echo_id`，用于主机侧 TX buffer 跟踪
+- 可选时间戳字段：`timestamp_us`（4 字节）追加在 wire frame 末尾，数值来自 `LibXR::Timebase::GetMicroseconds()` 的低 32 位
+- 多通道：通道数由模板参数 `CanChNum` 编译期固定
 
 ---
 
 ## 1. 类与构造方式
 
-`GsUsbClass<CanChNum>` 中 `CanChNum` 为编译期固定的 CAN 通道数（`1..255`），通道号对外以 `uint8_t` 表示。构造时需提供 **等于 `CanChNum` 数量**的通道对象指针列表。
+`GsUsbClass<CanChNum>` 中 `CanChNum` 为编译期固定的 CAN 通道数（`1..255`），通道号对外以 `uint8_t` 表示。构造时需提供等于 `CanChNum` 数量的通道对象指针列表。
 
 该类同时兼容 Classic CAN 与 FDCAN（启用 FD 能力），通过不同构造函数区分。
 
@@ -36,14 +36,15 @@ GsUsbClass(Endpoint::EPNumber data_in_ep_num,
            size_t echo_queue_size = 32,
            LibXR::GPIO* identify_gpio = nullptr,
            std::initializer_list<LibXR::GPIO*> termination_gpios = {},
-           LibXR::Database* database = nullptr);
+           LibXR::Database* database = nullptr,
+           const char* interface_string = DEFAULT_INTERFACE_STRING);  // "XRUSB GS USB"
 ```
 
 要点：
 
 - `cans`：Classic CAN 指针列表，数量必须等于 `CanChNum`
-- 默认端点号为 **EP1(IN)/EP2(OUT)**：用于兼容部分旧版内核/驱动对端点布局的约束
-- Linux `gs_usb` 驱动通常会通过 **VID:PID 白名单**匹配设备，并要求匹配到 `bInterfaceNumber == 0` 的 USB interface（建议将该类放在配置中的第一个 interface）
+- 端点号必须显式给出；旧版内核的 `gs_usb` 驱动固定使用 EP1 IN / EP2 OUT，取这两个端点号可以兼容这些内核
+- Linux `gs_usb` 驱动通常会通过 VID:PID 白名单匹配设备，并要求匹配到 `bInterfaceNumber == 0` 的 USB interface（建议将该类放在配置中的第一个 interface）
 
 ### 1.2 FDCAN 构造（启用 FD）
 
@@ -55,13 +56,13 @@ GsUsbClass(Endpoint::EPNumber data_in_ep_num,
            size_t echo_queue_size = 32,
            LibXR::GPIO* identify_gpio = nullptr,
            std::initializer_list<LibXR::GPIO*> termination_gpios = {},
-           LibXR::Database* database = nullptr);
+           LibXR::Database* database = nullptr,
+           const char* interface_string = DEFAULT_INTERFACE_STRING);  // "XRUSB GS USB"
 ```
 
 要点：
 
 - `fd_cans`：FDCAN 指针列表，数量必须等于 `CanChNum`
-- IN/OUT 端点号必须显式指定
 - FD 能力是否真正可用，取决于设备端是否启用 FD 支持、以及主机侧是否通过控制面将对应通道置为 FD 模式
 
 ---
@@ -70,12 +71,12 @@ GsUsbClass(Endpoint::EPNumber data_in_ep_num,
 
 ### 2.1 接口描述符
 
-`GsUsbClass` 暴露 **1 个接口**，不使用 IAD。接口的 class/subclass/protocol 固定为 `0xFF/0xFF/0xFF`（Vendor Specific），端点数为 2。
+`GsUsbClass` 暴露 1 个接口，不使用 IAD。接口的 class/subclass/protocol 固定为 `0xFF/0xFF/0xFF`（Vendor Specific），端点数为 2。
 
 ### 2.2 Bulk 端点
 
-- **Bulk OUT**：Host → Device（主机下发 CAN/FD 帧，同时携带 `echo_id` 用于 TX echo）
-- **Bulk IN**：Device → Host（设备上报 RX 帧/错误帧，以及 TX echo 回包）
+- Bulk OUT：Host → Device（主机下发 CAN/FD 帧，同时携带 `echo_id` 用于 TX echo）
+- Bulk IN：Device → Host（设备上报 RX 帧/错误帧，以及 TX echo 回包）
 
 端点最大传输长度由底层 `Endpoint` 实现决定；配置时以 `UINT16_MAX` 作为上限。
 
@@ -98,14 +99,14 @@ struct WireHeader {
 
 约定：
 
-- 设备上报 **RX 帧**时使用 `ECHO_ID_RX = 0xFFFFFFFF`
-- 主机下发帧若 `echo_id != 0xFFFFFFFF`，设备会在发送路径中生成对应的 **TX echo** 事件回送给主机
+- 设备上报 RX 帧时使用 `ECHO_ID_RX = 0xFFFFFFFF`
+- 主机下发帧若 `echo_id != 0xFFFFFFFF`，设备会在发送路径中生成对应的 TX echo 事件回送给主机
 
 负载与长度：
 
-- Classic CAN：payload 固定 **8 字节**
-- CAN FD：payload 固定 **64 字节**
-- 可选时间戳：若该通道启用时间戳，则在 payload 后追加 **4 字节 `timestamp_us`**（微秒，低 32 位）
+- Classic CAN：payload 固定 8 字节
+- CAN FD：payload 固定 64 字节
+- 可选时间戳：若该通道启用时间戳，则在 payload 后追加 4 字节 `timestamp_us`（微秒，低 32 位）
 
 总长度：
 
@@ -133,7 +134,7 @@ struct WireHeader {
 - 注册端点回调：
   - OUT 完成：解析主机下发 wire frame
   - IN 完成：尝试继续发送下一帧
-- 复位运行态，并将 OUT 端点尽量保持在接收状态（避免 host 下发“断流”）
+- 复位运行态，并让 OUT 端点保持接收状态，主机可以连续下发数据
 - 注册 CAN RX 回调（用于将接收帧/错误帧入队并触发发送）
 
 ### 4.2 UnbindEndpoints
@@ -161,13 +162,13 @@ struct WireHeader {
 
 设备向主机发送的数据来源分为两类：
 
-1. **TX echo（优先级更高）**：用于主机跟踪发送完成
-2. **RX 上报**：通道接收的 Classic/FD 帧，以及错误帧（可选）
+1. TX echo（优先级更高）：用于主机跟踪发送完成
+2. RX 上报：通道接收的 Classic/FD 帧，以及错误帧（可选）
 
 发送策略要点：
 
 - 只有当 IN 端点处于空闲态时才会启动一次发送
-- 出队顺序为：**echo 优先，其后才是 RX 上报**
+- 出队顺序为：echo 优先，其后才是 RX 上报
 - IN 发送完成回调会触发下一次尝试发送，实现连续输出
 
 ---
@@ -231,8 +232,8 @@ Dev gsusb(/*in_ep*/LibXR::USB::Endpoint::EPNumber::EP1,
           /*db*/&db);
 
 // USB device class list: {{&gsusb}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 ```
 
 ### 9.2 FDCAN（1 通道）

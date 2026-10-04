@@ -1,16 +1,16 @@
 ---
 id: xrusb-dev-stack-daplinkv2
 title: DAPLinkV2
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # DAPLinkV2 设备协议栈
 
-本文档描述 XRUSB 的 **CMSIS-DAP v2（Bulk）** 设备类实现：`LibXR::USB::DapLinkV2Class<SwdPort>`。测试可用的VID:PID：`0x0D28:0x2040`，BCD版本：`0x0201`。
+本文档描述 XRUSB 的 CMSIS-DAP v2（Bulk）设备类实现：`LibXR::USB::DapLinkV2Class<SwdPort>`。测试可用的VID:PID：`0x0D28:0x2040`，BCD版本：`0x0201`。
 
-该设备类面向通用 CMSIS-DAP v2 主机工具链（如 pyOCD、OpenOCD 的 CMSIS-DAP backend、DAPLink 兼容客户端等）的 **USB Bulk 传输**方式，采用 **1 个 Vendor Interface + 2 个 Bulk 端点（1 IN + 1 OUT）** 的传输模型，实现 DAP v2 常用命令子集（以 SWD 为主），并提供 Windows 侧即插即用的 WinUSB（MS OS 2.0）能力宣告。
+该设备类面向通用 CMSIS-DAP v2 主机工具链（如 pyOCD、OpenOCD 的 CMSIS-DAP backend、DAPLink 兼容客户端等）的 USB Bulk 传输方式，采用 1 个 Vendor Interface + 2 个 Bulk 端点（1 IN + 1 OUT）的传输模型，实现 DAP v2 常用命令子集（以 SWD 为主），并提供 Windows 侧即插即用的 WinUSB（MS OS 2.0）能力宣告。
 
-由于 DAPLink 通常会声明自身为复合设备，因此需要搭配其他 USB Class 使用（例如 CDC 虚拟串口等）。上位机识别设备时也常会查找带有 `CMSIS-DAP` 字符串的设备，因此建议的 LanguagePack 为：
+DAPLink 设备通常与其他 USB Class（例如 CDC 虚拟串口）组合使用。上位机识别设备时也常会查找带有 `CMSIS-DAP` 字符串的设备，因此建议的 LanguagePack 为：
 
 ```cpp
 static constexpr auto USB_FS_LANG_PACK =
@@ -21,12 +21,12 @@ static constexpr auto USB_FS_LANG_PACK =
 
 支持能力：
 
-- **CMSIS-DAP v2 Bulk transport**
-- **SWD + 可选 JTAG**：直接包含 `daplink_v2.hpp` 时编译 JTAG 支持；调用 `SetJtag()` 绑定后端后启用 JTAG capability。`daplink_v2_profile_swd.hpp` 可构建纯 SWD 版本。
-- **可选 nRESET 控制**（通过 `GPIO* nreset_gpio` 注入，缺省为不支持）
-- **SWJ_Pins shadow 语义**（SWDIO/SWCLK 以 shadow 状态对主机表现；nRESET 若连线可返回真实电平）
-- **WinUSB（MS OS 2.0）BOS 平台能力**（CompatibleID="WINUSB" + DeviceInterfaceGUIDs）
-- **DAP_Transfer / DAP_TransferBlock**（含 AP posted-read pipeline；Transfer 支持 match / timestamp 约束检查）
+- CMSIS-DAP v2 Bulk transport
+- SWD；设置 JTAG 后端后 `DAP_Connect` 也可连接 JTAG
+- 可选 nRESET 控制（通过 `GPIO* nreset_gpio` 注入，缺省为不支持）
+- SWJ_Pins shadow 语义（SWDIO/SWCLK 以 shadow 状态对主机表现；nRESET 若连线可返回真实电平）
+- WinUSB（MS OS 2.0）BOS 平台能力（CompatibleID="WINUSB" + DeviceInterfaceGUIDs）
+- DAP_Transfer / DAP_TransferBlock（含 AP posted-read pipeline；Transfer 支持 match / timestamp 约束检查）
 
 ---
 
@@ -39,26 +39,32 @@ static constexpr auto USB_FS_LANG_PACK =
 构造函数：
 
 ```cpp
-template <typename SwdPort, /* packet/queue template parameters... */>
+template <typename SwdPort, uint16_t DefaultDapPacketSize = 512,
+          uint8_t AdvertisedPacketCount = 8, uint16_t MaxDapPacketSize = 1024,
+          uint16_t QueuedRequestBufferSize = 2048, uint16_t QueuedCommandCountMax = 255>
 explicit DapLinkV2Class(
     Endpoint::EPNumber data_in_ep_num,
     Endpoint::EPNumber data_out_ep_num,
     SwdPort& swd_link,
     LibXR::GPIO* nreset_gpio = nullptr,
-    const char* interface_string = DEFAULT_INTERFACE_STRING);
+    const char* interface_string = DEFAULT_INTERFACE_STRING);  // "CMSIS-DAP v2"
 ```
 
 参数说明：
 
 - `swd_link`：SWD 链路对象引用（`SwdPort` 实例）。
 - `nreset_gpio`：可选 nRESET GPIO；若为空则 reset 相关命令以 best-effort 方式处理。
-- `data_in_ep_num` / `data_out_ep_num`：显式指定 Bulk IN/OUT 端点号。
+- `data_in_ep_num` / `data_out_ep_num`：Bulk IN/OUT 端点号（必填）。
+- `MaxDapPacketSize`：`PACKET_SIZE`，超过 1279 时按 1279；为 0 时改用 `DefaultDapPacketSize`
+- `AdvertisedPacketCount`：对主机实际暴露的 `PACKET_COUNT` 钳制到 4
+- `QueuedRequestBufferSize` / `QueuedCommandCountMax`：`DAP_QueueCommands` 排队缓冲区字节数和最多排队命令数
 
 常用接口：
 
 - `SetInfoStrings(info)`：覆盖 `DAP_Info` 字符串。
 - `GetState()`：获取内部 DAP 状态结构（读）。
 - `IsInited()`：是否已完成绑定初始化。
+- `SetJtag(jtag)`：设置 JTAG 后端（`LibXR::Debug::Jtag*`）。包含 `daplink_v2_profile_swd.hpp` 时 JTAG 在编译期关闭，`SetJtag()` 不起作用；直接包含 `daplink_v2.hpp` 或 `daplink_v2_profile_jtag.hpp` 时 JTAG 可用。
 
 ### 1.2 InfoStrings
 
@@ -90,7 +96,7 @@ struct InfoStrings {
 
 ### 2.1 接口描述符
 
-`DapLinkV2Class` 贡献 **1 个接口**，不使用 IAD：
+`DapLinkV2Class` 贡献 1 个接口，不使用 IAD：
 
 - `GetInterfaceCount() = 1`
 - `HasIAD() = false`
@@ -99,12 +105,12 @@ struct InfoStrings {
 
 ### 2.2 Bulk 端点
 
-- **Bulk OUT**：Host → Device（DAP 请求包）
-- **Bulk IN**：Device → Host（DAP 响应包）
+- Bulk OUT：Host → Device（DAP 请求包）
+- Bulk IN：Device → Host（DAP 响应包）
 
 端点分配与配置发生在 `BindEndpoints()`：
 
-- 从 `EndpointPool` 分配 OUT/IN 端点（支持指定/自动端点号）。
+- 按构造时给出的端点号从 `EndpointPool` 取得 OUT/IN 端点。
 - 端点类型为 BULK；最大传输长度以 `UINT16_MAX` 作为上限，底层会选择合法值。
 - 配置描述符中的 `wMaxPacketSize` 来自端点对象的 `MaxPacketSize()`。
 
@@ -125,18 +131,18 @@ struct InfoStrings {
 
 ## 4. 传输模型（Bulk 请求/响应）
 
-本类实现 **CMSIS-DAP v2 over Bulk** 的同步请求/响应模型：
+本类实现 CMSIS-DAP v2 over Bulk 的请求/响应模型：
 
-1. 主机向 **Bulk OUT** 发送一帧请求。
-2. 设备在 OUT 完成回调中解析请求并生成响应（写入 IN 端点缓冲）。
-3. 设备通过 **Bulk IN** 发送响应。
-4. IN 完成后，设备重新 arm OUT 接收下一帧请求。
+1. 主机向 Bulk OUT 发送一帧请求。
+2. 设备在 OUT 完成回调中解析请求：IN 空闲时直接在 IN 缓冲区生成响应并发送；IN 正在发送时写入双缓冲的另一半或响应队列。
+3. 已生成未发完的响应少于 `PACKET_COUNT`（4）时，设备立即重新挂起 OUT 接收下一帧；达到上限后，等 IN 完成再挂起。
+4. 每次 IN 完成后发送下一份待发响应。
 
 ---
 
 ## 5. 生命周期：Bind / Unbind
 
-### 5.1 `BindEndpoints(endpoint_pool, start_itf_num)`
+### 5.1 `BindEndpoints(endpoint_pool, start_itf_num, in_isr)`
 
 要点：
 
@@ -150,7 +156,7 @@ struct InfoStrings {
   - SWJ shadow 默认：SWDIO=1、nRESET=1、SWCLK=0
 - 置 `inited_=true`，arm OUT 接收。
 
-### 5.2 `UnbindEndpoints(endpoint_pool)`
+### 5.2 `UnbindEndpoints(endpoint_pool, in_isr)`
 
 要点：
 
@@ -166,7 +172,7 @@ struct InfoStrings {
 
 内部状态结构 `LibXR::USB::DapLinkV2Def::State` 关键字段包括：
 
-- `debug_port`：默认 DISABLED；CONNECT 成功后按主机选择进入 SWD 或 JTAG
+- `debug_port`：默认 DISABLED；CONNECT 后为 SWD 或 JTAG
 - `transfer_abort`：TransferAbort 标志
 - `transfer_cfg`：TransferConfigure 解析后的策略（idle_cycles / retry_count / match_retry）
 
@@ -197,8 +203,8 @@ struct InfoStrings {
 | ----------------------- | -------------------: | ---------------------------------------------------------------------------------------- |
 | `DAP_Info`              |               `INFO` | 返回字符串/数值信息（含 CAPABILITIES / PACKET_COUNT / PACKET_SIZE / TIMESTAMP_CLOCK 等） |
 | `DAP_HostStatus`        |        `HOST_STATUS` | 返回 OK                                                                                  |
-| `DAP_Connect`           |            `CONNECT` | 支持 SWD；JTAG profile 已启用并绑定后端时也可连接 JTAG                                                             |
-| `DAP_Disconnect`        |         `DISCONNECT` | 关闭当前调试链路并回到 DISABLED                                                                 |
+| `DAP_Connect`           |            `CONNECT` | 连接 SWD；设置 JTAG 后端后也可连接 JTAG；返回实际端口                                    |
+| `DAP_Disconnect`        |         `DISCONNECT` | 关闭 SWD 和已设置的 JTAG 后端，回到 DISABLED                                             |
 | `DAP_TransferConfigure` | `TRANSFER_CONFIGURE` | 设置 idle_cycles / retry / match_retry，并映射到 SWD policy                              |
 | `DAP_Transfer`          |           `TRANSFER` | DP/AP 读写；支持 match / timestamp；AP posted-read pipeline                              |
 | `DAP_TransferBlock`     |     `TRANSFER_BLOCK` | DP/AP block 读写；AP read 使用 posted pipeline；不支持 match/timestamp                   |
@@ -211,16 +217,19 @@ struct InfoStrings {
 | `DAP_SWJ_Sequence`      |       `SWJ_SEQUENCE` | 写入 SWJ bit 序列（LSB-first），并更新 shadow（SWDIO=last bit, SWCLK=0）                 |
 | `DAP_SWD_Configure`     |      `SWD_CONFIGURE` | best-effort 解析，返回 OK                                                                |
 | `DAP_SWD_Sequence`      |       `SWD_SEQUENCE` | 多段输入/输出序列；输入数据追加在响应尾部（LSB-first）                                   |
-| `DAP_QueueCommands`     |     `QUEUE_COMMANDS` | 校验并把一组打包命令加入内部请求缓冲，等待 ExecuteCommands                                              |
-| `DAP_ExecuteCommands`   |   `EXECUTE_COMMANDS` | 执行此前 QueueCommands 保存的命令流并返回组合响应                                                        |
+| `DAP_JTAG_Sequence`     |      `JTAG_SEQUENCE` | JTAG 可用时处理                                                                          |
+| `DAP_JTAG_Configure`    |     `JTAG_CONFIGURE` | JTAG 可用时处理                                                                          |
+| `DAP_JTAG_IDCODE`       |        `JTAG_IDCODE` | JTAG 可用时处理                                                                          |
+| `DAP_QueueCommands`     |     `QUEUE_COMMANDS` | 把请求中的命令追加到排队缓冲区，返回 `<CMD, DAP_OK>`；超过 `QueuedRequestBufferSize` / `QueuedCommandCountMax` 或格式错误时返回 `<CMD, DAP_ERROR>` |
+| `DAP_ExecuteCommands`   |   `EXECUTE_COMMANDS` | 依次执行已排队的命令，响应为 `CMD` 字节后接各命令的响应；失败返回 `<CMD, DAP_ERROR>`     |
 
 注：具体数值 ID 取决于 `DapLinkV2Def::CommandId` 的定义；本文以枚举名表示。
 
 ### 7.2 `DAP_Info` 关键字段
 
-- `CAPABILITIES`：始终包含 SWD；JTAG 编译启用且已经 `SetJtag()` 时附加 JTAG capability
+- `CAPABILITIES`：`DAP_CAP_SWD`；设置了 JTAG 后端时加上 `DAP_CAP_JTAG`
 - `PACKET_COUNT`：默认返回 `4`。虽然类模板默认的声明值是 `8`，但当前实现会把实际对主机暴露的数量钳制到 `4`。
-- `PACKET_SIZE`：由 DAP 模板参数计算。默认模板对主机返回 `1024` 字节；USB 端点 `MaxTransferSize()` 只决定是否需要 Bulk 分段/重组
+- `PACKET_SIZE`：`MaxDapPacketSize`，默认 1024。端点的 `MaxTransferSize()` 不影响该值，只决定一个 DAP 包是否分成多次 Bulk 传输收发
 - `TIMESTAMP_CLOCK`：`1,000,000`（与微秒时间基准匹配）
 
 ---
@@ -231,17 +240,16 @@ struct InfoStrings {
 
 ```cpp
 #include "daplink_v2.hpp"
-#include "usb/device.hpp"
-#include "debug/swd.hpp"
 
-MySwdBackend swd(/* ... init ... */);   // 具体的 SWD 后端实现 Concrete SWD backend
-MyGpio nreset(/* ... optional ... */);  // 具体的 GPIO 实现 Concrete GPIO implementation
+extern LibXR::Debug::Swd& swd;  // 平台提供的 SWD 后端
+extern LibXR::GPIO& nreset;     // 可选的 nRESET 引脚
 
-using EP = LibXR::USB::Endpoint::EPNumber;
-LibXR::USB::DapLinkV2Class<MySwdBackend> dap(EP::EP1, EP::EP2, swd, &nreset);
+using EPNumber = LibXR::USB::Endpoint::EPNumber;
 
-// 可选：覆盖 DAP_Info 字符串
-LibXR::USB::DapLinkV2Class<MySwdBackend>::InfoStrings info;
+LibXR::USB::DapLinkV2Class<LibXR::Debug::Swd> dap(EPNumber::EP1, EPNumber::EP1, swd,
+                                                  &nreset);
+
+LibXR::USB::DapLinkV2Class<LibXR::Debug::Swd>::InfoStrings info;
 info.vendor = "XRobot";
 info.product = "DAPLinkV2";
 info.serial = "00000001";
@@ -249,8 +257,8 @@ info.firmware_ver = "2.0.0";
 dap.SetInfoStrings(info);
 
 // USB device class list: {{&dap}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 ```
 
 ### 8.2 Windows/WinUSB 侧访问

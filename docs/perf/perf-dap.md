@@ -11,14 +11,14 @@ sidebar_position: 4
 ## 测试环境
 
 * Probe：自制 DAPLink（CMSIS-DAP v2）
-  * 主控：CH32V307 144Mhz
+  * 主控：CH32V307 144 MHz
   * SWD：GPIO 翻转实现（SwdGeneralGPIO）
 * USB：USBHS（High-Speed）
   * 端点类型：Bulk
   * MaxPacketSize：512
 * 编译优化：`-O3`
 * 目标芯片：STM32F401RC
-* SWD 时钟：上位机 Speed=10000，实测最高稳定频率约 10MHz
+* SWD 时钟：`SwdGeneralGPIO` 使用 `loops_per_us = 0`（无延时路径，SWCLK 由 GPIO 翻转速度决定，上位机 Speed 不改变 SWCLK），实测约 10 MHz
 
 ![daplink-benchmark](/img/dap.png)
 
@@ -55,7 +55,7 @@ LibXR::CH32USBOtgHS usb_dev_hs(
 * Iterations=32
 * 变更 Data length：32 / 128 / 2048 / 32768 bytes
 
-1) SRAM 读写上限（固定长度）：使用 OpenOCD + TCL 脚本进行 SRAM 指定地址区间的 write/read/e2e 计时统计。
+2) SRAM 读写上限（固定长度）：使用 OpenOCD + TCL 脚本进行 SRAM 指定地址区间的 write/read/e2e 计时统计。
 
 ## 测试结果
 

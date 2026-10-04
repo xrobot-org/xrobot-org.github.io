@@ -6,17 +6,17 @@ sidebar_position: 5
 
 # DAPLinkV1 Device Stack
 
-This document describes XRUSB’s **CMSIS-DAP v1 (HID)** device-class implementation: `LibXR::USB::DapLinkV1Class<SwdPort>`.
+This document describes XRUSB’s CMSIS-DAP v1 (HID) device-class implementation: `LibXR::USB::DapLinkV1Class<SwdPort>`.
 
-This class targets CMSIS-DAP v1 host toolchains that still use **HID Report** transport. Current mainline focuses on **SWD**, supports common DAP core commands, SWJ/SWD control sequences, and optional `nRESET` GPIO control.
+This class targets CMSIS-DAP v1 host toolchains that still use HID Report transport. It supports SWD, and JTAG once a backend is set with `SetJtag()`; common DAP core commands; SWJ/SWD/JTAG sequences; and optional `nRESET` GPIO control.
 
 Supported capabilities:
 
-- **CMSIS-DAP v1 HID transport**
-- **SWD with optional JTAG**: direct `daplink_v1.hpp` builds JTAG support; JTAG is advertised/used after `SetJtag()` binds a backend. `daplink_v1_profile_swd.hpp` builds an SWD-only profile.
-- **Optional nRESET control** (inject via `GPIO* nreset_gpio`)
-- **HID IN/OUT + Feature Report** transport path
-- **DAP_Transfer / DAP_TransferBlock** (including AP posted-read pipeline)
+- CMSIS-DAP v1 HID transport
+- SWD; with a JTAG backend set, `DAP_Connect` can also connect over JTAG
+- Optional nRESET control (inject via `GPIO* nreset_gpio`)
+- HID Interrupt IN/OUT transport
+- DAP_Transfer / DAP_TransferBlock (including AP posted-read pipeline)
 
 ---
 
@@ -39,15 +39,18 @@ explicit DapLinkV1Class(
 
 Parameters:
 
+- `in_ep_num` / `out_ep_num`: HID Interrupt IN/OUT endpoint numbers (required)
 - `swd_link`: SWD link object reference
 - `nreset_gpio`: optional nRESET GPIO
-- `in_ep_num` / `out_ep_num`: HID IN/OUT endpoint numbers; auto allocation is supported
+
+The interface string is fixed to `"CMSIS-DAP"`.
 
 Common APIs:
 
 - `SetInfoStrings(info)`: override `DAP_Info` strings
 - `GetState()`: read internal DAP state
 - `IsInited()`: whether bind/initialization has completed
+- `SetJtag(jtag)`: set the JTAG backend (`LibXR::Debug::Jtag*`). Including `daplink_v1_profile_swd.hpp` disables JTAG at compile time and `SetJtag()` has no effect; JTAG is available when `daplink_v1.hpp` or `daplink_v1_profile_jtag.hpp` is included directly
 
 ### 1.2 InfoStrings
 
@@ -80,19 +83,18 @@ HID<sizeof(DAPLINK_V1_REPORT_DESC), DapLinkV1Def::MAX_REQUEST_SIZE,
     DapLinkV1Def::MAX_RESPONSE_SIZE>
 ```
 
-Current mainline constants:
+Constants:
 
 - `MAX_REQUEST_SIZE = 64`
 - `MAX_RESPONSE_SIZE = 64`
-- `PACKET_COUNT_ADVERTISED = 1`
 
 The HID report descriptor defines:
 
-- a 64-byte **Input Report**
-- a 64-byte **Output Report**
-- a 64-byte **Feature Report**
+- a 64-byte Input Report
+- a 64-byte Output Report
+- a 64-byte Feature Report
 
-So this class uses **HID report transport**, not the Bulk transport model used by DAPLinkV2.
+Requests and responses travel over HID Interrupt OUT / IN. The Feature Report declared in the descriptor is not implemented: `GET_REPORT(Feature)` returns empty data and `SET_REPORT` returns not supported.
 
 ---
 
@@ -116,7 +118,7 @@ The unbind stage mainly does the following:
 
 - closes the SWD backend
 - releases HID IN/OUT endpoints
-- clears response-queue and shadow state
+- resets shadow state (SWDIO=1, nRESET=1)
 
 ---
 
@@ -124,7 +126,7 @@ The unbind stage mainly does the following:
 
 Current implementation behavior for key `DAP_Info` fields:
 
-- `CAPABILITIES`: always includes SWD; adds JTAG when JTAG is compiled and a backend is bound
+- `CAPABILITIES`: `DAP_CAP_SWD`, plus `DAP_CAP_JTAG` when a JTAG backend is set
 - `PACKET_COUNT`: `1`
 - `PACKET_SIZE`: `64`
 - `TIMESTAMP_CLOCK`: `1,000,000`
@@ -138,7 +140,7 @@ Notes:
 
 ## 5. Supported Command Scope
 
-Current mainline covers a command family broadly similar to DAPLinkV2, but on a different transport:
+Supported commands:
 
 - `DAP_Info`
 - `DAP_HostStatus`
@@ -155,28 +157,24 @@ Current mainline covers a command family broadly similar to DAPLinkV2, but on a 
 - `DAP_SWJ_Sequence`
 - `DAP_SWD_Configure`
 - `DAP_SWD_Sequence`
+- `DAP_JTAG_Sequence` / `DAP_JTAG_Configure` / `DAP_JTAG_IDCODE` (when JTAG is available)
+- `DAP_QueueCommands` / `DAP_ExecuteCommands`: return `<CMD, DAP_ERROR>`
 
 Implementation boundary:
 
-- JTAG commands are available in a JTAG-enabled profile after `SetJtag()` binds a backend; the SWD-only profile excludes them
-- `PACKET_COUNT` is fixed at `1`, so there is no DAPLinkV2-style host-visible multi-packet response depth
+- `PACKET_COUNT` is fixed at `1`.
 
 ---
 
 ## 6. Runtime Behavior
 
-This class maintains:
+This class maintains the SWJ shadow pin state, the current `debug_port` and the `transfer_abort` flag.
 
-- SWJ shadow pin state
-- current `debug_port`
-- `transfer_abort` flag
-- a HID response queue whose depth matches `PACKET_COUNT_ADVERTISED`
+Requests are handled in three steps:
 
-The request path is roughly:
-
-1. host sends a HID Output Report
-2. device parses it in `OnDataOutComplete()`
-3. response data is returned through HID Input / Feature Report paths
+1. the host sends a HID Output Report over Interrupt OUT
+2. the device parses the request in `OnDataOutComplete()` and writes the response into the IN endpoint buffer
+3. if the IN endpoint is idle, the response is sent immediately; if a transfer is in progress, the response stays in the other half of the double buffer and is sent after the previous transfer completes
 
 ---
 
@@ -184,16 +182,16 @@ The request path is roughly:
 
 ```cpp
 #include "daplink_v1.hpp"
-#include "usb/device.hpp"
-#include "debug/swd.hpp"
 
-MySwdBackend swd(/* ... init ... */);
-MyGpio nreset(/* ... optional ... */);
+extern LibXR::Debug::Swd& swd;  // SWD backend provided by the platform
+extern LibXR::GPIO& nreset;     // optional nRESET pin
 
-using EP = LibXR::USB::Endpoint::EPNumber;
-LibXR::USB::DapLinkV1Class<MySwdBackend> dap(EP::EP1, EP::EP1, swd, &nreset);
+using EPNumber = LibXR::USB::Endpoint::EPNumber;
 
-LibXR::USB::DapLinkV1Class<MySwdBackend>::InfoStrings info;
+LibXR::USB::DapLinkV1Class<LibXR::Debug::Swd> dap(EPNumber::EP1, EPNumber::EP1, swd,
+                                                  &nreset);
+
+LibXR::USB::DapLinkV1Class<LibXR::Debug::Swd>::InfoStrings info;
 info.vendor = "XRobot";
 info.product = "DAPLinkV1";
 info.serial = "00000001";
@@ -201,16 +199,16 @@ info.firmware_ver = "1.0.0";
 dap.SetInfoStrings(info);
 
 // USB device class list: {{&dap}}
-// usb_dev.Init();
-// usb_dev.Start();
+// usb_dev.Init(false);
+// usb_dev.Start(false);
 ```
 
 ---
 
 ## 8. Difference from DAPLinkV2
 
-- `DapLinkV1Class`: **HID transport**, `PACKET_SIZE=64`, `PACKET_COUNT=1`
-- `DapLinkV2Class`: **Bulk transport**, current mainline default host-visible `PACKET_SIZE=1024`, `PACKET_COUNT=4`
+- `DapLinkV1Class`: HID transport, `PACKET_SIZE=64`, `PACKET_COUNT=1`
+- `DapLinkV2Class`: Bulk transport, default `PACKET_SIZE=1024`, `PACKET_COUNT=4`
 
 If the host toolchain supports CMSIS-DAP v2 Bulk, `DapLinkV2Class` is generally preferred.
 If compatibility with older host-side HID report paths is required, `DapLinkV1Class` is the appropriate class.

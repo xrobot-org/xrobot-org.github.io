@@ -101,6 +101,8 @@ virtual ErrorCode MemRead(uint16_t reg,
 - `in_isr` 指示是否在中断上下文中发起/推进本次 SPI 操作（透传给底层实现）。
 - `GetConfig()` 返回当前内部保存的配置引用；`IsDoubleBuffer()` 只反映 `config_.double_buffer` 当前是否开启。
 
+`OperationRW` 的完成方式见 [Operation 操作模型](../core/core-op.md) 和 [BLOCK 超时与完成交接](../../adv_coding/driver/block_timeout_semantics.md)。
+
 ### 操作结构体
 
 ```cpp
@@ -123,4 +125,4 @@ struct ReadWriteInfo {
 - `ReadAndWrite(...)`、`Transfer(...)`、`MemRead(...)`、`MemWrite(...)` 都是平台实现需要提供的抽象行为；各平台的寄存器协议和 DMA 组织方式不一定相同。
 - 当前 `GetRxBuffer()` / `GetTxBuffer()` 在双缓冲关闭时返回构造时传入的 `rx_buffer_ / tx_buffer_`；双缓冲开启时返回当前 active 半区。
 - `SwitchBuffer()` 只在 `double_buffer == true` 时切换内部 `DoubleBuffer` 状态；否则不做任何操作。
-- `SetActiveLength()` / `GetActiveLength()` 当前只作用在发送侧 `double_buffer_tx_` 的辅助长度字段上，不表示一条独立的统一“传输长度元信息协议”。
+- `SetActiveLength()` / `GetActiveLength()` 当前只作用在发送侧 `double_buffer_tx_` 的辅助长度字段上。

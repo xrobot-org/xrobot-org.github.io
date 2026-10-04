@@ -6,25 +6,24 @@ sidebar_position: 1
 
 # Topic Design
 
-For the basic usage, see the `Topic`, `SyncSubscriber`, `ASyncSubscriber`, and `QueuedSubscriber`
-pages in the message system section. This page covers why the mechanism is split into these roles.
+For basic usage, see [Topic](/en/docs/basic_coding/middleware/message/message-topic). This page
+covers why the mechanism is split into these roles.
 
 ## What `Topic` is solving
 
-`Topic` unifies the most common in-process handoff patterns with as little overhead as possible:
-publishers write data, subscribers consume it in different ways, and multi-publisher protection can
-be enabled when needed. It does not cover Linux shared memory, process-to-process synchronization,
-or durable queue semantics, which are beyond the scope of this lightweight component.
+`Topic` unifies the most common in-process handoff patterns: publishers write data, subscribers
+consume it in different ways, and multi-publisher protection is added when needed. Shared memory
+across processes is provided by `LinuxSharedTopic<T>`.
 
 ## The role of `Block`
 
 At the source level, `Block` is the central structure inside `Topic`. It stores the payload type
 contract, the topic-name CRC32 key, the subscriber lists, and the state used to coordinate
 concurrent access. By default it optimizes the single-publisher path: if `multi_publisher` is not
-explicitly enabled, a lightweight atomic `busy` state checks exclusive publication. Only when
-multi-publisher mode is enabled does it fall back to `Mutex`. That mode is for ordinary task-context
-`Publish()` calls and does not use `PublishFromCallback()`. This keeps the common single-publisher
-path lightweight instead of forcing every publish onto a lock.
+explicitly enabled, a lightweight atomic `busy` state checks exclusive publication, and concurrent
+publication triggers an assertion. Only when multi-publisher mode is enabled does it fall back to
+`Mutex`. That mode is for ordinary task-context `Publish()` calls and cannot be used with
+`PublishFromCallback()`. The common single-publisher path therefore needs no lock.
 
 ## Why there is no built-in latest cache anymore
 
@@ -42,28 +41,27 @@ container.
 ## Why subscribers are split by type
 
 The subscriber types are split into synchronous, asynchronous, queued, and callback variants because
-they represent four genuinely different consumption semantics. `SyncSubscriber` means "wake me when
-new data arrives". `ASyncSubscriber` means "arm once, then come back and take that one accepted
-result". `QueuedSubscriber` means "enqueue every publish". Callback subscription means "invoke me
-immediately at publish time". If all of that were collapsed into one subscriber interface, the
-result would either degenerate into the most conservative common subset or push too many branches
-into runtime.
+they represent four genuinely different consumption semantics. `SyncSubscriber` wakes the waiting
+thread when new data arrives; `ASyncSubscriber` arms a wait, the next publish fills its local
+buffer, and the subscriber reads it later; `QueuedSubscriber` writes every publish into a queue; a
+callback subscriber runs its callback at publish time. If all of that were collapsed into one
+subscriber interface, the result would either degenerate into the most conservative common subset
+or push too many branches into runtime.
 
-## Why it is not a strict message queue
+## Dispatch
 
-From a concurrency point of view, `Topic` dispatches published data into different consumption
-forms rather than acting as a strict message queue. The synchronous path uses `Semaphore`, the
-asynchronous path uses small state blocks, the queue path uses `SPSCQueue`, and callback subscribers
-are linked through `LockFreeList`. This fits in-process module handoff, log fan-out, or state
-broadcast. For shared large payloads across processes, explicit queue-full policy, or zero-copy
-shared slots, switch to `LinuxSharedTopic<T>` rather than adding system-level semantics to `Topic`.
+`Topic` dispatches each publish according to how each subscriber consumes it: all subscribers are
+linked into the `Block`'s `LockFreeList`; synchronous subscribers are woken through a `Semaphore`,
+asynchronous subscribers use their own state block, queued subscribers write into an `SPSCQueue`,
+and callback subscribers run their callback. This fits in-process module handoff, log fan-out, and
+state broadcast. Large payloads shared across processes, an explicit queue-full policy, or zero-copy
+shared slots are provided by `LinuxSharedTopic<T>`.
 
 ## `WaitTopic` and domain
 
-`Topic` is not named on a single global flat plane. It can be organized by domain, and `WaitTopic`
-does not fetch an object immediately: it waits for a topic to appear in the matching domain. This
-handles module organization when initialization order is not completely fixed. It provides
-lightweight in-process discovery and binding, not a service registry or a cross-process directory.
+`Topic` names can be grouped by domain. `WaitTopic` waits until a topic appears in the matching
+domain and returns its handle, for modules whose initialization order is not fixed. It performs
+in-process discovery and binding.
 
 ## Positioning
 

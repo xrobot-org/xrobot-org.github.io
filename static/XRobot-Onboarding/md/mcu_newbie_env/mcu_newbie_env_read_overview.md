@@ -1,7 +1,7 @@
 ## 原始文档（可选阅读，仅作参考）
-- LibXR: https://github.com/Jiu-xiao/libxr/blob/master/README.zh-CN.md
-- CodeGenerator: https://github.com/Jiu-xiao/LibXR_CppCodeGenerator/blob/master/README.md
-- XRobot: https://github.com/xrobot-org/XRobot/blob/XRobot2.0/README.md
+- LibXR: https://github.com/xrobot-org/libxr/blob/master/README.zh-CN.md
+- CodeGenerator: https://github.com/xrobot-org/LibXR_CppCodeGenerator/blob/master/README.md
+- XRobot: https://github.com/xrobot-org/XRobot/blob/master/README.md
 以上文档内容较完整，本任务不要求全部看懂，只作为需要时查细节的“说明书”。
 ## 本任务说明
 本节只需要阅读和理解，不需要在电脑上实际操作。目标是先在脑中画出一张“大图”，后面的所有步骤都在这张图上找得到位置。

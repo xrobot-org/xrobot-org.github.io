@@ -21,5 +21,4 @@ public:
 ```
 
 - `Read()` is a pure virtual function, and must be implemented by subclasses to provide specific sampling logic;  
-- the base interface only guarantees a `float` return value, and does not define one universal physical unit, reference voltage, or calibration rule;
-- in many concrete implementations this value is organized as a voltage reading, but the actual unit and range still depend on the backend and upper-layer convention.
+- `Read()` returns a voltage in volts; the existing backends (STM32, ESP32) convert the raw sample with the reference voltage.

@@ -8,34 +8,27 @@ sidebar_position: 2
 
 STM32CubeMX默认会将Systick作为时钟基准，也可以手动指定其他定时器。
 
-对于裸机来说，保持时钟基准为Systick即可，但是建议将Systick的中断优先级调至最高。
-
-对于RTOS，建议指定其他定时器作为时钟基准，并且将该定时器的中断优先级调至最高。
-
-从当前 generator 的角度，这一页真正决定的主要是 `PlatformInit(...)` 前那一行 timebase 实例构造形状。
+建议在 SYS 中把时钟基准（Timebase Source）改为普通定时器（例如 TIM6），并在 NVIC 中把该定时器中断的抢占优先级设为最高（0）。时钟基准仍是 SysTick，或定时器中断的抢占优先级不是 0 时，`libxr parse` 会给出警告。
 
 ## 示例
 
-代码生成工具会根据STM32CubeMX的时钟配置生成如下代码:
+代码生成工具会根据STM32CubeMX的时钟配置，在 `PlatformInit()` 之前生成时基对象:
 
 ```cpp
 // Systick 作为时钟基准
-STM32Timebase timebase;
+static STM32Timebase timebase;
 ```
 
 ```cpp
-// 定时器作为时钟基准
-STM32TimerTimebase timebase(&htimX); // X 为时钟基准的定时器
+// 定时器作为时钟基准，例如 TIM2
+static STM32TimerTimebase timebase(&htim2);
 ```
 
-## 当前 generator 覆盖范围
+## 生成规则
 
-当前 `GeneratorCodeSTM32.py` 在 timebase 这一项的主要行为是：
-
-- `Timebase.Source == SysTick` 时生成 `STM32Timebase timebase;`
-- `Timebase.Source` 为普通 `TIMx` 时，生成 `STM32TimerTimebase timebase(&htimx);`
-- 当前 `STM32TimerTimebase` 构造函数只接受 `TIM_HandleTypeDef*`。generator 若从 IOC 读到 `LPTIMx / HRTIMx` 并按同一形状生成代码，该句与当前 LibXR 类型并不兼容；这两类源不能当作已适配的 timebase 使用。
-- 随后 `PlatformInit(...)` 的参数是否为空、还是包含软件定时器优先级/栈深度，取决于当前 `SYSTEM`（裸机 / FreeRTOS / ThreadX）。
+- 时钟基准为 SysTick 时生成 `STM32Timebase`；
+- 时钟基准为定时器时生成该定时器的 `STM32TimerTimebase`。`STM32TimerTimebase` 的构造函数只接受 `TIM_HandleTypeDef*`，LPTIM 或 HRTIM 作为时钟基准时生成的代码无法编译，因此时钟基准应选用 TIM；
+- 随后的 `PlatformInit()` 在裸机工程中不带参数，在 FreeRTOS 和 ThreadX 工程中带软件定时器的优先级和栈深度，见[软件定时器](./timer.md)。
 
 ## 使用
 

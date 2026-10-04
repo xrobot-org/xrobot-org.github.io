@@ -12,10 +12,10 @@ sidebar_position: 3
 
 当前 LibXR 仓库还包含 `LinuxSharedTopic` 的主机侧基准，位置为 `test/automatic/middleware/message/topic/`。这些测试分别覆盖：
 
-- `linux_shm_bench.cpp`：连续发布，统计发布速率、接收延迟和错误计数；
-- `linux_shm_latency_bench.cpp`：每条消息等待接收确认后再继续，统计单条交接延迟；
-- `linux_shm_overload_bench.cpp`：慢订阅者条件下比较 FULL 与 DROP_OLD；
-- `linux_shm_subscriber_modes_bench.cpp`：比较广播、丢旧和负载分担模式。
+- `bench_standard.cpp`：连续发布，统计发布速率、接收延迟和错误计数；
+- `bench_latency.cpp`：每条消息等待接收确认后再继续，统计单条交接延迟；
+- `bench_overload.cpp`：慢订阅者条件下比较 FULL 与 DROP_OLD；
+- `bench_modes.cpp`：比较广播、丢旧和负载分担模式。
 
 读取结果时要区分两条数据路径：进程内 `Topic::Publish()` 在发布者上下文同步分发；`LinuxSharedTopic` 通过共享 payload 槽和描述符在进程间交接。两者的 payload 大小、订阅方式和消费者处理量应保持一致后再比较。
 

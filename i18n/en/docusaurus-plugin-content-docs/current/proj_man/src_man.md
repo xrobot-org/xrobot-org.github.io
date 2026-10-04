@@ -1,143 +1,97 @@
 ---
 id: proj-man-source-man
-title: Module Source Management
-sidebar_position: 0
+title: Module Catalogs
+sidebar_position: 5
 ---
 
-# Module Source Management
+# Module Catalogs
 
-XRobot can combine multiple `index.yaml` files through `sources.yaml`. Official sources, private sources, and mirrors all use the same mechanism, and `xrobot_src_man` is used to generate, maintain, and query them.
-
----
-
-## Why Manage Module Sources?
-
-- Add a mirror or internal acceleration source when access to the official repository is slow.
-- Maintain a private `index.yaml` and namespace for internal modules.
-- Use separate namespaces per source to avoid naming conflicts.
-- Let same-named modules come from different sources and choose by priority.
+A Source is an `index.yaml` that lists Module and BSP Git repositories. A BSP's `Modules/sources.yaml` combines several Sources; `xrobot setup` uses them to map `owner/Repo` to a repository.
 
 ---
 
-## Basic Concepts
-
-| Term              | Description                                                                 |
-|-------------------|-----------------------------------------------------------------------------|
-| **Module Source** | An `index.yaml` file describing multiple module repositories under a namespace |
-| **sources.yaml**  | A local file listing multiple source entries including URLs and priorities   |
-| **index.yaml**    | The actual module list and namespace definition, hosted publicly or locally  |
-
----
-
-## 1. Quick Start: Using the Official Module Source
-
-No configuration needed—uses the default source: [xrobot-modules/index.yaml](https://xrobot.work/xrobot-modules/index.yaml)
-
-### Create a sources.yaml Template
-
-```bash
-xrobot_src_man create-sources
-```
-
-### List All Available Modules
-
-```bash
-xrobot_src_man list
-```
-
-Sample output:
-
-```bash
-Available modules:
-  xrobot-org/BlinkLED   source: https://xrobot.work/xrobot-modules/index.yaml (actual namespace: xrobot-org)
-```
-
----
-
-## 2. Add a Private Module Source
-
-You can add a custom `index.yaml` for private modules or mirrors.
-
-### 1. Create `sources.yaml` and Add Multiple Sources
-
-```bash
-xrobot_src_man create-sources --output Modules/sources.yaml
-```
-
-Then edit it like this:
+## sources.yaml
 
 ```yaml
 sources:
   - url: https://xrobot.work/xrobot-modules/index.yaml
     priority: 0
-  - url: https://your-domain.com/private-index.yaml
+  - url: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
+    priority: 0
+  - url: ./my-index.yaml
     priority: 1
 ```
 
-### 2. Add a Local Private Source (Local Paths Supported)
-
-```bash
-xrobot_src_man add-source ./Modules/my-index.yaml --priority 1
-```
+- `url` is an HTTP(S) address or a local path relative to `sources.yaml`.
+- When several Sources list a package, the smaller `priority` wins; equal priorities that name different repositories are an error. Mirror Sources take no part in this choice.
+- `xrobot init` writes the official Source `https://xrobot.work/xrobot-modules/index.yaml`.
 
 ---
 
-## 3. Mirror / Intranet Acceleration Support
-
-Some `index.yaml` files support the `mirror_of` field to indicate they mirror another source, for example:
+## index.yaml
 
 ```yaml
-namespace: your-team
-mirror_of: xrobot-org
+namespace: my-team
 modules:
-  - https://git.your-company.com/BlinkLED.git
-  - https://git.your-company.com/MySensor.git
+  - https://github.com/my-team/MySensor.git
+  - id: my-team/Filter
+    repo: https://git.example.com/my-team/Filter.git
+    status: verified
+    tested_ref: v1.2.0
+    tested_libxr: 0123456789abcdef0123456789abcdef01234567
+bsps:
+  - https://github.com/my-team/bsp-my-board.git
+```
+
+- A package is identified as `owner/Repo`. A GitHub URL gives the identity directly; other URLs use `namespace/<repository name>`, or an explicit `id` in a mapping.
+- `bsps` is for discovering BSP repositories only; a BSP is never a Module dependency.
+- `status` is `community` (default), `verified` or `official` and describes maintenance and validation. The latter two require `tested_ref` and `tested_libxr`, the versions the validation applies to.
+- `mirror_of: <namespace>` marks a mirror Source. Once a mirror is listed, `xrobot setup` fetches from it whatever its `priority`; `repo` in `xrobot source get` shows the mirror, while `canonical` and `xrobot.lock` keep the original repository URL.
+
+---
+
+## xrobot source
+
+Like the other commands, `xrobot source` finds the BSP at or above the current directory (or the `-C` directory) and reads its `Modules/sources.yaml`; `--sources PATH` before the subcommand selects another file.
+
+```bash
+xrobot source list                      # every package
+xrobot source list --type bsp           # BSPs only (or --type module)
+xrobot source search BMI                # packages whose entry contains BMI
+xrobot source get xrobot-org/BlinkLED   # repository, Source and status of a package
+xrobot source find xrobot-org/BlinkLED  # where a package appears in every Source (mirrors included)
+```
+
+`list` and `search` both take `--type module` or `--type bsp`.
+
+Editing:
+
+```bash
+xrobot source create-sources                          # write a sources.yaml with the official Source only, replacing the file (-o for another file)
+xrobot source add-source https://example.com/index.yaml --priority 1
+xrobot source create-index -o my-index.yaml --namespace my-team [--mirror-of xrobot-org]
+xrobot source add-index https://github.com/my-team/MySensor.git --index my-index.yaml
+```
+
+`add-source` and `add-index` append one item to the list; the rest of the file and its comments stay as they are.
+
+Without `-o`, `create-index` writes `Modules/index.yaml`, and `--namespace` defaults to `local`; the new file holds one example entry `https://github.com/xrobot-org/BlinkLED.git` and an empty `bsps`.
+
+Example output with the official Source only:
+
+```text
+$ xrobot source list
+xrobot-org/AK8975 [module] https://github.com/xrobot-org/AK8975.git
+xrobot-org/ANOFlow [module] https://github.com/xrobot-org/ANOFlow.git
+xrobot-org/BMI088 [module] https://github.com/xrobot-org/BMI088.git
+xrobot-org/BMI270 [module] https://github.com/xrobot-org/BMI270.git
+xrobot-org/BlinkLED [module] https://github.com/xrobot-org/BlinkLED.git
+...
 ```
 
 ---
 
-## 4. Creating and Maintaining Custom index.yaml
+## Official Catalogs
 
-You can also maintain your own `index.yaml` to organize private modules.
-
-### 1. Create an index.yaml Template
-
-```bash
-xrobot_src_man create-index --output Modules/my-index.yaml --namespace yourns
-```
-
-To mark it as a mirror:
-
-```bash
-xrobot_src_man create-index --output my-index.yaml --namespace yourns --mirror-of xrobot-org
-```
-
-### 2. Add Module Repositories to index.yaml
-
-```bash
-xrobot_src_man add-index https://github.com/yourorg/MyModule.git --index Modules/my-index.yaml
-```
-
----
-
-## 5. Query and Validate Modules
-
-Module origins and URLs can be queried directly:
-
-### List All Modules
-
-```bash
-xrobot_src_man list
-```
-
-### Get Address and Source of a Module
-
-```bash
-xrobot_src_man get yourns/MyModule
-```
-
-### Find a Module Across All Sources (Including Mirrors)
-
-```bash
-xrobot_src_man find yourns/MyModule
-```
+- [xrobot-org/xrobot-modules](https://github.com/xrobot-org/xrobot-modules): `https://xrobot.work/xrobot-modules/index.yaml`
+- [QDU-Robomaster/qdu-future-modules](https://github.com/QDU-Robomaster/qdu-future-modules): `https://qdu-robomaster.github.io/qdu-future-modules/index.yaml`

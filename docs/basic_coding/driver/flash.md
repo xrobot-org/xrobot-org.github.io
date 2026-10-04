@@ -6,7 +6,7 @@ sidebar_position: 9
 
 # Flash（闪存接口）
 
-`LibXR::Flash` 提供跨平台的抽象闪存访问接口，用于块擦除与写入操作，适配 NOR/NAND Flash、EEPROM、NVS 等非易失性存储设备。
+`LibXR::Flash` 提供跨平台的闪存访问接口，用于按块擦除和写入。现有后端为 `STM32Flash`、`CH32Flash`（片上 Flash）和 `LinuxBinaryFileFlash`（以文件模拟）。
 
 ## 接口定义
 
@@ -38,5 +38,6 @@ public:
 ## 使用说明
 
 - 后端通常围绕 `MinWriteSize()` / `MinEraseSize()` 这样的最小擦写粒度组织实现；上层布局应按这些粒度设计，但具体是否作为前置限制、以及如何分块处理，仍由具体后端决定；
-- `flash_area` 参数描述的是当前 `Flash` 对象可操作的存储区域；
+- `flash_area` 是该 `Flash` 对象可操作的存储区域，`Size()` 返回其长度；
+- `Read()` 在基类中有默认实现，从 `flash_area` 按内存复制；`flash_area` 可直接按地址读取时，后端只需实现 `Erase()` 和 `Write()`；
 - 上层可基于该接口实现参数存储、文件系统、日志管理等功能。

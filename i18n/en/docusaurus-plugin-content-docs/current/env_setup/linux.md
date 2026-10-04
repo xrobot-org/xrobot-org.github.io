@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Linux Environment Setup
 
-On Linux, install the required dependencies directly. The examples below assume `Ubuntu 24.04` or another Debian-family environment using `apt`.
+The commands below assume `Ubuntu 24.04` or another Debian-family distribution that uses `apt`.
 
 ```bash
 sudo apt update
@@ -18,11 +18,11 @@ sudo apt install -y \
   libwpa-client-dev libnm-dev libudev-dev
 ```
 
-In current mainline, `libwpa-client-dev`, `libnm-dev`, and `libudev-dev` are the most relevant extra packages for Linux-side networking and device-related drivers.
+`libudev-dev` is required by the LibXR Linux drivers. Without `libwpa-client-dev`, CMake only prints a warning and the Wi-Fi client (`linux_wifi_client.hpp`) is not built; with it, `libnm-dev` is required as well. Installing `xrobot` and `libxr` is described in [Environment Setup](README.md).
 
 ## Using Clang
 
-Just point CMake at Clang explicitly:
+Select Clang in CMake:
 
 ```bash
 cmake -S . -B build -G Ninja \
@@ -30,4 +30,4 @@ cmake -S . -B build -G Ninja \
   -DCMAKE_CXX_COMPILER=clang++
 ```
 
-If you want a prebuilt fixed environment, `docker-image-linux` is also available.
+The `docker-image-linux` image comes with these dependencies preinstalled, see [Docker Environment Setup](docker.md).

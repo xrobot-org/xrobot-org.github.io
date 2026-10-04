@@ -28,16 +28,18 @@ public:
   ~Mutex();
 
   ErrorCode Lock();     // Blocking lock
-  ErrorCode TryLock();  // Non-blocking attempt
+  [[nodiscard]] ErrorCode TryLock();  // Non-blocking attempt
   void Unlock();        // Unlock
 
   class LockGuard {
   public:
-    explicit LockGuard(Mutex& m);
+    LockGuard(Mutex& mutex);
     ~LockGuard();
   };
 };
 ```
+
+`Lock()` returns `OK` on success; when the underlying lock fails, Linux and ThreadX return `FAILED`, FreeRTOS and Webots return `BUSY`. `TryLock()` returns `BUSY` when the mutex is held.
 
 ## Usage Example
 

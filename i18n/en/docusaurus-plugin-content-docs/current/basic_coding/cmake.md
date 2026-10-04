@@ -23,6 +23,7 @@ set(LIBXR_SYSTEM linux CACHE STRING "" FORCE)
 set(LIBXR_DRIVER linux CACHE STRING "" FORCE)
 add_subdirectory(libxr)
 
+add_executable(app main.cpp)
 target_link_libraries(app PRIVATE xr)
 ```
 
@@ -88,13 +89,13 @@ Formatting support can also be trimmed for 64-bit integers, double, scientific n
 
 ## XRobot modules
 
-Set `XROBOT_MODULES_DIR` before adding LibXR:
+Set `XROBOT_MODULES_DIR` before adding LibXR (CMake 3.19 or newer is required):
 
 ```cmake
 set(XROBOT_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Modules")
 add_subdirectory(libxr)
 ```
 
-LibXR includes the `CMakeLists.txt` from each module directory it finds there.
+LibXR then includes the `CMakeLists.txt` that `xrobot setup` generates in that directory and checks `User/xrobot_main.hpp`; see the XRobot [CMake integration](../proj_man/setup.md).
 
 Use a fresh build directory after changing the system, driver, compiler or SDK so the previous CMake cache does not carry over detection results.

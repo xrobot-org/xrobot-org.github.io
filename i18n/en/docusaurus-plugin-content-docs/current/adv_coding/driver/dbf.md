@@ -6,39 +6,109 @@ sidebar_position: 1
 
 # Double Buffering
 
-Double buffering is mainly used for communication peripherals. At any given time, only one buffer is transmitting or receiving, while the other is being copied or written. The pre-write/post-read mechanism provided by double buffering can greatly increase interface throughput, even approaching the interface’s theoretical maximum bandwidth.
+For the basic API, see [DoubleBuffer](/en/docs/basic_coding/structure/double_buffer).
 
-LibXR provides two primary double-buffering mechanisms:
+This page describes the role of `DoubleBuffer` in drivers. Double buffering separates three things
+in time: the hardware transfer, preparation of the next block, and submission from upper layers.
+While the current block is still on the bus, the driver can prepare the next one, and the completion
+interrupt only switches blocks and continues the transfer, which shortens gaps and keeps timing
+stable.
 
-1. Driver-embedded double buffering for low-speed interfaces, used primarily in UART. Data reads and writes go through a FIFO, resulting in two copies.
-2. Double buffering for high-speed interfaces, used mainly for USB and SPI. Users can access the underlying buffers directly, enabling zero-copy transmission.
+---
 
-On UART transmit paths, port completion and DMA completion are separate. A `WriteOperation` may finish once the backend has copied the entire request into stable active/pending storage, while DMA and wire transmission continue. The transfer-complete ISR still switches buffers and keeps the hardware stream moving.
+## 1. The `DoubleBuffer` state model
 
-## 基本原理
+`LibXR::DoubleBuffer` splits one contiguous memory region into two equal blocks, exposed as
+`ActiveBuffer()` and `PendingBuffer()`. The first is the buffer the hardware is currently using; the
+second is the next buffer waiting to be switched in. The internal state is small: the index of the
+active block, whether the pending block is valid, and the valid lengths of the active and pending
+blocks.
 
-Take UART as an example (actual reception may use circular DMA; not discussed here):
+The structure itself does not depend on DMA, USB, or UART. It only records that the current block
+has been handed to the hardware, whether the next block is ready, and when a switch is allowed.
+
+---
+
+## 2. Why drivers need double buffering
+
+With a single buffer, the transmit path is usually serial: wait for the current transfer to finish,
+write the next block, then start the next transfer. Double buffering breaks this chain: the hardware
+keeps sending the active block while the CPU writes the next block into the pending block; when the
+transmit-complete ISR arrives, the driver only calls `Switch()` and continues the transfer, without
+preparing data inside the interrupt. On high-frequency small-packet paths, this difference often
+determines throughput and jitter.
+
+---
+
+## 3. Double buffering in UART drivers
+
+TX in both `STM32UART` and `CH32UART` is built directly on `DoubleBuffer`. The write path has the
+same shape in both: if DMA is idle, the current request is written into the active block and started
+immediately; if DMA is busy, it is written into the pending block, its length is recorded, the block
+is marked as ready to switch, and the transmit-complete interrupt takes over. A write request
+completes as soon as it is copied into the active or pending block, while DMA and the wire may still
+be sending. The transmit-complete interrupt
+first checks with `HasPending()` whether the pending block holds data; if it does, it calls
+`Switch()` and immediately starts the next DMA transfer, then takes the next request from the queue
+into the new pending block.
+
+---
+
+## 4. Double buffering in USB / SPI
+
+On high-speed interfaces, double buffering leans toward direct access to the underlying buffers.
+
+The double-buffer semantics of `USB::Endpoint` differ from UART. The `PendingBuffer()` seen in an
+endpoint completion callback is the packet that has just completed, not the next block to be sent.
+So although both use active/pending, a USB callback reads a completed block, while the UART transmit
+path prepares the next block to send. The two meanings must not be confused.
+
+`SPI` usually switches the RX/TX double buffers together after a transfer completes, so that
+preparation of the next round follows directly from the end of the current transfer. The focus here
+is on keeping the gap between two transfers as short as possible rather than on the interface
+abstraction.
+
+---
+
+## 5. Two common usage patterns
+
+There are roughly two usage patterns. The first is driver-internal copying, typically `STM32UART`,
+`CH32UART`, and the GDMA path of `ESP32UART`: user data first enters a queue, the driver then copies
+it into the active/pending buffer, and the hardware only sees the driver's internal double buffer.
+The second is direct buffer exposure, typically USB Endpoint and SPI zero-copy transfers: upper
+layers access the underlying buffers directly, and the driver only handles block handoff and state
+progression. Both patterns use the same data structure with different goals: the first favors
+uniformity and clarity, the second avoids extra copies.
+
+---
+
+## 6. Basic diagram
+
+Taking UART transmit as an example:
 
 ```mermaid
 stateDiagram-v2
-  [*] --> RUN
+  [*] --> TX_Awrite_Bsend
+  state "TX: A write / B send" as TX_Awrite_Bsend
+  state "TX: B write / A send" as TX_Bwrite_Asend
 
-  state RUN {
-    %% ================= TX (Transmit) =================
-    [*] --> TX_Awrite_Bsend
-    state "TX: A write / B send" as TX_Awrite_Bsend
-    state "TX: B write / A send" as TX_Bwrite_Asend
-
-    TX_Awrite_Bsend --> TX_Bwrite_Asend: TX complete (switch to A send, B idle → write)
-    TX_Bwrite_Asend --> TX_Awrite_Bsend: TX complete (switch to B send, A idle → write)
-
-    --
-    %% ================= RX (Receive/Read) =================
-    [*] --> RX_Arecv_Bread
-    state "RX: A receive / B for app read" as RX_Arecv_Bread
-    state "RX: B receive / A for app read" as RX_Brecv_Aread
-
-    RX_Arecv_Bread --> RX_Brecv_Aread: A full/idle interrupt (hand off A to app, switch B to receive)
-    RX_Brecv_Aread --> RX_Arecv_Bread: B full/idle interrupt (hand off B to app, switch A to receive)
-  }
+  TX_Awrite_Bsend --> TX_Bwrite_Asend: TX complete (switch to A send, B idle → write)
+  TX_Bwrite_Asend --> TX_Awrite_Bsend: TX complete (switch to B send, A idle → write)
 ```
+
+UART receive uses one circular DMA buffer and does not go through `DoubleBuffer`.
+
+Key points in this diagram:
+
+- application writes and hardware transmission use different buffers
+- transmit completion only switches blocks
+- the next block is usually ready before the previous one has finished sending
+
+---
+
+## 7. When double buffering fits
+
+Double buffering fits best when hardware transfer and CPU data preparation can run in parallel,
+individual transfers are small but continuous, and the ISR needs to continue the transfer quickly.
+Conversely, if the interface is slow, the load is low, or upper layers only occasionally send a few
+bytes, double buffering may bring no noticeable benefit and only adds state management.

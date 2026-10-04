@@ -6,214 +6,300 @@ sidebar_position: 7
 
 # 项目管理（XRobot）
 
-XRobot 用于模块仓库管理、参数配置和主函数生成，通常与 LibXR 一起组织项目。
-
-本章按安装、目录约定和命令行工具展开。
+XRobot 是配合 LibXR 使用的模块管理工具。它负责拉取模块、把每个模块锁定到具体的提交，再根据 `User/` 下的 YAML 配置生成主函数 `XRobotMain`。
 
 ---
 
 ## 安装
 
-如果你主要在 `VS Code` 里使用 XRobot，也可以安装官方插件 [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot)。插件提供工作区内的图形化配置入口，适合配合命令行一起使用。
-
-推荐通过 pipx 安装（支持隔离环境）：
-
-**Windows：**
-
-```ps
-python -m pip install --user pipx
-python -m pipx ensurepath
-pipx install xrobot
-# 重启终端
-```
-
-**Linux：**
-
 ```bash
-sudo apt install pipx
-pipx install xrobot
-pipx ensurepath
-# 重启终端
+pip install xrobot==1.0.0
 ```
 
-**或者使用 pip 安装：**
+BSP 使用的 XRobot 版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段中，安装时应与之一致。
 
-```bash
-pip install xrobot
-```
+也可以用 `pipx install xrobot==1.0.0` 安装到隔离环境。不要同时用 pip 和 pipx 安装同一个包。
 
-**源码安装：**
-
-```bash
-git clone https://github.com/xrobot-org/XRobot.git
-cd XRobot
-pip install .
-```
-
-注意不要同时用 pip 和 pipx 安装同一个包，否则你的环境变量可能会混乱，导致版本冲突。
+在 `VS Code` 中可以安装插件 [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot)（2.0.0 起对应 XRobot 1.0）。插件显示 `xrobot describe` 的结果，所有修改都通过 `xrobot` 命令完成。
 
 ---
 
-## 目录结构约定
+## BSP 目录约定
 
-默认目录布局如下：
+BSP 根目录是向上查找到的第一个包含 `Modules/modules.yaml` 的目录。所有命令都可以在 BSP 的任意子目录运行，也可以用 `-C DIR` 指定起点。
 
-```text
-YourProject/
-├── Modules/               # 存放模块仓库
-│   └── modules.yaml       # 仓库列表
-│   └── sources.yaml       # （可选）模块源索引
-├── User/                  # 用户配置与生成输出
-│   ├── xrobot.yaml        # 构造参数配置
-│   └── xrobot_main.hpp    # 自动生成主函数
-```
+| 文件 | 是否提交 | 含义 |
+| --- | --- | --- |
+| `Modules/modules.yaml` | 是 | 需要的模块（`owner/Repo@ref`）和 `xrobot:` 工具版本 |
+| `Modules/sources.yaml` | 是 | 源（`index.yaml`）及优先级 |
+| `xrobot.lock` | 是 | 依赖闭包中每个模块的具体提交 |
+| `User/` 下（含子目录）的 `*.yaml` | 是 | 配置，每份描述一个产品；`User/libxr_config.yaml` 除外 |
+| `User/` 下的入口源文件 | 是 | 用 `XR_REGISTER` 注册 BSP 对象并调用 `XROBOT_MAIN()` |
+| `Modules/<owner>/<Repo>/` | 否 | 检出到锁定提交的模块仓库 |
+| `Modules/CMakeLists.txt` | 否 | 由 `xrobot setup` 生成 |
+| `User/xrobot_main.hpp` | 否 | 为选中的配置生成的头文件，其中是主函数 `XRobotMain` |
 
----
-
-## 主要功能
-
-- **模块仓库拉取与同步**  
-  自动拉取、同步和递归解析模块仓库，保证依赖与版本一致性。
-- **参数自动提取与配置**  
-  自动解析模块头文件参数，生成和管理 YAML 配置文件。
-- **自动主函数生成**  
-  根据配置自动生成 C++ 入口函数 `XRobotMain()`，支持多模块、实例和嵌套结构。
-- **manifest 解析**  
-  解析并格式化模块头文件清单（manifest）。
-- **模块模板快速生成**  
-  一键生成包含 CI 的标准化模块目录。
-- **多源模块管理**  
-  支持本地/远程 YAML 配置和多模块源索引管理。
-
----
-
-## 命令行工具一览
-
-| 命令 Command        | 说明                             | Description                                        |
-| ------------------- | -------------------------------- | -------------------------------------------------- |
-| `xrobot_gen_main`   | 自动生成 C++ 主函数              | Generate main C++ entry source file                |
-| `xrobot_mod_parser` | 解析模块并打印 manifest 信息     | Parse and show module manifest                     |
-| `xrobot_create_mod` | 快速创建标准化模块目录           | Create a new module folder & header                |
-| `xrobot_init_mod`   | 拉取并递归同步所有模块仓库       | Clone and recursively sync all module repos        |
-| `xrobot_setup`      | 一键初始化工作区和生成主函数     | One-click workspace setup & main function generate |
-| `xrobot_add_mod`    | 添加模块仓库或追加模块实例到配置 | Add repo or append module instance config          |
-| `xrobot_src_man`    | 多源模块仓库管理与索引工具       | Multi-source module repository management utility  |
-
-详细参数和用法见后续章节。
+`xrobot init` 在当前目录创建 `Modules/modules.yaml`、`Modules/sources.yaml`、`User/xrobot.yaml`，把生成文件写入 `.gitignore`，并写入 `.gitattributes`（`* text=auto`、`*.sh text eol=lf`、`*.bat text eol=crlf`；已有文件时只补缺少的行）。仓库内统一为 LF，签出时按平台转换，这样在 Windows 和 Linux 上用 CubeMX 重新生成工程，提交里只有真实的改动。
 
 ---
 
 ## 快速上手
 
+以 Linux 上的一个最小 BSP 为例：一个 LED 接在 `/dev/gpiochip0` 的 17 号线上，由模块 BlinkLED 控制闪烁。主机需要安装的软件包见 [Linux 环境配置](../env_setup/linux.md)。BSP 根目录下有 LibXR 子模块、`CMakeLists.txt` 和入口源文件 `User/main.cpp`：
+
 ```bash
-# 1. 一键初始化环境、拉取模块、生成主函数（推荐）
-# 1. One-click initialize workspace, fetch modules, and generate main function (recommended)
-$ xrobot_setup
-Starting XRobot auto-configuration...
-[INFO] Created default Modules/modules.yaml
-Please edit this file; each line should be a full module name like:
-  - xrobot-org/BlinkLED
-  - your-namespace/YourModule@dev
-[INFO] Created default Modules/sources.yaml
-Please configure sources index.yaml for official or custom/private mirrors.
-Default official source already included.
+git init
+git submodule add https://github.com/xrobot-org/libxr.git libxr
+xrobot init
+```
 
-$ xrobot_setup
-Starting XRobot auto-configuration...
-[EXEC] xrobot_init_mod --config Modules/modules.yaml --directory Modules --sources Modules/sources.yaml
-[INFO] Cloning new module: xrobot-org/BlinkLED
-Cloning into 'Modules/BlinkLED'...
-remote: Enumerating objects: 31, done.
-remote: Counting objects: 100% (31/31), done.
-remote: Compressing objects: 100% (21/21), done.
-remote: Total 31 (delta 10), reused 31 (delta 10), pack-reused 0 (from 0)
-Receiving objects: 100% (31/31), 4.43 KiB | 2.22 MiB/s, done.
-Resolving deltas: 100% (10/10), done.
-[SUCCESS] All modules and their dependencies processed.
-[INFO] Created default Modules/CMakeLists.txt: Modules/CMakeLists.txt
-[EXEC] xrobot_gen_main --output User/xrobot_main.hpp
-Discovered modules: BlinkLED
-[INFO] Successfully parsed manifest for BlinkLED
-[INFO] Writing configuration to User/xrobot.yaml
-[SUCCESS] Generated entry file: User/xrobot_main.hpp
+`CMakeLists.txt` 在添加 LibXR 之前设置 `XROBOT_MODULES_DIR`，LibXR 据此加入模块并检查生成的头文件（见 [CMake 集成](./setup.md#cmake-集成)）：
 
-All done! Main function generated at: User/xrobot_main.hpp
+```cmake
+cmake_minimum_required(VERSION 3.19)
+project(blink CXX)
 
-# 2. 单独拉取/同步模块仓库（可选）
-# 2. Pull or sync module repositories separately (optional)
-$ xrobot_init_mod --config Modules/modules.yaml --directory Modules
-[INFO] Updating module: xrobot-org/BlinkLED
-Already up to date.
-Already on 'master'
-Your branch is up to date with 'origin/master'.
-[SUCCESS] All modules and their dependencies processed.
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 3. 创建模块
-# 3. Create a module
-$ xrobot_create_mod MySensor --desc "IMU interface module" --hw i2c1
-[OK] Module MySensor generated at Modules/MySensor
+set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
+add_subdirectory(libxr)
 
-# 4. 查看模块信息
-# 4. View module information
-$ xrobot_mod_parser --path ./Modules/MySensor/
+add_executable(blink User/main.cpp)
+target_include_directories(blink PRIVATE User)
+target_link_libraries(blink PRIVATE xr)
+```
 
-=== Module: MySensor.hpp ===
-Description       : IMU interface module
+入口源文件构造 BSP 对象，用 `XR_REGISTER` 注册配置可以使用的对象，然后进入应用：
 
-Constructor Args  :
-Required Hardware : i2c1
-Depends           : None
+```cpp
+#include "linux_gpio.hpp"
+#include "xrobot_main.hpp"
 
-# 5. 添加模块仓库（如需自定义来源）
-# 5. Add a module repository (custom source, optional)
-$ xrobot_add_mod your-namespace/YourModule@main
-[SUCCESS] Added repo module 'your-namespace/YourModule@main' to Modules/modules.yaml
-
-# 6. 添加模块实例
-# 6. Add a module instance
-$ xrobot_add_mod MySensor
-[SUCCESS] Appended module instance 'MySensor' as id 'MySensor_0' to User/xrobot.yaml
-
-# 7. 查看模块实例
-# 7. View module instances
-$ cat ./User/xrobot.yaml
-global_settings:
-  monitor_sleep_ms: 1000
-modules:
-- name: BlinkLED
-  constructor_args:
-    blink_cycle: 250
-- id: MySensor_0
-  name: MySensor
-  constructor_args: {}
-
-# 8. 重新生成主函数（支持自动扫描和配置）
-# 8. Regenerate main function (auto scan & config supported)
-$ xrobot_gen_main --output User/xrobot_main.hpp
-Discovered modules: BlinkLED, MySensor
-[SUCCESS] Generated entry file: User/xrobot_main.hpp
-
-# 9. 查看主函数
-# 9. View main function
-$ cat ./User/xrobot_main.hpp
-#include "app_framework.hpp"
-#include "libxr.hpp"
-
-// Module headers
-#include "BlinkLED.hpp"
-#include "MySensor.hpp"
-
-static void XRobotMain(LibXR::HardwareContainer &hw) {
-  using namespace LibXR;
-  ApplicationManager appmgr;
-
-  // Auto-generated module instantiations
-  static BlinkLED blinkled(hw, appmgr, 250);
-  static MySensor MySensor_0(hw, appmgr);
-
-  while (true) {
-    appmgr.MonitorAll();
-    Thread::Sleep(1000);
-  }
+int main()
+{
+  LibXR::PlatformInit();
+  static LibXR::LinuxGPIO LED_R("/dev/gpiochip0", 17);
+  LED_R.SetConfig({LibXR::GPIO::Direction::OUTPUT_PUSH_PULL, LibXR::GPIO::Pull::NONE});
+  XR_REGISTER(LED_R, LibXR::GPIO);
+  XROBOT_MAIN();
 }
 ```
+
+加入模块并新增实例：
+
+```bash
+xrobot module add xrobot-org/BlinkLED@dev
+xrobot setup                              # 拉取、锁定、检查配置、生成头文件
+xrobot instance add xrobot-org/BlinkLED   # 新增实例 blinkled_0
+```
+
+`instance add` 按构造函数写出全部参数及源码中的默认值；没有默认值的依赖参数留空（`null`，表示“未填写”），并列出可以填写的已注册对象：
+
+```text
+$ xrobot instance add xrobot-org/BlinkLED
+已将 blinkled_0 添加到 User/xrobot.yaml；生成前请填写值为空的依赖参数
+  led（LibXR::GPIO&）：LED_R
+```
+
+将依赖参数 `led` 填写为已注册的 BSP 对象名：
+
+```bash
+xrobot instance set blinkled_0 args.led LED_R
+```
+
+`User/xrobot.yaml` 随之变为：
+
+```yaml
+modules:
+  - module: xrobot-org/BlinkLED
+    id: blinkled_0
+    args:
+      - led: LED_R
+      - blink_cycle: 250
+settings:
+  monitor_sleep_ms: 1000
+```
+
+生成，用原生工具构建，然后运行：
+
+```bash
+xrobot gen
+cmake -S . -B build
+cmake --build build
+./build/blink
+```
+
+STM32 BSP 的入口源文件 `User/app_main.cpp` 由代码生成器写出，见 [与 XRobot 集成](../code_gen/xrobot_inter.md)。
+
+---
+
+## 命令一览
+
+| 命令 | 作用 |
+| --- | --- |
+| `xrobot --version` | 显示安装的 XRobot 版本 |
+| `xrobot init` | 在当前目录创建 BSP 文件，写入 `.gitignore` 和 `.gitattributes` 条目 |
+| `xrobot setup [--no-line-directives]` | 解析并锁定模块，检查所有配置，重新生成 `User/xrobot_main.hpp` |
+| `xrobot gen [-c CONFIG] [--no-line-directives]` | 生成 `User/xrobot_main.hpp`（选中这份配置；`--no-line-directives` 不写 `#line`） |
+| `xrobot describe [-c CONFIG]` | 以 JSON 输出 BSP 状态，供编辑器使用 |
+| `xrobot sync [-c CONFIG]...` | 为新增字段/参数写入默认值，删除已移除的字段 |
+| `xrobot format [--check] [-c CONFIG]...` | 把配置改写为规范格式 |
+| `xrobot instance [-c CONFIG] add\|set\|remove\|rename` | 编辑一个实例 |
+| `xrobot module add\|remove owner/Repo[@ref]` | 编辑 `Modules/modules.yaml` |
+| `xrobot module show MODULE` | 显示模块的 manifest 和构造函数（目录、头文件或模块 id） |
+| `xrobot new-module NAME` | 创建模块骨架（头文件、CMake、README、CI） |
+| `xrobot check-module MODULE` | 像 `setup` 一样解析模块（会更新 `xrobot.lock` 和 `Modules/`），再写出模块 CI 编译用的构造调用（只编译，不执行） |
+| `xrobot source ...` | 查询或编辑源 |
+
+`xrobot <命令> --help` 显示每个命令的参数。
+
+命令的输出和报错随系统语言：中文环境下为中文，其他环境下为英文。环境变量 `XR_LANG` 可以指定语言（`zh` 或 `en`），LibXR_CppCodeGenerator 的命令同样使用这个变量。生成的文件内容不随语言变化。
+
+---
+
+## BSP CI
+
+STM32 BSP 的 CI 调用共享工作流 `xrobot-org/XRobot/.github/workflows/bsp-stm32-ci.yml`，BSP 只需写出工程名和要构建的配置：
+
+```yaml
+name: build
+on:
+  push: {branches: [master, dev], tags: ['v*']}
+  pull_request: {branches: [master, dev]}
+  release: {types: [published]}
+  workflow_dispatch:
+jobs:
+  build:
+    permissions: {contents: write}   # 把固件附到发布
+    uses: xrobot-org/XRobot/.github/workflows/bsp-stm32-ci.yml@v1
+    with:
+      project: DevC
+      configs: |
+        default
+        debug
+        full
+```
+
+检查作业和构建作业按 `Modules/modules.yaml` 的 `xrobot:` 和 `User/libxr_config.yaml` 的 `generator:` 固定的版本安装工具。检查作业执行第 1 至 4 步；各构建作业（第 5 步）与检查作业并行运行；发布作业（第 6 步）在检查作业和全部构建作业成功后运行：
+
+1. 重新生成 BSP 对象（`libxr parse`、`libxr gen`），检查 `User/app_main.cpp`、`User/app_main.h`、`User/flash_map.hpp` 和 `User/libxr_config.yaml` 与提交一致；
+2. 检查仓库内没有以 CRLF 存储的文本文件（`git ls-files --eol` 中的 `i/crlf`），否则失败并提示 `git add --renormalize .`，见 [`xrobot init`](#bsp-目录约定) 写入的 `.gitattributes`；
+3. `xrobot format --check` 检查配置格式；
+4. `xrobot setup --frozen` 按 lock 检出模块并检查每份配置；
+5. 对每份配置配置并构建；要发布的构建（见[固件发布](#固件发布)）打包固件（`.elf`、`.hex`、`.bin`、配置文件和记录构建信息的 `build-info.json`）并上传为构建产物；
+6. 打 `v*` tag 或发布 Release 时，一个作业下载全部构建产物，生成发布文件、校验和、清单和说明，并一次上传到 Release。
+
+| 输入 | 默认值 | 含义 |
+| --- | --- | --- |
+| `project` | 必填 | CMake 工程名，固件是 `build/<project>.elf` |
+| `configs` | `default` | 要构建的配置，每行一个；`default` 指 `User/xrobot.yaml`，其余名字对应 `<config-dir>/<名字>.yaml` |
+| `config-dir` | `User/RobotConfig` | 配置所在的目录 |
+| `toolchain` | `cmake/starm-clang.cmake` | CMake 工具链文件 |
+| `build-type` | `Release` | CMake 构建类型；为空时不设置 |
+| `presets` | 空 | 每行一个 CMake preset，用于有多个镜像的 BSP（如 OpenCR 的 app 和 bootloader）：每个 preset 都要有同名的配置 preset 和构建 preset，工作流依次 `cmake --preset`、`cmake --build --preset`，不再使用 `toolchain` 和 `build-type`；与 `configs` 的每一项各构建一次 |
+| `release-configs` | 空 | 发布到 Release 的配置，每行一个，必须出现在 `configs` 中；为空时按[固件发布](#固件发布)的默认规则 |
+| `image` | `ghcr.io/xrobot-org/docker-image-stm32:main` | 构建容器 |
+
+`XR_CONTEXT_REF` 和 `XR_RELEASE_REF`（`xrobot setup` 的 `--context-ref` 与 `--release-ref`）由工作流根据触发事件设置，BSP 不需要写。
+
+### 固件发布
+
+打 `v*` tag 或发布 Release 时，工作流上传固件。发布哪些配置按以下规则确定：
+
+- `configs` 只有 `default` 时，发布 `default`；
+- 否则发布除 `default` 外的每份配置；
+- 给出 `release-configs` 时，发布其中的配置，可以包含 `default`。
+
+使用 `presets` 时，每份发布的配置发布全部 preset 的镜像。
+
+发布的文件如下，`<tag>` 是 tag 名（如 `v1.2.0`），其中不能用于文件名的字符替换为 `-`：
+
+| 文件 | 内容 |
+| --- | --- |
+| `<project>-<config>[-<preset>]-<tag>.elf`、`.hex`、`.bin` | 每个构建的固件 |
+| `<project>-<config>-<tag>.yaml` | 这份配置的配置文件：`default` 是 `User/xrobot.yaml`，其余是 `<config-dir>/<名字>.yaml` |
+| `<project>-<config>-<tag>.tar.gz` | 这份配置的全部文件，位于归档内的 `<project>-<config>-<tag>/` 目录 |
+| `SHA256SUMS` | 上面每个文件的 SHA-256，可用 `sha256sum -c SHA256SUMS` 校验 |
+| `firmware-manifest.json` | 构建清单 |
+
+配置名和 preset 名以 `-` 连接成构建名（`<config>-<preset>`），构建名必须互不相同：`a-b` 加 `c` 与 `a` 加 `b-c` 得到同一个名字，工作流在规划阶段报错。
+
+各构建把文件上传为构建产物，之后由一个作业下载全部构建产物、生成上面的文件并一次上传，所以 `SHA256SUMS` 覆盖本次发布的每个文件。缺少某个构建产物，或各构建的提交、工具版本不一致时，该作业失败。
+
+`firmware-manifest.json` 记录 tag、提交、BSP 仓库、工程名、构建类型、工具链文件、镜像，XRobot 与 libxr 实际安装的版本和固定的版本，LibXR 子模块的提交，`xrobot.lock` 中每个模块的提交，以及每个构建的配置、preset、文件名和 `arm-none-eabi-size` 给出的 text、data、bss 大小。使用 `presets` 时，构建类型和工具链由 preset 决定，清单中为 `null`。以下是只构建 `default` 的 BSP 在 `v1.0.0` 上的清单：
+
+```json
+{
+  "schema": 1,
+  "tag": "v1.0.0",
+  "commit": "ad662b2bc410a440717f6a35e3f83a573f2422c5",
+  "repository": "xrobot-org/bsp-dev-mc02",
+  "project": "CtrBoard-H7_ALL",
+  "build_type": "Debug",
+  "toolchain": "cmake/starm-clang.cmake",
+  "image": "ghcr.io/xrobot-org/docker-image-stm32:main",
+  "tools": {
+    "xrobot": {
+      "version": "1.0.0",
+      "pin": "1.0.0"
+    },
+    "libxr": {
+      "version": "6.0.0",
+      "pin": "6.0.0"
+    }
+  },
+  "libxr_submodule": {
+    "path": "Middlewares/Third_Party/LibXR",
+    "commit": "6c51bf4084d983bc20309e63818ce104dc53f959"
+  },
+  "modules": {
+    "xrobot-org/BuzzerAlarm": "44424519645a0d9297d5a7bd57b8dd4e0c342e74"
+  },
+  "builds": [
+    {
+      "config": "default",
+      "preset": null,
+      "files": {
+        "elf": "CtrBoard-H7_ALL-default-v1.0.0.elf",
+        "hex": "CtrBoard-H7_ALL-default-v1.0.0.hex",
+        "bin": "CtrBoard-H7_ALL-default-v1.0.0.bin",
+        "config": "CtrBoard-H7_ALL-default-v1.0.0.yaml",
+        "archive": "CtrBoard-H7_ALL-default-v1.0.0.tar.gz"
+      },
+      "size": {
+        "text": 137384,
+        "data": 84,
+        "bss": 117172
+      }
+    }
+  ]
+}
+```
+
+推送 tag 时，工作流创建 Release，说明是各构建的大小表和工具版本：
+
+```markdown
+## CtrBoard-H7_ALL v1.0.0
+
+| Config | Preset | text | data | bss | Archive |
+| --- | --- | ---: | ---: | ---: | --- |
+| `default` | - | 137384 | 84 | 117172 | `CtrBoard-H7_ALL-default-v1.0.0.tar.gz` |
+
+- Commit `ad662b2` of xrobot-org/bsp-dev-mc02
+- XRobot 1.0.0, libxr 6.0.0, LibXR `6c51bf4`
+- Image `ghcr.io/xrobot-org/docker-image-stm32:main`, toolchain `cmake/starm-clang.cmake`, build type `Debug`
+- `SHA256SUMS` lists every file of this release; `firmware-manifest.json` records the builds and the Module commits
+```
+
+Release 已经有说明时（在网页上创建 Release 会同时推送 tag），保留原有说明。发布 Release 时，工作流只附加文件，说明保持原样。调用方的任务需要 `permissions: contents: write`，工作流才能创建 Release 并上传文件。
+
+---
+
+## 本章内容
+
+- [模块请求与锁定](./setup.md)：`modules.yaml`、ref 规则、`xrobot.lock`、`xrobot setup` 与发布门禁
+- [应用配置](./config.md)：配置格式、依赖绑定、结构体、常量、多产品
+- [入口与生成](./gen_main.md)：`XR_REGISTER`、`XROBOT_MAIN()`、生成的头文件与构建检查
+- [编写模块](./create_mod.md)：模块类与构造函数、manifest、模块 CI
+- [模块源](./src_man.md)：`sources.yaml`、`index.yaml` 与 `xrobot source`

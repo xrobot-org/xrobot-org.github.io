@@ -1,12 +1,12 @@
 ---
 id: core-op
 title: Operation Model
-sidebar_position: 9
+sidebar_position: 11
 ---
 
 # Operation Model
 
-This module defines the generic template class `Operation<T>` to describe asynchronous operations with completion feedback mechanisms. It supports three modes: Callback, Blocking, and Polling, and is designed to unify completion handling in embedded I/O operations.
+`operation.hpp` defines the generic `Operation<T>` template, which describes how the caller is notified when an asynchronous operation completes: callback (CALLBACK), blocking (BLOCK) or polling (POLLING).
 
 `ReadOperation` / `WriteOperation` are aliases of `Operation<ErrorCode>` and are commonly used by I/O ports to report completion status via `ErrorCode`.
 
@@ -26,7 +26,7 @@ enum class OperationType : uint8_t {
 ### POLLING Status Enum
 
 ```cpp
-enum class OperationPollingStatus : uint8_t {
+enum class OperationPollingStatus : uint32_t {
   READY,
   RUNNING,
   DONE,
@@ -50,7 +50,7 @@ Operation(Callback<T> &cb);
 Operation(std::atomic<OperationPollingStatus> &status);
 ```
 
-`Operation` can also be initialized from another `Operation` instance (copy/move semantics are equivalent to assignment).
+An `Operation` can be copied and moved; copies refer to the same callback, semaphore or polling status.
 
 ## Status Updates
 
@@ -63,10 +63,13 @@ void MarkAsRunning();
 
 - `UpdateStatus(...)` triggers a callback, unblocks a waiter, or updates polling state depending on the operation type:
   - CALLBACK: calls `cb.Run(in_isr, status)`, passing `status` as the completion value of type `T`.
-  - BLOCK: calls `Semaphore::PostFromCallback(in_isr)` to unblock; the completion value itself is not stored inside `Operation` for the blocking waiter, and the final `ErrorCode` is currently handed off by the owning port-side state.
-  - POLLING: the current implementation checks success using `status == ErrorCode::OK` and sets `DONE` or `ERROR` accordingly. In practice, this makes the polling path most natural for `Operation<ErrorCode>` in current mainline, rather than a fully generic success policy for arbitrary `T`.
+  - BLOCK: calls `PostFromCallback(in_isr)` on the semaphore to wake the waiter; the final `ErrorCode` is kept by the port and returned by the blocking call.
+  - POLLING: stores (release) `DONE` when `status == ErrorCode::OK` and `ERROR` otherwise, so it fits operations whose completion value is an `ErrorCode`.
 - `MarkAsRunning()` sets the polling status to `RUNNING` if the type is `POLLING`.
-- These functions are typically called by drivers/ports; users only need to select an `OperationType` and pass an `Operation` instance in.
+- Ports or drivers call these two functions; users only construct the `Operation` and pass it in.
+- An `Operation` only borrows its callback, semaphore or polling status; the caller keeps them valid until the operation ends.
+- A semaphore serves one BLOCK call at a time; BLOCK calls are thread-only.
+- Callbacks run inline in the context that completes the I/O, possibly an ISR; read the polling status with `load(std::memory_order_acquire)`.
 
 ## Usage Examples
 
@@ -98,33 +101,30 @@ ReadOperation op_poll(status);
 read_port(buffer, op_poll);
 
 // Later check if completed
-if (status.load(std::memory_order_acquire) ==
-    LibXR::ReadOperation::OperationPollingStatus::DONE) {
+auto now = status.load(std::memory_order_acquire);
+if (now == LibXR::ReadOperation::OperationPollingStatus::DONE) {
   // Completed successfully
-} else if (status.load(std::memory_order_acquire) ==
-           LibXR::ReadOperation::OperationPollingStatus::ERROR) {
+} else if (now == LibXR::ReadOperation::OperationPollingStatus::ERROR) {
   // Completed with an error
 }
 ```
 
-## Additional current-mainline role: `AsyncBlockWait`
+## `AsyncBlockWait`
 
-Besides `Operation<T>`, `operation.hpp` also defines an internal helper currently used by synchronous driver paths:
+`operation.hpp` also defines a helper used by synchronous drivers:
 
 ```cpp
 class AsyncBlockWait;
 ```
 
-It does not replace `Operation`; it provides a shared BLOCK waiter handoff:
+Synchronous drivers use it to wait for one asynchronous completion:
 
 - `Start(Semaphore&)`
 - `Wait(timeout)`
 - `TryPost(in_isr, ErrorCode)`
 - `Cancel()`
 
-Current semantics highlights:
+Key semantics:
 
-- a timed-out waiter becomes detached from later completions;
-- a late completion may still clean up the in-flight state, but the result no longer belongs to the caller that has already returned with timeout.
-
-That is also why the BLOCK path above is described mainly as “semaphore wake-up”, not as a generic value-storing completion channel inside `Operation` itself.
+- a waiter that returned on timeout is detached from later completions;
+- a late completion only clears the internal wait state and does not wake the caller that already timed out.

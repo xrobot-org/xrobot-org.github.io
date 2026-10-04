@@ -21,7 +21,7 @@ The focus here is on practical usage and on choosing/calibrating the delay param
 
 Timing is generated in software: it computes the number of busy-loop iterations for each half-period from the target clock `hz` and the delay calibration factor `loops_per_us`, approximating the requested SWCLK.
 
-Recommended external circuitry (strongly recommended):
+Recommended external circuitry:
 - 33Ω series resistors on SWCLK/SWDIO (current limiting / ringing suppression)
 - 10k pull-up on SWDIO
 
@@ -43,10 +43,12 @@ Minimum expected capabilities from the GPIO types (abstractly):
 - `Read() -> bool`
 
 SWDIO must support:
-- Input sampling: `INPUT + PULL_UP`
+- Input sampling: `Direction::INPUT` + `Pull::UP`
 - Output drive selected by `IO_DRIVE_MODE`
   - `SwdIoDriveMode::PUSH_PULL` -> `OUTPUT_PUSH_PULL`
   - `SwdIoDriveMode::OPEN_DRAIN` -> `OUTPUT_OPEN_DRAIN`
+
+When choosing the output mode, open-drain suits boards with an external pull-up on SWDIO, and push-pull suits boards without one. The actual electrical behavior of SWDIO/SWCLK also depends on GPIO drive strength, trace length, damping resistors, probe load, and the target's input structure.
 
 ---
 
@@ -63,7 +65,7 @@ explicit SwdGeneralGPIO(SwclkGpioType& swclk,
 
 Typical usage flow:
 1) Create GPIO objects and the probe instance (start with a “conservative” frequency and a calibrated `loops_per_us`).
-2) Call `EnterSwd()` on the target (recommended if you are unsure which debug mode the target is in).
+2) Call `EnterSwd()` (recommended when the target's current debug mode is unknown).
 3) Use the `Swd` base class “retry-enabled” APIs in upper layers (to handle WAIT, insert idle clocks, etc.).
 
 Example:
@@ -79,7 +81,7 @@ Probe probe(swclk, swdio, /*loops_per_us=*/calibrated, /*default_hz=*/500000);
 
 probe.EnterSwd();
 
-// Upper layers should prefer a retry-enabled path (illustrative; depends on your Swd wrappers)
+// Read DP IDCODE (ReadIdCode does not retry; retrying transactions such as DpReadTxn are in the Swd base class)
 uint32_t idcode = 0;
 LibXR::Debug::SwdProtocol::Ack ack;
 probe.ReadIdCode(idcode, ack);
@@ -93,7 +95,7 @@ probe.ReadIdCode(idcode, ack);
 
 `SetClockHz(hz)` sets the **target SWCLK frequency**.
 
-- `hz` is clamped to the range supported by this implementation (values below the minimum are raised; values above the maximum are lowered).
+- A nonzero `hz` is clamped to 50 kHz–100 MHz (`MIN_HZ`/`MAX_HZ`); the constructor default is 500 kHz (`DEFAULT_CLOCK_HZ`).
 - Whether the actual frequency matches the configured value depends on `loops_per_us`, GPIO toggle speed, CPU load, etc.
 - `hz == 0` forces the internal “no-delay path” (no BusyLoop delay is inserted). In this mode, the SWCLK frequency is determined by CPU and GPIO toggle speed and is typically “as fast as possible”.
 
@@ -107,7 +109,7 @@ It is not a universal constant and typically varies significantly with:
 - LTO and compiler version
 - Instruction/bus wait states (on some MCUs, power/clock domains may also affect it)
 
-Whenever any of the above changes, you should re-calibrate `loops_per_us`.
+`loops_per_us` is re-calibrated whenever any of the above changes.
 
 ### 4.3 When the “No-Delay Path” Is Used
 
@@ -120,14 +122,14 @@ Implications of the no-delay path:
 - Cons: SWCLK is no longer precisely controlled by `hz`; it becomes “as fast (and as stable) as the platform allows”.
 
 Engineering guidance:
-- If you need a **controllable and reproducible** SWCLK, ensure the computed `half_period_loops_` is clearly > 0 (i.e., calibrate `loops_per_us` properly and avoid overly high `hz`).
-- If you only need it to **work and be as fast as possible**, you may set `loops_per_us = 0`, or set `hz` high enough that the implementation naturally falls into the no-delay path.
+- For a controllable and reproducible SWCLK, keep the computed `half_period_loops_` above 0 (calibrate `loops_per_us` and avoid an overly high `hz`).
+- When only maximum speed matters, set `loops_per_us = 0`, or set `hz` high enough that the implementation falls into the no-delay path.
 
 ---
 
 ## 5. Choosing and Calibrating `loops_per_us`
 
-Two common calibration methods are provided below. The key principle: calibrate under the **same compiler options and the same CPU frequency** as your final firmware.
+Two common calibration methods are provided below. The key principle: calibrate with the same compiler options and CPU frequency as the final firmware.
 
 ### Method A: Calibrate with a Hardware Timer / Cycle Counter
 
@@ -151,7 +153,7 @@ Steps:
 3) Adjust proportionally: `loops_per_us_new ≈ loops_per_us_old * (f_meas / f_target)`, iterate 1–2 times to converge.
 
 Pros: no need to use timer resources; GPIO toggle overhead is included in the fit.  
-Note: If you are already in the no-delay path (very high frequency), this method may stop working, because adjusting `loops_per_us` may not bring you back into the delayed path.
+In the no-delay path (very high frequency) this method does not apply, because adjusting `loops_per_us` may not return to the delayed path.
 
 ---
 
@@ -173,6 +175,8 @@ Recommended mitigation order:
 2) Verify 33Ω series resistors and SWDIO pull-up;
 3) Shorten the cable / improve grounding;
 4) Re-calibrate `loops_per_us` (especially after changing compiler optimization options).
+
+At higher SWCLK frequencies, edge rate, ringing, overshoot/undershoot, and settling time affect ACK and sampling stability. When a link works at low frequency but fails randomly at high frequency, the SWCLK/SWDIO edges are checked with an oscilloscope.
 
 ---
 

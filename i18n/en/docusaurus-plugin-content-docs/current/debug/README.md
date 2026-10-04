@@ -6,7 +6,7 @@ sidebar_position: 8
 
 # Debug Interfaces
 
-This chapter covers the `SWD` and `JTAG` debug paths.
+This chapter describes the `SWD` and `JTAG` debug interfaces.
 
 ## Contents
 

@@ -8,10 +8,7 @@ sidebar_position: 12
 
 `LibXR::Watchdog` 提供通用看门狗（Watchdog）抽象接口，支持配置溢出时间、自动喂狗周期等参数，并提供启动、停止和手动喂狗等控制接口，适配多线程和定时任务等不同运行环境。
 
-需要注意的是，当前主线把“硬件配置”和“自动喂狗调度”分成了两层：
-
-- `SetConfig(...)` 只负责把 `timeout_ms / feed_ms` 交给具体平台实现；
-- `ThreadFun()` / `TaskFun()` 是否真的执行自动喂狗，还取决于公开运行态成员 `auto_feed_` 和 `auto_feed_interval_ms`。
+现有后端（`STM32Watchdog`、`ESP32Watchdog`）中，`SetConfig()` 设置溢出时间，并把 `feed_ms` 记为自动喂狗间隔 `auto_feed_interval_ms`（要求 `0 < feed_ms <= timeout_ms`，否则返回 `ARG_ERR`）；`Start()` 启动看门狗并置位 `auto_feed_`，`Stop()` 清除 `auto_feed_`。两个后端的构造函数已调用 `SetConfig()` 和 `Start()`。
 
 ## 接口概览
 
@@ -51,12 +48,12 @@ static void TaskFun(Watchdog* wdg);
 - `ThreadFun`：用于线程环境中的自动喂狗循环；
 - `TaskFun`：适用于定时轮询任务系统中的自动喂狗函数。
 
-当前辅助函数的真实语义：
+辅助函数的行为：
 
 - `ThreadFun()` 会循环调用 `LibXR::Thread::Sleep(auto_feed_interval_ms)`，并在 `auto_feed_ == true` 时执行 `Feed()`；
 - `TaskFun()` 不做循环，只在本次被调度时检查一次 `auto_feed_` 并决定是否 `Feed()`。
 
-也就是说，自动喂狗是否生效并不是单靠 `SetConfig()` 决定；上层还需要显式组织线程或周期任务，并设置好 `auto_feed_` 与 `auto_feed_interval_ms`。
+自动喂狗由运行 `ThreadFun()` 的线程，或由 `Timer` 周期调用的 `TaskFun()` 执行。STM32 IWDG 启动后不能关闭，`STM32Watchdog::Stop()` 返回 `NOT_SUPPORT` 并停止自动喂狗。
 
 ## 特性总结
 
