@@ -37,4 +37,4 @@ DAC:
 - the constructor arguments come from `DAC.<instance>.init_voltage` (default 0.0) and `DAC.<instance>.vref` (default 3.3);
 - a DAC peripheral without enabled channels gets no object.
 
-After editing the file, run `libxr stm32 setup -d .` to regenerate the code.
+After editing the file, regenerate the code with the commands in [Regenerating the Code](./README.md#regenerating-the-code).

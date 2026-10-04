@@ -41,4 +41,4 @@ FDCAN:
 - 从 `CAN.<实例>.queue_size` 或 `FDCAN.<实例>.queue_size` 读取发送队列长度，默认 5；
 - 开启 XRobot 集成（`--xrobot`）时，FDCAN 对象另有一个 `LibXR::CAN` 引用，见[与XRobot集成](../xrobot_inter.md)。
 
-修改该文件后运行 `libxr stm32 setup -d .` 重新生成代码。
+修改该文件后重新生成代码，命令见[重新生成代码](./README.md#重新生成代码)。

@@ -207,12 +207,65 @@ With `CMSIS_V2`, STM32CubeMX always enables FreeRTOS software timers (`configUSE
 
 ---
 
+## libxr_config.yaml
+
+`User/libxr_config.yaml` holds the settings of code generation. When the file does not exist, `libxr gen` creates it with the defaults; every later generation adds missing settings and keeps the values, comments and keys the generator does not use. A peripheral section is written only when the project has that peripheral, with one entry per instance keyed by the lower-case instance name, such as `spi1`.
+
+The table lists the top-level keys in the order of a newly created file; the last two are written by the user:
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `terminal_source` | `''` | Serial port of the terminal, see [UART and Terminal](./uart.md) |
+| `software_timer` | `priority: 2`, `stack_depth: 1024` | Software timer thread, see [Software Timer](./timer.md) |
+| `SPI` | `tx_buffer_size: 32`, `rx_buffer_size: 32`, `dma_section: ''`, `dma_enable_min_size: 3` | See [SPI](./spi.md) |
+| `I2C` | `buffer_size: 32`, `dma_section: ''`, `dma_enable_min_size: 3` | See [I2C](./i2c.md) |
+| `USART` | `tx_buffer_size: 128`, `rx_buffer_size: 128`, `dma_section: ''`, `tx_queue_size: 5` | USART, UART and LPUART, see [UART and Terminal](./uart.md) |
+| `ADC` | `buffer_size: 32`, `dma_section: ''`, `vref: 3.3` | See [ADC](./adc.md) |
+| `CAN` | `queue_size: 5` | See [CAN & CAN FD](./can.md) |
+| `FDCAN` | `queue_size: 5` | See [CAN & CAN FD](./can.md) |
+| `USB` | `enable`; with `true` the other settings are filled in | See [UART and Terminal](./uart.md) |
+| `Terminal` | `read_buff_size: 32`, `max_line_size: 32`, `max_arg_number: 5`, `max_history_number: 5`; `run_as_thread: false` as well when a terminal is generated | See [UART and Terminal](./uart.md) |
+| `database` | `enable: false`, `block_size: auto` | See [Flash Database](./flash.md) |
+| `SYSTEM` | From the `.ioc` | `FreeRTOS`, `ThreadX` or `None` (bare metal), see below |
+| `DAC` | `init_voltage: 0.0`, `vref: 3.3` | See [DAC](./dac.md) |
+| `IWDG` | `timeout_ms: 1000`, `feed_interval_ms: 250` | See [Watchdog](./watchdog.md) |
+| `Watchdog` | `run_as_thread: false`, `feed_interval_ms: 250` | Written when an IWDG is enabled, see [Watchdog](./watchdog.md) |
+| `generator` | Not written | Pins the code generator version, see [Integrate with XRobot](../xrobot_inter.md#generator-version) |
+| `config_version` | Not written; read as 1 | Version of the file format, see below |
+
+The generator writes `SYSTEM` from the `.ioc` and ignores it when reading; the system always comes from the `.ioc`. When `config_version` is above 1 or not an integer, `libxr gen` warns that settings of a newer format may have no effect; generation goes on and the key stays as written.
+
+Keys written by earlier versions are converted or removed on regeneration: `device_aliases` is removed, generated objects are registered only under their own names, and the aliases in it that differ from their object are listed in a warning (alias -> object); `FlashLayout` is removed, the Flash layout being written only to `flash_map.hpp`; `cdc_tx_fifo_size`, `cdc_rx_fifo_size` and `cdc_queue_size` of an enabled USB peripheral become one item of the `cdc` list, or are only removed when `cdc` exists, see [UART and Terminal](./uart.md); upper-case instance keys under `CAN` and `FDCAN` (such as `CAN1`) become lower case.
+
+---
+
+## Regenerating the Code
+
+After a change to `User/libxr_config.yaml` or to the configuration in STM32CubeMX, run again in the project root:
+
+```bash
+libxr stm32 setup -d .
+```
+
+To regenerate only the files in `User/`, write `.config.yaml` from the `.ioc` first, then run `libxr gen`:
+
+```bash
+libxr parse -d .
+libxr gen -i .config.yaml -o User/app_main.cpp
+```
+
+`.config.yaml` is listed in the generated `.gitignore`, so a fresh clone of the project does not have it and needs `libxr parse` first.
+
+---
+
 ## Optional Arguments
+
+The arguments of `libxr stm32 setup` are listed below; `libxr stm32 setup --help` lists them as well.
 
 | Argument   | Description                             |
 | ---------- | --------------------------------------- |
-| `-d`       | Specify STM32 project root directory (default: current directory) |
-| `-t`       | Set the terminal device (such as `usart1` or `usb_fs_cdc`), stored as `terminal_source` in `User/libxr_config.yaml` |
+| `-d`, `--directory` | Specify STM32 project root directory (default: current directory) |
+| `-t`, `--terminal` | Set the terminal device (such as `usart1` or `usb_fs_cdc`), stored as `terminal_source` in `User/libxr_config.yaml` |
 | `--xrobot` / `--no-xrobot` | Emit `XR_REGISTER` registrations and `XROBOT_MAIN();`, or not, see [Integrate with XRobot](../xrobot_inter.md); without either the project keeps its choice |
 | `--commit` | Check out the LibXR submodule at this commit; without it the existing checkout is kept, and a new submodule starts at the commit this libxr release pins |
 | `--git-source` | The Git source a missing LibXR is cloned from: `auto` (default), `github`, a base URL, a repository URL or a local repository; `.gitmodules` always records the GitHub URL |
@@ -248,9 +301,34 @@ The command edits `CMakePresets.json` and `cmake/starm-clang.cmake`. Switching b
 
 ---
 
-## Build Optimization
+## LibXR.CMake
 
-In the settings block at the top of `cmake/LibXR.CMake`, `LIBXR_OPT_DEBUG` (default `-Og`) is the Debug optimization level of the application target, including the sources in `User/`; in Debug builds the LibXR library `xr` (which also compiles the sources of XRobot Modules) and the libraries CubeMX generates (HAL, FreeRTOS and so on) use `-O2`. `LIBXR_OPT_RELEASE` is the Release level of the application, `xr` and these libraries; `""` keeps the level of the toolchain file (`-Os` for GCC and `-Oz` for ST Arm Clang as CubeMX writes them).
+The "Project settings" block at the top of `cmake/LibXR.CMake` holds the build settings of the project. Below is the beginning of the file generated for a FreeRTOS project: the generated-file line, then the settings block.
+
+```cmake
+# Generated by `libxr stm32 setup`; edit the values in the "Project settings" block only.
+
+# ---- Project settings --------------------------------------------------------
+set(LIBXR_SYSTEM FreeRTOS)
+set(LIBXR_DRIVER st)
+# User sources of the application; "" when CMakeLists.txt adds them itself.
+set(LIBXR_USER_SOURCES_GLOB "${CMAKE_CURRENT_SOURCE_DIR}/User/*.cpp")
+# Optimization level of the application in Debug builds and of everything in Release builds;
+# "" keeps the level of the toolchain file.
+set(LIBXR_OPT_DEBUG "-Og")
+set(LIBXR_OPT_RELEASE "")
+```
+
+- `LIBXR_SYSTEM`: the LibXR system layer, decided by `FreeRTOSConfig.h` or `app_threadx.h` in `Core/Inc`: `FreeRTOS`, `ThreadX` or `None` (bare metal);
+- `LIBXR_DRIVER`: the LibXR peripheral backend, `st` for STM32 projects. Both are described in the LibXR [CMake Configuration](../../basic_coding/cmake.md);
+- `XROBOT_MODULES_DIR`: added when `User/app_main.cpp` was generated with `--xrobot`, see [Integrate with XRobot](../xrobot_inter.md);
+- `LIBXR_USER_SOURCES_GLOB`: the sources added to the application target, by default every `.cpp` file in `User/`; with `""` none are added and `CMakeLists.txt` adds them itself;
+- `LIBXR_OPT_DEBUG` (default `-Og`): the Debug optimization level of the application target, including the sources in `User/`; in Debug builds the LibXR library `xr` (which also compiles the sources of XRobot Modules) and the libraries CubeMX generates (HAL, FreeRTOS and so on) use `-O2`;
+- `LIBXR_OPT_RELEASE` (default `""`): the Release level of the application, `xr` and these libraries; `""` keeps the level of the toolchain file (`-Os` for GCC and `-Oz` for ST Arm Clang as CubeMX writes them).
+
+The generator maintains the rest of the file (LibXR, the application target, the optimization of the libraries and the build output). When `libxr stm32 cmake` or `libxr stm32 setup` rewrites the file, the content of the "Project settings" block is kept: only `LIBXR_SYSTEM` and `XROBOT_MODULES_DIR` are corrected for the project, and missing settings are added with their defaults; the rest is generated again.
+
+A `LibXR.CMake` generated by an earlier version lacks the generated-file line and migrates to this structure when rewritten: `LIBXR_DRIVER` and `XROBOT_MODULES_DIR` are kept; `LIBXR_OPT_DEBUG` takes the `-O` option of the application target in the old Debug block, or the Debug level of the toolchain files without one, and `LIBXR_OPT_RELEASE` takes the Release level of the toolchain files; a `file(GLOB LIBXR_USER_SOURCES ...)` with a single pattern goes into `LIBXR_USER_SOURCES_GLOB`. Optimization options of other targets in the old Debug block are dropped, with a notice for each one that differs from the old template. Every statement the generator does not recognize is kept: those before `add_subdirectory(LibXR)` go into the "Project settings" block and those after it into the "Kept from the earlier LibXR.CMake" block at the end of the file, which later rewrites keep as well.
 
 ---
 
@@ -270,6 +348,8 @@ After each link of the application, `cmake/LibXR.CMake` makes `<project>.hex` (I
 | `libxr stm32 flash-info` | Prints the internal flash layout of an STM32 model as YAML |
 | `libxr stm32 cmake`      | Integrates LibXR into the project build system |
 | `libxr stm32 toolchain`  | Switch toolchain and standard library          |
+
+`libxr <command> --help` lists all arguments of a command with their defaults, for example `libxr gen --help` or `libxr stm32 cubemx-gen --help`.
 
 The `xr_*` commands of libxr before 6.0.0 (such as `xr_cubemx_cfg`) still work with their arguments and meanings unchanged: they name their new command when they run and are removed in 7.0.0. The [CodeGenerator README](https://github.com/xrobot-org/LibXR_CppCodeGenerator#旧命令--old-commands) lists them.
 

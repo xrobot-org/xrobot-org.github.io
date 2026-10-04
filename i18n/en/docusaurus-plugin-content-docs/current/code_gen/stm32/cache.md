@@ -1,7 +1,7 @@
 ---
 id: stm32-code-gen-cache
 title: Cache
-sidebar_position: 13
+sidebar_position: 14
 ---
 
 # Cache (High Performance Cache)

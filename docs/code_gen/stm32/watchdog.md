@@ -1,7 +1,7 @@
 ---
 id: stm32-code-gen-watchdog
 title: 看门狗
-sidebar_position: 12
+sidebar_position: 13
 ---
 
 # 看门狗
@@ -58,13 +58,7 @@ Watchdog:
 - `run_as_thread`：为 `true` 时用独立线程喂狗，线程按实例的 `feed_interval_ms` 循环喂狗，另外写入 `thread_stack_depth`（默认 1024）和 `thread_priority`（默认 3，即 `HIGH`，见[软件定时器](./timer.md)）；
 - `feed_interval_ms`：定时器任务的喂狗周期，默认 250 ms。
 
-## 生成代码命令
-
-修改 `libxr_config.yaml` 后，重新生成代码：
-
-```bash
-libxr stm32 setup -d .
-```
+修改该文件后重新生成代码，命令见[重新生成代码](./README.md#重新生成代码)。
 
 ## 注意事项
 

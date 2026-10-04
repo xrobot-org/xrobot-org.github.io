@@ -42,4 +42,4 @@ software_timer:
 
 `priority` takes 0 to 4 or a level name in any case; 0 to 4 stand for `IDLE`, `LOW`, `MEDIUM`, `HIGH` and `REALTIME`, and the default is 2 (`MEDIUM`). Any other value stops generation. The `thread_priority` of the terminal and the watchdog takes the same values.
 
-After editing the file, run `libxr stm32 setup -d .` to regenerate the code.
+After editing the file, regenerate the code with the commands in [Regenerating the Code](./README.md#regenerating-the-code).

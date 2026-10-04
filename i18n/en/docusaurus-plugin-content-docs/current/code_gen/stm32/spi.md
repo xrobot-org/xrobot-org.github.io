@@ -35,4 +35,4 @@ Generation rules:
 - `dma_enable_min_size` is the last argument of the `STM32SPI` constructor;
 - `dma_section` decides the section the buffers go to, see [Cache](./cache.md).
 
-After editing the file, run `libxr stm32 setup -d .` to regenerate the code.
+After editing the file, regenerate the code with the commands in [Regenerating the Code](./README.md#regenerating-the-code).

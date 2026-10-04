@@ -1,7 +1,7 @@
 ---
 id: stm32-code-gen-flash
 title: Flash数据库
-sidebar_position: 1
+sidebar_position: 12
 ---
 
 # Flash数据库
@@ -51,45 +51,10 @@ $ libxr gen -i .config.yaml -o User/app_main.cpp
 [错误] 生成失败：User\libxr_config.yaml：database.block_size 'wide' 不是正整数或 auto
 ```
 
-以下各节是在 User Code 中自行创建 Flash 对象和数据库对象的写法。
+## 在 User Code 中创建对象
 
-## 创建Flash对象
+`database.enable` 为 `false` 时，也可以在 User Code 中自行创建这两个对象，写法与上面生成的代码相同；`STM32Flash` 的第三个参数可以给出数据库存储区的起始地址，须正好是某个扇区的起点，存储区一直到 Flash 末尾，省略时使用末尾两个扇区（开头的 STM32F407IGH6 布局中为 `0x080C0000`）。键的定义与读写（`Database::Key`、`Set()`）、`DatabaseRawSequential` 和回收阈值见中间件的 [闪存数据库](../../basic_coding/middleware/database.md)。
 
-第一个参数是 Flash 地址映射表，第二个参数是表的项数，第三个参数是数据库存储区的起始地址，存储区一直到 Flash 末尾。起始地址须正好是某个扇区的起点，否则构造时断言失败。第三个参数可以省略，这时使用末尾两个扇区，数据库的主块和备份块各占一个。
+手写的 `flash` 和 `database` 对象不能与 `database.enable: true` 同时使用：这时 `app_main()` 中已经生成 `static STM32Flash flash` 和 `static DatabaseRaw<...> database`，User Code 2、3 中的同名对象与它们位于同一作用域，编译时报重复定义。
 
-```cpp
-  // app_main.cpp
-  /* User Code Begin 3 */
-  STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER);
-  // 等同于 STM32Flash flash(FLASH_REGIONS, FLASH_REGION_NUMBER, 0x080C0000);
-```
-
-## 创建数据库对象
-
-各系列都使用 `DatabaseRaw<N>`。模板参数 `N` 是数据库的最小写入单元，单位为字节，不能小于 Flash 的最小写入单元，一般写 `STM32Flash::MIN_WRITE_SIZE`。第二个参数可以省略，启动时失效的旧键数量超过它（默认 128）就整理一次存储区。
-
-```cpp
-LibXR::DatabaseRaw<STM32Flash::MIN_WRITE_SIZE> database(flash);
-```
-
-G4、L4、H7 等系列的 Flash 按双字或 Flash 字编程，每个单元擦除后只能写一次。`DatabaseRaw` 的每个键标志各占一个最小写入单元，修改标志时写入的是尚未写过的单元，所以这些系列同样使用 `DatabaseRaw<STM32Flash::MIN_WRITE_SIZE>`。
-
-另一种后端 `DatabaseRawSequential` 只按地址顺序写入。第二个参数可以省略，代表最大缓冲区大小（默认 256 字节）。
-
-```cpp
-LibXR::DatabaseRawSequential database(flash, 256);
-```
-
-## 创建数据库键值
-
-模板参数为键值存储的数据类型，第二个参数为键名，第三个参数为默认值。键值可自动转换成对应的类型，也可通过key.data_获取原始数据。
-
-```cpp
-Database::Key<uint32_t> key1(database, "key1", 0);
-```
-
-## 写入数据库
-
-```cpp
-key1.Set(key1.data_ + 1);
-```
+User Code 中用到 `FLASH_REGIONS` 时，`app_main.cpp` 在下一次生成时才 include `flash_map.hpp`；在此之前编译，需要在 User Code 1 中写 `#include "flash_map.hpp"`。

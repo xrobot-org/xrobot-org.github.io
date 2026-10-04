@@ -149,19 +149,4 @@ Values filled in by the generator are written in decimal, so the default vid 0x1
 
 The first four entries of `Terminal` are the `Terminal` template arguments: read buffer size, maximum line length, maximum number of arguments and number of history entries. A non-empty `terminal_source` adds `run_as_thread` (default `false`); when it is `true`, `thread_stack_depth` (default 1024) and `thread_priority` (default 3, that is `HIGH`; see [Software Timer](./timer.md)) are added as well.
 
----
-
-## Code Generation Command
-
-After editing `libxr_config.yaml`, regenerate the whole project:
-
-```bash
-libxr stm32 setup -d .
-```
-
-To regenerate only the entry source, write `.config.yaml` from the `.ioc` first:
-
-```bash
-libxr parse -d .
-libxr gen -i .config.yaml -o User/app_main.cpp
-```
+After editing the file, regenerate the code with the commands in [Regenerating the Code](./README.md#regenerating-the-code).

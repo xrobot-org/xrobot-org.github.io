@@ -62,9 +62,28 @@ extern "C" void app_main(void)
 }
 ```
 
-- 名字就是生成的 C++ 对象名：GPIO 取 CubeMX 中的引脚标签（没有标签时由引脚名得到）；SPI、I2C、UART、CAN、FDCAN 取小写的实例名（如 `spi1`、`usart1`）；ADC 通道为 `<实例>_<通道>`（如 `adc3_adc_channel_8`），DAC 输出为 `<实例>_<通道>`（如 `dac1_out2`），PWM 为 `pwm_<定时器>_ch<通道>`；USB 的各路 CDC 为 `<USB 实例>_cdc`、`<USB 实例>_cdc2`……，注册为 `LibXR::UART`；看门狗取 IWDG 实例名（如 `iwdg`），注册为 `LibXR::Watchdog`。另外注册 `power_manager`（`LibXR::PowerManager`）；设置了 `terminal_source` 时注册 `ramfs` 和 `terminal`；`database.enable` 为 `true` 时注册 `database`（`LibXR::Database`）。
-- 每个名字只注册一种类型。FDCAN 对象 `fdcanN` 注册为 `LibXR::FDCAN`，同时生成引用 `LibXR::CAN& canN = fdcanN;` 并注册为 `LibXR::CAN`。芯片同时有 CAN 与 FDCAN 导致 `canN` 重名时，生成失败。
-- 需要注册更多对象（例如在 User Code 3 中额外创建的串口）时，在 User Code 3 中写 `XR_REGISTER`，这些内容在重新生成时保留。数据库由 `libxr_config.yaml` 的 `database.enable` 生成并注册为 `database`，见 [Flash 数据库](./stm32/flash.md)。
+注册名即生成的 C++ 对象名。各类对象的注册名和类型如下，顺序与生成代码中注册的顺序相同：
+
+| 对象 | 注册名 | 类型 |
+| --- | --- | --- |
+| 电源管理 | `power_manager` | `LibXR::PowerManager` |
+| GPIO 引脚 | CubeMX 中的引脚标签，没有标签时为引脚名，如 `USER_KEY`、`PA8` | `LibXR::GPIO` |
+| ADC 通道 | `<ADC 实例>_<通道>`，如 `adc3_adc_channel_8`；同一通道配置在多个 Rank 时，之后的名字带 `_rank<N>` 后缀 | `LibXR::ADC` |
+| DAC 输出 | `<DAC 实例>_<输出>`，如 `dac1_out2`；实例名为 `DAC` 时为 `dac_out2` | `LibXR::DAC` |
+| PWM 通道 | `pwm_<定时器>_ch<通道>`，如 `pwm_tim1_ch1`；互补输出为 `pwm_tim1_ch1n` | `LibXR::PWM` |
+| SPI | 小写的实例名，如 `spi1` | `LibXR::SPI` |
+| 硬件串口（USART、UART、LPUART） | 小写的实例名，如 `usart1`、`uart7` | `LibXR::UART` |
+| USB CDC | `<USB 实例>_cdc`、`<USB 实例>_cdc2`……，如 `usb_otg_fs_cdc` | `LibXR::UART` |
+| I2C | 小写的实例名，如 `i2c1` | `LibXR::I2C` |
+| CAN | 小写的实例名，如 `can1`；FDCAN 实例另有引用 `canN`（`LibXR::CAN& canN = fdcanN;`） | `LibXR::CAN` |
+| FDCAN | 小写的实例名，如 `fdcan1` | `LibXR::FDCAN` |
+| 独立看门狗 | 小写的实例名，如 `iwdg`、`iwdg1` | `LibXR::Watchdog` |
+| RamFS | `ramfs`，`terminal_source` 指向已生成的串口时生成 | `LibXR::RamFS` |
+| 终端 | `terminal`，与 `ramfs` 一同生成 | `LibXR::Terminal<...>`，模板参数为 `Terminal` 的前四项设置，如 `LibXR::Terminal<32, 32, 5, 5>` |
+| 数据库 | `database`，`database.enable` 为 `true` 时生成，见 [Flash 数据库](./stm32/flash.md) | `LibXR::Database` |
+
+- 每个名字只注册一种类型，生成的名字重复时生成失败，例如芯片同时有 CAN 与 FDCAN，`canN` 重名。
+- 需要注册更多对象（例如在 User Code 3 中额外创建的串口）时，在 User Code 3 中写 `XR_REGISTER`，这些内容在重新生成时保留。
 - `XROBOT_MAIN();` 由生成器维护。旧版本把它写在 User Code 3 中；若 User Code 区域中仍有该调用，生成器报告行号并停止、不写任何文件，删除该行后重新生成即可。
 
 `libxr stm32 cmake` 和 `libxr stm32 setup` 按 `User/app_main.cpp` 是否由 `--xrobot` 生成，在 `cmake/LibXR.CMake` 开头的 “Project settings” 块中加入或删除 `set(XROBOT_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Modules")`，加入时写在 `set(LIBXR_DRIVER st)` 之后。单独运行 `libxr gen` 不修改这个文件。
@@ -86,6 +105,6 @@ xrobot instance set blinkled_0 args.led LED_B   # 依赖参数填写已注册的
 xrobot gen                                      # 重新生成 User/xrobot_main.hpp
 ```
 
-各命令的说明见项目管理的[快速上手](../proj_man/README.md#快速上手)。模块的依赖参数为 `LibXR::RamFS&` 时，需要在 `User/libxr_config.yaml` 中设置 `terminal_source`（或运行 `libxr stm32 setup` 时给出 `-t`）；为 `LibXR::Database&` 时，需要设置 `database.enable: true`。修改后重新运行 `libxr stm32 setup -d .`，生成并注册 `ramfs` 或 `database`。没有这两个设置时，`xrobot instance add` 对这类参数没有可填写的对象。
+各命令的输出见[快速开始](../quick_start.md#新建-bsp)。模块的依赖参数为 `LibXR::RamFS&` 时，需要在 `User/libxr_config.yaml` 中设置 `terminal_source`（或运行 `libxr stm32 setup` 时给出 `-t`）；为 `LibXR::Database&` 时，需要设置 `database.enable: true`。修改后重新运行 `libxr stm32 setup -d .`，生成并注册 `ramfs` 或 `database`。没有这两个设置时，`xrobot instance add` 对这类参数没有可填写的对象。
 
-`User/xrobot_main.hpp` 由 XRobot 生成，见 [入口与生成](../proj_man/gen_main.md)。
+`User/xrobot_main.hpp` 由 XRobot 生成，见 [主函数生成](../proj_man/gen_main.md)。
