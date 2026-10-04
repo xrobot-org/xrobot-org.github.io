@@ -42,15 +42,7 @@ determines throughput and jitter.
 
 ## 3. Double buffering in UART drivers
 
-TX in both `STM32UART` and `CH32UART` is built directly on `DoubleBuffer`. The write path has the
-same shape in both: if DMA is idle, the current request is written into the active block and started
-immediately; if DMA is busy, it is written into the pending block, its length is recorded, the block
-is marked as ready to switch, and the transmit-complete interrupt takes over. A write request
-completes as soon as it is copied into the active or pending block, while DMA and the wire may still
-be sending. The transmit-complete interrupt
-first checks with `HasPending()` whether the pending block holds data; if it does, it calls
-`Switch()` and immediately starts the next DMA transfer, then takes the next request from the queue
-into the new pending block.
+The transmit side of `STM32UART` and `CH32UART` is built on `DoubleBuffer`: when DMA is idle, a request is written into `ActiveBuffer()` and DMA starts immediately; when DMA is busy, the request is written into `PendingBuffer()` and its length is recorded; the transmit-complete interrupt checks with `HasPending()` that the pending block holds data, calls `Switch()` and starts the next DMA transfer. When a write request completes and the full transmit order are described in the "MCU path" section of [UART Driver Design](./uart_driver.md).
 
 ---
 
