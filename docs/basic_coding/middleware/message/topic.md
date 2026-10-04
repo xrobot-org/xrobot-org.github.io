@@ -13,8 +13,6 @@ sidebar_position: 1
 - 自身不保存最近一次消息；
 - 类型约束由 `payload_type_id + payload_size + payload_alignment` 共同定义。
 
-如果你把旧版本里的 `Topic` 理解成“自带 latest cache 的轻量总线”，这条语义现在已经不成立。
-
 ## 创建 Topic
 
 通常用 `CreateTopic<T>()` 创建 Topic：
@@ -203,21 +201,6 @@ topic.RegisterCallback(cb2);
 - 第一个参数 `bool in_isr` 用来区分当前是否处于 ISR 路径；
 - 第二个参数是创建回调时传入的绑定参数，类型须与 `Create()` 的第二个实参完全一致：`void*` 参数对应 `static_cast<void*>(nullptr)`，直接传 `nullptr`（类型为 `std::nullptr_t`）会编译失败。
 
-## `Topic` 现在不做什么
-
-当前 `Topic` 明确**不负责**这些语义：
-
-- 不保存最近一次消息缓存；
-- 不提供 `DumpData()` 这一类 latest-value 导出接口；
-- 不负责进程间共享、零拷贝共享槽位或持久化队列；
-- 不保证队列订阅者在队满时保留全部历史消息。
-
-如果你需要：
-
-- 进程内 latest cache：请在模块内自己维护一份状态，或通过订阅者显式更新；
-- 进程间共享 topic：请看 [`LinuxSharedTopic`](./linux-shared-topic.md)；
-- 跨链路字节打包与解析：请看 [数据打包与解析](./packet-server.md)。
-
 ## 常用接口
 
 | 接口 | 作用 |
@@ -240,4 +223,5 @@ topic.RegisterCallback(cb2);
 - 如果只是“收到就处理”，优先用回调或同步订阅。
 - 如果需要保留每次发布的历史，使用 `QueuedSubscriber + SPSCQueue`。
 - 只关心下一条结果时用 `ASyncSubscriber`，每次取走数据后再次调用 `StartWaiting()`。
-- 如果旧代码还依赖 `DumpData()` 或 topic 内部 cache，这部分需要按当前主线语义重写。
+- 需要最近一次消息时，由模块保存订阅者收到的数据，例如在回调中更新一个成员变量。
+- 进程间共享数据使用 [`LinuxSharedTopic`](./linux-shared-topic.md)，经串口或网络传输使用[数据打包与解析](./packet-server.md)。

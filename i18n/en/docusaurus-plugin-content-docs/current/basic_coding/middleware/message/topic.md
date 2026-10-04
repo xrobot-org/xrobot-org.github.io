@@ -13,8 +13,6 @@ sidebar_position: 1
 - it does not keep the latest message;
 - the runtime contract is defined by `payload_type_id + payload_size + payload_alignment`.
 
-If you remember the older `Topic` as a lightweight bus with a built-in latest cache, that is no longer the current mainline behavior.
-
 ## Creating a Topic
 
 Topics are usually created with `CreateTopic<T>()`:
@@ -203,21 +201,6 @@ Supported payload forms include:
 
 The first `bool in_isr` indicates whether the current path is in ISR context. The second parameter is the bound argument passed to `Create()`; its type must match that argument exactly, so a `void*` parameter takes `static_cast<void*>(nullptr)`, while a plain `nullptr` (type `std::nullptr_t`) fails to compile.
 
-## What `Topic` No Longer Does
-
-The current `Topic` deliberately does **not** provide these semantics:
-
-- it does not store the latest payload value internally;
-- it does not expose `DumpData()`-style latest-value export APIs;
-- it does not implement cross-process shared topic semantics or persistent queue behavior;
-- it does not guarantee that queued subscribers retain every publish when the queue is full.
-
-If you need:
-
-- an in-process latest cache: maintain that state explicitly in your own module;
-- cross-process shared topics: use [`LinuxSharedTopic`](./linux-shared-topic.md);
-- packet packing and parsing across transport links: use [Packet Packing and Parsing](./packet-server.md).
-
 ## Common Interfaces
 
 | Interface | Purpose |
@@ -236,8 +219,9 @@ If you need:
 
 ## Practical Guidance
 
-- For ordinary typed business payloads, prefer `CreateTopic<T>()`; do not rebuild the old `sizeof(T)`-style topic pattern.
+- For ordinary typed payloads, prefer `CreateTopic<T>()` instead of passing `sizeof(T)` manually.
 - For immediate delivery, use callbacks or synchronous subscribers.
 - To keep every publish, use `QueuedSubscriber + SPSCQueue`.
 - For only the next result, use `ASyncSubscriber` and call `StartWaiting()` again after each `GetData()`.
-- If old code still depends on `DumpData()` or topic-owned cache semantics, that part needs to be rewritten to fit current mainline behavior.
+- When the latest message is needed, the module keeps the data its subscriber receives, for example by updating a member variable in a callback.
+- Data shared between processes uses [`LinuxSharedTopic`](./linux-shared-topic.md); data carried over a UART or network link uses [Packet Packing and Parsing](./packet-server.md).

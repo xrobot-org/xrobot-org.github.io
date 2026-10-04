@@ -18,8 +18,6 @@ sidebar_position: 2
 - payload 对齐要求；
 - packet 头尾 CRC 校验。
 
-它**不再依赖 topic 缓存**，也不会恢复旧版本里 `DumpData()` 那种 latest-value 语义。
-
 ## 打包一条强类型消息
 
 ```cpp
@@ -127,28 +125,6 @@ server.Register(topic);
 - 如果收到的 payload **长于** topic 固定大小，只保留前缀部分，多余字节直接截断。
 
 这条规则用于兼容 payload 长度有偏差的上游。
-
-## 当前不会做的事
-
-这条链路现在**不会**做下面这些事：
-
-- 不从 topic 里导出 latest payload；
-- 不要求 `Topic` 开启缓存；
-- 不提供旧版 `DumpData()` 系列接口；
-- 不自动把 packet 解释成“弱类型 topic”。
-
-如果你看到旧代码写的是：
-
-```cpp
-topic.DumpData(pkt);
-topic.DumpData(val);
-```
-
-那就是旧语义，需要改成：
-
-- 手里已经有业务对象时，直接 `PackData(value, packet)`；
-- 手里已经是 raw payload 时，使用 `PackRaw()`；
-- 需要 latest cache 时，在上层模块自己维护一份状态。
 
 ## 最小链路示例
 
