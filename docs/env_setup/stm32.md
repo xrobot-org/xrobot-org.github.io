@@ -8,7 +8,7 @@ sidebar_position: 1
 
 本文适用于由 `STM32CubeMX` 导出的 **CMake 工程**。推荐基于 `VS Code` 开发。`STM32CubeMX2 / HAL2` 当前不在支持范围内。
 
-推荐配合[视频教程](https://space.bilibili.com/339766655/lists/5028472)使用此文档。
+推荐配合[视频教程](https://space.bilibili.com/339766655/lists/5028472)使用此文档。视频录制于 libxr 6.0.0 和 xrobot 1.0.0 发布之前，其中的命令是旧版写法：libxr 5.x 的 `xr_*` 命令与 6.0.0 的 `libxr` 子命令的对照见 [CodeGenerator 的 README](https://github.com/xrobot-org/LibXR_CppCodeGenerator#旧命令--old-commands)，xrobot 1.0.0 的命令见[项目管理](../proj_man/README.md#命令一览)。
 
 ## 基础环境
 
@@ -29,6 +29,8 @@ sudo apt update
 sudo apt install -y git python3 python3-pip cmake tar xz-utils wget pipx ninja-build
 ```
 
+Arm 编译器不在 apt 中，可以通过 STM32CubeCLT 的 Linux 版安装，也可以从 Arm 官网下载 [Arm GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)（`arm-none-eabi-gcc`），安装后把编译器所在的 `bin` 目录加入 `PATH`。[docker-image-stm32](docker.md) 镜像中已装有 Arm GNU Toolchain 14.2 和 ST Arm Clang，`arm-none-eabi-gcc` 与 `starm-clang` 都可以直接调用。
+
 ## VS Code 开发
 
 先用 `STM32CubeMX` 建工程，并导出 **CMake** 工程。`Project Manager` 里的 `Default Compiler/Linker` 选择 `gcc` 或 `starm-clang` 即可。这个设置会写到工程根目录 `CMakePresets.json` 的 `toolchainFile`，通常对应 `${sourceDir}/cmake/gcc-arm-none-eabi.cmake` 或 `${sourceDir}/cmake/starm-clang.cmake`。
@@ -38,9 +40,7 @@ sudo apt install -y git python3 python3-pip cmake tar xz-utils wget pipx ninja-b
 * `STMicroelectronics.stm32-vscode-extension`
 * [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot)
 
-`XRobot.xrobot` 提供两个视图：LibXR 视图面向 STM32CubeMX 工程，编辑 `User/libxr_config.yaml` 并运行 `libxr` 命令；XRobot 视图显示 BSP 中的模块、配置和实例，模块和实例的修改通过 `xrobot` 命令完成。
-
-<img src="/img/xrobot_vscode_plugin_setup.png" alt="XRobot VS Code 插件界面" width="360" />
+`XRobot.xrobot` 的视图与前置条件见 [VS Code 扩展](README.md#vs-code-扩展)。
 
 ## 工具链
 
@@ -78,7 +78,7 @@ $env:GCC_TOOLCHAIN_ROOT = "$env:LOCALAPPDATA\stm32cube\bundles\gnu-tools-for-stm
 $env:CLANG_GCC_CMSIS_COMPILER = "$env:LOCALAPPDATA\stm32cube\bundles\st-arm-clang\<版本号>"
 ```
 
-Linux：
+Linux（示例路径取自 docker-image-stm32 镜像，镜像没有设置这两个变量；本机安装时换成实际的安装目录）：
 
 ```bash
 export GCC_TOOLCHAIN_ROOT=/opt/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin

@@ -8,9 +8,7 @@ sidebar_position: 1
 
 This page applies to **CMake projects exported by `STM32CubeMX`**. `VS Code` is the recommended editor flow. `STM32CubeMX2 / HAL2` is currently out of scope.
 
-The video tutorial list is still a useful companion:
-
-- [Bilibili tutorial list](https://space.bilibili.com/339766655/lists/5028472)
+The [video tutorials](https://space.bilibili.com/339766655/lists/5028472) (Chinese) are recommended alongside this page. They were recorded before libxr 6.0.0 and xrobot 1.0.0 were released and use the old commands: the libxr 5.x `xr_*` commands and the 6.0.0 `libxr` subcommands that replace them are listed in the [CodeGenerator README](https://github.com/xrobot-org/LibXR_CppCodeGenerator#旧命令--old-commands), and the xrobot 1.0.0 commands in [Project Management](../proj_man/README.md#commands).
 
 ## Basic Environment
 
@@ -31,6 +29,8 @@ sudo apt update
 sudo apt install -y git python3 python3-pip cmake tar xz-utils wget pipx ninja-build
 ```
 
+The Arm compilers are not in apt. They can be installed with the Linux version of STM32CubeCLT, or the [Arm GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) (`arm-none-eabi-gcc`) can be downloaded from Arm; after installation, add the `bin` directory of the compiler to `PATH`. The [docker-image-stm32](docker.md) image has the Arm GNU Toolchain 14.2 and ST Arm Clang installed, with `arm-none-eabi-gcc` and `starm-clang` callable directly.
+
 ## VS Code Workflow
 
 Create the project in `STM32CubeMX` first and export it as a **CMake** project. In `Project Manager`, choose `gcc` or `starm-clang` as `Default Compiler/Linker`. CubeMX writes that choice into `CMakePresets.json`, typically through `${sourceDir}/cmake/gcc-arm-none-eabi.cmake` or `${sourceDir}/cmake/starm-clang.cmake`.
@@ -40,7 +40,7 @@ Recommended extensions:
 - `STMicroelectronics.stm32-vscode-extension`
 - [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot)
 
-`XRobot.xrobot` provides two views: the LibXR view works on STM32CubeMX projects, edits `User/libxr_config.yaml` and runs the `libxr` command; the XRobot view shows the Modules, configurations and instances of a BSP and changes Modules and instances through `xrobot` commands.
+The views and prerequisites of `XRobot.xrobot` are described in [VS Code Extension](README.md#vs-code-extension).
 
 ## Toolchain Choice
 
@@ -78,7 +78,7 @@ $env:GCC_TOOLCHAIN_ROOT = "$env:LOCALAPPDATA\stm32cube\bundles\gnu-tools-for-stm
 $env:CLANG_GCC_CMSIS_COMPILER = "$env:LOCALAPPDATA\stm32cube\bundles\st-arm-clang\<version>"
 ```
 
-Linux:
+Linux (the example paths are those of the docker-image-stm32 image, which does not set these two variables; for a local installation use the actual installation directories):
 
 ```bash
 export GCC_TOOLCHAIN_ROOT=/opt/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin

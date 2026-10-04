@@ -64,6 +64,19 @@ There are seven images:
 * Based on `ubuntu:24.04`
 * Preinstalls Webots R2025a, OpenVINO 2025.4 and OpenCV 4.13.0
 
+## Images for BSPs and Templates
+
+The CI of each repository uses the image below; the same image can be used to build the repository locally:
+
+| Repository | Image |
+| --- | --- |
+| STM32 BSPs (bsp-dev-c, bsp-dev-mc02, BSP-OpenCR-1.0, bsp_stm32f103), through the shared workflow `bsp-stm32-ci.yml` | `docker-image-stm32` |
+| Module repositories, through the shared workflow `module-ci.yml` | `docker-image-linux` |
+| bsp-linux-autoaim, bsp-webots-autoaim | `docker-image-webots` |
+| CH32V203C8_LibXR_Template, CH32V307_LibXR_Template | `docker-image-ch32-riscv` |
+| HPM5301_LibXR_Template | `docker-image-hpm` |
+| MSPM0G3507_LibXR_Template | `docker-image-mspm0` |
+
 ## GHCR
 
 Current pulls use `GHCR`:

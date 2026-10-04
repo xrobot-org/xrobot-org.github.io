@@ -12,6 +12,24 @@ sidebar_position: 5
 
 - [HPM5301_LibXR_Template](https://github.com/xrobot-org/HPM5301_LibXR_Template)
 
+## 工具链
+
+HPM 工程使用 RISC-V GCC 工具链，编译器前缀为 `riscv32-unknown-elf-`。HPM SDK 从环境变量 `GNURISCV_TOOLCHAIN_PATH` 读取工具链的安装目录（`bin` 的上一级目录），编译器为其中的 `bin/riscv32-unknown-elf-gcc`；没有设置这个变量时，CMake 配置报错 `GNURISCV_TOOLCHAIN_PATH is not set yet`。
+
+工具链的来源：
+
+- Windows：HPMicro 的开发环境包 [sdk_env](https://github.com/hpmicro/sdk_env)，工具链放在其中的 `toolchains/` 目录，由 `start_cmd.cmd` 打开的命令行设置 `GNURISCV_TOOLCHAIN_PATH` 等环境变量；
+- Linux x64：[hpm-linux-gcc-release v0.1.0](https://github.com/Jiu-xiao/hpm-linux-gcc-release/releases/tag/v0.1.0) 发布的 `riscv32-unknown-elf` 工具链；
+- Docker：`ghcr.io/xrobot-org/docker-image-hpm:main` 在 `/opt/hpm-riscv32-unknown-elf` 中装有上述 Linux 工具链（GCC 15.2.0），路径记录在环境变量 `XR_HPM_TOOLCHAIN_ROOT` 中，见 [Docker 环境配置](docker.md)。
+
+镜像没有设置 `GNURISCV_TOOLCHAIN_PATH`，在镜像中构建前先由 `XR_HPM_TOOLCHAIN_ROOT` 设置它，模板工程的 CI 也是这样做的：
+
+```bash
+export GNURISCV_TOOLCHAIN_PATH="$XR_HPM_TOOLCHAIN_ROOT"
+cmake --preset release-flash-xip
+cmake --build --preset release-flash-xip
+```
+
 ## 当前主线里已经有什么
 
 按 `libxr master` 当前 `driver/hpm` 目录，已经存在这些驱动实现：
