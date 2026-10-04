@@ -90,7 +90,7 @@ Once approved, the vendor prefix is added to the list below and the shared VID/P
 
 ### XRobot Project Team
 
-- `XRUSB-DEMO`: Used for XRUSB demos / examples  
+- `XRUSB-DEMO`: Used for XRUSB demos / examples. Demo firmware and the code generator's default configuration (the `serial` key of the USB settings in `libxr_config.yaml`) use `XRUSB-DEMO-` as the complete prefix, so the Serial is `XRUSB-DEMO-<UID_HEX>` and the product/project prefix is omitted; when several kinds of demo device need to be told apart, a product/project prefix is added, for example `XRUSB-DEMO-XRDAP-` in the [DAPLinkV2](./dev_stack/dap.md) example. Released products use the vendor prefix they have requested.  
 - `XRobot`: Used for products released by XRobot  
 
 ### Qingdao University RoboMaster Future Team

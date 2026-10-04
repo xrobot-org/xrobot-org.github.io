@@ -87,7 +87,7 @@ QDU-Future-MainCtrl-89ABCDEF0123456701234567
 
 ### XRobot 项目团队
 
-- `XRUSB-DEMO`：用于 XRUSB 演示 / 例程  
+- `XRUSB-DEMO`：用于 XRUSB 演示 / 例程。演示固件和代码生成器的默认配置（`libxr_config.yaml` 中 USB 设置的 `serial` 键）以 `XRUSB-DEMO-` 作为完整前缀，Serial 为 `XRUSB-DEMO-<UID_HEX>`，省略产品/项目前缀；需要区分多种演示设备时加上产品/项目前缀，例如 [DAPLinkV2](./dev_stack/dap.md) 示例中的 `XRUSB-DEMO-XRDAP-`。正式产品使用各自申请的厂商品牌前缀。  
 - `XRobot`：用于 XRobot 发布的产品  
 
 ### 青岛大学 RoboMaster 未来战队
