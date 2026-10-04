@@ -59,7 +59,7 @@ module.exports = {
         docs: {
           routeBasePath: '/docs',
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/xrobot-org/xrobot-org.github.io/edit/XRobot2.0/',
+          editUrl: 'https://github.com/xrobot-org/xrobot-org.github.io/edit/dev/',
           editLocalizedFiles: true,
         },
         theme: {
