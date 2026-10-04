@@ -16,6 +16,11 @@ sidebar_position: 2
 - 并发、状态机和超时行为修正
 - 编译与构建修复
 
+## 模块
+
+- 新模块（编写方法见[编写模块](../proj_man/create_mod.md)）
+- 模块加入官方源（见 xrobot-modules 的[添加模块 / Adding a Module](https://github.com/xrobot-org/xrobot-modules/blob/dev/README.md#添加模块--adding-a-module)）
+
 ## 文档
 
 - API 说明修正
@@ -31,12 +36,3 @@ sidebar_position: 2
 - 性能回归结果补充
 - 平台矩阵验证
 - 最小复现工程或问题复现脚本
-
-## 不在本章范围内的内容
-
-- 安装和使用教程
-- `XRobot` 的日常工作流
-- 模块开发教程
-- 单个驱动或中间件的详细 API 手册
-
-这些内容应放在各自章节，不放在贡献指南里。

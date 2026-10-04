@@ -24,11 +24,11 @@ The official repositories of xrobot-org and QDU-Robomaster, including this docum
 - Do not mix feature work, doc rewrites, and unrelated cleanup into the same commit.
 - Commit titles should state the actual change, not a vague summary.
 
-Current repository history looks roughly like this:
+A commit title is one imperative English sentence starting with a capital letter, without a `type(scope):` prefix, for example:
 
-- `docs(hpm): fix static image paths for Docusaurus`
-- `docs: refresh site content and targeted docs updates`
-- `fix(uart): handle late BLOCK completion after timeout`
+- `Order generated inputs by their plain case-sensitive spelling`
+- `Initialize every field of RuntimeStringTextPart`
+- `Keep the includes and handles that hand-written User Code uses`
 
 ## Syncing Mainline
 

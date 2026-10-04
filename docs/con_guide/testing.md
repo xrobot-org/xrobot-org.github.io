@@ -6,7 +6,7 @@ sidebar_position: 5.7
 
 # 测试规范
 
-这里整理 LibXR（C++）以及 XRobot、LibXR_CppCodeGenerator、xr-syntax（Python）的测试写法。测试代码与主代码遵守同一套[编码规范](./coding_style.md)和 [Python 编码规范](./coding_style_python.md)，本页只写测试特有的约定。
+这里整理 LibXR（C++）以及 XRobot、LibXR_CppCodeGenerator、xr-syntax（Python）的测试写法。测试代码与主代码遵守同一套[编码规范](./coding_style.md)和 [Python 编码规范](./coding_style_python.md)，本页只写测试特有的约定。各仓库在 CI 中运行的测试与检查，以及提交前在本地运行的命令，见[如何参与贡献](./how2con.md#验证)。
 
 ## 测什么
 
@@ -62,7 +62,7 @@ LibXR：
 
 ## 消融
 
-测试整理完或新增一批测试后，用覆盖率和变异测试确认每个测试都有作用：
+测试整理完或新增一批测试后，用覆盖率和变异测试确认每个测试都有作用。这项检查按以下步骤手动进行：
 
 1. 用 coverage 的 `dynamic_context = test_function` 记录每个测试执行过的行。
 2. 对被执行的行做一处小改动：比较运算取反、条件取反、`and`/`or` 互换、修改常量或字符串、删除 `raise` 或一次调用、把返回值改成 `None`。每个改动只运行执行过这一行的测试，记录哪些测试失败。改动按语法树位置定位，所以在已提交版本的副本（`git archive`）上运行，不在正在修改的工作区上运行；运行时设置 `PYTHONDONTWRITEBYTECODE=1`，否则同一文件的两个改动大小相同、又在同一秒内写入时，Python 会沿用上一个改动的 `.pyc`。

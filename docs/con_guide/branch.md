@@ -24,11 +24,11 @@ xrobot-org 与 QDU-Robomaster 的官方仓库（包括本文档网站）使用�
 - 不把功能改动、文档重写、无关清理混进同一个提交。
 - 提交标题直接写改动内容，不写空泛描述。
 
-仓库里现有标题大致是这种风格：
+提交标题是一句英文祈使句，首字母大写，不加 `type(scope):` 前缀，例如：
 
-- `docs(hpm): fix static image paths for Docusaurus`
-- `docs: refresh site content and targeted docs updates`
-- `fix(uart): handle late BLOCK completion after timeout`
+- `Order generated inputs by their plain case-sensitive spelling`
+- `Initialize every field of RuntimeStringTextPart`
+- `Keep the includes and handles that hand-written User Code uses`
 
 ## 同步主线
 

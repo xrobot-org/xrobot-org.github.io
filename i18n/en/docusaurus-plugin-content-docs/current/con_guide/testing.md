@@ -6,7 +6,7 @@ sidebar_position: 5.7
 
 # Testing
 
-This page collects how tests are written for LibXR (C++) and for XRobot, LibXR_CppCodeGenerator and xr-syntax (Python). Test code follows the same [Code Style](./coding_style.md) and [Python Code Style](./coding_style_python.md) as the main code; this page covers only what is specific to tests.
+This page collects how tests are written for LibXR (C++) and for XRobot, LibXR_CppCodeGenerator and xr-syntax (Python). Test code follows the same [Code Style](./coding_style.md) and [Python Code Style](./coding_style_python.md) as the main code; this page covers only what is specific to tests. The tests and checks each repository runs in CI, and the commands to run locally before submitting, are listed in [How to Contribute](./how2con.md#verification).
 
 ## What to check
 
@@ -62,7 +62,7 @@ LibXR:
 
 ## Ablation
 
-After tests are reorganized or a batch of tests is added, coverage and mutation testing confirm that every test is needed:
+After tests are reorganized or a batch of tests is added, coverage and mutation testing confirm that every test is needed. The check is done by hand in the following steps:
 
 1. Record the lines each test executes with coverage's `dynamic_context = test_function`.
 2. Make one small change to an executed line: invert a comparison or a condition, swap `and`/`or`, change a constant or a string, remove a `raise` or a call, or return `None`. For each change, run only the tests that executed that line and record which fail. Changes are located by syntax-tree position, so they run on a copy of a committed version (`git archive`), never on a working tree that is being edited; set `PYTHONDONTWRITEBYTECODE=1`, or Python reuses the `.pyc` of the previous change when two changes of one file have the same size and are written within the same second.
