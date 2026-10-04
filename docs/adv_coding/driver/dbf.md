@@ -28,7 +28,7 @@ sidebar_position: 1
 
 ## 3. 串口驱动里的双缓冲
 
-`STM32UART` 和 `CH32UART` 的 TX 都直接建立在 `DoubleBuffer` 上。写路径的形状基本一致：如果 DMA 空闲，当前请求直接写进 active 区并立刻启动；如果 DMA 正忙，则写进 pending 区，记录长度并标记可切换，等待发送完成中断接手。写请求在复制进 active 或 pending 区时即完成，此时 DMA 和线路可能仍在发送。发送完成中断先用 `HasPending()` 判断 pending 区是否有数据，有则 `Switch()` 并立即启动下一次 DMA，再从队列取下一笔请求填入新的 pending 区。
+`STM32UART` 和 `CH32UART` 的发送侧建立在 `DoubleBuffer` 上：DMA 空闲时，请求写入 `ActiveBuffer()` 并立即启动 DMA；DMA 正忙时，请求写入 `PendingBuffer()` 并记录长度；发送完成中断用 `HasPending()` 判断 pending 区有数据后调用 `Switch()`，再启动下一次 DMA。写请求的完成时机和完整的发送顺序见[串口驱动设计](./uart_driver.md)的“MCU 路径”一节。
 
 ---
 

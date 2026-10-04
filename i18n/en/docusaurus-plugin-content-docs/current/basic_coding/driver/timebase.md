@@ -35,7 +35,7 @@ protected:
 
 - `GetMicroseconds()` and `GetMilliseconds()` return `MicrosecondTimestamp` and `MillisecondTimestamp`, defined in `core/libxr_time.hpp`.
 - Timestamp subtraction is wrap-aware. Backend code can set the valid wrap range with `ConfigureWrapRange(...)`.
-- `IsReady()` reports whether the active platform backend has finished initialization.
+- `IsReady()` reports whether the active platform backend has finished initialization. `PlatformInit()` on FreeRTOS and ThreadX uses it to check the timebase, so board code constructs the timebase object before calling `PlatformInit()`; see [Platform initialization](../system/README.md#platform-initialization).
 - `DelayMicroseconds()` provides a small busy-wait helper built on the microsecond timebase.
 - Platform backends such as `LinuxTimebase`, `STM32Timebase`, `CH32Timebase`, and `ESP32Timebase` typically initialize hardware state in their constructors, call `ConfigureWrapRange(...)`, then mark the backend ready with `SetReady()`.
 - The static getters `GetMicroseconds()` and `GetMilliseconds()` are implemented in each platform's timebase source file.

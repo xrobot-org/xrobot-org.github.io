@@ -111,20 +111,4 @@ if (now == LibXR::ReadOperation::OperationPollingStatus::DONE) {
 
 ## `AsyncBlockWait`
 
-`operation.hpp` also defines a helper used by synchronous drivers:
-
-```cpp
-class AsyncBlockWait;
-```
-
-Synchronous drivers use it to wait for one asynchronous completion:
-
-- `Start(Semaphore&)`
-- `Wait(timeout)`
-- `TryPost(in_isr, ErrorCode)`
-- `Cancel()`
-
-Key semantics:
-
-- a waiter that returned on timeout is detached from later completions;
-- a late completion only clears the internal wait state and does not wake the caller that already timed out.
+`operation.hpp` also defines `AsyncBlockWait` for driver internals: drivers that do not go through `ReadPort` / `WritePort` (such as some SPI and I2C drivers) use it to wait for a `BLOCK` transfer and hand off on timeout; see [BLOCK Timeout and Completion Handoff](../../adv_coding/driver/block_timeout_semantics.md).

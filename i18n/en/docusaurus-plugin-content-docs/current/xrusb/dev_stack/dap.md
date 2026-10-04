@@ -6,7 +6,7 @@ sidebar_position: 6
 
 # DAPLinkV2 Device Stack
 
-This document describes XRUSB’s CMSIS-DAP v2 (Bulk) device-class implementation: `LibXR::USB::DapLinkV2Class<SwdPort>`. A known-working test VID:PID is `0x0D28:0x2040`, with BCD version `0x0201`.
+This document describes XRUSB’s CMSIS-DAP v2 (Bulk) device-class implementation: `LibXR::USB::DapLinkV2Class<SwdPort>`. A known-working test VID:PID is `0x0D28:0x0204`, the one used by ARM DAPLink, with BCD version `0x0201`.
 
 This class targets common CMSIS-DAP v2 host toolchains (e.g., pyOCD, OpenOCD CMSIS-DAP backend, DAPLink-compatible clients) using USB Bulk transport. It uses a single Vendor interface + two Bulk endpoints (1 IN + 1 OUT), implements a practical subset of DAP v2 commands (SWD-focused), and advertises plug-and-play WinUSB (MS OS 2.0) capability on Windows.
 

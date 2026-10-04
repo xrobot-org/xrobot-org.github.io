@@ -65,7 +65,7 @@ int main() {
 | Multithread/RTOS | Thread::SleepUntil + manager  | Automatically spawns manager thread; 1ms-precision loop. |
 | Bare-metal       | Auto call RefreshTimerInIdle  | Refreshed automatically during Thread/Mutex/Semaphore wait. |
 
-To port to a new platform, ensure only that Thread and Timebase are supported—no change to Timer logic is required.
+The priority and stack depth of the management thread are set by the arguments of `PlatformInit()`; see [Platform initialization](./README.md#platform-initialization). The Timer implementation is the same on every platform: each platform provides the Thread and Timebase it depends on, and threadless backends also provide `RefreshTimerInIdle()`; see [Platform Porting](../../adv_coding/porting.md).
 
 ## Implementation Notes
 

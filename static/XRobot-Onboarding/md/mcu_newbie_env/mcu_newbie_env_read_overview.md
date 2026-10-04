@@ -1,5 +1,5 @@
 ## 原始文档（可选阅读，仅作参考）
-- LibXR: https://github.com/xrobot-org/libxr/blob/master/README.zh-CN.md
+- LibXR: https://github.com/xrobot-org/libxr/blob/master/README.md
 - CodeGenerator: https://github.com/xrobot-org/LibXR_CppCodeGenerator/blob/master/README.md
 - XRobot: https://github.com/xrobot-org/XRobot/blob/master/README.md
 以上文档内容较完整，本任务不要求全部看懂，只作为需要时查细节的“说明书”。

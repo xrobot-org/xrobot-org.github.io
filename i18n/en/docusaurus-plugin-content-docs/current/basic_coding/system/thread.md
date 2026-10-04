@@ -72,14 +72,10 @@ On the none and webasm backends, `Create()` calls `Blink` directly in the curren
 | **Webots** | `system/webots/thread.hpp` + `thread.cpp` | `pthread_create`; `Sleep` / `SleepUntil` wait for simulation-time notifications (`pthread_cond_timedwait`) |
 | **WebAssembly** | `system/webasm/thread.hpp` + `thread.cpp` | Same as bare-metal: `Create()` calls the thread function directly; delays poll `Timebase` and call `Timer::RefreshTimerInIdle` |
 
-To port to a new platform:
-
-1. Implement `thread.hpp / thread.cpp` under `system/<os>/`;
-2. Typedef `libxr_thread_handle` in `libxr_system.hpp`;
-3. Update the build system to include the correct source files.
+On a new platform, `thread.hpp` and `thread.cpp` are implemented together with the other system-layer files; the required files are listed in [Platform Porting](../../adv_coding/porting.md).
 
 ## Reference Implementation Notes
 
-* POSIX version attempts `SCHED_FIFO` and maps `Priority` within available range; falls back to default with a warning if not supported.
+* POSIX version attempts `SCHED_FIFO` and maps `Priority` within available range; falls back to the default policy if not supported, with one warning per process.
 * FreeRTOS/ThreadX versions calculate priority steps from `configMAX_PRIORITIES` or `TX_MAX_PRIORITIES`.
 * The current `none` implementation is a single-shot direct-call placeholder: `Create()` invokes the target function immediately and enforces one creation path via an internal guard, rather than providing a real scheduler-backed thread model.

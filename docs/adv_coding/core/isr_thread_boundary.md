@@ -24,17 +24,17 @@ ISR 与任务之间交换数据时，LibXR 默认不使用 `mutex`：ISR 不能�
 
 `CAS` 和原子操作在单核 MCU 上同样需要，它们解决的是 ISR 抢占线程时的 read-modify-write 竞态、ownership 状态 claim，以及 `busy/pending/detached` 这类轻量状态交接。单核系统的竞态发生在上下文切换之间。
 
-## `FromCallback` 和 ISR 不是一回事
+## `FromCallback` 与 ISR
 
-回调上下文和 ISR 上下文也不能混为一谈。`FromCallback` 的意思是“当前需要 callback-safe 语义”，并不自动等于“此刻就在硬中断里”。这也是为什么现在更强调 `ASSERT_FROM_CALLBACK(...)`、`PostFromCallback(in_isr)` 和 `ActiveFromCallback(..., in_isr)`，而不把所有 callback-safe 路径都等同于 ISR。两者一旦混成一类，接口语义很快就会漂移：本来只需要 callback-safe 的路径，会被迫套上更严格的 ISR 约束；而真正只能在 ISR 里做的动作，也会因为边界不清而被错误地下沉到普通回调里。
+回调上下文和 ISR 上下文是两种情况。`FromCallback` 系列接口表示调用处需要能在回调中使用的语义，是否处于硬中断由参数 `in_isr` 给出，例如 `ASSERT_FROM_CALLBACK(...)`、`PostFromCallback(in_isr)` 和 `ActiveFromCallback(..., in_isr)`。两者区分开之后，只需要回调安全的路径不必承受 ISR 的限制，只能在 ISR 中完成的动作也不会被放到普通回调里。
 
 ## 为什么 `BLOCK` 不能进 ISR
 
-在 ISR 中使用 `BLOCK` 是错误用法。`BLOCK` 最终一定会走到 `sem->Wait(...)` 一类等待路径；在 ISR 中等待会破坏上述边界，因此 ISR 里只投递、切换状态和 post，等待结果只在线程上下文中进行。`Operation::UpdateStatus()` 能通过 `PostFromCallback(in_isr)` 让完成通知 callback-safe，并不意味着 `BLOCK` 本身在 ISR 中也是合法的。
+在 ISR 中使用 `BLOCK` 是错误用法。`BLOCK` 最终一定会走到 `sem->Wait(...)` 一类等待路径；在 ISR 中等待会破坏上述边界，因此 ISR 里只投递、切换状态和 post，等待结果只在线程上下文中进行。`Operation::UpdateStatus()` 通过 `PostFromCallback(in_isr)` 使完成通知可以在 ISR 中发出，这只涉及通知一侧，`BLOCK` 的等待仍然只能在线程中进行。
 
-## freshness-first 场景
+## 只关心最新值的场景
 
-对控制和状态估计类场景来说，另一个很容易选错的地方是“是否该上深队列”。如果系统真正关心的是最新值，而不是保存每一个旧样本，那么默认更合适的结构通常是 `latest + seq` 或单槽 mailbox，而不是深队列。深队列适合完整保留样本、允许消费延迟的场景；在 freshness-first 路径里，它反而会把“旧但合法”的数据拖进系统。因此这类场景最好把 contract 直接写出来，例如“不得使用超过 2 个控制周期前的数据”“允许 `drop_oldest`”“必须暴露 overflow / drop 计数”。
+控制和状态估计类路径通常只关心最新值，不需要保存每一个旧样本，适合使用 `latest + seq` 或单槽 mailbox。深队列适合完整保留样本、允许消费延迟的场景；用在只关心最新值的路径上，会把过时但仍然合法的数据送进后续计算。这类路径宜把约定直接写明，例如“不得使用超过 2 个控制周期前的数据”“允许 `drop_oldest`”“必须暴露 overflow / drop 计数”。
 
 ## `ASync` 在这套边界里的位置
 

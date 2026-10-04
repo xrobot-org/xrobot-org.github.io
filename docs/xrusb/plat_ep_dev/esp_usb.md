@@ -80,28 +80,4 @@ usb_dev.Start(false);
 
 ## ESP32-C3 / ESP32-C6 USB Serial/JTAG
 
-`ESP32CDCJtag` 位于 `driver/esp/esp_cdc_jtag.*`，它继承自 `LibXR::UART`，用于把芯片内置 `USB Serial/JTAG` 控制器包装成 UART 后端。
-
-这条路径不属于 XRUSB 的通用设备控制器实现，因此不参与：
-
-- `USB::DeviceCore`
-- `EndpointPool`
-- USB class 组合
-
-构造函数：
-
-```cpp
-LibXR::ESP32CDCJtag usb_jtag_uart(
-    1024,
-    512,
-    5,
-    {115200, LibXR::UART::Parity::NO_PARITY, 8, 1});
-```
-
-当前限制：
-
-- 仅在 `ESP32-C3 / ESP32-C6` 下编译
-- 只接受 `8N1`
-- 若 `CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y`，会与 ESP-IDF 主控制台冲突
-
-该实现本质上是 USB 相关的 UART 后端，不属于 `ESP32-S3` 这条 XRUSB 平台设备实现。
+ESP32-C3、ESP32-C6 的 USB Serial/JTAG 控制器由 UART 驱动 `ESP32CDCJtag` 使用，它的构造参数和限制见[串口驱动设计](../../adv_coding/driver/uart_driver.md)的“ESP32 路径”一节。

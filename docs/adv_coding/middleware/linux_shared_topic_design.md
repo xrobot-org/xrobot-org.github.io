@@ -73,12 +73,18 @@ sidebar_position: 2
 
 ## 6. `FULL` 和 `DROP_OLD` 的实际差异
 
-在慢订阅者过载场景下，两者的实际行为是：
+本节和第 9 节的数据由 LibXR 仓库 `test/automatic/middleware/message/topic/` 中的基准函数 `RunOverloadBenchmarks()`、`RunStandardBenchmarks()` 和 `RunLatencyBenchmarks()` 测得（`libxr_test` 的 `linux_shm_bench` 用例只运行它们的缩小版本）。测试于 2026-10-04 在 Docker 容器 `ghcr.io/xrobot-org/docker-image-linux:main`（Ubuntu 24.04，g++ 13.3.0，Release 构建，`/dev/shm` 为 2 GB）中进行，宿主是 WSL2（内核 6.6.87.2，AMD Ryzen 7 8845H，16 线程），LibXR 为 dev 分支 a2f5f01。表中是单次运行的结果，数值随机器和负载变化。
 
-- `DROP_OLD` 能保住 publisher throughput，同时明显降低 delivered sample latency
-- `FULL` 保住队列内容完整，但 publish 成功率明显下降，延迟也会抬高
+`bench_overload.cpp` 让订阅者每取得一条消息后休眠 50 µs；发布者连续发布，失败不重试；订阅者队列长度为 8（64 KiB 载荷）或 4（1 MiB 载荷）。延迟是从发布到订阅者取得数据的时间：
 
-所以：所有样本都不能丢就选 `FULL`，要尽快拿到新数据就选 `DROP_OLD`。这和控制场景里 freshness-first 的取舍一致。
+| 载荷 | 模式 | 发布成功 | 订阅者收到 | 平均延迟 | p50 | p99 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 64 KiB | `FULL` | 598 / 4000 | 598 | 1080 µs | 1026 µs | 2520 µs |
+| 64 KiB | `DROP_OLD` | 4000 / 4000 | 530 | 387 µs | 180 µs | 2381 µs |
+| 1 MiB | `FULL` | 167 / 256 | 167 | 470 µs | 433 µs | 1523 µs |
+| 1 MiB | `DROP_OLD` | 256 / 256 | 143 | 364 µs | 338 µs | 934 µs |
+
+慢订阅者的队列满后，`FULL` 让后续发布失败，已入队的消息全部送达，但它们在队列中等待，延迟较高；`DROP_OLD` 下发布全部成功，订阅者队列丢弃旧消息，收到的消息更新，平均延迟和中位延迟更低。所有样本都不能丢时选 `FULL`，要尽快拿到新数据时选 `DROP_OLD`，这与控制场景中只关心最新值的取舍一致。
 
 ---
 
@@ -110,14 +116,16 @@ sidebar_position: 2
 
 ---
 
-## 9. 为什么 `latency_avg` 经常不值得直接看
+## 9. 连续发布与逐条确认的延迟
 
-standard-case 的 `latency_avg` 容易受 scheduler 和启动 backlog 污染：如果 publisher 一开始就灌数据、subscriber 还没进入稳态等待，`avg latency` 里会混进一段队列堆积时间，不等于单次投递延迟。
+`bench_standard.cpp` 连续发布；`bench_latency.cpp` 每发布一条就等待订阅者确认，再发下一条。两者统计的都是从发布到订阅者取得数据的时间，但含义不同。以下是 64 字节载荷（帧长 88 字节）、只写帧头和载荷首尾字节（transport 模式）的结果，环境同第 6 节：
 
-更有意义的区分是：
+| 基准 | 条数 | 平均 | p50 | p95 | p99 |
+| --- | --- | --- | --- | --- | --- |
+| `bench_standard`（连续发布） | 100000 | 54.9 µs | 0.81 µs | 374 µs | 777 µs |
+| `bench_latency`（逐条确认） | 20000 | 47.1 µs | 33.6 µs | 104 µs | 293 µs |
 
-- saturated-throughput queueing latency：系统满载时的排队表现
-- single-outstanding one-way latency：消息从 publish 到被 wait 成功拿到的单次路径
+连续发布时，订阅者处理完上一条后队列中通常已有下一条，取数据不需要等待唤醒，一半样本的延迟不到 1 µs；发布快于消费时，消息在队列中积压，等待时间计入延迟，p95 达到数百微秒。平均值因此主要反映排队情况，不等于单条消息的投递延迟。逐条确认时，订阅者每次都在 futex 上等待，延迟包含唤醒和调度的时间，p50 约 34 µs，反映单条消息从发布到被取得的耗时。比较实现或配置时，吞吐看 `bench_standard`，单条延迟看 `bench_latency` 的分位数。
 
 ---
 

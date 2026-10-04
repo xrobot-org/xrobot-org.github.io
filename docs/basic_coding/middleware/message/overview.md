@@ -20,4 +20,4 @@ sidebar_position: 0
 - `Topic::Server` / `Packet`：面向串口、总线或网络字节流的数据打包与解析
 - `LinuxSharedTopic`：Linux 主机侧、基于共享内存的跨进程 Topic
 
-其中 `Topic` 当前主线的核心契约是“强类型分发”，而不是旧版本常见的“Topic 自带 latest cache”模型。
+`Topic` 的核心契约是强类型分发：每次发布按类型同步分发给订阅者，`Topic` 自身不保存最近一次消息。

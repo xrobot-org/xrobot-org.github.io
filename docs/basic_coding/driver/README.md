@@ -13,7 +13,7 @@ LibXR 设备接口有以下共同点：
 - 抽象类统一命名和行为，平台差异由各后端实现；
 - 数据传输用 `Operation` 描述完成方式（阻塞、回调或轮询）：UART 的收发经过 `ReadPort` / `WritePort` 队列，I2C、SPI 的每次传输直接带一个 `ReadOperation` / `WriteOperation`，后端可在中断或 DMA 中完成；
 - 接口参数和配置结构体使用强类型；
-- 依赖 C++20 和 LibXR 基础组件，可用于裸机和 RTOS；
+- 依赖 C++20 和 LibXR 核心 API，可用于裸机和 RTOS；
 - 各外设按平台能力裁剪实现，可共享系统资源（如共享总线）。
 
 ## 目录
@@ -32,6 +32,7 @@ LibXR 设备接口有以下共同点：
 - [看门狗（Watchdog）](./watchdog.md)
 - [USB（USB 设备）](./usb.md)
 - [网络接口与 Wi-Fi](./network.md)
+- [调试接口（SWD / JTAG）](../../debug/README.md)
 
 ## 接口组成
 
@@ -41,6 +42,8 @@ LibXR 设备接口有以下共同点：
 - 面向流或事务场景的 `Read()` / `Write()` 数据传输接口
 - 在硬件模型需要时提供的 `Enable()` / `Disable()` 控制接口
 - 用于中断或异步完成路径的 `Callback` 事件注册
+
+UART 等经过 `ReadPort` / `WritePort` 的 `Read()` / `Write()`，其返回时机、各返回码的含义和缓冲区需要保持有效的时间见 [IO 读写抽象](../core/core-rw.md)；SPI、I2C 的传输见各自页面的“行为”一节。
 
 `ADC`、`DAC`、`PowerManager`、`Timebase`、`Flash` 只提供各自设备需要的少量接口。
 

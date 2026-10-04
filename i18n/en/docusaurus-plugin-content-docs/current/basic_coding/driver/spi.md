@@ -112,6 +112,16 @@ struct ReadWriteInfo {
 };
 ```
 
+## Behavior
+
+The following rules apply to `ReadAndWrite()`, `Read()`, `Write()`, `Transfer()`, `MemRead()` and `MemWrite()`:
+
+- An SPI object handles one transfer at a time and does not queue. While the previous transfer is still running, a new call returns `BUSY`.
+- A `BLOCK` operation returns the transfer result, or `TIMEOUT` when the wait times out. Other operations return `OK` to mean that the transfer has started or has already completed; the result is reported through the `Operation`.
+- When the length exceeds the backend constructor parameter `dma_enable_min_size` (3 by default on STM32, CH32, ESP32 and MSPM0) and the backend can use DMA, the transfer runs by DMA and the result is reported from the completion interrupt; other transfers complete by polling inside the call, and the callback has run or the polling status has been updated before the call returns.
+- The `rx_buffer` and `tx_buffer` passed to the constructor are the buffers the backend transfers through. `ReadAndWrite()` and the other calls first copy the write data into the transmit buffer and copy the received data into `read_data` after the transfer, so a single transfer cannot be longer than the buffer; a longer one triggers an `ASSERT`. With double buffering enabled, each buffer is split in two halves and a single transfer is limited to the size of one half.
+- `Transfer(size, op)` copies nothing: it sends the first `size` bytes already written to `GetTxBuffer()`, and the received data stays in `GetRxBuffer()`.
+
 ## Feature Summary
 
 - Supports configuration of SPI clock **polarity** and **phase**.

@@ -39,5 +39,6 @@ public:
 
 - 后端通常围绕 `MinWriteSize()` / `MinEraseSize()` 这样的最小擦写粒度组织实现；上层布局应按这些粒度设计，但具体是否作为前置限制、以及如何分块处理，仍由具体后端决定；
 - `flash_area` 是该 `Flash` 对象可操作的存储区域，`Size()` 返回其长度；
+- `STM32Flash`、`CH32Flash` 由扇区表构造。扇区表是 `FlashRegion{address, sector_size, sector_count}` 的数组，每项描述一段大小相同的连续扇区，按地址顺序列出整片 Flash；STM32 工程的扇区表由代码生成器写入 `User/flash_map.hpp`，构造参数见 [Flash数据库](../../code_gen/stm32/flash.md)；
 - `Read()` 在基类中有默认实现，从 `flash_area` 按内存复制；`flash_area` 可直接按地址读取时，后端只需实现 `Erase()` 和 `Write()`；
 - 上层可基于该接口实现参数存储、文件系统、日志管理等功能。

@@ -18,8 +18,6 @@ Packing and parsing use:
 - the payload alignment requirement;
 - packet header and tail CRC checks.
 
-It **does not depend on topic cache anymore**, and it does not restore the older `DumpData()`-style latest-value behavior.
-
 ## Packing One Typed Message
 
 ```cpp
@@ -127,28 +125,6 @@ When `Server` publishes a packet to a topic, it handles a payload of a different
 - if the packet payload is **longer** than the topic's fixed payload size, only the prefix matching the topic size is kept and the rest is truncated.
 
 This rule keeps compatibility with upstream payload lengths that deviate.
-
-## What This Path No Longer Does
-
-This path does **not** do the following anymore:
-
-- export a latest payload from the topic;
-- require topic cache to be enabled;
-- provide the old `DumpData()` family of APIs;
-- reinterpret packets as a weakly typed topic cache.
-
-If old code still looks like this:
-
-```cpp
-topic.DumpData(pkt);
-topic.DumpData(val);
-```
-
-then it is using old semantics and should be migrated to:
-
-- `PackData(value, packet)` when you already have the business object;
-- `PackRaw()` when you already have the raw payload bytes;
-- an explicit module-owned cache when you truly need latest-value behavior.
 
 ## Minimal End-to-End Example
 

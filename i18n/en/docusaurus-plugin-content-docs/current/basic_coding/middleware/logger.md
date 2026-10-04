@@ -27,7 +27,41 @@ XR_LOG_WARN("Low battery");
 XR_LOG_ERROR("Sensor failure");
 ```
 
-Logs are published to `/xr/log`; when the level value is not greater than `LIBXR_LOG_OUTPUT_LEVEL` and `STDIO::write_` is set, they are also printed to the terminal.
+Logs are published to `/xr/log`; when the level value is not greater than `LIBXR_LOG_OUTPUT_LEVEL` and `STDIO::write_` is set, they are also printed to the terminal. On Linux, `STDIO::write_` is created by `PlatformInit()`; on an MCU the application sets it, for example `LibXR::STDIO::write_ = uart.write_port_;` (see the STDIO section of [IO Read/Write Abstraction](../core/core-rw.md)).
+
+---
+
+## Format strings and output format
+
+The log macros expand to `LibXR::Logger::Publish<fmt>(...)` and the format string is parsed at compile time, so it must be a string literal. It can use printf style (`%d`) or brace style (`{}`); the macro picks one from the literal and the arguments. When both styles are valid for the same literal, compilation fails with:
+
+```text
+static assertion failed: LibXR::Logger: literal is ambiguous between brace and printf frontends; use XR_FMT(...) or XR_PRINTF(...)
+```
+
+In that case the literal is wrapped in `XR_FMT("...")` or `XR_PRINTF("...")` to select brace style or printf style. The available format specifiers and the format features that must be enabled separately are described in [Compile-Time Formatting](../core/core-print.md).
+
+The formatted text is written to `LogData::message`, whose buffer length is `XR_LOG_MESSAGE_MAX_LEN` (including the terminating `\0`); longer text is truncated. The default length is 64, and 256 on the linux, webots and webasm system layers; it can be changed with `set()` before `add_subdirectory(libxr)`.
+
+On the terminal, each log line consists of the color control characters, the level letter (`D`, `I`, `P`, `W`, `E`), the millisecond timestamp in square brackets, the file name and line number in parentheses, and the message text, ending with `\r\n`. The program below runs on Linux:
+
+```cpp
+LibXR::PlatformInit();
+int value = 7;
+XR_LOG_DEBUG("Debug value: %d", value);
+XR_LOG_INFO("brace value: {}", value);
+XR_LOG_WARN(XR_PRINTF("pct %d {}"), value);
+XR_LOG_PASS("Test passed");
+```
+
+Terminal output (color control characters omitted):
+
+```text
+D [0](./logger_doc.cpp:7) Debug value: 7
+I [0](./logger_doc.cpp:8) brace value: 7
+W [0](./logger_doc.cpp:9) pct 7 {}
+P [0](./logger_doc.cpp:10) Test passed
+```
 
 ---
 

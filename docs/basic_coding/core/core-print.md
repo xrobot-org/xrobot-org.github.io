@@ -54,7 +54,7 @@ constexpr LibXR::Format<"x={:+05d} {:x} {}"> format{};
 - `Compiled<Args...>`：把具体参数类型绑定到这条格式后的编译结果。
 - `WriteTo(sink, args...)`（const 成员函数）：直接写入一个 `OutputSink`，返回 `ErrorCode`。
 
-开启 CMake 选项 `LIBXR_PRINT_ENABLE_EXPLICIT_ARGUMENT_INDEXING=1` 后支持显式参数重排（默认关闭，关闭时编译报错）：
+开启 CMake 选项 `LIBXR_PRINT_ENABLE_EXPLICIT_ARGUMENT_INDEXING=1` 后支持显式参数重排（默认关闭，关闭时编译报错，见第 7 节）：
 
 ```cpp
 LibXR::Format<"{1} {0}">
@@ -81,7 +81,7 @@ constexpr auto format = LibXR::Print::Printf::Build<"%+05d %x %s">();
 - 不支持的长度修饰
 - 动态宽度 / 精度 `*`
 - 位置参数与顺序参数混用
-- 当前配置未开启的格式特性，例如 `#` 标志需要 `LIBXR_PRINT_ENABLE_ALTERNATE=1`（默认关闭）
+- 当前配置未开启的格式特性，例如 `#` 标志需要 `LIBXR_PRINT_ENABLE_ALTERNATE=1`（默认关闭，见第 7 节）
 
 > 当前实现支持的是“编译期已知字面量”路径，不是运行时传入任意格式串再动态解析的传统 `printf` 接口。
 
@@ -169,3 +169,29 @@ int written = LibXR::Print::PrintfIntoBuffer<"%d %s">(buffer, sizeof(buffer), 12
 - `RuntimeStringView` 也复用这套能力，把结果保留到内部字符串缓冲区。
 
 调试文本输出到全局 `STDIO` 时使用 [core-rw](./core-rw.md) 中的 `STDIO::Printf`；写到自定义 sink 或内存缓冲区时使用本页的 `Print::*` 接口。
+
+---
+
+## 7. 打印配置
+
+格式化代码按下列 CMake 变量裁剪，格式串用到未开启的特性时编译报错。变量取 0 或 1，在 `add_subdirectory(libxr)` 之前用 `set()` 设置：
+
+| 变量 | 控制的特性 | 默认值 |
+| --- | --- | --- |
+| `LIBXR_PRINT_ENABLE_INTEGER` | 十进制整数 | 1 |
+| `LIBXR_PRINT_INTEGER_ENABLE_BASE8_16` | 二进制、八进制和十六进制整数 | 1 |
+| `LIBXR_PRINT_INTEGER_ENABLE_64BIT` | 64 位整数 | 0 |
+| `LIBXR_PRINT_ENABLE_TEXT` | 字符与字符串 | 1 |
+| `LIBXR_PRINT_ENABLE_POINTER` | 指针 | 0 |
+| `LIBXR_PRINT_ENABLE_FLOAT` | 所有浮点格式的总开关 | 1 |
+| `LIBXR_PRINT_FLOAT_ENABLE_FIXED` | 定点格式（`%f`） | 1 |
+| `LIBXR_PRINT_FLOAT_ENABLE_DOUBLE` | 按 `double` 精度格式化；关闭时 `double` 参数按 `float` 精度输出 | 0 |
+| `LIBXR_PRINT_FLOAT_ENABLE_SCIENTIFIC` | 科学计数格式（`%e`） | 0 |
+| `LIBXR_PRINT_FLOAT_ENABLE_GENERAL` | 通用格式（`%g`） | 0 |
+| `LIBXR_PRINT_FLOAT_ENABLE_LONG_DOUBLE` | `long double`（`L` 长度修饰），同时需要开启 `LIBXR_PRINT_FLOAT_ENABLE_DOUBLE` | 0 |
+| `LIBXR_PRINT_ENABLE_WIDTH` | 常量字段宽度 | 1 |
+| `LIBXR_PRINT_ENABLE_PRECISION` | 常量精度 | 1 |
+| `LIBXR_PRINT_ENABLE_ALTERNATE` | `#` 标志 | 0 |
+| `LIBXR_PRINT_ENABLE_EXPLICIT_ARGUMENT_INDEXING` | 显式参数索引（brace 风格的 `{1}`、printf 风格的 `n$`） | 0 |
+
+开启 `LIBXR_TEST_BUILD` 时，上表中默认值为 0 的变量默认取 1。

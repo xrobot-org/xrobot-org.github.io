@@ -39,5 +39,6 @@ public:
 
 - Backends are typically organized around `MinWriteSize()` / `MinEraseSize()` granularity. Upper-layer layouts should be designed with those limits in mind, but the exact front-door acceptance rules remain backend-specific.
 - `flash_area` is the storage region this `Flash` object operates on; `Size()` returns its length;
+- `STM32Flash` and `CH32Flash` are constructed from a sector table: an array of `FlashRegion{address, sector_size, sector_count}`, where each entry describes a run of contiguous sectors of equal size and the entries list the whole Flash in address order. In STM32 projects the code generator writes the sector table to `User/flash_map.hpp`; the constructor parameters are described in [Flash Database](../../code_gen/stm32/flash.md);
 - `Read()` has a default implementation in the base class that copies from `flash_area`; when `flash_area` is directly addressable, a backend only implements `Erase()` and `Write()`;
 - This interface can be used as a foundation for implementing parameter storage, file systems, log management, and more.

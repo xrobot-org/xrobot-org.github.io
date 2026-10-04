@@ -25,10 +25,10 @@ publication triggers an assertion. Only when multi-publisher mode is enabled doe
 `Mutex`. That mode is for ordinary task-context `Publish()` calls and cannot be used with
 `PublishFromCallback()`. The common single-publisher path therefore needs no lock.
 
-## Why there is no built-in latest cache anymore
+## Who keeps the latest value
 
-In current mainline, `Topic` has a stricter publish-and-dispatch role and no longer stores a latest
-payload copy inside `Block`. Responsibilities are split as follows:
+`Topic` only publishes and dispatches; `Block` does not keep a copy of the latest payload.
+Responsibilities are split as follows:
 
 - `Topic` handles fan-out of one publish to different subscriber forms;
 - latest-value semantics, when needed, are maintained explicitly by the upper layer;

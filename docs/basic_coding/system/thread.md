@@ -72,14 +72,10 @@ int main() {
 | **Webots** | `system/webots/thread.hpp` + `thread.cpp` | `pthread_create`；`Sleep` / `SleepUntil` 等待仿真时间通知（`pthread_cond_timedwait`） |
 | **WebAssembly** | `system/webasm/thread.hpp` + `thread.cpp` | 与 None 相同：`Create()` 直接调用线程函数，延时期间轮询 `Timebase` 并调用 `Timer::RefreshTimerInIdle` |
 
-移植新平台时，仅需：
-
-1. 在 `system/<os>/` 下实现对应的 `thread.hpp / thread.cpp`；
-2. 在 `libxr_system.hpp` 中 typedef `libxr_thread_handle`；
-3. 更新构建系统以选择正确源文件。
+新平台的 `thread.hpp`、`thread.cpp` 与系统层的其他文件一起实现，所需文件见 [平台移植](../../adv_coding/porting.md)。
 
 ## 参考实现细节
 
-* POSIX 版本优先尝试 `SCHED_FIFO` 并根据可用优先级范围映射 `Priority`；否则回退默认策略并给出日志警告。
+* POSIX 版本优先尝试 `SCHED_FIFO` 并根据可用优先级范围映射 `Priority`；否则回退默认策略，每个进程只给出一次日志警告。
 * FreeRTOS/ThreadX 版本通过 `configMAX_PRIORITIES` 或 `TX_MAX_PRIORITIES` 动态计算优先级步长，确保与内核配置一致。
 * 当前 `none` 实现更像一次性直调占位：`Create()` 会立即调用目标函数，并通过内部保护限制只走一次创建路径，而不是真正提供带调度器的线程模型。

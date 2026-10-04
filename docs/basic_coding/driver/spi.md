@@ -113,6 +113,16 @@ struct ReadWriteInfo {
 };
 ```
 
+## 行为
+
+以下规则适用于 `ReadAndWrite()`、`Read()`、`Write()`、`Transfer()`、`MemRead()` 和 `MemWrite()`：
+
+- 一个 SPI 对象同时只处理一次传输，不排队。上一次传输尚未结束时，新的调用返回 `BUSY`。
+- `BLOCK` 操作返回传输结果，等待超时返回 `TIMEOUT`。其他操作返回 `OK` 表示传输已经开始或已经完成，结果通过 `Operation` 通知。
+- 长度超过后端构造参数 `dma_enable_min_size`（STM32、CH32、ESP32、MSPM0 默认均为 3）且后端可以使用 DMA 时，传输由 DMA 完成，结果在完成中断中通知；其余传输在调用内以轮询方式完成，调用返回前已执行回调或更新轮询状态。
+- 构造时传入的 `rx_buffer`、`tx_buffer` 是后端收发使用的缓冲区。`ReadAndWrite()` 等接口先把写数据复制进发送缓冲区，传输结束后再把接收数据复制到 `read_data`，因此单次传输的长度不能超过缓冲区大小，超出时触发 `ASSERT`。开启双缓冲后，每块缓冲区分为两半，单次长度以半区大小为上限。
+- `Transfer(size, op)` 不复制数据：它发送 `GetTxBuffer()` 中已经写好的前 `size` 字节，收到的数据留在 `GetRxBuffer()` 中。
+
 ## 特性总结
 
 - 支持 SPI 的极性与相位配置；

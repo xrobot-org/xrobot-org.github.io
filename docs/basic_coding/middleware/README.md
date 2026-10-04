@@ -19,9 +19,4 @@ sidebar_position: 3
 - [RamFS 内存文件系统](./ramfs.md)
 - [Terminal 命令终端](./terminal.md)
 
-说明：
-
-- 当前主线中的消息系统已经不再适合用一页概括全部行为；`Topic`、`Packet/Server`、`LinuxSharedTopic` 的契约和取舍差异应分别进入对应页面阅读。
-- `RamFS` 当前公开的是 `Custom` 节点模型，而不是旧材料中曾出现过的 `Device` 节点模型。
-
 更多接口说明见各页面。

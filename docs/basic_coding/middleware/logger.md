@@ -27,7 +27,41 @@ XR_LOG_WARN("Low battery");
 XR_LOG_ERROR("Sensor failure");
 ```
 
-日志发布到 `/xr/log`；等级值不大于 `LIBXR_LOG_OUTPUT_LEVEL` 且 `STDIO::write_` 已设置时，同时打印到终端。
+日志发布到 `/xr/log`；等级值不大于 `LIBXR_LOG_OUTPUT_LEVEL` 且 `STDIO::write_` 已设置时，同时打印到终端。Linux 上 `STDIO::write_` 由 `PlatformInit()` 创建；MCU 上由应用指定，例如 `LibXR::STDIO::write_ = uart.write_port_;`（见 [IO 读写抽象](../core/core-rw.md) 的 STDIO 一节）。
+
+---
+
+## 格式串与输出格式
+
+日志宏展开为 `LibXR::Logger::Publish<fmt>(...)`，格式串在编译期解析，因此必须是字符串字面量。格式串可以使用 printf 风格（`%d`）或 brace 风格（`{}`），宏根据字面量和参数选择其中一种。两种写法在同一个字面量中都成立时，编译报错：
+
+```text
+static assertion failed: LibXR::Logger: literal is ambiguous between brace and printf frontends; use XR_FMT(...) or XR_PRINTF(...)
+```
+
+这时用 `XR_FMT("...")` 或 `XR_PRINTF("...")` 包住字面量，指定使用 brace 风格或 printf 风格。可用的格式说明符和需要单独开启的格式特性见[编译期格式化输出](../core/core-print.md)。
+
+格式化后的文本写入 `LogData::message`，缓冲区长度为 `XR_LOG_MESSAGE_MAX_LEN`（含结尾的 `\0`），超出部分被截断。默认长度为 64，linux、webots、webasm 系统层为 256，可在 `add_subdirectory(libxr)` 之前用 `set()` 修改。
+
+打印到终端时，每条日志依次输出颜色控制字符、等级字母（`D`、`I`、`P`、`W`、`E`）、方括号中的毫秒时间戳、括号中的文件名和行号、消息文本，以 `\r\n` 结尾。以下程序在 Linux 上运行：
+
+```cpp
+LibXR::PlatformInit();
+int value = 7;
+XR_LOG_DEBUG("Debug value: %d", value);
+XR_LOG_INFO("brace value: {}", value);
+XR_LOG_WARN(XR_PRINTF("pct %d {}"), value);
+XR_LOG_PASS("Test passed");
+```
+
+终端输出如下（省略颜色控制字符）：
+
+```text
+D [0](./logger_doc.cpp:7) Debug value: 7
+I [0](./logger_doc.cpp:8) brace value: 7
+W [0](./logger_doc.cpp:9) pct 7 {}
+P [0](./logger_doc.cpp:10) Test passed
+```
 
 ---
 

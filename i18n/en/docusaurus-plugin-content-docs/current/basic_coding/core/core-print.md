@@ -54,7 +54,7 @@ constexpr LibXR::Format<"x={:+05d} {:x} {}"> format{};
 - `Compiled<Args...>`: the compiled result after binding concrete argument types
 - `WriteTo(sink, args...)` (const member function): writes into an `OutputSink` and returns `ErrorCode`
 
-With the CMake option `LIBXR_PRINT_ENABLE_EXPLICIT_ARGUMENT_INDEXING=1`, explicit argument reordering is supported (off by default; disabled use is a compile error):
+With the CMake option `LIBXR_PRINT_ENABLE_EXPLICIT_ARGUMENT_INDEXING=1`, explicit argument reordering is supported (off by default; disabled use is a compile error; see section 7):
 
 ```cpp
 LibXR::Format<"{1} {0}">
@@ -81,7 +81,7 @@ Its failures are also pushed to compile time whenever possible, including:
 - unsupported length modifiers
 - dynamic width / precision using `*`
 - mixing positional and sequential arguments
-- format features disabled in the current configuration, e.g. the `#` flag needs `LIBXR_PRINT_ENABLE_ALTERNATE=1` (off by default)
+- format features disabled in the current configuration, e.g. the `#` flag needs `LIBXR_PRINT_ENABLE_ALTERNATE=1` (off by default; see section 7)
 
 > The current implementation is a compile-time literal path, not a traditional runtime `printf` parser for arbitrary format strings.
 
@@ -169,3 +169,29 @@ The relationship is:
 - `RuntimeStringView` also reuses it, but retains the result inside its own string storage
 
 Use `STDIO::Printf` from [core-rw](./core-rw.md) for debug text on the global output; use the `Print::*` APIs on this page to write into a custom sink or a bounded buffer.
+
+---
+
+## 7. Print configuration
+
+The formatting code is trimmed by the CMake variables below; a format string that uses a disabled feature fails to compile. Each variable takes 0 or 1 and is set with `set()` before `add_subdirectory(libxr)`:
+
+| Variable | Feature | Default |
+| --- | --- | --- |
+| `LIBXR_PRINT_ENABLE_INTEGER` | Decimal integers | 1 |
+| `LIBXR_PRINT_INTEGER_ENABLE_BASE8_16` | Binary, octal and hexadecimal integers | 1 |
+| `LIBXR_PRINT_INTEGER_ENABLE_64BIT` | 64-bit integers | 0 |
+| `LIBXR_PRINT_ENABLE_TEXT` | Characters and strings | 1 |
+| `LIBXR_PRINT_ENABLE_POINTER` | Pointers | 0 |
+| `LIBXR_PRINT_ENABLE_FLOAT` | Master switch for all floating-point formats | 1 |
+| `LIBXR_PRINT_FLOAT_ENABLE_FIXED` | Fixed-point format (`%f`) | 1 |
+| `LIBXR_PRINT_FLOAT_ENABLE_DOUBLE` | Formatting at `double` precision; when disabled, `double` arguments are printed at `float` precision | 0 |
+| `LIBXR_PRINT_FLOAT_ENABLE_SCIENTIFIC` | Scientific format (`%e`) | 0 |
+| `LIBXR_PRINT_FLOAT_ENABLE_GENERAL` | General format (`%g`) | 0 |
+| `LIBXR_PRINT_FLOAT_ENABLE_LONG_DOUBLE` | `long double` (`L` length modifier); also requires `LIBXR_PRINT_FLOAT_ENABLE_DOUBLE` | 0 |
+| `LIBXR_PRINT_ENABLE_WIDTH` | Constant field width | 1 |
+| `LIBXR_PRINT_ENABLE_PRECISION` | Constant precision | 1 |
+| `LIBXR_PRINT_ENABLE_ALTERNATE` | The `#` flag | 0 |
+| `LIBXR_PRINT_ENABLE_EXPLICIT_ARGUMENT_INDEXING` | Explicit argument indexing (`{1}` in brace style, `n$` in printf style) | 0 |
+
+With `LIBXR_TEST_BUILD` enabled, the variables whose default is 0 in this table default to 1.

@@ -44,7 +44,13 @@ Notes:
 
 - `cans`: list of Classic CAN pointers; the count must equal `CanChNum`
 - Endpoint numbers are required; older kernel `gs_usb` drivers use fixed EP1 IN / EP2 OUT, so these numbers keep compatibility with them
-- The Linux `gs_usb` driver often matches devices via a VID:PID whitelist and may require `bInterfaceNumber == 0`. It is recommended to place this class as the first interface in the configuration
+- The Linux `gs_usb` driver binds automatically by the VID:PID entries of its kernel device table, and every entry is limited to interface number 0, so this class is placed as the first interface in the configuration
+- The project's registered `1D50:6199` (see [VID/PID and serial usage conventions](/docs/xrusb/xrusb-id)) is not in the device table of mainline `gs_usb`, so the host does not bind it automatically. After the driver is loaded, writing the VID, the PID and the interface class `ff` (the class of this interface) to `new_id` makes the driver bind the vendor-specific interface of the device; the setting is lost when the driver is reloaded or the host reboots:
+
+```bash
+sudo modprobe gs_usb
+echo "1d50 6199 ff" | sudo tee /sys/bus/usb/drivers/gs_usb/new_id
+```
 
 ### 1.2 FDCAN constructor (FD enabled)
 

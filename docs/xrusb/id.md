@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # VID/PID 与 Serial 使用约定
 
-XRUSB 通过 OpenMoko 社区 USB PID Registry 登记并获得一组 USB VID/PID（1D50:6199），用于示例代码与通用开发板固件。
+XRUSB 通过 OpenMoko 社区 USB PID Registry 登记并获得一组 USB VID/PID（1D50:6199），用于示例代码与通用开发板固件，登记记录见 [openmoko-usb-oui 的提交 27f3846](https://github.com/openmoko/openmoko-usb-oui/commit/27f3846d77e0d0d10271b809b831f70040c6197a)。
 
 在满足以下约定的前提下，任何基于 XRUSB 协议栈的固件，都可以复用这组 VID/PID，而不必另外购买 PID：
 
@@ -77,8 +77,8 @@ QDU-Future-MainCtrl-89ABCDEF0123456701234567
 
 申请厂商品牌前缀的方式如下（免费）：
 
-1. 在 GitHub 仓库提交 issue，说明希望申请的前缀和用途；
-2. Fork 仓库，修改本文档，在「分配列表」中添加申请的厂商品牌前缀，然后提交 Pull Request；
+1. 在本网站的仓库 [xrobot-org/xrobot-org.github.io](https://github.com/xrobot-org/xrobot-org.github.io/issues) 提交 issue，说明希望申请的前缀和用途；
+2. Fork 该仓库，修改本文档，在「分配列表」中添加申请的厂商品牌前缀，然后提交 Pull Request；
 3. 通过本项目提供的邮箱 / 社区 / 交流群联系维护者（见项目首页说明）。
 
 申请通过后，该厂商品牌前缀会加入下面的分配列表，并可按本文件的约定复用 VID/PID。
@@ -87,7 +87,7 @@ QDU-Future-MainCtrl-89ABCDEF0123456701234567
 
 ### XRobot 项目团队
 
-- `XRUSB-DEMO`：用于 XRUSB 演示 / 例程  
+- `XRUSB-DEMO`：用于 XRUSB 演示 / 例程。演示固件和代码生成器的默认配置（`libxr_config.yaml` 中 USB 设置的 `serial` 键）以 `XRUSB-DEMO-` 作为完整前缀，Serial 为 `XRUSB-DEMO-<UID_HEX>`，省略产品/项目前缀；需要区分多种演示设备时加上产品/项目前缀，例如 [DAPLinkV2](./dev_stack/dap.md) 示例中的 `XRUSB-DEMO-XRDAP-`。正式产品使用各自申请的厂商品牌前缀。  
 - `XRobot`：用于 XRobot 发布的产品  
 
 ### 青岛大学 RoboMaster 未来战队

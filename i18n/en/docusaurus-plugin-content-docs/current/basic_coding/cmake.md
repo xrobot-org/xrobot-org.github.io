@@ -57,7 +57,7 @@ Current `driver/` backends are:
 - `webasm`
 - `webots`
 
-Names are normalized to lowercase internally. Windows can host MCU cross-compilation and documentation work. The current tree has no `system/windows` or `driver/windows`, so there is no native Windows LibXR backend.
+Names are normalized to lowercase internally. Cross-compiling requires `LIBXR_SYSTEM`; without it, configuration stops with `No system selected.`. When not cross-compiling, an unset `LIBXR_SYSTEM` and `LIBXR_DRIVER` follow the host: a Linux host selects `linux`, or `webots` when the CMake variable `WEBOTS_HOME` is set. A Windows host is used to cross-compile MCU projects; host programs are built in the Linux environment of WSL or the `docker-image-linux` image (see [Docker Environment Setup](../env_setup/docker.md)). Configuring on a Windows host without cross-compiling stops with `LibXR has no Windows system or driver layer.`, followed by these two ways.
 
 ## Common options
 
@@ -85,7 +85,7 @@ XR_LOG_MESSAGE_MAX_LEN
 LIBXR_DEFAULT_SCALAR
 ```
 
-Formatting support can also be trimmed for 64-bit integers, double, scientific notation, pointers, explicit argument indexing and related features. See `cmake/config.cmake` for the complete option list.
+Formatting support can also be trimmed for 64-bit integers, double, scientific notation, pointers, explicit argument indexing and related features. The options and their defaults are listed in the "Print configuration" section of [Compile-Time Formatting](./core/core-print.md).
 
 ## XRobot modules
 
