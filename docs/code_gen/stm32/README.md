@@ -209,13 +209,14 @@ FreeRTOS 的接口（Interface）推荐选择 `CMSIS_V2`。STM32Cube FW_H7 V1.13
 
 `User/libxr_config.yaml` 保存代码生成的设置。文件不存在时，`libxr gen` 按默认值新建；之后每次生成补上缺少的设置，文件中已有的值、注释和生成器不使用的键都保留。外设的设置段只在工程有对应外设时写入，段中每个实例一项，键为小写的实例名，例如 `spi1`。
 
-下表按新建文件中的顺序列出顶层的键，最后两项由用户写入：
+下表列出顶层的键，其中 `config_version` 由用户写入：
 
 | 键 | 默认值 | 说明 |
 | --- | --- | --- |
+| `generator` | 新建文件时写入已安装的版本，如 `6.0.0` | 固定代码生成器的版本，见[与XRobot集成](../xrobot_inter.md#生成器版本) |
 | `terminal_source` | `''` | 作为终端的串口，见[串口与终端](./uart.md) |
 | `software_timer` | `priority: 2`、`stack_depth: 1024` | 软件定时器线程，见[软件定时器](./timer.md) |
-| `SPI` | `tx_buffer_size: 32`、`rx_buffer_size: 32`、`dma_section: ''`、`dma_enable_min_size: 3` | 见 [SPI](./spi.md) |
+| `SPI` | `tx_buffer_size: 32`、`rx_buffer_size: 32`、`dma_section: ''`；两个方向都开启了 DMA 时另有 `dma_enable_min_size: 3` | 见 [SPI](./spi.md) |
 | `I2C` | `buffer_size: 32`、`dma_section: ''`、`dma_enable_min_size: 3` | 见 [I2C](./i2c.md) |
 | `USART` | `tx_buffer_size: 128`、`rx_buffer_size: 128`、`dma_section: ''`、`tx_queue_size: 5` | USART、UART 和 LPUART，见[串口与终端](./uart.md) |
 | `ADC` | `buffer_size: 32`、`dma_section: ''`、`vref: 3.3` | 见 [ADC](./adc.md) |
@@ -228,7 +229,6 @@ FreeRTOS 的接口（Interface）推荐选择 `CMSIS_V2`。STM32Cube FW_H7 V1.13
 | `DAC` | `init_voltage: 0.0`、`vref: 3.3` | 见 [DAC](./dac.md) |
 | `IWDG` | `timeout_ms: 1000`、`feed_interval_ms: 250` | 见[看门狗](./watchdog.md) |
 | `Watchdog` | `run_as_thread: false`、`feed_interval_ms: 250` | 有启用的 IWDG 时写入，见[看门狗](./watchdog.md) |
-| `generator` | 不写入 | 固定代码生成器版本，见[与XRobot集成](../xrobot_inter.md#生成器版本) |
 | `config_version` | 不写入，按 1 处理 | 文件格式的版本，见下文 |
 
 `SYSTEM` 由生成器按 `.ioc` 写入，读取时忽略，系统总是取自 `.ioc`。`config_version` 大于 1 或不是整数时，`libxr gen` 给出警告，说明较新格式的设置可能不起作用，生成照常进行，这个键保持不变。
@@ -326,7 +326,18 @@ set(LIBXR_OPT_RELEASE "")
 
 文件的其余部分（LibXR、应用目标、库的优化级别和构建产物）由生成器维护。`libxr stm32 cmake` 和 `libxr stm32 setup` 改写文件时保留 “Project settings” 块的内容，只按工程校正 `LIBXR_SYSTEM` 和 `XROBOT_MODULES_DIR`，并以默认值补上缺少的设置；其余部分重新生成。
 
-旧版本生成的 `LibXR.CMake` 第一行没有这行生成说明，改写时迁移到上述结构：`LIBXR_DRIVER` 和 `XROBOT_MODULES_DIR` 保留；`LIBXR_OPT_DEBUG` 取旧文件 Debug 块中应用目标的 `-O` 选项，没有时取工具链文件的 Debug 级别，`LIBXR_OPT_RELEASE` 取工具链文件的 Release 级别；只有一个模式的 `file(GLOB LIBXR_USER_SOURCES ...)` 写入 `LIBXR_USER_SOURCES_GLOB`。旧 Debug 块中其他目标的优化选项被丢弃，与旧模板不同的每条记录一条说明。生成器不认识的语句都保留：`add_subdirectory(LibXR)` 之前的放进 “Project settings” 块，之后的放进文件末尾的 “Kept from the earlier LibXR.CMake” 块，这个块在以后改写时同样保留。
+旧版本生成的 `LibXR.CMake` 第一行没有这行生成说明，改写时迁移到上述结构：`LIBXR_DRIVER` 和 `XROBOT_MODULES_DIR` 保留；`LIBXR_OPT_DEBUG` 取旧文件 Debug 块中应用目标的 `-O` 选项，没有时取工具链文件的 Debug 级别，`LIBXR_OPT_RELEASE` 取工具链文件的 Release 级别；只有一个模式的 `file(GLOB LIBXR_USER_SOURCES ...)` 写入 `LIBXR_USER_SOURCES_GLOB`。生成器不认识的语句都保留：`add_subdirectory(LibXR)` 之前的放进 “Project settings” 块，之后的放进文件末尾的 “Kept from the earlier LibXR.CMake” 块，这个块在以后改写时同样保留。
+
+旧 Debug 块中其他目标的优化选项与旧模板相同时（`xr`、`FreeRTOS`、`STM32_Drivers`、`USB_Device_Library` 的 `-O2`），由新结构重新生成；用户改过的级别和加入的目标连同 `if(TARGET ...)` 原样放进 “Kept from the earlier LibXR.CMake” 块，包在同样的 `if(CMAKE_BUILD_TYPE STREQUAL "Debug")` 中。这个块排在库的 `-O2` 之后，因此这些选项仍然生效，每条记录一条说明。例如旧文件把 `xr` 改为 `-O1`、给 `ThreadX` 加了 `-O0` 时，Kept 块的末尾为：
+
+```cmake
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(xr PRIVATE -O1)
+    if(TARGET ThreadX)
+        target_compile_options(ThreadX PRIVATE -O0)
+    endif()
+endif()
+```
 
 ---
 

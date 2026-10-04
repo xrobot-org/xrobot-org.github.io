@@ -90,7 +90,11 @@ The registered name is the generated C++ object name. The table gives the regist
 
 ## Generator Version
 
-Add `generator: 6.0.0` (a release version or a 40-hex commit) at the top level of `User/libxr_config.yaml` to pin the code generator; BSP CI installs that version. The generator keeps this key and the file's comments.
+`generator:` at the top level of `User/libxr_config.yaml` pins the code generator (a release version or a 40-hex commit); BSP CI installs that version. When the generator creates this file, its first line holds the installed version, e.g. `generator: 6.0.0`; regeneration keeps the key and the file's comments. When an existing file has no such key, `libxr gen` warns and generates as usual:
+
+```text
+[WARNING] libxr_config.yaml does not pin the generator; add `generator: 6.0.0` (the BSP CI installs the pinned version)
+```
 
 ## After Generation
 

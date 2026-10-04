@@ -27,8 +27,16 @@ static STM32TimerTimebase timebase(&htim2);
 ## 生成规则
 
 - 时钟基准为 SysTick 时生成 `STM32Timebase`；
-- 时钟基准为定时器时生成该定时器的 `STM32TimerTimebase`。`STM32TimerTimebase` 的构造函数只接受 `TIM_HandleTypeDef*`，LPTIM 或 HRTIM 作为时钟基准时生成的代码无法编译，因此时钟基准应选用 TIM；
+- 时钟基准为 TIM 定时器时生成该定时器的 `STM32TimerTimebase`；
 - 随后的 `PlatformInit()` 在裸机工程中不带参数，在 FreeRTOS 和 ThreadX 工程中带软件定时器的优先级和栈深度，见[软件定时器](./timer.md)。
+
+`STM32TimerTimebase` 的构造函数只接受 `TIM_HandleTypeDef*`。时钟基准为 LPTIM 或 HRTIM 时，`libxr gen` 报错停止，不写入任何文件：
+
+```text
+$ libxr gen -i .config.yaml -o User/app_main.cpp
+[信息] 系统：FreeRTOS
+[错误] 生成失败：HAL 时基是 LPTIM1，而 LibXR 的时基只支持 TIM 定时器（STM32TimerTimebase 接受 TIM_HandleTypeDef），未写入任何文件。请在 STM32CubeMX 的 SYS 中把 Timebase Source 改为 TIM 定时器（例如 TIM6）后重新生成
+```
 
 ## 使用
 
