@@ -14,7 +14,7 @@ sidebar_position: 5
 - The `Node<T>` template class encapsulates user data.
 - Supports thread-safe add, delete, and traversal operations.
 - Internally uses a circular linked list to avoid null pointer issues.
-- Traversal supports structure size verification to ensure type safety.
+- In Debug builds, `Foreach` asserts that each node's data size satisfies `LimitMode` (by default at least `sizeof(Data)`).
 
 ## Class Structure
 
@@ -73,7 +73,7 @@ list.Foreach<int>([](int& data) {
 - Nodes must be allocated and freed by the user. `List` does not manage memory.
 - Each node can only exist in one list at a time, and should not be added again while it is still linked.
 - The current `BaseNode` destructor asserts that the node has already been detached from any list. If a node object may be destroyed before the list itself, remove it explicitly with `Delete()` first.
-- `Foreach` includes structure validation to ensure type matching.
+- `Data` in `Foreach<Data>` must match the node's actual type; Debug builds only check the size.
 
 ## Typical Use Cases
 

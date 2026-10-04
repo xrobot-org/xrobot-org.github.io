@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Common Definitions
 
-This module provides the foundational macros, constants, error codes, and generic template utilities used throughout LibXR. It helps eliminate platform differences, simplifies coding, and supports debugging and runtime validation.
+`libxr_def.hpp` provides the basic macros, constants, error codes and generic template functions that the other LibXR headers build on.
 
 ## Math and Physical Constants
 
@@ -22,8 +22,8 @@ This module provides the foundational macros, constants, error codes, and generi
 
 ## Alignment and Cache-Line Definitions
 
-- `HW_CACHE_LINE_SIZE`: hardware cache-line size, typically 64 bytes on 64-bit platforms and 32 bytes on 32-bit platforms.
-- `CONCURRENCY_ALIGNMENT`: alignment policy used by concurrency-oriented structures; it may differ between single-core and multi-core configurations.
+- `HW_CACHE_LINE_SIZE`: hardware cache-line size, 64 when pointers are 8 bytes, otherwise 32.
+- `CONCURRENCY_ALIGNMENT`: alignment used by concurrent structures; `sizeof(size_t)` when `LIBXR_SINGLE_CORE` is true, otherwise `HW_CACHE_LINE_SIZE`. CMake defaults `LIBXR_SINGLE_CORE` to `OFF` on linux, webots and windows and to `ON` elsewhere.
 - `CACHE_LINE_SIZE`: backward-compatible cache-line alias.
 - `ALIGN_SIZE`: native platform alignment size, currently `sizeof(void*)`.
 
@@ -64,7 +64,7 @@ Used for runtime checks to validate data size:
 - `MORE`: Must be greater than or equal to the reference  
 - `NONE`: No size restriction
 
-Current mainline also provides:
+The size check function:
 
 ```cpp
 constexpr bool SizeLimitCheck(SizeLimitMode mode, size_t limit, size_t size) noexcept;
@@ -77,7 +77,7 @@ This is a pure predicate only. It answers whether the requested size relation ho
 Provides unified runtime assertions:
 
 - `ASSERT(x)`: Verifies the expression at runtime; triggers fatal error if false
-- `ASSERT_FROM_CALLBACK(x, in_isr)`: ISR-safe assertion check
+- `ASSERT_FROM_CALLBACK(x, in_isr)`: for callbacks or ISRs; `in_isr` is passed to `libxr_fatal_error()`
 
 These are only active when `LIBXR_DEBUG_BUILD` is defined. When triggered, the following function is called:
 
@@ -85,24 +85,28 @@ These are only active when `LIBXR_DEBUG_BUILD` is defined. When triggered, the f
 void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
 ```
 
-You can register a callback to handle assertion failures (see `libxr_assert.hpp` for details).
+Assertion failures can be handled by a registered fatal callback (see Assertions and Error Handling).
 
 ## Generic Template Utilities
 
-Besides enums and constants, current mainline also exposes:
+It also provides:
 
 - `OffsetOf(member)` for member-offset computation via a member pointer;
 - `ContainerOf(ptr, member)` for recovering the owning object pointer from a member pointer;
 - concepts such as `MemberObjectPointer` and `CommonOrdered`.
 
-These interfaces are currently used mainly by low-level containers, driver glue, and RTTI-free object backtracking paths.
+These are used mainly by low-level containers and driver code to recover the owning object from a member pointer.
+
+## Generic Template Functions
 
 ```cpp
-template <typename T1, typename T2>
-constexpr auto LibXR::max(T1 a, T2 b) -> common_type<T1, T2>::type;
+template <typename LeftType, typename RightType>
+  requires CommonOrdered<LeftType, RightType>
+constexpr auto LibXR::max(LeftType a, RightType b) -> std::common_type_t<LeftType, RightType>;
 
-template <typename T1, typename T2>
-constexpr auto LibXR::min(T1 a, T2 b) -> common_type<T1, T2>::type;
+template <typename LeftType, typename RightType>
+  requires CommonOrdered<LeftType, RightType>
+constexpr auto LibXR::min(LeftType a, RightType b) -> std::common_type_t<LeftType, RightType>;
 ```
 
-Used to compute the maximum/minimum of any numeric types, including integers and floats.
+Both arguments need a common type and must be comparable; the result has the common type, e.g. `LibXR::max(3, 4.5)` returns 4.5 (`double`).

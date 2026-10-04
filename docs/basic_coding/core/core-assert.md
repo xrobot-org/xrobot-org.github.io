@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # 断言与错误处理
 
-本模块用于运行时错误检查与致命错误回调管理。当前公开接口核心是 `LibXR::Assert` 命名空间中的 fatal callback 管理函数，以及 `ASSERT` / `ASSERT_FROM_CALLBACK` 这些宏。
+`libxr_assert.hpp` 提供运行时检查与致命错误回调管理：`LibXR::Assert` 命名空间中的 fatal 回调函数，以及 `ASSERT`、`REQUIRE` 等检查宏。
 
 ## 致命错误处理接口
 
@@ -14,7 +14,7 @@ sidebar_position: 2
 extern "C" void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
 ```
 
-该函数用于终止程序执行，可在正常或回调上下文中调用。发生断言失败时将自动调用，并可通过 `LibXR::Assert` 命名空间中的回调注册接口处理。
+断言失败时调用 `libxr_fatal_error()`，该函数不返回。在线程上下文（`in_isr` 为 `false`）中，若 `STDIO::write_` 已绑定且可写，先打印 `"Fatal error at <文件>:<行号>"`，再调用已注册的 fatal 回调（回调收到的 `in_isr` 为 `false`），然后休眠 500 ms 并重复，因此回调会被反复调用。`in_isr` 为 `true` 时只向地址 0 写入以触发硬件故障，不调用回调。
 
 ## `LibXR::Assert` 命名空间
 
@@ -33,14 +33,15 @@ LibXR::Assert::RegisterFatalErrorCallback(cb);
 
 支持传入 `LibXR::Assert::FatalCallback`，也就是 `LibXR::Callback<const char*, uint32_t>` 类型的回调对象，用于处理致命错误事件。
 
-说明：当前尺寸关系判断本身在 `libxr_def.hpp` 中以 `constexpr bool SizeLimitCheck(...)` 的形式公开，而不是在这里再单独定义一个调试专用静态类接口。
-
 ## 宏定义：断言检查
 
-- `ASSERT(expr)`: 普通上下文断言，失败时调用 `libxr_fatal_error(...)`
-- `ASSERT_FROM_CALLBACK(expr, in_isr)`: 回调上下文断言
+| 宏 | 生效条件 | 关闭时 | 用途 |
+| --- | --- | --- | --- |
+| `ASSERT(expr)` / `ASSERT_FROM_CALLBACK(expr, in_isr)` | 定义 `LIBXR_DEBUG_BUILD`（`CMAKE_BUILD_TYPE=Debug` 时自动定义） | 表达式仍求值，不检查 | 调用前提与配置检查 |
+| `REQUIRE(expr)` / `REQUIRE_FROM_CALLBACK(expr, in_isr)` | 始终生效 | — | 不可恢复的运行错误 |
+| `DEV_ASSERT(expr)` / `DEV_ASSERT_FROM_CALLBACK(expr, in_isr)` | CMake 选项 `LIBXR_DEV_ASSERT_BUILD=ON` | 表达式不求值 | LibXR 内部开发检查 |
 
-这些宏由 `LIBXR_DEBUG_BUILD` 控制是否启用，建议用于调试、开发阶段的防御性编程。
+失败时调用 `libxr_fatal_error(__FILE__, __LINE__, in_isr)`。不带 `_FROM_CALLBACK` 的版本传入 `in_isr = false`；`_FROM_CALLBACK` 版本在回调或 ISR 中使用，`in_isr` 原样传入。`ASSERT` 关闭时表达式仍会执行，必要操作应写在宏外。
 
 ## 用例示例
 
@@ -61,10 +62,7 @@ auto err_cb = LibXR::Assert::FatalCallback::Create(
 
 LibXR::Assert::RegisterFatalErrorCallback(err_cb);
 
+// buffer、in_isr 来自调用处的上下文
 ASSERT(buffer != nullptr);
 ASSERT_FROM_CALLBACK(buffer != nullptr, in_isr);
 ```
-
----
-
-断言与校验逻辑建议在系统开发初期即集成并启用。

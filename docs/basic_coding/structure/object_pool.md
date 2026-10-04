@@ -1,22 +1,24 @@
 ---
 id: object_pool
 title: RAII 对象池
-sidebar_position: 9
+sidebar_position: 7
 ---
 
 # ObjectPool
 
-`object_pool.hpp` 在当前主线中提供了一组基于“空闲索引队列”的 RAII 槽池接口，核心模板为：
+`object_pool.hpp` 提供一组基于空闲索引队列的 RAII 槽池接口，核心模板为：
 
 ```cpp
 LibXR::BasicObjectPool<Data, FreeQueue>
 ```
 
-以及三个当前直接公开的别名：
+以及三个别名：
 
 - `LibXR::ObjectPool<Data, IndexType>`：底层使用 `Queue<IndexType>`
 - `LibXR::SPSCObjectPool<Data, IndexType>`：底层使用 `SPSCQueue<IndexType>`
 - `LibXR::MPMCObjectPool<Data, IndexType>`：底层使用 `MPMCQueue<IndexType>`
+
+这一组对象池的特点是：
 
 - 通过 `Acquire()` 获取一个独占槽位；
 - 通过 move-only `Handle` 在析构时自动归还槽位；
@@ -28,14 +30,14 @@ LibXR::BasicObjectPool<Data, FreeQueue>
 
 ### 1.1 最小队列约束 `PoolIndexQueue`
 
-`BasicObjectPool` 不依赖某一个具体队列类型，而是要求底层空闲索引队列满足最小 typed 接口：
+`BasicObjectPool` 不依赖某一个具体队列类型，而是要求底层空闲索引队列满足最小强类型接口：
 
 - `ValueType`
 - `Push(const ValueType&)`
 - `Pop(ValueType&)`
 - `Size()`
 
-因此当前主线可以直接复用普通 `Queue`、`SPSCQueue`、`MPMCQueue` 作为空闲索引管理器。
+因此普通 `Queue`、`SPSCQueue`、`MPMCQueue` 都可以作为空闲索引队列。
 
 ### 1.2 Move-only `Handle`
 
@@ -45,32 +47,35 @@ LibXR::BasicObjectPool<Data, FreeQueue>
 - 禁止拷贝，避免同一个槽位被多个句柄同时持有；
 - 支持 `Get()`、`operator->()`、`operator*()` 访问槽内对象；
 - 支持 `Index()` 查询当前槽位索引；
-- 支持 `Reset()` 主动提前归还。
+- 支持 `Reset()` 主动提前归还；
+- 支持 `Valid()` 判断句柄是否持有槽位。
 
 这也是“RAII 对象池”这个名称的来源。
 
 ---
 
-## 2. 当前主线提供的构造方式
+## 2. 构造方式
 
-`BasicObjectPool` 当前支持四类构造方式：
+`BasicObjectPool` 支持四类构造方式：
 
-1. **内部 queue + 内部 slots**
-2. **内部 queue + 外部 slots**
-3. **外部 queue + 内部 slots**
-4. **外部 queue + 外部 slots**
+1. 内部 queue + 内部 slots
+2. 内部 queue + 外部 slots
+3. 外部 queue + 内部 slots
+4. 外部 queue + 外部 slots
 
 选择含义：
 
-- 需要最省心的用法：直接用内部 queue / 内部 slots。
+- 槽位和队列都由对象池分配：使用内部 queue / 内部 slots。
 - 需要把槽位放在调用方控制的存储区：使用外部 `slots`。
 - 需要复用已有队列实现或精确控制队列行为：使用外部 `free_queue`。
 
-当使用外部 `free_queue` 时，当前实现要求：
+使用外部 `free_queue` 时：
 
 - 队列在传入时必须为空；
 - 队列只供当前 pool 独占使用；
 - 队列容量至少能容纳 `slot_count` 个索引。
+
+此外，使用内部 slots 的构造要求 `Data` 可默认构造；`IndexType` 须为无符号整数类型。
 
 ---
 
@@ -85,7 +90,9 @@ LibXR::BasicObjectPool<Data, FreeQueue>
 
 - 成功时返回 `ErrorCode::OK`；
 - 无空闲槽位时返回底层队列的弹出失败结果，当前常见表现为 `ErrorCode::EMPTY`；
-- `Handle` 析构时会自动归还槽位，不必手工把索引放回队列。
+- `Handle` 析构时会自动归还槽位，不必手工把索引放回队列；
+- `Acquire()` 要求传入的 `handle` 未持有槽位（Debug 构建下断言）；
+- 对象池析构前所有 `Handle` 必须已归还（Debug 构建下断言 `EmptySize() == Size()`），因此 pool 须比 handle 后析构。
 
 ### 3.2 容量查询
 
@@ -159,5 +166,3 @@ if (pool.Acquire(handle) == LibXR::ErrorCode::OK)
 ```cpp
 handle.Reset();
 ```
-
----

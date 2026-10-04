@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # SPSCQueue（单生产者单消费者无锁队列）
 
-`LibXR::SPSCQueue<T>` 是当前主线公开的单生产者单消费者无锁队列。它适合明确的单向通道：
+`LibXR::SPSCQueue<T>` 是单生产者单消费者无锁队列，适合明确的单向通道：
 
 - 一个上下文负责 `Push`；
 - 另一个上下文负责 `Pop`；
@@ -40,6 +40,7 @@ queue.Pop(value);
 - `Push(const T&)`
 - `Pop(T&)`
 - `Peek(T&)`
+- `Pop()`（丢弃队首元素）
 
 ### 批量元素
 
@@ -53,6 +54,10 @@ queue.Pop(value);
 - `PushWithWriter(size_t size, Writer&& writer)`
 - `PopWithReader(Reader&& reader)`
 - `PopWithReader(size_t size, Reader&& reader)`
+- `ProduceWithWriter(size_t limit, Writer&& writer)`：回调签名 `size_t(T*, size_t, T*, size_t)`，一次拿到环形区的两段空闲空间，返回实际写入的元素数
+- `ConsumeWithReader(size_t limit, Reader&& reader)`：回调签名 `size_t(const T*, size_t, const T*, size_t)`，返回实际取走的元素数
+
+这两个接口要求 `T` 可平凡拷贝、可平凡析构；`SPSCQueue<T>` 不支持超过 `alignof(std::max_align_t)` 的对齐。
 
 ### 其他
 
@@ -86,6 +91,6 @@ auto sub = LibXR::Topic::QueuedSubscriber(topic, queue);
 
 - 生产者只有一个；
 - 消费者只有一个；
-- 你想明确表达这条拓扑，而不是退回到更重的通用并发队列。
+- 需要在类型上明确这条单向拓扑。
 
-如果任一侧不止一个，就不要继续硬套 `SPSCQueue`，改用 `MPMCQueue` 或重新整理队列拓扑。
+任一侧不止一个时使用 `MPMCQueue`。

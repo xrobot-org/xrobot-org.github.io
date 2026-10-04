@@ -6,15 +6,15 @@ sidebar_position: 1
 
 # Queue（普通 FIFO 队列）
 
-`LibXR::Queue<T>` 是当前公开队列家族里最基础的一类：普通固定容量 FIFO，不带并发同步语义，适合单线程或你自己已经处理好外部同步的场景。
+`LibXR::Queue<T>` 是最基础的队列：普通固定容量 FIFO，不带并发同步，适合单线程或调用方已做好外部同步的场景。
 
-主线现在公开的队列家族分成三类：
+公开的队列分为三类：
 
 - `Queue<T>`：普通 FIFO；
 - `SPSCQueue<T>`：单生产者单消费者无锁队列；
 - `MPMCQueue<T>`：多生产者多消费者有界队列。
 
-如果你只是需要一个通用环形队列，先看这一页；如果你需要并发语义，再看 `SPSCQueue` 或 `MPMCQueue`。
+只需要单线程 FIFO 时使用 `Queue<T>`；有并发访问时按生产者和消费者数量选用 `SPSCQueue` 或 `MPMCQueue`。
 
 ## 结构分层
 
@@ -37,6 +37,11 @@ queue.Pop(value);
 ```
 
 ## 主要接口
+
+### 构造
+
+- `explicit Queue(size_t length)`：在内部分配存储
+- `Queue(size_t length, uint8_t* buffer)`：使用调用方提供的缓冲区，至少 `length * sizeof(T)` 字节
 
 ### 单个元素操作
 
@@ -75,7 +80,7 @@ LibXR::Queue<uint32_t> queue(5);
 
 ### 2. 允许容量为 1
 
-当前主线测试覆盖了 `Queue<T>(1)` 这种场景，行为是正常的 FIFO，不需要额外绕开。
+`Queue<T>(1)` 按普通 FIFO 工作。
 
 ### 3. 支持无默认构造 payload
 
@@ -93,7 +98,7 @@ LibXR::Queue<NoDefaultPayload> queue(1);
 
 ### 4. `Overwrite()` 会直接把队列内容替换成一个新元素
 
-当前主线测试验证过：`Overwrite()` 之后队列只保留这一个新元素，不是“覆盖队尾”或“尽量写进去”。
+`Overwrite()` 清空队列后写入这一个元素，之后 `Size()` 为 1。
 
 ## 什么时候该用 `Queue<T>`
 
@@ -117,5 +122,3 @@ LibXR::Queue<NoDefaultPayload> queue(1);
 | `Queue<T>` | 无并发保证 | 普通 FIFO |
 | `SPSCQueue<T>` | 单生产者 / 单消费者 | lock-free，常见于 ISR/线程或线程/线程单向通道 |
 | `MPMCQueue<T>` | 多生产者 / 多消费者 | 有界并发队列，要求 payload 可平凡拷贝 |
-
-所以“多线程环境下请用 `LockFreeQueue`”这类旧说法已经过时。当前主线要按生产者/消费者拓扑在 `SPSCQueue` 和 `MPMCQueue` 之间选。

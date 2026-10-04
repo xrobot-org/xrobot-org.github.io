@@ -6,15 +6,15 @@ sidebar_position: 1
 
 # Queue (ordinary FIFO queue)
 
-`LibXR::Queue<T>` is the most basic member of the current public queue family: a fixed-capacity FIFO without built-in concurrency semantics. It is suitable for single-threaded code or for cases where synchronization is already handled externally.
+`LibXR::Queue<T>` is the most basic queue: a fixed-capacity FIFO without built-in concurrency semantics. It is suitable for single-threaded code or for cases where synchronization is already handled externally.
 
-The current public queue family is:
+The public queue types are:
 
 - `Queue<T>`: ordinary FIFO;
 - `SPSCQueue<T>`: single-producer / single-consumer lock-free queue;
 - `MPMCQueue<T>`: bounded multi-producer / multi-consumer queue.
 
-If you just need a general ring queue, start here. If you need concurrency semantics, choose `SPSCQueue` or `MPMCQueue` explicitly.
+Use `Queue<T>` for single-threaded FIFOs; with concurrent access choose `SPSCQueue` or `MPMCQueue` by the number of producers and consumers.
 
 ## Structure Layers
 
@@ -37,6 +37,11 @@ queue.Pop(value);
 ```
 
 ## Main Interfaces
+
+### Construction
+
+- `explicit Queue(size_t length)`: allocates internal storage
+- `Queue(size_t length, uint8_t* buffer)`: uses a caller-provided buffer of at least `length * sizeof(T)` bytes
 
 ### Single-item operations
 
@@ -75,7 +80,7 @@ LibXR::Queue<uint32_t> queue(5);
 
 ### 2. Capacity 1 is valid
 
-Current mainline tests explicitly cover `Queue<T>(1)`. This is not a special unsupported corner case.
+`Queue<T>(1)` works as an ordinary FIFO.
 
 ### 3. Non-default-constructible payloads are supported
 
@@ -93,7 +98,7 @@ LibXR::Queue<NoDefaultPayload> queue(1);
 
 ### 4. `Overwrite()` replaces the queue contents with exactly one new element
 
-Current mainline tests verify that `Overwrite()` leaves the queue containing only the new item, rather than partially replacing old contents.
+`Overwrite()` clears the queue and stores this one element, so `Size()` becomes 1.
 
 ## When to Use `Queue<T>`
 
@@ -102,7 +107,7 @@ Good fit:
 - single-threaded state machines;
 - local FIFO buffering;
 - business queues without interrupt or multi-thread contention;
-- cases where you want a plain data structure without concurrency semantics.
+- plain data structures without concurrency semantics.
 
 Not a good fit:
 
@@ -115,7 +120,5 @@ Not a good fit:
 | Queue | Concurrency shape | Notes |
 |------|-------------------|------|
 | `Queue<T>` | none | ordinary FIFO |
-| `SPSCQueue<T>` | one producer / one consumer | lock-free single-channel queue |
-| `MPMCQueue<T>` | multiple producers / multiple consumers | bounded concurrent queue |
-
-So the old advice "use `LockFreeQueue` for multithreaded code" is no longer accurate. Current mainline expects you to choose between `SPSCQueue` and `MPMCQueue` based on the actual producer/consumer topology.
+| `SPSCQueue<T>` | one producer / one consumer | lock-free; common for ISR-to-thread or thread-to-thread one-way channels |
+| `MPMCQueue<T>` | multiple producers / multiple consumers | bounded concurrent queue; payload must be trivially copyable |

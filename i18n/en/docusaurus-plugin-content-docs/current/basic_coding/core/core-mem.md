@@ -1,10 +1,10 @@
 ---
 id: core-mem
-sidebar_position: 11
+sidebar_position: 5
 title: Fast Memory Operations
 ---
 
-# Memory FastCopy / FastMove / FastSet / FastCmp
+# Fast Memory Operations
 
 `LibXR::Memory` provides a set of alignment- and burst-optimized memory primitives intended to replace generic `memcpy / memset / memcmp` on hot paths (such as ring buffer moves, IO TX/RX packing, etc.). The implementation selects a better 8/4/2/1-byte granularity based on pointer alignment and uses loop unrolling to improve throughput.
 
@@ -22,7 +22,7 @@ class Memory {
    * @param src  Source address
    * @param size Number of bytes to copy
    */
-  void FastCopy(void* dst, const void* src, size_t size);
+  static void FastCopy(void* dst, const void* src, size_t size);
 
   /**
    * @brief Fast memory move (overlap-safe)
@@ -30,7 +30,7 @@ class Memory {
    * @param src  Source address
    * @param size Number of bytes to move
    */
-  void FastMove(void* dst, const void* src, size_t size);
+  static void FastMove(void* dst, const void* src, size_t size);
 
   /**
    * @brief Fast memory fill (memset-like)
@@ -38,7 +38,7 @@ class Memory {
    * @param value Fill value (repeated per byte)
    * @param size  Number of bytes to fill
    */
-  void FastSet(void* dst, uint8_t value, size_t size);
+  static void FastSet(void* dst, uint8_t value, size_t size);
 
   /**
    * @brief Fast memory compare (memcmp-like)
@@ -47,14 +47,14 @@ class Memory {
    * @param size Number of bytes to compare
    * @return 0 if equal; otherwise non-zero. The sign and difference semantics match memcmp (difference of the first mismatching byte).
    */
-  int FastCmp(const void* a, const void* b, size_t size);
+  static int FastCmp(const void* a, const void* b, size_t size);
 };
 } // namespace LibXR
 ```
 
 ## FastCopy Semantics
 
-- If `dst` and `src` have the same alignment phase (alignment offset), the implementation first handles the unaligned head bytes, then switches to burst copies using `LibXR::ALIGN_SIZE` (typically 8 or 4) with 8x unrolling.
+- If `dst` and `src` have the same alignment phase (alignment offset), the implementation first handles the unaligned head bytes, then switches to burst copies using `LibXR::ALIGN_SIZE` (equal to `sizeof(void*)`: 8 on 64-bit platforms, 4 on 32-bit platforms) with 8x unrolling.
 - If their alignment phases differ, it tries to fall back to the largest possible width based on address delta:
   - When `LibXR::ALIGN_SIZE == 8` and the address delta is a multiple of 4, it can fall back to 4-byte burst copies.
   - When the address delta is even, it can fall back to 2-byte burst copies.
@@ -66,7 +66,7 @@ class Memory {
 - The current implementation of `FastMove()` first checks whether `dst` and `src` overlap:
   - if they do not overlap, it falls back directly to `FastCopy()`;
   - if they do overlap, it uses the safe move path.
-- It is intended for “possibly overlapping” regions; if you already know the regions do not overlap, prefer `FastCopy()`.
+- Intended for possibly overlapping regions; when the regions are known not to overlap, use `FastCopy()`.
 
 ## FastSet Semantics
 

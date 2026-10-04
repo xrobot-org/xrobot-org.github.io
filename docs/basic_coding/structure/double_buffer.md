@@ -1,7 +1,7 @@
 ---
 id: double_buffer
 title: 双缓冲区
-sidebar_position: 8
+sidebar_position: 9
 ---
 
 # 双缓冲区（DoubleBuffer）
@@ -10,7 +10,7 @@ sidebar_position: 8
 
 ## 核心特性
 
-- 将一块连续内存按当前实现要求对半切分为两个缓冲区。
+- 将一块连续内存对半切分为两个缓冲区。
 - 支持主动缓冲（active）与备用缓冲（pending）之间切换。
 - 提供对两个缓冲区的直接访问与数据填充接口。
 - 支持默认构造后再通过 `Init()` 绑定 backing storage。
@@ -28,7 +28,7 @@ void Reset();
 ```
 
 - `DoubleBuffer(raw_data)` 与 `Init(raw_data)` 走同一套初始化路径。
-- `raw_data` 需要满足当前实现的对半切分约束；空双缓冲允许传入 `nullptr + 0`。
+- `raw_data` 的地址须按 `alignof(size_t)` 对齐，大小须为 `2 * alignof(size_t)` 的整数倍，否则 Debug 构建断言失败；空双缓冲允许传入 `nullptr + 0`。
 - `Reset()` 只清运行时状态，不解绑已绑定的两半缓冲区。
 
 ### 数据操作接口
@@ -50,9 +50,9 @@ void Reset();
 
 补充说明：
 
-- `FillPending()` 在当前实现中会同时写入 pending 半区并更新 `pending_len_`。
-- `FillActive()` 只写入 active 半区字节，不会自动更新 `active_len_`；如果上层还要读取长度信息，需要自行配合 `SetActiveLength()`。
-- `EnablePending()` 只改变 `pending_valid_`，不会自动设置 `pending_len_`。
+- `FillPending()` 写入 pending 半区并记录其长度。
+- `FillActive()` 只写入 active 半区字节，不更新 active 长度；上层需要长度时调用 `SetActiveLength()`。
+- `EnablePending()` 只把 pending 标记为有效，不设置 pending 长度。
 
 ## 使用示例
 
@@ -80,8 +80,8 @@ buf.EnablePending();
 ## 注意事项
 
 - 填充备用区后需调用 `Switch()` 才能激活其数据。
-- 当前类本身不做动态分配；backing storage 由调用方准备，既可以是静态数组，也可以是调用方自行管理的动态内存，只要满足当前实现的对齐和大小约束。
-- `FillPending` 不可重入，调用前应确认 pending 状态为 false。
+- 类本身不做动态分配；存储由调用方准备，可以是静态数组或调用方管理的动态内存，需满足上述对齐和大小要求。
+- pending 已有效时 `FillPending()` 不写入并返回 `false`；pending 无效时 `GetPendingLength()` 返回 0。
 - `EnablePending()` 只改 pending 状态位，不会复制数据，也不会自动同步长度字段。
 
 ## 应用场景

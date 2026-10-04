@@ -1,7 +1,7 @@
 ---
 id: rbtree
 title: 红黑树
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # 红黑树（RBTree）
@@ -28,15 +28,17 @@ sidebar_position: 7
 ### 构造与初始化
 
 ```cpp
-RBTree<Key> tree(compare_fun);
+explicit RBTree(int (*compare_fun)(const Key&, const Key&));
 ```
 
 - `compare_fun` 为自定义比较函数指针 `int(const Key&, const Key&)`
+- `Key` 须可默认构造（`BaseNode` 含 `Key key` 成员）。
 
 ### 插入与删除
 
 ```cpp
-void Insert(BaseNode& node, Key&& key);
+template <typename KeyType>
+void Insert(BaseNode& node, KeyType&& key);
 void Delete(BaseNode& node);
 ```
 
@@ -46,20 +48,21 @@ void Delete(BaseNode& node);
 ### 查找节点
 
 ```cpp
-template <typename Data>
+template <typename Data, SizeLimitMode LimitMode = SizeLimitMode::MORE>
 Node<Data>* Search(const Key& key);
 ```
 
 - 返回键为 `key` 的节点指针，若无则为 nullptr
+- Debug 构建下按 `LimitMode` 断言节点数据大小。
 
 ### 遍历节点
 
 ```cpp
-template <typename Data, typename Func>
+template <typename Data, typename Func, SizeLimitMode LimitMode = SizeLimitMode::MORE>
 ErrorCode Foreach(Func func);
 ```
 
-- 中序遍历节点，对每个 `Node<Data>` 执行 `func` 回调。
+- 中序遍历，回调签名为 `ErrorCode(Node<Data>&)`；`Foreach` 不检查节点大小。
 - 回调返回 `ErrorCode::OK` 时继续遍历；返回任意非 `OK` 错误码时立即中断并把该错误码返回给调用方。
 
 ### 节点数量
@@ -83,6 +86,8 @@ Node<Data>* ForeachDisc(Node<Data>* node);
 ### 节点定义示例
 
 ```cpp
+static int cmp(const int& a, const int& b) { return (a > b) - (a < b); }
+
 RBTree<int> tree(cmp);
 RBTree<int>::Node<std::string> n1("hello");
 tree.Insert(n1, 42);
@@ -93,7 +98,7 @@ tree.Insert(n1, 42);
 - 所有操作为线程安全，但需注意节点生命周期由用户控制
 - 当前公开接口假定节点由用户创建并持有；树本身不负责节点内存管理。
 - 节点类型需固定在使用前明确
-- 节点大小支持运行时校验，防止误类型访问
+- `Search` 在 Debug 构建下检查节点数据大小，`Foreach` 与 `ForeachDisc` 不检查。
 
 ## 应用场景
 

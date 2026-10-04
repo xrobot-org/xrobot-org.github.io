@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # General Callback
 
-This module provides a lightweight and ISR-safe general callback system. The main public interface is `Callback`; its implementation is built on `CallbackBlock` plus the optional `GuardedCallbackBlock`, and is commonly used for asynchronous notifications, event handling, and error callbacks.
+`libxr_cb.hpp` provides the generic callback `Callback`, built on `CallbackBlock` and the optional `GuardedCallbackBlock`, for asynchronous notifications, event handling and error callbacks.
 
 ## CallbackBlock
 
@@ -18,13 +18,12 @@ class CallbackBlock;
 Encapsulates a concrete callback function together with its first bound argument, and provides the erased invocation entry used from ISR or task contexts:
 
 - `FunctionType`: Callback function signature: `void(bool in_isr, ArgType arg, Args... args)`.
-- Actual invocation is routed through the internal `InvokeThunk(...)` / `Invoke(...)` path.
 
-Binding is completed during construction. Copy is explicitly disabled, and the block should not be treated as a small ordinary value object.
+The function and argument are bound at construction. `CallbackBlock` is not copyable; copies of a `Callback` share one block.
 
 ### Reentrancy Guard Semantics of `GuardedCallbackBlock`
 
-In current mainline, reentrancy protection is not enabled by default in `CallbackBlock`. It is implemented by `GuardedCallbackBlock`, and the user-facing entry is:
+`GuardedCallbackBlock` adds reentrancy protection to `CallbackBlock`; the user-facing entry is:
 
 ```cpp
 LibXR::Callback<Args...>::CreateGuarded(fun, bound_arg);
@@ -58,15 +57,15 @@ LibXR::Callback<Args...> cb = LibXR::Callback<Args...>::Create(fun, bound_arg);
 - `fun`: Callback function in the form `void(bool, BoundArgType, Args...)` and **must be convertible to a function pointer** (plain functions, static member functions, capture-less lambdas, etc.).
 - `bound_arg`: The first argument bound to the callback
 
-> `Create` currently performs `new CallbackBlock<BoundArgType, Args...>`, so it **allocates dynamically** and `Callback` itself does not manage deallocation.
+> `Create` allocates a `CallbackBlock<BoundArgType, Args...>` with `new` and the block is never freed; call `Create()` / `CreateGuarded()` during initialization and keep the callback long-lived.
 
-If you need the guarded variant:
+Guarded variant:
 
 ```cpp
 LibXR::Callback<Args...> cb = LibXR::Callback<Args...>::CreateGuarded(fun, bound_arg);
 ```
 
-That path currently allocates `GuardedCallbackBlock<...>`.
+That path allocates `GuardedCallbackBlock<...>`. The guard flattens recursion on one call chain; concurrent triggering from several threads or ISRs needs external synchronization.
 
 ### Running a callback
 
@@ -78,7 +77,7 @@ Any number of additional arguments can be passed. `in_isr` indicates if the call
 
 ### Other interfaces
 
-- `Empty()`: Checks if the callback is empty (current implementation: `cb_block_ == &empty_cb_block_`).
+- `Empty()`: Checks whether the callback is empty.
 - Supports default constructor, copy constructor, move constructor, and assignment.
   - Copying is shallow: multiple `Callback` instances share the same block pointer and entry point.
 
@@ -101,7 +100,7 @@ ISR=0 context=42 msg=Hello
 
 ## Design Features
 
-- **Optional reentrancy guard**: trampoline-style flattening is enabled only on the `CreateGuarded(...)` path; ordinary `Create(...)` builds a plain `CallbackBlock`.
-- **ISR-friendly**: Every interface explicitly carries `in_isr`, making it safe to run inside interrupts.
-- **Type-safe encapsulation**: Templates and type deduction perform binding and invocation in a type-safe manner.
-- **Lightweight & embeddable**: Minimal structure suitable for IO, timers, event buses, and other callback-based modules.
+- Only callbacks created by `CreateGuarded(...)` have the reentrancy guard; `Create(...)` builds a plain `CallbackBlock`.
+- `Run()` may be called from an ISR and passes `in_isr` to the callback; whether the callback body may run in an ISR depends on the callback. `Create()` / `CreateGuarded()` allocate memory and belong to initialization.
+- Argument types are fixed by the template parameters and checked at compile time.
+- Used for callbacks in IO, timers, event publishing and similar paths.

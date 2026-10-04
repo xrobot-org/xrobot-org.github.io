@@ -6,9 +6,7 @@ sidebar_position: 2
 
 # SPSCQueue
 
-`LibXR::SPSCQueue<T>` is the current public single-producer / single-consumer lock-free queue in mainline LibXR.
-
-It is the right fit for clearly one-way channels such as:
+`LibXR::SPSCQueue<T>` is a single-producer / single-consumer lock-free queue for clearly one-way channels such as:
 
 - ISR -> thread;
 - producer thread -> consumer thread;
@@ -40,6 +38,7 @@ queue.Pop(value);
 - `Push(const T&)`
 - `Pop(T&)`
 - `Peek(T&)`
+- `Pop()` (discards the front element)
 
 ### Batch operations
 
@@ -53,6 +52,10 @@ queue.Pop(value);
 - `PushWithWriter(size_t size, Writer&& writer)`
 - `PopWithReader(Reader&& reader)`
 - `PopWithReader(size_t size, Reader&& reader)`
+- `ProduceWithWriter(size_t limit, Writer&& writer)`: callback signature `size_t(T*, size_t, T*, size_t)`; two free spans of the ring in one callback; returns the number of elements written
+- `ConsumeWithReader(size_t limit, Reader&& reader)`: callback signature `size_t(const T*, size_t, const T*, size_t)`; returns the number of elements taken
+
+These two require `T` to be trivially copyable and trivially destructible; `SPSCQueue<T>` does not support alignment above `alignof(std::max_align_t)`.
 
 ### Other helpers
 
@@ -71,7 +74,12 @@ LibXR::SPSCQueue<float> queue(8);
 auto sub = LibXR::Topic::QueuedSubscriber(topic, queue);
 ```
 
-You can also queue `Topic::Message<T>` when you need timestamps as well.
+It can also queue timestamped `Topic::Message<T>`:
+
+```cpp
+LibXR::SPSCQueue<LibXR::Topic::Message<float>> queue(8);
+auto sub = LibXR::Topic::QueuedSubscriber(topic, queue);
+```
 
 If the queue is full, that publish is dropped immediately instead of blocking the publisher.
 
@@ -81,6 +89,6 @@ Use `SPSCQueue` when all of the following are true:
 
 - there is exactly one producer;
 - there is exactly one consumer;
-- you want the topology to stay explicit instead of defaulting to a heavier general concurrent queue.
+- the one-way topology should be explicit in the type.
 
-If either side is not singular anymore, switch to `MPMCQueue` or redesign the queue topology explicitly.
+If either side has more than one context, use `MPMCQueue`.

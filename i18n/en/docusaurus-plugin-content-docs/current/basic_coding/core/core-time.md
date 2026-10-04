@@ -1,12 +1,12 @@
 ---
 id: core-time
 title: Timestamps and Time Differences
-sidebar_position: 7
+sidebar_position: 9
 ---
 
 # Timestamps and Time Differences
 
-This module defines microsecond- and millisecond-level timestamp types `MicrosecondTimestamp` and `MillisecondTimestamp`, which represent system clock times and can be used to compute the time difference between two points. It is suitable for scenarios such as timers, delay control, and performance analysis.
+`libxr_time.hpp` defines the microsecond and millisecond timestamps `MicrosecondTimestamp` and `MillisecondTimestamp` and their `Duration`. The current time comes from `GetMicroseconds()` / `GetMilliseconds()` of [Timebase](../driver/timebase.md).
 
 ## MicrosecondTimestamp
 
@@ -69,9 +69,9 @@ Represents a millisecond-level timestamp. Supports implicit conversion to `uint3
 
 ## Overflow Handling
 
-Time difference computations handle timestamp wrap-around (e.g., overflow), making it suitable for system clock management on embedded platforms.
+When the newer timestamp is smaller, subtraction assumes one wrap-around; a difference beyond the wrap limit fails an assertion in Debug builds.
 
-To adapt to different platforms/timebases, current mainline keeps the wrap-range configuration in the `LibXR::Detail` namespace:
+The wrap limits live in the `LibXR::Detail` namespace:
 
 ```cpp
 uint64_t TimebaseMaxValidUs();
@@ -80,6 +80,4 @@ void ConfigureTimebaseWrapRange(uint64_t max_valid_us,
                                 uint32_t max_valid_ms) noexcept;
 ```
 
-These interfaces / internal storages define the "maximum valid timebase value" (microseconds/milliseconds), so wrap-around difference calculations and validity checks can be performed correctly.
-
-In other words, current mainline no longer exposes this configuration group as the older external global variables.
+Each platform Timebase backend calls `Timebase::ConfigureWrapRange()` in its constructor, which forwards to `Detail::ConfigureTimebaseWrapRange()`; without it the limits are `UINT64_MAX` / `UINT32_MAX`. Application code normally does not call the `Detail` functions.

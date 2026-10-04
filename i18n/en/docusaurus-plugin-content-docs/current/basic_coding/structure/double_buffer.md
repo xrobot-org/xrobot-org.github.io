@@ -1,7 +1,7 @@
 ---
 id: double_buffer
 title: Double Buffer
-sidebar_position: 8
+sidebar_position: 9
 ---
 
 # Double Buffer
@@ -10,7 +10,7 @@ sidebar_position: 8
 
 ## Key Features
 
-- Splits one contiguous memory block into two equal halves under the current implementation contract.
+- Splits one contiguous memory block into two equal halves.
 - Supports switching between the active buffer and the pending buffer.
 - Provides direct access and data fill interfaces for both buffers.
 - Supports default construction followed by later `Init()` binding.
@@ -28,7 +28,7 @@ void Reset();
 ```
 
 - `DoubleBuffer(raw_data)` and `Init(raw_data)` use the same initialization path.
-- `raw_data` must satisfy the current half-split contract; an empty double buffer may be initialized with `nullptr + 0`.
+- `raw_data` must be aligned to `alignof(size_t)` and its size must be a multiple of `2 * alignof(size_t)`, otherwise Debug builds assert; an empty double buffer may use `nullptr + 0`.
 - `Reset()` only clears runtime state and keeps the two bound halves attached.
 
 ### Data Operation Interfaces
@@ -50,9 +50,9 @@ void Reset();
 
 Additional notes:
 
-- In the current implementation, `FillPending()` both copies bytes into the pending half and updates `pending_len_`.
-- `FillActive()` only copies bytes into the active half and does not update `active_len_`; if upper layers also use the length metadata, they must call `SetActiveLength()` explicitly.
-- `EnablePending()` only changes `pending_valid_` and does not set `pending_len_` automatically.
+- `FillPending()` copies bytes into the pending half and records their length.
+- `FillActive()` only copies bytes into the active half and does not update the active length; call `SetActiveLength()` when the length is needed.
+- `EnablePending()` only marks the pending half valid and does not set the pending length.
 
 ## Usage Example
 
@@ -79,9 +79,9 @@ buf.EnablePending();
 
 ## Notes
 
-- You must call `Switch()` after filling the pending buffer to activate it.
-- The class itself does not allocate backing storage. The caller prepares it; this can be a static array or caller-managed dynamic memory, as long as the current alignment and size contract is satisfied.
-- `FillPending` is not reentrant; ensure the pending state is false before calling.
+- The pending buffer becomes active only after `Switch()`.
+- The class does not allocate; the caller provides the storage (a static array or caller-managed dynamic memory) meeting the alignment and size rules above.
+- While pending is valid, `FillPending()` writes nothing and returns `false`; `GetPendingLength()` returns 0 while pending is not valid.
 - `EnablePending()` only changes the pending-valid bit. It does not copy data and does not synchronize the length fields automatically.
 
 ## Application Scenarios

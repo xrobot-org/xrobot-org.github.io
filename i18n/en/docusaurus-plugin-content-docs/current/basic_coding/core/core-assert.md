@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # Assertions and Error Handling
 
-This module provides runtime error checking and fatal-error callback management. In current mainline, the public surface is centered on the `LibXR::Assert` namespace together with the `ASSERT` / `ASSERT_FROM_CALLBACK` macros.
+`libxr_assert.hpp` provides runtime checks and fatal-error callback management: the fatal-callback functions in the `LibXR::Assert` namespace and the `ASSERT` / `REQUIRE` check macros.
 
 ## Fatal Error Handling Interface
 
@@ -14,7 +14,7 @@ This module provides runtime error checking and fatal-error callback management.
 extern "C" void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
 ```
 
-This function is used to terminate program execution and can be called from both normal and callback contexts. It is automatically invoked on assertion failure and can be handled through callbacks registered in the `LibXR::Assert` namespace.
+`libxr_fatal_error()` is called when an assertion fails and does not return. In thread context (`in_isr` false) it prints `"Fatal error at <file>:<line>"` when `STDIO::write_` is bound and writable, runs the registered fatal callback with `in_isr` set to false, sleeps 500 ms and repeats, so the callback runs repeatedly. With `in_isr` true it only writes to address 0 to trigger a hardware fault and does not run the callback.
 
 ## `LibXR::Assert` Namespace
 
@@ -33,14 +33,15 @@ LibXR::Assert::RegisterFatalErrorCallback(cb);
 
 Accepts `LibXR::Assert::FatalCallback`, that is, `LibXR::Callback<const char*, uint32_t>`, to handle fatal error events.
 
-Note: the size-relation predicate itself is currently exposed from `libxr_def.hpp` as `constexpr bool SizeLimitCheck(...)`, rather than as a separate debug-only static class API here.
-
 ## Macros: Assertion Checks
 
-- `ASSERT(expr)`: Regular context assertion; calls `libxr_fatal_error(...)` on failure  
-- `ASSERT_FROM_CALLBACK(expr, in_isr)`: ISR context assertion
+| Macro | Enabled when | When disabled | Purpose |
+| --- | --- | --- | --- |
+| `ASSERT(expr)` / `ASSERT_FROM_CALLBACK(expr, in_isr)` | `LIBXR_DEBUG_BUILD` defined (automatic with `CMAKE_BUILD_TYPE=Debug`) | expression still evaluated, not checked | preconditions and configuration |
+| `REQUIRE(expr)` / `REQUIRE_FROM_CALLBACK(expr, in_isr)` | always | — | unrecoverable runtime errors |
+| `DEV_ASSERT(expr)` / `DEV_ASSERT_FROM_CALLBACK(expr, in_isr)` | CMake option `LIBXR_DEV_ASSERT_BUILD=ON` | expression not evaluated | LibXR internal development checks |
 
-These macros are enabled or disabled by `LIBXR_DEBUG_BUILD` and are recommended for defensive programming during development.
+On failure the macro calls `libxr_fatal_error(__FILE__, __LINE__, in_isr)`. The plain forms pass `in_isr = false`; the `_FROM_CALLBACK` forms are for callbacks or ISRs and pass `in_isr` through. A disabled `ASSERT` still evaluates its expression, so required operations belong outside the macro.
 
 ## Usage Example
 
@@ -60,8 +61,7 @@ auto err_cb = LibXR::Assert::FatalCallback::Create(
     arg);
 
 LibXR::Assert::RegisterFatalErrorCallback(err_cb);
+// buffer and in_isr come from the calling context
 ASSERT(buffer != nullptr);
 ASSERT_FROM_CALLBACK(buffer != nullptr, in_isr);
 ```
-
-It is recommended to enable assertions and validations early in development.

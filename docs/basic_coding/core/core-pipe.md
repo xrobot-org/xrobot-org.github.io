@@ -6,15 +6,15 @@ sidebar_position: 12
 
 # Pipe 单向管道
 
-`Pipe` 将一个 `WritePort` 与一个 `ReadPort` 通过**同一条无锁字节队列**连接成**单向**数据通道：写端写入的字节可被读端直接读取，无需端口间的中间拷贝（仅有一次写入到共享队列的拷贝）。该类适用于在线程/任务/ISR 与任务之间进行高效的数据转发与环回测试。
+`Pipe` 把一个 `WritePort` 和一个 `ReadPort` 通过同一条 SPSC 字节队列连接成单向数据通道：写端把数据复制进队列，读端从同一队列复制到接收缓冲区，两端之间不经过额外的中间缓冲。适用于线程、任务或 ISR 与任务之间的数据转发和环回测试。
 
 ---
 
 ## 特性概览
 
-- **零额外拷贝**：写端写入 → 直接进入共享队列 → 读端从同一队列取出。
-- **ISR 友好**：写端发布数据时直接通知读端推进挂起请求，并继续传递 `in_isr` 上下文。
-- **语义与 `ReadPort`/`WritePort` 一致**：阻塞/回调/轮询等完成方式统一由 `Operation` 控制。
+- 写端拥有一条 `buffer_size` 字节的队列，读端直接读取这条队列。
+- 写入在数据入队并通知读端后完成，不等待读端读取；挂起的读请求在写入时被满足，可能在写入调用内同步完成。
+- 两端的完成方式与 `ReadPort` / `WritePort` 相同，由 `Operation` 指定。
 
 ---
 
@@ -24,7 +24,7 @@ sidebar_position: 12
 class Pipe {
 public:
   // 使用给定共享数据队列容量（字节）构造
-  Pipe(size_t buffer_size);
+  explicit Pipe(size_t buffer_size);
 
   // 非拷贝/非赋值
   Pipe(const Pipe&) = delete;
@@ -37,17 +37,15 @@ public:
 };
 ```
 
-- `buffer_size`：共享队列总容量（字节），用于承载写入的数据。创建后不可更改。
-- 当前实现内部实际构造成 `ReadPort(0)` 与 `WritePort(0, buffer_size)`：
-  - 读端不分配自己的队列，而是借用写端的字节队列；
-  - 写端没有请求元信息队列，写完成发生在字节成功入队之后。
-- `Pipe` 不直接暴露 `Size()/Reset()` 等方法——请通过 `GetReadPort()` / `GetWritePort()` 使用对应端口接口。
+- `buffer_size`：共享队列容量（字节），必须大于 0，创建后不可更改。
+- `Pipe` 不直接提供 `Size()` 等方法，通过 `GetReadPort()` / `GetWritePort()` 使用端口接口。
+- 析构不取消请求，也不释放队列存储。
 
 ---
 
 ## 使用方式
 
-把 `Pipe` 当作“自带回环驱动”的内存管道使用：写端写入会触发 `WriteFun`，进而推进读端处理挂起读取。
+`Pipe` 相当于自带回环驱动的内存管道：写入数据后通知读端，满足挂起的读请求。
 
 ```cpp
 LibXR::Pipe pipe(256);
@@ -55,13 +53,18 @@ LibXR::Pipe pipe(256);
 auto& r = pipe.GetReadPort();
 auto& w = pipe.GetWritePort();
 
-// 典型：先发起读（可能进入 PENDING），再写入推进
-uint8_t buf[16];
-LibXR::ReadOperation rop(status_or_cb_or_sem);
-LibXR::WriteOperation wop(status_or_cb_or_sem);
+std::atomic<LibXR::ReadOperation::OperationPollingStatus> rs{
+    LibXR::ReadOperation::OperationPollingStatus::READY};
+std::atomic<LibXR::WriteOperation::OperationPollingStatus> ws{
+    LibXR::WriteOperation::OperationPollingStatus::READY};
+LibXR::ReadOperation rop(rs);
+LibXR::WriteOperation wop(ws);
 
-r({buf, sizeof(buf)}, rop);           // 可能挂起
-w({some_data, some_len}, wop);        // 写入后直接通知读端检查共享队列
+uint8_t buf[16];
+const uint8_t data[16] = {};
+
+r({buf, sizeof(buf)}, rop);    // 队列中数据不足，读请求挂起，rs 为 RUNNING
+w({data, sizeof(data)}, wop);  // 写入后读请求完成，rs、ws 均为 DONE
 ```
 
-> `Pipe` 的写完成表示字节已经进入共享队列，不等待读端消费。空间不足时返回 `FULL`，不会通过阻塞写等待读端腾出空间。
+> `Pipe` 的写完成表示字节已经进入共享队列，不等待读端消费；队列空间不足时，写入返回 `FULL`。

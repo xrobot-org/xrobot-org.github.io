@@ -1,12 +1,12 @@
 ---
 id: core-color
 title: 终端颜色与格式
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # 终端颜色与格式
 
-本模块对应 `libxr_color.hpp`，提供当前主线里用于终端文本样式、控制序列、前景色、背景色和常用预设的枚举与 ANSI 转义字符串。它主要服务于终端输出、Logger、串口调试终端等文本界面路径。
+`libxr_color.hpp` 提供终端文本样式、控制序列、前景色、背景色和常用预设的枚举与 ANSI 转义字符串，用于终端输出、Logger 和串口调试终端。
 
 ## 文本样式 `TextStyle`
 
@@ -108,10 +108,10 @@ enum class Preset : uint8_t {
 
 ```cpp
 std::cout
-    << LIBXR_TEXT_STYLE_STR[static_cast<uint8_t>(LibXR::TextStyle::BOLD)]
-    << LIBXR_FOREGROUND_STR[static_cast<uint8_t>(LibXR::Foreground::GREEN)]
+    << LibXR::LIBXR_TEXT_STYLE_STR[static_cast<uint8_t>(LibXR::TextStyle::BOLD)]
+    << LibXR::LIBXR_FOREGROUND_STR[static_cast<uint8_t>(LibXR::Foreground::GREEN)]
     << "This is bold green text!"
-    << LIBXR_TERMINAL_CONTROL_STR[static_cast<uint8_t>(LibXR::TerminalControl::RESET)];
+    << LibXR::LIBXR_TERMINAL_CONTROL_STR[static_cast<uint8_t>(LibXR::TerminalControl::RESET)];
 ```
 
-Logger 当前也直接使用这一组常量：按日志级别从 `LIBXR_FOREGROUND_STR[]` 取前景色，再在结尾追加 `TerminalControl::RESET`。
+Logger 使用这一组常量：按日志级别从 `LIBXR_FOREGROUND_STR[]` 取前景色，再在结尾追加 `TerminalControl::RESET`。

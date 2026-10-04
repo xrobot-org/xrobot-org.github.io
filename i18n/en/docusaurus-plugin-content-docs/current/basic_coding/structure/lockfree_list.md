@@ -14,7 +14,7 @@ sidebar_position: 6
 - All nodes inherit from `BaseNode`, with uniform structure and size identification.
 - Supports arbitrary data types using the `Node<T>` template wrapper.
 - Lock-free insertion and safe traversal (no deletion supported).
-- Automatically verifies structure size during traversal to ensure type safety.
+- In Debug builds, `Foreach` asserts that each node's data size satisfies `LimitMode` (by default at least `sizeof(Data)`).
 - No dynamic memory allocation involved; nodes are managed by the user.
 
 ## Class Structure
@@ -36,12 +36,12 @@ void Add(BaseNode& node);
 ### Traverse Nodes
 
 ```cpp
-template <typename Data, typename Func, SizeLimitMode LimitMode = MORE>
+template <typename Data, typename Func, SizeLimitMode LimitMode = SizeLimitMode::MORE>
 ErrorCode Foreach(Func func);
 ```
 
 - Traverses all nodes in the list and calls `func(Data&)` on the data.
-- Uses `SizeLimitMode` to check data type match.
+- In Debug builds, node data size is asserted against `LimitMode` (by default at least `sizeof(Data)`).
   - Traversal continues while the callback returns `ErrorCode::OK`; any non-`OK` code stops traversal immediately and is returned to the caller.
 
 ### Get Size
@@ -55,7 +55,7 @@ uint32_t Size();
 ### Usage Example
 
 ```cpp
-LibXR::LockFreeList::Node<int> node1(123);
+LibXR::LockFreeList::Node<int> node1(123);  // nodes must be destroyed after the list, so declare them first
 LibXR::LockFreeList list;
 list.Add(node1);
 
@@ -69,7 +69,7 @@ list.Foreach<int>([](int& val) {
 
 - This list does not support node deletion, making it ideal for "add-only" scenarios.
 - Node lifetime is managed by the user; avoid duplicate additions or premature destruction.
-- The current `BaseNode` destructor asserts that the node has already been detached from the list. If a node object may be destroyed before the list itself, the caller must ensure the list has already been torn down or the node is no longer linked.
+- The `BaseNode` destructor asserts that the node is detached; the list destructor detaches all nodes, so nodes must be destroyed after the list, e.g. declared before it or given static storage duration.
 - Do not modify the list structure during traversal.
 
 ## Typical Use Cases

@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # MPMCQueue
 
-`LibXR::MPMCQueue<T>` is the current public bounded multi-producer / multi-consumer queue in mainline LibXR.
+`LibXR::MPMCQueue<T>` is a bounded multi-producer / multi-consumer queue.
 
 Compared with `SPSCQueue`, it is intended for more general concurrent topologies:
 
@@ -26,9 +26,16 @@ uint16_t value = 0;
 queue.Pop(value);
 ```
 
+Main interfaces:
+
+- `Push(const T&)`: returns `OK`, or `FULL` when full.
+- `Pop(T&)` / `Pop()`: returns `OK`, or `EMPTY` when empty.
+- `MaxSize()`, `EmptySize()`, `ElementSize()`.
+- `Size()`: an approximate snapshot under concurrent access.
+
 ## Payload Requirements
 
-Current mainline places explicit restrictions on `MPMCQueue<T>`:
+`MPMCQueue<T>` requires:
 
 - `T` must be trivially copyable;
 - `T` must be trivially destructible.
@@ -43,13 +50,9 @@ Good fit:
 - public concurrent queues accessed by interrupts and threads, or by multiple threads;
 - internal driver queues that need bounded concurrent behavior.
 
-In current mainline, several CAN TX queue implementations already use `MPMCQueue<ClassicPack>` or similar payloads.
+For example, the CAN drivers use `MPMCQueue<ClassicPack>` for their TX queues.
 
 ## How to Choose Between `SPSCQueue` and `MPMCQueue`
 
-Do not treat `MPMCQueue` as the default replacement for every queue. The current codebase is moving toward topology-driven selection:
-
-- exactly one producer and one consumer: prefer `SPSCQueue`;
-- actual multiple producers or consumers: use `MPMCQueue`.
-
-This keeps the producer/consumer topology explicit.
+- one producer and one consumer: use `SPSCQueue`;
+- multiple producers or consumers: use `MPMCQueue`.

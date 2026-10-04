@@ -1,16 +1,16 @@
 ---
 id: core-rw
 title: IO Read/Write Abstraction
-sidebar_position: 8
+sidebar_position: 10
 ---
 
 # IO Read/Write Abstraction
 
-This module defines the generic `ReadPort` and `WritePort` interface classes for cross-platform encapsulation of various I/O behaviors such as asynchronous, blocking, and polling. It binds completion feedback mechanisms via the `Operation` model. To adapt to different underlying drivers, simply implement the corresponding read/write functions and assign them to the port object to gain full asynchronous I/O capability.
+`libxr_rw.hpp` defines the generic `ReadPort` and `WritePort`, which wrap asynchronous, blocking and polling I/O behind one interface; the completion feedback is selected by `Operation`. A driver pushes received bytes into the `ReadPort` queue and takes pending data from the `WritePort`; see [UART Driver Design](../../adv_coding/driver/uart_driver.md).
 
-The current mainline implementation of `ReadPort`, `WritePort`, and `WritePort::Stream` mainly uses atomic state machines and lock-free structures such as `SPSCQueue` for the **software-side queuing and completion handoff**. That should not be over-expanded into a claim that the entire read/write path can never involve system calls; actual syscalls, DMA starts, or hardware accesses still depend on the concrete RX producer and `WriteFun` backend.
+`ReadPort`, `WritePort` and `WritePort::Stream` use atomic state and `SPSCQueue` for software-side queuing and completion; system calls, DMA starts and hardware access are done by the concrete driver.
 
-> Note: the default constructors of `ReadPort` / `WritePort` create internal lock-free queues and buffers (one-time allocation/initialization during construction) to hold data and write metadata.
+> Note: `ReadPort` / `WritePort` allocate their internal queues once at construction and do not free them on destruction.
 
 ## Core Types
 
@@ -32,10 +32,10 @@ These represent asynchronous I/O operations with a completion response behavior.
 ### Construction
 
 ```cpp
-ReadPort(size_t buffer_size = 128);
+explicit ReadPort(size_t buffer_size = 128);
 ```
 
-Construction allocates the receive byte queue. A zero capacity leaves the port without a receive queue.
+Creates a receive queue of `buffer_size` bytes (default 128). With 0 no queue is allocated and the port is not readable.
 
 ### Submitting a read
 
@@ -45,7 +45,9 @@ ErrorCode operator()(RawData data, ReadOperation &op, bool in_isr = false);
 
 A positive-length request copies into `data` only after the complete length is available. A zero-length request waits for the queue to become nonempty and consumes no bytes.
 
-For non-`BLOCK`, `OK` means admission; completion can be inline or deferred. For `BLOCK`, `OK` means the data handoff completed. A request larger than capacity returns `SIZE_ERR`; occupied request processing returns `BUSY`.
+For non-`BLOCK`, `OK` means admission; completion can be inline or deferred. For `BLOCK`, `OK` means the data handoff completed. A request larger than capacity returns `SIZE_ERR`; occupied request processing returns `BUSY`; an unbound port returns `NOT_SUPPORT`; a `BLOCK` read that times out returns `TIMEOUT`.
+
+`BLOCK` reads are thread-only; until one returns, the same port must not start another read or call `ClearQueuedData()`, nor overlap an outstanding non-`BLOCK` read.
 
 Keep the destination and callback/polling objects alive until completion. A `BLOCK` destination remains valid through function return.
 
@@ -58,7 +60,7 @@ size_t Capacity() const;
 bool Readable() const;
 ```
 
-Unbound ports report zero sizes. `Readable()` means a receive queue exists; it does not mean bytes are currently available.
+The first three return queued bytes, free bytes and total capacity, all 0 when no queue is bound. `Readable()` means a receive queue exists; it does not mean bytes are currently available.
 
 ### Backend RX production
 
@@ -112,12 +114,13 @@ ErrorCode operator()(ConstRawData data, WriteOperation &op, bool in_isr = false)
 
 Admission copies the entire source into the internal byte queue, so caller storage can be reused after return.
 
-- non-`BLOCK` `OK` means admitted;
+- non-`BLOCK` `OK` means admitted; a `BLOCK` write returns the completion result or `TIMEOUT`, and queued data is still sent after a timeout (see [BLOCK Timeout and Completion Handoff](../../adv_coding/driver/block_timeout_semantics.md));
 - insufficient request or byte capacity returns `FULL`;
 - producer-state conflict returns `BUSY`;
 - an unavailable port returns `NOT_SUPPORT`;
 - requests are not partially admitted;
-- zero-length writes succeed after capability checking without notifying the backend.
+- zero-length writes succeed after capability checking without notifying the backend;
+- `BLOCK` writes are thread-only; `BLOCK` and non-`BLOCK` writes on one port must not overlap.
 
 Write completion means that the backend accepted the entire request, not that physical transmission ended. A UART backend can complete the `WriteOperation` after copying bytes into active/pending DMA storage while DMA and the wire keep running.
 
@@ -130,7 +133,7 @@ size_t Capacity() const;
 bool Writable() const;
 ```
 
-`Writable()` means byte storage exists and `WriteFun` is bound. It does not reserve a request slot or byte capacity for the next call.
+`Size()`, `EmptySize()` and `Capacity()` return queued bytes (including uncommitted Stream appends), free bytes and total capacity of the byte queue. `Writable()` means byte storage exists and `WriteFun` is bound. It does not reserve a request slot or byte capacity for the next call.
 
 ### Backend consumption
 
@@ -146,14 +149,15 @@ Backend consumption, settlement, and the completion callbacks it triggers must b
 
 ## STDIO Interface
 
-LibXR provides a global `STDIO` interface that can be bound to `ReadPort` / `WritePort` instances and used with the `Printf(...)` function to output debug information.
+LibXR provides a global `STDIO`; once `ReadPort` / `WritePort` are bound, `Printf` or `Print` writes debug output.
 
 ```cpp
-LibXR::STDIO::write_ = &uart.write_port_;
+LibXR::STDIO::write_ = uart.write_port_;
 LibXR::STDIO::Printf<"Hello, %d">(123);
+LibXR::STDIO::Print<"Hello, {}">(123);
 ```
 
-Implementation note: the current `Printf` path uses the shared STDIO write session and an internal mutex for formatting/serialization, and chooses between the normal write path and the stream/bulk write path depending on whether `STDIO::write_stream_` is configured.
+`Printf` / `Print` format and write to `STDIO::write_` under an internal mutex and must be called from threads. They return the number of bytes committed; output beyond the write port's current free space is truncated. They return -1 when `write_` is unset or not writable, or when formatting or submission fails. If `STDIO::write_stream_` is set, output goes to that stream; otherwise each call uses a temporary `WritePort::Stream`.
 
 ## Usage Examples
 
@@ -173,12 +177,12 @@ uart.Read(buffer, op_cb);
 
 ## WritePort::Stream Batch Write Interface
 
-`WritePort::Stream` provides a chained batch-write capability similar to C++ streams, making it suitable for high-throughput, large-packet, or consecutive multi-block write scenarios. Its goal is to **lock the port resource once, write data in batches, and reduce queue pressure and fragmentation**.
+`WritePort::Stream` merges several pieces of data into one write request, for writing multiple blocks in a row.
 
 ### Key Features
 
-- **Stream-style chained writing**: Supports multiple `<<` operations to append multiple segments into the write buffer.
-- **Automatic Batch Submission**: Unsubmitted data is automatically committed upon destruction, and you can also call `Commit()` manually at any time.
+- Repeated `<<` or `Write()` calls append to one batch.
+- `Commit()` submits the batch; destruction submits it automatically.
 
 ### Example Usage
 
@@ -200,23 +204,22 @@ public:
     Stream(WritePort* port, WriteOperation op);
     ~Stream();
     Stream& operator<<(const ConstRawData& data);
-    ErrorCode Commit();
+    [[nodiscard]] ErrorCode Write(ConstRawData data);
+    [[nodiscard]] ErrorCode Write(std::string_view text);
+    [[nodiscard]] ErrorCode Commit();
+    [[nodiscard]] ErrorCode Acquire();
+    [[nodiscard]] size_t EmptySize() const;
 };
 ```
 
 Semantics highlights:
 
-- `Stream(WritePort*, WriteOperation)`: tries to acquire the write lock and checks that the write-metadata queue has at least 1 free slot; if it cannot lock or the queue is full, the stream starts in an unlocked state.
-- `operator<<`: if unlocked, it retries acquiring the write lock; if it still fails, this `<<` writes nothing. If locked and there is enough capacity (`size_ + data.size_ <= cap_`), it appends data into the write buffer; if capacity would be exceeded, no partial write is performed (the segment is ignored).
-- `Commit()`: submits the currently accumulated data as a single write request and triggers the underlying write; then resets `size_` to 0. After committing, it refreshes available capacity based on the queue free slots, and may release the write lock when needed.
-- `~Stream()`: if there is uncommitted data, it is committed automatically, then the write lock is released.
+- The constructor tries to acquire the port and does not report failure; call `Acquire()` to check or retry. `Acquire()` returns `OK` when acquired or already owned, `PTR_NULL` for a null port, `NOT_SUPPORT` when not writable, `BUSY` when occupied, and `FULL` when no request slot is free.
+- `Write()` appends data and reports the result: `FULL` when space is insufficient, appending nothing from this call and keeping earlier appends. `<<` does the same without reporting failures.
+- `Commit()` submits the batch and releases the port; a later `<<` / `Write()` re-acquires it and starts a new batch. An empty batch only completes non-BLOCK notifications.
+- If the stream still owns the port on destruction, it behaves like `Commit()` and discards the result.
+- Thread-only; completion notifications use `in_isr = false`.
 
 ---
 
 `ReadPort` and `WritePort` are the core interfaces of the LibXR I/O abstraction layer. They provide unified data buffering and completion feedback mechanisms, suitable for data stream scenarios such as UART, network, and file systems.
-
-## Current implementation boundaries
-
-- `ReadPort(buffer_size)` creates its internal `SPSCQueue<uint8_t>` only when `buffer_size > 0`; with a zero capacity, the current implementation allows `queue_data_ == nullptr`, so APIs such as `Size()` / `EmptySize()` must not be used blindly.
-- `WritePort(queue_size, buffer_size)` currently constructs `queue_info_` and `queue_data_` separately; `queue_data_` is likewise allowed to be null when `buffer_size == 0`.
-- The “thread-safe” claim for `ReadPort` / `WritePort` mainly describes the current software-side queue, busy-state, and completion-handoff logic. Whether the concrete RX producer and `WriteFun` path are re-entrant or ISR-safe still depends on the backend implementation.

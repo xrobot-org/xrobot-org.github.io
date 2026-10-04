@@ -1,12 +1,12 @@
 ---
 id: core-op
 title: Operation 操作模型
-sidebar_position: 9
+sidebar_position: 11
 ---
 
 # Operation 操作模型
 
-本模块定义通用的 `Operation<T>` 模板类，用于描述具有完成反馈机制的异步操作。支持回调（Callback）、阻塞（Block）、轮询（Polling）三种模式，适用于嵌入式 I/O 操作中的统一完成处理。
+`operation.hpp` 定义通用的 `Operation<T>` 模板类，描述一次异步操作完成后如何通知调用方，支持回调（CALLBACK）、阻塞（BLOCK）、轮询（POLLING）三种方式。
 
 其中 `ReadOperation` / `WriteOperation` 是对 `Operation<ErrorCode>` 的别名，用于 I/O 完成时回传 `ErrorCode`。
 
@@ -26,7 +26,7 @@ enum class OperationType : uint8_t {
 ### POLLING 状态枚举
 
 ```cpp
-enum class OperationPollingStatus : uint8_t {
+enum class OperationPollingStatus : uint32_t {
   READY,
   RUNNING,
   DONE,
@@ -50,7 +50,7 @@ Operation(Callback<T> &cb);
 Operation(std::atomic<OperationPollingStatus> &status);
 ```
 
-另外，`Operation` 支持从另一个 `Operation` 实例初始化（复制/移动语义等价于赋值）。
+`Operation` 可复制和移动，副本引用同一个回调、信号量或轮询状态。
 
 ## 状态更新
 
@@ -63,10 +63,13 @@ void MarkAsRunning();
 
 - `UpdateStatus(...)` 会根据操作类型触发回调、解除阻塞或更新轮询状态：
   - CALLBACK：调用 `cb.Run(in_isr, status)`，其中 `status` 作为 `T` 类型的完成状态传递给回调。
-  - BLOCK：调用信号量的 `PostFromCallback(in_isr)` 解除阻塞等待；当前完成值本身不会通过 `Operation` 内部保存给阻塞等待者，具体最终 `ErrorCode` 由拥有该 `Operation` 的端口侧 handoff 状态保存。
-  - POLLING：当前实现直接按 `status == ErrorCode::OK` 判断成功并置为 `DONE`，否则置为 `ERROR`。因此这条路径在当前主线里实际上是面向 `Operation<ErrorCode>` 使用最自然的；若把它推广到其它 `T`，并不能自动得到一套独立于 `ErrorCode` 的通用成功判定语义。
+  - BLOCK：调用信号量的 `PostFromCallback(in_isr)` 唤醒等待者；最终的 `ErrorCode` 由端口保存，并作为阻塞调用的返回值。
+  - POLLING：以 release 写入，`status == ErrorCode::OK` 时置为 `DONE`，否则置为 `ERROR`，因此适用于完成值为 `ErrorCode` 的 `Operation`。
 - `MarkAsRunning()` 在 POLLING 模式下设置状态为 `RUNNING`。
-- 这两个函数通常由驱动/端口在合适的时机调用；用户侧只需选择合适的 `OperationType` 并传入即可。
+- 这两个函数由端口或驱动调用，用户只需构造对应的 `Operation` 并传入。
+- `Operation` 只借用回调、信号量或轮询状态，调用方保证它们在操作结束前有效。
+- 一个信号量同时只服务一个 BLOCK 调用；BLOCK 只能在线程中调用。
+- 回调在完成读写的上下文中同步执行，可能位于 ISR 内；轮询状态读取时使用 `load(std::memory_order_acquire)`。
 
 
 ## 示例用法
@@ -99,37 +102,30 @@ ReadOperation op_poll(status);
 read_port(buffer, op_poll);
 
 // 后续通过 status 查询是否完成
-if (status.load(std::memory_order_acquire) ==
-    LibXR::ReadOperation::OperationPollingStatus::DONE) {
+auto now = status.load(std::memory_order_acquire);
+if (now == LibXR::ReadOperation::OperationPollingStatus::DONE) {
   // 成功完成
-} else if (status.load(std::memory_order_acquire) ==
-           LibXR::ReadOperation::OperationPollingStatus::ERROR) {
+} else if (now == LibXR::ReadOperation::OperationPollingStatus::ERROR) {
   // 完成但发生错误
 }
 ```
 
----
+## `AsyncBlockWait`
 
-`Operation` 是 LibXR I/O 操作的基础机制，适用于串口、网络、定时器等模块，统一管理完成行为，确保线程与中断上下文均安全。
-
-## 当前主线中的补充角色：`AsyncBlockWait`
-
-在 `operation.hpp` 中，`Operation<T>` 之外还定义了一个当前主线内部使用的辅助类：
+`operation.hpp` 还定义了供同步驱动使用的辅助类：
 
 ```cpp
 class AsyncBlockWait;
 ```
 
-它的职责不是替代 `Operation`，而是为同步驱动路径提供一个共享的 BLOCK waiter handoff：
+同步驱动用它等待一次异步完成：
 
 - `Start(Semaphore&)`
 - `Wait(timeout)`
 - `TryPost(in_isr, ErrorCode)`
 - `Cancel()`
 
-当前语义要点：
+语义要点：
 
-- 超时等待者会与后续迟到完成脱钩（detached）；
-- 迟到完成仍然可以把内部 in-flight 状态清干净，但结果不再属于那个已经超时返回的调用方。
-
-这也是为什么上文 BLOCK 路径只强调“信号量唤醒”，而不把最终错误码归因到 `Operation` 自身内部存储。
+- 超时返回的等待者与之后的迟到完成脱钩；
+- 迟到完成只清除内部等待状态，不再唤醒已超时返回的调用方。
