@@ -1,6 +1,6 @@
 ---
 id: env-setup-esp32
-title: ESP32环境配置
+title: ESP32 环境配置
 sidebar_position: 3
 ---
 
@@ -12,7 +12,7 @@ ESP32 使用官方 `ESP-IDF` 工作流。
 
 * [ESP-IDF Getting Started](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/get-started/index.html)
 
-如果你实际用的是 `ESP32-C3 / S3 / C6`，切到对应目标芯片的 `Getting Started` 页面即可。
+`ESP32-C3 / S3 / C6` 等芯片见对应芯片的 `Getting Started` 页面。
 
 ## 工程接入
 
@@ -24,20 +24,20 @@ LibXR 在 ESP32 上仍然通过 [`cmake/esp32.cmake`](https://github.com/xrobot-
 include(path_to_libxr/cmake/esp32.cmake)
 ```
 
-注意把 `path_to_libxr` 替换成你的 LibXR 路径，而且这行要放在 `idf_component_register(...)` 之后。
+`path_to_libxr` 为 LibXR 所在路径，这一行放在 `idf_component_register(...)` 之后。
 
 ## `esp32.cmake` 会做什么
 
-这份脚本会直接完成这些事：
+这份脚本完成以下工作：
 
-* 设置 `LIBXR_SYSTEM=FreeRTOS`
-* 设置 `LIBXR_DRIVER=esp`
-* 如有需要自动 `add_subdirectory(libxr)`
-* 链接官方 `idf::freertos`、`idf::driver`、`idf::hal`、`idf::usb`、`idf::esp_timer`、`idf::esp_event`、`idf::esp_netif`、`idf::esp_wifi`、`idf::esp_adc`、`idf::nvs_flash`
-* 在新版本 IDF 存在时，自动补上拆分后的 `idf::esp_driver_gpio`、`idf::esp_driver_ledc`
+* 设置 `LIBXR_SYSTEM=freertos`、`LIBXR_DRIVER=esp`，并打开 `LIBXR_STATIC_BUILD`
+* 未定义 `LIBXR_SINGLE_CORE` 时，按 `CONFIG_SOC_CPU_CORES_NUM` 和 `CONFIG_FREERTOS_UNICORE` 设定：多核且未启用 `CONFIG_FREERTOS_UNICORE` 时为 `OFF`，否则为 `ON`
+* 目标 `xr` 不存在时用 `add_subdirectory` 加入 LibXR
+* 把 `xr` 链接到存在的 IDF 组件：`idf::freertos`、`idf::driver`、`idf::hal`、`idf::usb`、`idf::esp_hw_support`、`idf::esp_timer`、`idf::esp_event`、`idf::esp_netif`、`idf::esp_wifi`、`idf::esp_adc`、`idf::nvs_flash`，以及新版 IDF 拆分出的 `idf::esp_driver_gpio`、`idf::esp_driver_ledc`
+* 最后把 `xr` 链接到当前组件（`target_link_libraries(${COMPONENT_LIB} PUBLIC xr)`），因此这行 `include` 要放在 `idf_component_register(...)` 之后
 
-它还会显式检查 `idf::freertos` 是否存在；如果没有，直接报错。因此这份脚本不适用于脱离 `idf.py` 的普通 CMake 工程。
+脚本检查 `idf::freertos` 是否存在，不存在时报错，因此只能在由 `idf.py` 构建的组件中使用。
 
 ## 当前环境信息
 
-当前 `docker-image-esp32` 里预装的是 `ESP-IDF v5.4.1`。如果你本地使用的是更新的 `5.x` 稳定版本，整体接入方式仍然成立，但实际组件拆分和目录结构仍然以你当前安装的官方 IDF 为准。
+当前 `docker-image-esp32` 预装 `ESP-IDF v5.4.1`。更新的 `5.x` 稳定版本使用相同的接入方式，组件拆分和目录结构以所安装的 IDF 为准。

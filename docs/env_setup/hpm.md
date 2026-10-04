@@ -6,9 +6,9 @@ sidebar_position: 5
 
 # HPM 环境配置
 
-本页说明 LibXR 在 HPM 平台上的接入方式，不包括如何用先楫 SDK 的 GUI 工具建立工程。
+本页说明 LibXR 在 HPM 平台上的接入方式。
 
-如果你要快速起步，优先参考模板工程：
+可以从模板工程开始：
 
 - [HPM5301_LibXR_Template](https://github.com/xrobot-org/HPM5301_LibXR_Template)
 
@@ -21,30 +21,50 @@ sidebar_position: 5
 - `hpm_pwm.*`
 - `hpm_timebase.*`
 
-它们通过 `driver/hpm/CMakeLists.txt` 统一加入构建。和某些平台页不同，这里不是“目录里有文件，但默认构建没接进来”的状态。
+它们通过 `driver/hpm/CMakeLists.txt` 统一加入构建。
 
 ## 基本集成思路
 
-HPM 的接入方式与其他平台相同，是普通 LibXR 外部工程接入：
+以下节选自 [HPM5301_LibXR_Template](https://github.com/xrobot-org/HPM5301_LibXR_Template) 的 `cmake/LibXR.CMake`：
 
 ```cmake
+# LibXR platform/driver selection
 set(LIBXR_SYSTEM None)
 set(LIBXR_DRIVER hpm)
+set(LIBXR_NO_EIGEN True)
 
-add_subdirectory(path_to_libxr)
+# ...
+
+# Import LibXR as a subproject
+add_subdirectory("${LIBXR_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/libxr")
+
+# Make LibXR compile with the same HPM SDK compile options/includes.
+if(DEFINED HPM_SDK_LIB_ITF AND TARGET ${HPM_SDK_LIB_ITF})
+    target_link_libraries(xr PUBLIC ${HPM_SDK_LIB_ITF})
+endif()
+
+# Let app sources directly include LibXR headers.
+if(TARGET app)
+    target_link_libraries(app PUBLIC xr)
+endif()
+
+# Ensure LibXR object files are linked into the final ELF target.
+if(DEFINED APP_ELF_NAME AND TARGET ${APP_ELF_NAME})
+    target_link_libraries(${APP_ELF_NAME} xr)
+endif()
 ```
+
+`xr` 链接 `${HPM_SDK_LIB_ITF}`，LibXR 因此与应用使用相同的 HPM SDK 编译选项和头文件路径。
 
 这里的前提是：
 
-- 你的工程本身已经能通过 HPM SDK 正常编译；
+- 工程已经能用 HPM SDK 正常编译；
 - 工程已经把 HPM SDK 的头文件、启动文件、链接脚本和板级初始化接好；
 - LibXR 只是在这个基础上接入 `driver/hpm` 与通用 runtime/middleware。
 
-LibXR 不代替 HPM SDK 的项目骨架，它是在 HPM 工程已经成立之后接进去的。
-
 ## 当前文档建议的实际入口
 
-如果你现在手上是 HPM 项目，建议按这个顺序确认：
+HPM 工程按以下顺序接入：
 
 1. 先用 HPM SDK 或模板工程把最小工程跑通。
 2. 再检查工程里是否已经能正常 `add_subdirectory(libxr)`。
@@ -60,7 +80,7 @@ LibXR 不代替 HPM SDK 的项目骨架，它是在 HPM 工程已经成立之后
 - 可选 DMA helper 背景路径；
 - 等待策略与恢复路径。
 
-上述能力是否在你的工程里可直接用，取决于：
+上述能力在具体工程中能否使用，取决于：
 
 - HPM SDK 头文件是否完整；
 - 是否存在对应 DMA / interrupt helper；

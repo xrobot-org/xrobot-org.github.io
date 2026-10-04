@@ -172,7 +172,7 @@ def selected_config(self) -> Path:
 selected = project.header_selection()
 ```
 
-- 仓库中的测试检查 docstring 是否齐全且包含中文。
+- docstring 是否齐全且包含中文由各仓库检查：XRobot 与 LibXR_CppCodeGenerator 为 `tests/test_docstrings.py`，xr-syntax 为 CI 中运行的 `tools/check_bilingual_docs.py`。
 
 ## 错误处理
 
@@ -213,7 +213,7 @@ except Exception:
     raise
 ```
 
-- `# noqa` 只写在需要例外的那一行上，并注明规则编号，不在文件或配置中整体关闭规则。
+- `# noqa` 只写在需要例外的那一行上，并注明规则编号，不在文件或配置中整体关闭规则（`E501` 除外，见 [ruff](#ruff)）。
 
 ```python
 from xrobot.config import ConfigError  # noqa: F401
@@ -242,9 +242,11 @@ ignore = ["E501"]
 
 - 行宽由 `ruff format` 控制；格式化后仍超出的长字符串不另行报错，因此忽略 `E501`。
 
-- CI 中的检查命令：
+- CI 固定 `ruff==0.16.9`，只检查源码、测试和脚本目录（XRobot 与 xr-syntax 为 `src tests tools`，LibXR_CppCodeGenerator 为 `src tests scripts`），例如 XRobot：
 
 ```bash
-ruff format --check .
-ruff check .
+ruff format --check src tests tools
+ruff check src tests tools
 ```
+
+- xr-syntax 另外启用 `TID` 规则并设置 `ban-relative-imports = "all"`，CI 还运行 `mypy src`（`strict = true`）。

@@ -11,14 +11,14 @@ const agentQuickDeployFilename = 'xrobot-agent-context.md';
 const agentQuickDeployPromptZh = [
   '# XRobot / LibXR 专用 Agent 启动提示词',
   '',
-  '你正在协助的是 XRobot / LibXR 相关仓库。这里的仓库不一定是 STM32 工程，也不一定是 XRobot workspace；它也可能是 CH32、ESP32、Linux、Webots、HPM、MSPM0 平台工程，或者驱动、XRUSB、调试、CodeGen、示例与测试仓库。',
+  '你正在协助的是 XRobot / LibXR 相关仓库。这里的仓库不一定是 STM32 工程，也不一定是 XRobot BSP；它也可能是 CH32、ESP32、Linux、Webots、HPM、MSPM0 平台工程，或者驱动、XRUSB、调试、CodeGen、示例与测试仓库。',
   '',
   '开始分析前，先根据当前仓库的目录和关键文件判断它属于哪一类，再进入对应文档和代码入口。',
   '',
   '## 这几个项目分别是什么',
   '- LibXR：运行时框架，负责核心语义、驱动抽象、中间件和 XRUSB。',
-  '- XRobot：`xrobot` 命令，负责模块源与依赖解析、版本锁定（`xrobot.lock`）、应用配置和静态应用入口生成。',
-  '- CodeGen：代码生成工具，负责根据配置生成工程入口和相关代码。',
+  '- XRobot：`xrobot` 命令，LibXR 的模块管理与主函数生成工具：拉取模块、用 `xrobot.lock` 把每个模块锁定到具体的提交，并根据 `User/` 下的配置生成主函数 `XRobotMain`。',
+  '- CodeGen：`libxr` 命令（pip 包 `libxr`），读取 STM32CubeMX 工程的 `.ioc`，生成外设对象、入口函数 `app_main`，并把 LibXR 接入工程的 CMake 构建。',
   '',
   '## 使用原则',
   '- 这是 XRobot / LibXR 专用助手提示词，不是通用嵌入式模板。',
@@ -26,14 +26,14 @@ const agentQuickDeployPromptZh = [
   '- 先判断仓库角色，再决定看哪份文档、读哪部分代码、执行哪类命令。',
   '',
   '## 第一步先看什么',
-  '- 先检查仓库根目录与关键配置文件，确认它更像工作区、平台工程、驱动仓库，还是工具仓库。',
-  '- XRobot workspace 常见痕迹：`Modules/modules.yaml`、`Modules/sources.yaml`、`xrobot.lock`、`User/*.yaml`、调用 `XROBOT_MAIN()` 的入口源文件。',
+  '- 先检查仓库根目录与关键配置文件，确认它更像 XRobot BSP、平台工程、驱动仓库，还是工具仓库。',
+  '- XRobot BSP 常见痕迹：`Modules/modules.yaml`、`Modules/sources.yaml`、`xrobot.lock`、`User/*.yaml`、调用 `XROBOT_MAIN()` 的入口源文件。',
   '- LibXR 平台工程常见痕迹：`CMakeLists.txt`、`CMakePresets.json`、`libxr_config.yaml`、平台目录、芯片配置文件、板级实现目录。',
   '- 平台或 SDK 线索也要纳入判断：`.ioc`、CubeMX 工程、`idf.py`、`platformio.ini`、Linux / Webots 目录、厂商 SDK 目录。',
   '- 如果重点文件集中在 `driver`、`system`、`USB`、`DAP`、`Debug`、协议栈或设备枚举实现，优先按驱动 / XRUSB / 调试工程理解。',
   '',
   '## 工程类型判断',
-  '- 如果当前仓库有 `Modules/modules.yaml`，按 XRobot workspace 处理；`xrobot describe` 以 JSON 给出它的配置、锁定模块、注册和诊断。',
+  '- 如果当前仓库有 `Modules/modules.yaml`，按 XRobot BSP 处理；`xrobot describe` 以 JSON 给出它的配置、锁定模块、注册和诊断。',
   '- 如果当前仓库主要围绕 LibXR 集成、平台工程、芯片/板级配置、驱动实现展开，按 LibXR 平台工程处理。',
   '- 如果当前仓库重点是设备接口、协议栈、调试链路、USB/CAN/UART 等实现，按驱动 / XRUSB 工程处理。',
   '- 如果当前仓库主要是代码生成、模板、示例、测试或基准，按工具 / 示例仓库处理，不要硬套到板级移植流程。',
@@ -49,11 +49,11 @@ const agentQuickDeployPromptZh = [
   '- 调试：https://xrobot.work/docs/debug',
   '',
   '## 入口选择规则',
-  '- 只有确认是 XRobot workspace 时，才优先看 `proj_man`、`xrobot setup`、`xrobot describe`、`Modules/`、`User/`。',
+  '- 只有确认是 XRobot BSP 时，才优先看 `proj_man`、`xrobot setup`、`xrobot describe`、`Modules/`、`User/`。',
   '- 如果是 LibXR 平台工程，优先看 `env_setup`、`concept`、`basic_coding`，再按实际平台进入对应环境页。',
   '- 如果是驱动或设备接口问题，再转去 `xrusb`、`debug`、`basic_coding/driver`。',
   '- 如果是中间件、消息系统、调度、Topic 等运行时机制问题，优先看 `basic_coding` 下对应章节。',
-  '- 如果当前仓库只是某个平台或某个芯片工程，不要把它强行解释成 XRobot workspace。',
+  '- 如果当前仓库只是某个平台或某个芯片工程，不要把它强行解释成 XRobot BSP。',
   '',
   '## 遇到问题时怎么处理',
   '- 先确认问题属于哪一层：环境、工程工作流、运行时语义、驱动/XRUSB。',
@@ -63,7 +63,7 @@ const agentQuickDeployPromptZh = [
   '',
   '## 需要进一步求助时',
   '- 补充当前平台、目标芯片/系统、使用的命令、报错原文。',
-  '- 如果是 XRobot workspace 问题，优先附上 `Modules/` 和 `User/` 下相关文件状态。',
+  '- 如果是 XRobot BSP 问题，优先附上 `Modules/` 和 `User/` 下相关文件状态。',
   '- 如果是 LibXR 平台工程问题，优先附上 `CMakeLists.txt`、`CMakePresets.json`、平台配置文件、`libxr_config.yaml` 等文件状态。',
   '- 如果是驱动、XRUSB、调试或运行时问题，优先附上相关源码位置、最小复现代码和日志。',
   '',
@@ -74,49 +74,49 @@ const agentQuickDeployPromptZh = [
 const agentQuickDeployPromptEn = [
   '# XRobot / LibXR Agent Startup Prompt',
   '',
-  'You are assisting with a repository related to XRobot / LibXR. It may be an STM32, CH32, ESP32, Linux, Webots, HPM, or MSPM0 platform project; it may also be an XRobot workspace, a driver repository, an XRUSB/debug project, CodeGen, examples, or tests.',
+  'You are assisting with a repository related to XRobot / LibXR. It may be an STM32, CH32, ESP32, Linux, Webots, HPM, or MSPM0 platform project; it may also be an XRobot BSP, a driver repository, an XRUSB/debug project, CodeGen, examples, or tests.',
   '',
   'Before changing code or running setup commands, inspect the repository layout and key files first, identify what kind of repository this is, and then choose the corresponding docs and code entry points.',
   '',
   '## What these projects are',
   '- LibXR: the runtime framework, covering core semantics, driver abstractions, middleware, and XRUSB.',
-  '- XRobot: the `xrobot` command, covering module catalogs, dependency resolution and locking (`xrobot.lock`), application configuration, and static application entry generation.',
-  '- CodeGen: the code generation tool, used to generate project entry code from configuration.',
+  '- XRobot: the `xrobot` command, the Module manager and main function generator for LibXR: it fetches Modules, locks each one to a commit in `xrobot.lock`, and generates the main function `XRobotMain` from the configurations under `User/`.',
+  '- CodeGen: the `libxr` command (pip package `libxr`); it reads the `.ioc` of an STM32CubeMX project, generates the peripheral objects and the entry function `app_main`, and adds LibXR to the project\'s CMake build.',
   '',
   '## Ground rules',
   '- This is a dedicated XRobot / LibXR assistant prompt, not a generic embedded template.',
-  '- Do not assume STM32, ESP32, Linux, or an XRobot workspace before you inspect the repository.',
+  '- Do not assume STM32, ESP32, Linux, or an XRobot BSP before you inspect the repository.',
   '- Classify the repository role first, then decide which docs to read, which code to inspect, and which commands to run.',
   '',
   '## What to inspect first',
-  '- Start from the repository root and key config files, and decide whether it looks like a workspace, a platform project, a driver repository, or a tooling repository.',
-  '- Common XRobot workspace traces: `Modules/modules.yaml`, `Modules/sources.yaml`, `xrobot.lock`, `User/*.yaml`, and an entry source that calls `XROBOT_MAIN()`.',
+  '- Start from the repository root and key config files, and decide whether it looks like an XRobot BSP, a platform project, a driver repository, or a tooling repository.',
+  '- Common XRobot BSP traces: `Modules/modules.yaml`, `Modules/sources.yaml`, `xrobot.lock`, `User/*.yaml`, and an entry source that calls `XROBOT_MAIN()`.',
   '- Common LibXR platform-project traces: `CMakeLists.txt`, `CMakePresets.json`, `libxr_config.yaml`, platform directories, chip config files, and board-level implementation directories.',
   '- Platform or SDK clues also matter: `.ioc`, CubeMX projects, `idf.py`, `platformio.ini`, Linux / Webots directories, vendor SDK directories.',
   '- If key files are concentrated around `driver`, `system`, `USB`, `DAP`, `Debug`, protocol stacks, or device-enumeration logic, treat it first as a driver / XRUSB / debug project.',
   '',
   '## Repository classification',
-  '- If the repository contains `Modules/modules.yaml`, treat it as an XRobot workspace; `xrobot describe` prints its configurations, locked modules, registrations, and diagnostics as JSON.',
+  '- If the repository contains `Modules/modules.yaml`, treat it as an XRobot BSP; `xrobot describe` prints its configurations, locked modules, registrations, and diagnostics as JSON.',
   '- If the repository mainly centers on LibXR integration, platform bring-up, chip / board configuration, and driver implementation, treat it as a LibXR platform project.',
   '- If the repository mainly focuses on device interfaces, protocol stacks, debug links, or USB/CAN/UART implementation, treat it as a driver / XRUSB project.',
   '- If the repository mainly contains code generation, templates, examples, tests, or benchmarks, treat it as a tooling / example repository instead of forcing it into a board-porting flow.',
   '- If multiple entry styles coexist, describe the evidence first and then pick the main entry point. Do not jump straight to one tool command.',
   '',
   '## Documentation entry points',
-  '- Overview: https://xrobot.work/docs/intro',
-  '- Design concepts: https://xrobot.work/docs/concept',
-  '- Environment setup: https://xrobot.work/docs/env_setup',
-  '- Basic coding: https://xrobot.work/docs/basic_coding',
-  '- Project management (XRobot): https://xrobot.work/docs/proj_man',
-  '- XRUSB: https://xrobot.work/docs/xrusb',
-  '- Debug: https://xrobot.work/docs/debug',
+  '- Overview: https://xrobot.work/en/docs/intro',
+  '- Design concepts: https://xrobot.work/en/docs/concept',
+  '- Environment setup: https://xrobot.work/en/docs/env_setup',
+  '- Basic coding: https://xrobot.work/en/docs/basic_coding',
+  '- Project management (XRobot): https://xrobot.work/en/docs/proj_man',
+  '- XRUSB: https://xrobot.work/en/docs/xrusb',
+  '- Debug: https://xrobot.work/en/docs/debug',
   '',
   '## Entry selection rules',
-  '- Only prioritize `proj_man`, `xrobot setup`, `xrobot describe`, `Modules/`, and `User/` after confirming that the repository is an XRobot workspace.',
+  '- Only prioritize `proj_man`, `xrobot setup`, `xrobot describe`, `Modules/`, and `User/` after confirming that the repository is an XRobot BSP.',
   '- For a LibXR platform project, start from `env_setup`, `concept`, and `basic_coding`, then drill into the actual platform page.',
   '- For driver or device-interface problems, move to `xrusb`, `debug`, and `basic_coding/driver`.',
   '- For runtime mechanisms such as middleware, messaging, scheduling, or Topic semantics, go to the corresponding `basic_coding` sections first.',
-  '- If the repository is only a platform project or chip-specific project, do not force it into an XRobot workspace explanation.',
+  '- If the repository is only a platform project or chip-specific project, do not force it into an XRobot BSP explanation.',
   '',
   '## How to proceed when there is a problem',
   '- First identify which layer the problem belongs to: environment, project workflow, runtime semantics, or driver / XRUSB.',
@@ -126,7 +126,7 @@ const agentQuickDeployPromptEn = [
   '',
   '## What to include when asking for help',
   '- Include the current platform, target chip / system, commands used, and the exact error message.',
-  '- For XRobot workspace problems, include the relevant file state under `Modules/` and `User/` first.',
+  '- For XRobot BSP problems, include the relevant file state under `Modules/` and `User/` first.',
   '- For LibXR platform-project problems, include the relevant state of `CMakeLists.txt`, `CMakePresets.json`, platform config files, and `libxr_config.yaml` first.',
   '- For driver, XRUSB, debug, or runtime problems, include the related source location, a minimal repro, and logs.',
   '',
@@ -261,7 +261,7 @@ export default function Home(): JSX.Element {
 
                 <p className="homeLead">
                   <Translate id="homepage.hero.lead">
-                    面向机器人开发、设备接口与工程自动化的模块化框架。XRobot 负责包管理、项目组织和代码生成，LibXR 提供核心语义、驱动抽象与 XRUSB。
+                    面向机器人开发、设备接口与工程自动化的模块化框架。LibXR 提供核心语义、驱动抽象与 XRUSB；CodeGenerator 由 STM32CubeMX 工程生成使用 LibXR 的外设代码；XRobot 管理模块并生成主函数 XRobotMain。
                   </Translate>
                 </p>
 
@@ -386,7 +386,7 @@ export default function Home(): JSX.Element {
                       </strong>
                       <p>
                         <Translate id="homepage.route.xrobot.desc">
-                          包管理、项目管理、代码生成和日常开发流程。
+                          模块的拉取与锁定、配置和主函数生成。
                         </Translate>
                       </p>
                     </Link>
@@ -422,7 +422,7 @@ export default function Home(): JSX.Element {
                       </strong>
                       <p>
                         <Translate id="homepage.route.start.desc">
-                          平台选择、环境配置和第一个 Demo。
+                          平台选择、工具安装与环境配置。
                         </Translate>
                       </p>
                     </Link>
@@ -446,7 +446,7 @@ export default function Home(): JSX.Element {
               </h2>
               <p>
                 <Translate id="homepage.quick.desc">
-                  这里回答的不是“文档分几类”，而是“你现在手上要解决什么问题”。
+                  按常见任务列出文档入口。
                 </Translate>
               </p>
             </div>
@@ -495,7 +495,7 @@ export default function Home(): JSX.Element {
                 </h3>
                 <p>
                   <Translate id="homepage.path.usb.desc">
-                    先区分这是 XRobot workspace 还是普通 LibXR 工程；如果准备让 Agent 先判断入口，首页这份提示词可以直接用。
+                    先区分 XRobot BSP 与只使用 LibXR 的工程；首页的 Agent 提示词可用于判断工程类型。
                   </Translate>
                 </p>
               </Link>
@@ -515,7 +515,7 @@ export default function Home(): JSX.Element {
               </h2>
               <p>
                 <Translate id="homepage.recent.desc">
-                  这里展示最近已经启动或正在推进的方向，方便你判断哪些能力正在扩展中。
+                  近期已经启动或正在推进的开发方向。
                 </Translate>
               </p>
             </div>
@@ -524,11 +524,11 @@ export default function Home(): JSX.Element {
               <div className="homeRecentItem">
                 <span className="homeRecentTag">Platform</span>
                 <h3>
-                  <Translate id="homepage.recent.core.title">平台驱动已覆盖 MSPM0、HPM、ESP、CH32、STM32</Translate>
+                  <Translate id="homepage.recent.core.title">平台驱动已覆盖 STM32、CH32、ESP32、HPM、MSPM0、Linux、Webots 和 WebAssembly</Translate>
                 </h3>
                 <p>
                   <Translate id="homepage.recent.core.desc">
-                    当前主线已经包含多平台驱动目录；查看具体平台前，先按仓库和目标芯片确认自己实际落在哪一条实现线上。
+                    各平台驱动位于 LibXR 的 driver 目录下，每个平台一个子目录。
                   </Translate>
                 </p>
               </div>
@@ -540,7 +540,7 @@ export default function Home(): JSX.Element {
                 </h3>
                 <p>
                   <Translate id="homepage.recent.linux.desc">
-                    设备侧能力已经不只是一条单一协议线。进入 XRUSB 文档前，先确认你要看的是哪一类 device class。
+                    XRUSB 提供多种 USB 设备类，文档按设备类分页说明。
                   </Translate>
                 </p>
               </div>
@@ -548,11 +548,11 @@ export default function Home(): JSX.Element {
               <div className="homeRecentItem">
                 <span className="homeRecentTag">Debug</span>
                 <h3>
-                  <Translate id="homepage.recent.usb.title">调试链路以 SWD 为主，相关实现已分层整理</Translate>
+                  <Translate id="homepage.recent.usb.title">调试链路支持 SWD 与 JTAG，相关实现已分层整理</Translate>
                 </h3>
                 <p>
                   <Translate id="homepage.recent.usb.desc">
-                    当前文档和代码里与调试最相关的是 SWD、GPIO 时序实现和 CMSIS-DAP 设备类；不要先假定存在完整 JTAG 业务路径。
+                    调试相关实现包括 SWD 与 JTAG 的 GPIO 时序实现，以及 CMSIS-DAP v1/v2 设备类。
                   </Translate>
                 </p>
               </div>
@@ -566,11 +566,11 @@ export default function Home(): JSX.Element {
                 <Translate id="homepage.focus.eyebrow">Focus Areas</Translate>
               </div>
               <h2>
-                <Translate id="homepage.focus.title">先判断你现在在解决哪一类问题</Translate>
+                <Translate id="homepage.focus.title">按问题类型进入</Translate>
               </h2>
               <p>
                 <Translate id="homepage.focus.desc">
-                  大多数问题都落在这三类：理解机制、接硬件、跑工程。
+                  常见问题分为三类：运行机制、硬件接入和工程构建。
                 </Translate>
               </p>
             </div>
@@ -579,11 +579,11 @@ export default function Home(): JSX.Element {
               <div className="homeFocusCard">
                 <span className="homeFocusTag">Semantics</span>
                 <h3>
-                  <Translate id="homepage.focus.core.title">当你在搞清系统怎么工作</Translate>
+                  <Translate id="homepage.focus.core.title">运行机制</Translate>
                 </h3>
                 <p>
                   <Translate id="homepage.focus.core.desc">
-                    先看 callback、event、message 和中间件关系，把系统内部怎么运转先看明白。
+                    回调、事件、消息与中间件之间的关系。
                   </Translate>
                 </p>
                 <div className="homeMiniLinks">
@@ -596,11 +596,11 @@ export default function Home(): JSX.Element {
               <div className="homeFocusCard">
                 <span className="homeFocusTag">Platform</span>
                 <h3>
-                  <Translate id="homepage.focus.driver.title">当你在接硬件和做移植</Translate>
+                  <Translate id="homepage.focus.driver.title">硬件接入与移植</Translate>
                 </h3>
                 <p>
                   <Translate id="homepage.focus.driver.desc">
-                    先看驱动、平台实现、XRUSB 和调试链路，搞清板子、外设和接口怎么接进来。
+                    驱动、平台实现、XRUSB 与调试链路。
                   </Translate>
                 </p>
                 <div className="homeMiniLinks">
@@ -613,7 +613,7 @@ export default function Home(): JSX.Element {
               <div className="homeFocusCard">
                 <span className="homeFocusTag">Workflow</span>
                 <h3>
-                  <Translate id="homepage.focus.project.title">当你在把工程跑起来</Translate>
+                  <Translate id="homepage.focus.project.title">工程构建</Translate>
                 </h3>
                 <p>
                   <Translate id="homepage.focus.project.desc">
@@ -659,8 +659,8 @@ export default function Home(): JSX.Element {
               </div>
               <p className="homeAgentModalLead">
                 {isEnglish
-                  ? 'This prompt makes the Agent classify the repository as a workspace, platform project, or driver project first, then locks down the doc entry points and decision order so it does not start from the wrong path.'
-                  : '这份提示词先让 Agent 判断当前工程属于 workspace、平台工程还是驱动工程，再把文档入口和后续判断顺序钉住，避免一上来就走错链路。'}
+                  ? 'This prompt makes the Agent classify the repository as an XRobot BSP, a platform project, or a driver project first, and then choose the documentation entry points in a fixed order.'
+                  : '这份提示词让 Agent 先判断当前工程属于 XRobot BSP、平台工程还是驱动工程，再按固定顺序选择文档入口。'}
               </p>
               <div className="homeAgentModalMeta">
                 <span>{isEnglish ? 'Filename' : '文件名'}</span>
@@ -668,7 +668,7 @@ export default function Home(): JSX.Element {
               </div>
               <div className="homeAgentModalLinks">
                 <Link className="homeAgentModalLink" to="/docs/proj_man/proj-man-setup">
-                  {isEnglish ? 'Setup Guide' : '一键配置文档'}
+                  {isEnglish ? 'Module Requests and the Lock' : '模块请求与锁定'}
                 </Link>
                 <Link className="homeAgentModalLink" to="/docs/proj_man">
                   {isEnglish ? 'Project Management' : '项目管理总览'}

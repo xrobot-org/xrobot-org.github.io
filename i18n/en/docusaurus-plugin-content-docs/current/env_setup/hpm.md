@@ -6,9 +6,9 @@ sidebar_position: 5
 
 # HPM Environment Setup
 
-This page only describes the **current LibXR mainline integration boundary on HPM**. It does not try to replace the full HPM SDK GUI-based project-creation workflow.
+This page describes how LibXR integrates on HPM.
 
-For a practical starting point, refer to the template project first:
+The template project is a starting point:
 
 - [HPM5301_LibXR_Template](https://github.com/xrobot-org/HPM5301_LibXR_Template)
 
@@ -21,30 +21,50 @@ According to the current `driver/hpm` directory in `libxr master`, the tree alre
 - `hpm_pwm.*`
 - `hpm_timebase.*`
 
-Unlike some other platform pages, this is not a case where files exist in the directory but are still absent from the default build. `driver/hpm/CMakeLists.txt` pulls them into the build directly.
+`driver/hpm/CMakeLists.txt` pulls them into the build directly.
 
 ## Basic Integration Model
 
-The HPM line still follows the standard “external LibXR project” integration pattern:
+The following is an excerpt from `cmake/LibXR.CMake` of [HPM5301_LibXR_Template](https://github.com/xrobot-org/HPM5301_LibXR_Template):
 
 ```cmake
+# LibXR platform/driver selection
 set(LIBXR_SYSTEM None)
 set(LIBXR_DRIVER hpm)
+set(LIBXR_NO_EIGEN True)
 
-add_subdirectory(path_to_libxr)
+# ...
+
+# Import LibXR as a subproject
+add_subdirectory("${LIBXR_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/libxr")
+
+# Make LibXR compile with the same HPM SDK compile options/includes.
+if(DEFINED HPM_SDK_LIB_ITF AND TARGET ${HPM_SDK_LIB_ITF})
+    target_link_libraries(xr PUBLIC ${HPM_SDK_LIB_ITF})
+endif()
+
+# Let app sources directly include LibXR headers.
+if(TARGET app)
+    target_link_libraries(app PUBLIC xr)
+endif()
+
+# Ensure LibXR object files are linked into the final ELF target.
+if(DEFINED APP_ELF_NAME AND TARGET ${APP_ELF_NAME})
+    target_link_libraries(${APP_ELF_NAME} xr)
+endif()
 ```
+
+`xr` links `${HPM_SDK_LIB_ITF}`, so LibXR is compiled with the same HPM SDK options and include paths as the application.
 
 The preconditions are:
 
-- your project already builds successfully with the HPM SDK
+- the project already builds with the HPM SDK
 - the project already wires in HPM SDK headers, startup files, linker scripts, and board initialization
 - LibXR is added on top of that baseline to provide `driver/hpm` plus the common runtime/middleware layers
 
-LibXR does not replace the HPM SDK project skeleton. It is integrated after the HPM project itself is already valid.
-
 ## Practical Entry Order
 
-If you are currently working on an HPM project, a reasonable order is:
+An HPM project integrates LibXR in this order:
 
 1. get the minimal HPM SDK or template project running first
 2. verify that the project can already `add_subdirectory(libxr)` cleanly
@@ -60,13 +80,11 @@ The current HPM `I2C` line is no longer just a simple blocking wrapper. Accordin
 - optional DMA-helper background paths
 - wait policies and recovery logic
 
-Whether all of that is directly usable in your concrete project still depends on:
+Whether these capabilities can be used in a given project depends on:
 
 - whether the HPM SDK headers are complete
 - whether matching DMA / interrupt helpers are present
 - whether the target board’s clocks, pin setup, and bus-recovery path have been validated
-
-So this page documents “capability that exists in mainline code,” not “feature guaranteed to be fully validated for every HPM project by default.”
 
 ## Current Boundary of `PWM`
 
@@ -75,15 +93,4 @@ So this page documents “capability that exists in mainline code,” not “fea
 - if the SoC provides a standard PWM peripheral, it uses `hpm_pwm_drv`
 - otherwise the code still has a `GPTMR` fallback path
 
-That means the docs should not pretend there is only one fixed HPM PWM implementation. The actual path depends on your chip and the SDK macro conditions.
-
-## What This Page Does Not Try to Cover
-
-This page does not attempt to replace:
-
-- HPM SDK installation or environment-variable tutorials
-- graphical project-creation steps
-- board clock/pin wizard screenshots
-- full IDE or GUI operator manuals from the HPM SDK side
-
-If those steps later become tightly coupled with LibXR integration and stabilize inside a template repository, they can be documented there separately.
+The path depends on the chip and the SDK macro conditions.

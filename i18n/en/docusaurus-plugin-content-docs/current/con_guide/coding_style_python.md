@@ -172,7 +172,7 @@ def selected_config(self) -> Path:
 selected = project.header_selection()
 ```
 
-- A test in each repository checks that docstrings are complete and contain Chinese.
+- Each repository checks that docstrings are complete and contain Chinese: `tests/test_docstrings.py` in XRobot and LibXR_CppCodeGenerator, `tools/check_bilingual_docs.py` run by CI in xr-syntax.
 
 ## Error handling
 
@@ -213,7 +213,7 @@ except Exception:
     raise
 ```
 
-- `# noqa` is written only on the line that needs the exception, with the rule code; rules are not disabled for a whole file or in the configuration.
+- `# noqa` is written only on the line that needs the exception, with the rule code; rules are not disabled for a whole file or in the configuration (except `E501`, see [ruff](#ruff)).
 
 ```python
 from xrobot.config import ConfigError  # noqa: F401
@@ -242,9 +242,11 @@ ignore = ["E501"]
 
 - `ruff format` controls the line length; long strings that still exceed it after formatting are not reported separately, so `E501` is ignored.
 
-- The CI checks are:
+- CI pins `ruff==0.16.9` and checks the source, test and script directories (`src tests tools` in XRobot and xr-syntax, `src tests scripts` in LibXR_CppCodeGenerator), for example in XRobot:
 
 ```bash
-ruff format --check .
-ruff check .
+ruff format --check src tests tools
+ruff check src tests tools
 ```
+
+- xr-syntax also selects the `TID` rules with `ban-relative-imports = "all"`, and its CI runs `mypy src` (`strict = true`).

@@ -20,7 +20,7 @@
     "description": "The label of footer link with label=入门 linking to /"
   },
   "link.item.label.LibXR 类文档": {
-    "message": "LibXR Class Document",
+    "message": "LibXR API Reference",
     "description": "The label of footer link with label=LibXR 类文档 linking to https://xrobot.work/libxr/"
   },
   "link.item.label.CodeGenerator命令行工具": {
@@ -43,9 +43,9 @@
     "message": "CodeGenerator",
     "description": "The label of footer link with label=CodeGenerator linking to https://github.com/xrobot-org/LibXR_CppCodeGenerator"
   },
-  "link.item.label.QDU Robomaster未来战队": {
-    "message": "QDU Robomaster Team",
-    "description": "The label of footer link with label=QDU Robomaster未来战队 linking to https://github.com/QDU-Robomaster"
+  "link.item.label.QDU RoboMaster 未来战队": {
+    "message": "QDU RoboMaster Team",
+    "description": "The label of footer link with label=QDU RoboMaster 未来战队 linking to https://github.com/QDU-Robomaster"
   },
   "link.item.label.Bilibili视频教程": {
     "message": "Bilibili Video Tutorial",
@@ -62,9 +62,5 @@
   "link.item.label.QQ群: 608182228": {
     "message": "QQ Group: 608182228",
     "description": "The label of footer link with label=QQ群: 608182228 linking to https://qm.qq.com/q/RPgE71OXmw"
-  },
-  "copyright": {
-    "message": "Copyright © 2025 XRobot",
-    "description": "The footer copyright"
   }
 }

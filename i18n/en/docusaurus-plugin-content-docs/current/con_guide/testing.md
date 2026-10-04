@@ -40,7 +40,7 @@ Python repositories:
 
 - `tests/test_<module>.py` belongs to `src/<package>/<module>.py`. Argument parsing, output format and exit codes of the command line go to `test_cli.py`; behavior that a command triggers but another module implements goes to that module's test file.
 - Helpers shared by several test files live in `tests/fixtures.py` (`conftest.py` in pytest repositories); a helper used by one file stays in that file.
-- Test classes group behavior and are named with noun phrases (`AddInstance`, `LockFile`), deriving from `fixtures.TestCase` or one of its subclasses. Test method names start with `test_` and the rest is a sentence stating the behavior (`test_a_missing_lock_is_reported`).
+- In the `unittest` repositories (XRobot, LibXR_CppCodeGenerator), test classes group behavior and are named with noun phrases (`AddInstance`, `LockFile`), deriving from `fixtures.TestCase` or one of its subclasses. Test method names start with `test_` and the rest is a sentence stating the behavior (`test_a_missing_lock_is_reported`). The tests of xr-syntax are module-level functions whose names follow the same rule.
 
 LibXR:
 
@@ -49,7 +49,7 @@ LibXR:
 
 ## Comments
 
-- A Python test file starts with a docstring of one Chinese and one English line stating what the file tests; each test class has a one-line bilingual docstring too. Test methods are described by their names and have no docstring. Helper functions, test base classes and fixtures have bilingual docstrings like the main code, and the repository's docstring test checks `tests/` as well.
+- A Python test file starts with a docstring of one Chinese and one English line stating what the file tests; each test class has a one-line bilingual docstring too. Test methods are described by their names and have no docstring. Helper functions, test base classes and fixtures have bilingual docstrings like the main code, and the docstring check of each repository covers `tests/` as well (`tests/test_docstrings.py` in XRobot and LibXR_CppCodeGenerator, `tools/check_bilingual_docs.py` run by CI in xr-syntax).
 - What cannot be seen at a glance, such as why an input is built a certain way or where an expected result comes from, gets a bilingual comment.
 - A LibXR test file starts with a comment stating what it tests and any special setup; comments in the body explain important steps and expected results, not obvious assignments and assertions.
 

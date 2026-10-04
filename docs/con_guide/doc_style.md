@@ -57,11 +57,11 @@ logo 与徽章
 
 ```text
 # 模块名
-## 1. 模块作用
-## 2. 构造接口          依赖在前，配置参数在后，逐项说明
-## 3. Topic             发布与订阅的名称、类型和用途
-## 4. 配置示例          xrobot instance add 生成并填写后的 YAML
-## 5. 依赖与硬件
+## 1. 模块作用 / Purpose
+## 2. 构造接口 / Constructor                    依赖在前，配置参数在后，逐项说明
+## 3. Topic                                     发布与订阅的名称、类型和用途
+## 4. 配置示例 / Configuration Example          xrobot instance add 生成并填写后的 YAML
+## 5. 依赖与硬件 / Dependencies and Hardware
 ```
 
 模块有需要单独说明的约定（例如时间戳的含义）时，放在“模块作用”之后，单独成节。
@@ -70,10 +70,10 @@ logo 与徽章
 
 ```text
 # BSP 名称
-## 1. 板子与平台
-## 2. 配置一览          每份配置对应的产品或用途
-## 3. 构建
-## 4. 烧录与运行
+## 1. 板子与平台 / Board and Platform
+## 2. 配置一览 / Configurations         每份配置对应的产品或用途
+## 3. 构建 / Build
+## 4. 烧录与运行 / Flash and Run
 ```
 
 ## 语言与排版

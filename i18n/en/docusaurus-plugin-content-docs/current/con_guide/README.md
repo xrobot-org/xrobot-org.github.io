@@ -10,8 +10,8 @@ Contribution-related conventions are listed below.
 
 ## Contents
 
-- [Contribution Scope](./scope.md)
 - [How to Contribute](./how2con.md)
+- [Contribution Scope](./scope.md)
 - [Repository and Branch Conventions](./branch.md)
 - [Change Boundaries](./change_boundary.md)
 - [Code Style](./coding_style.md)

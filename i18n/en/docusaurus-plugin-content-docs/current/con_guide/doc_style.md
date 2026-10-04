@@ -57,11 +57,11 @@ Reference: [the XRobot README](https://github.com/xrobot-org/XRobot).
 
 ```text
 # Module name
-## 1. 模块作用          purpose
-## 2. 构造接口          constructor: dependencies first, then configuration parameters, each described
-## 3. Topic             published and subscribed names, types and purposes
-## 4. 配置示例          the YAML written by xrobot instance add, filled in
-## 5. 依赖与硬件        dependencies and hardware
+## 1. 模块作用 / Purpose
+## 2. 构造接口 / Constructor                    dependencies first, then configuration parameters, each described
+## 3. Topic                                     published and subscribed names, types and purposes
+## 4. 配置示例 / Configuration Example          the YAML written by xrobot instance add, filled in
+## 5. 依赖与硬件 / Dependencies and Hardware
 ```
 
 A convention that needs its own explanation (for example the meaning of timestamps) gets a separate section after “模块作用”.
@@ -70,10 +70,10 @@ A convention that needs its own explanation (for example the meaning of timestam
 
 ```text
 # BSP name
-## 1. 板子与平台        board and platform
-## 2. 配置一览          the product or purpose of each configuration
-## 3. 构建              build
-## 4. 烧录与运行        flashing and running
+## 1. 板子与平台 / Board and Platform
+## 2. 配置一览 / Configurations         the product or purpose of each configuration
+## 3. 构建 / Build
+## 4. 烧录与运行 / Flash and Run
 ```
 
 ## Language and layout

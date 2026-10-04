@@ -1,14 +1,12 @@
 ---
 id: env-setup-mspm0
 title: MSPM0 Environment Setup
-sidebar_position: 3
+sidebar_position: 3.5
 ---
 
 # MSPM0 Environment Setup
 
 The current documented baseline uses the GNU Arm Embedded Toolchain with prefix `arm-none-eabi-`. Compatibility with TI Arm Clang has not been verified in this line.
-
-One important boundary: current `libxr master` does **not** mean “every MSPM0 driver is already part of the default build.” According to the current `driver/mspm0/CMakeLists.txt`, the default build list includes `GPIO / PWM / Timebase / UART`, while `SPI / I2C` source files already exist in the tree but are not yet pulled into the default MSPM0 driver build path.
 
 If you only need a quick starting point, use the MSPM0 Docker image:
 
@@ -39,27 +37,36 @@ Typical responsibility split:
 - the root `CMakeLists.txt` owns the final application target, user sources, link options, and post-processing
 - `cmake/LibXR.CMake` owns LibXR platform selection, SDK path checks, SysConfig output checks, and MSPM0-specific dependencies for the `xr` target
 
-## Recommended Directory Layout
+## Directory Layout
+
+The template project [MSPM0G3507 LibXR Template](https://github.com/xrobot-org/MSPM0G3507_LibXR_Template) is laid out as follows:
 
 ```text
 .
 |-- CMakeLists.txt
+|-- CMakePresets.json
 |-- cmake/
-|   `-- LibXR.CMake
+|   |-- LibXR.CMake
+|   `-- arm-none-eabi-gcc.cmake
+|-- Core/
+|-- User/
 |-- libxr/
 |-- mspm0-sdk/
-|-- src/
+|-- scripts/
+|   `-- fetch-mspm0-sdk.sh
 `-- sysconfig/
 ```
 
 Where:
 
-- `libxr/` is the LibXR source tree
-- `mspm0-sdk/` is the TI MSPM0 SDK root
-- `src/` is the application source directory
-- `sysconfig/` stores generated SysConfig output
+- `libxr/` is the LibXR submodule
+- `mspm0-sdk/` is the TI MSPM0 SDK submodule
+- `User/` holds the application sources (`main.c`, `app_main.cpp`)
+- `Core/` holds the syscalls stubs and the stack-reservation linker script
+- `sysconfig/` holds the SysConfig project and its generated files
+- `scripts/fetch-mspm0-sdk.sh` fetches only the SDK files the build needs
 
-If your SDK is not kept inside the repository, `MSPM0_SDK_DIR` can point somewhere else.
+When the SDK is outside the repository, point `MSPM0_SDK_DIR` at it.
 
 ## SysConfig Output Requirements
 
@@ -80,7 +87,7 @@ CMake usually needs these files to exist:
 
 If the project uses automatic discovery, the root project does not need to hard-code names such as `ti_msp_dl_config.c`; it is enough to keep the generated files under `sysconfig/`.
 
-If you modify the `.syscfg` file, regenerate these outputs before running CMake again.
+After the `.syscfg` file changes, regenerate these outputs before running CMake again.
 
 ## Chip-Specific Items
 
@@ -93,9 +100,9 @@ Even though this page is generic, several items must still track the actual chip
 
 Many MSPM0 build issues are ultimately “chip-specific files were not switched consistently.”
 
-## Current MSPM0 Driver Coverage in Mainline
+## MSPM0 Drivers
 
-The default MSPM0 source list contains:
+`driver/mspm0/CMakeLists.txt` builds these drivers:
 
 - `mspm0_gpio.*`
 - `mspm0_pwm.*`
@@ -127,34 +134,16 @@ cmake --build build
 
 ## Docker Build
 
-If you do not want to install the toolchain locally, use Docker instead.
-
-PowerShell:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\docker_build.ps1
-```
-
-Bash:
+The image `ghcr.io/xrobot-org/docker-image-mspm0:main` provides `arm-none-eabi-gcc`, CMake and Ninja. In the template project:
 
 ```bash
-bash ./tools/docker_build.sh
+git submodule update --init libxr
+sh scripts/fetch-mspm0-sdk.sh
+docker run --rm -v "$PWD:/work" -w /work ghcr.io/xrobot-org/docker-image-mspm0:main \
+  bash -c 'cmake --preset release && cmake --build --preset release'
 ```
 
-The PowerShell script supports:
-
-```powershell
-.\tools\docker_build.ps1 -Image ghcr.io/xrobot-org/docker-image-mspm0:main -BuildType Release -BuildDir build -CCompiler arm-none-eabi-gcc -CxxCompiler arm-none-eabi-g++ -AsmCompiler arm-none-eabi-gcc
-```
-
-The Bash script supports these environment variables:
-
-- `XROBOT_MSPM0_IMAGE`
-- `BUILD_TYPE`
-- `BUILD_DIR`
-- `C_COMPILER`
-- `CXX_COMPILER`
-- `ASM_COMPILER`
+The output is `build/release/ti_mspm0_libxr_dev.elf`, `.hex` and `.bin`.
 
 ## Common Problems
 

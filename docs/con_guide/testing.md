@@ -40,7 +40,7 @@ Python 仓库：
 
 - `tests/test_<模块>.py` 对应 `src/<包>/<模块>.py`。命令行的参数解析、输出格式和退出码放在 `test_cli.py`；由命令触发、在其他模块中实现的行为，放在那个模块的测试文件中。
 - 多个测试文件共用的辅助放在 `tests/fixtures.py`（pytest 仓库放在 `conftest.py`），只在一个文件中使用的留在该文件。
-- 测试类按行为分组，类名是名词短语（`AddInstance`、`LockFile`），继承 `fixtures.TestCase` 或它的子类；测试方法名以 `test_` 开头，其余部分是一句说明行为的话（`test_a_missing_lock_is_reported`）。
+- 使用 `unittest` 的仓库（XRobot、LibXR_CppCodeGenerator）中，测试类按行为分组，类名是名词短语（`AddInstance`、`LockFile`），继承 `fixtures.TestCase` 或它的子类；测试方法名以 `test_` 开头，其余部分是一句说明行为的话（`test_a_missing_lock_is_reported`）。xr-syntax 的测试是模块级函数，函数名遵循同样的规则。
 
 LibXR：
 
@@ -49,7 +49,7 @@ LibXR：
 
 ## 注释
 
-- Python 测试文件开头的 docstring 中文一行、英文一行，说明这个文件测什么；测试类同样有一行中英 docstring。测试方法由方法名说明，不另写 docstring。辅助函数、测试基类和 fixtures 与主代码一样写中英 docstring，仓库的 docstring 测试同时检查 `tests/`。
+- Python 测试文件开头的 docstring 中文一行、英文一行，说明这个文件测什么；测试类同样有一行中英 docstring。测试方法由方法名说明，不另写 docstring。辅助函数、测试基类和 fixtures 与主代码一样写中英 docstring，各仓库的 docstring 检查同样覆盖 `tests/`（XRobot 与 LibXR_CppCodeGenerator 为 `tests/test_docstrings.py`，xr-syntax 为 CI 中运行的 `tools/check_bilingual_docs.py`）。
 - 输入为什么这样构造、预期结果从哪里来，这类不能一眼看出的内容写中英注释。
 - LibXR 测试文件在头部注释说明测什么和特殊的运行前提；正文注释解释关键步骤和预期结果，直观的赋值和断言不逐行解释。
 
