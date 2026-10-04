@@ -66,7 +66,7 @@
     "message": "Porting to a New Platform"
   },
   "homepage.route.port.desc": {
-    "message": "The peripheral driver interfaces and their implementation on each platform."
+    "message": "The system layer and peripheral drivers a new operating system or chip implements."
   },
   "homepage.foot.eyebrow": {
     "message": "Project"

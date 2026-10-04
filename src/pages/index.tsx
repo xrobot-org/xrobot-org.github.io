@@ -423,14 +423,14 @@ export default function Home(): JSX.Element {
                       </p>
                     </Link>
 
-                    <Link className="homeRouteCard" to="/docs/basic_coding/driver">
+                    <Link className="homeRouteCard" to="/docs/adv_coding/adv-coding-porting">
                       <span className="homeRouteTag">Port</span>
                       <strong>
                         <Translate id="homepage.route.port.title">移植到新平台</Translate>
                       </strong>
                       <p>
                         <Translate id="homepage.route.port.desc">
-                          外设驱动接口与各平台的实现。
+                          新操作系统和新芯片需要实现的系统层与外设驱动。
                         </Translate>
                       </p>
                     </Link>
