@@ -13,18 +13,20 @@ Both inherit from the abstract interface class `Database`, and are designed for 
 
 ## Main Features
 
-- Supports primary/backup block redundancy and verification, with automatic recovery after power loss;
+- Main and backup blocks store the data redundantly; each block carries a version header and a write-complete marker, which startup uses to check the main block and restore it from the backup when it is damaged;
 - Provides a unified interface `Database` and template wrapper `Database::Key<T>`, enabling type-safe read/write;
 - Two implementation modes:
   - `DatabaseRawSequential`: sequential write, suitable for Flash that does not support reverse overwrite;
   - `DatabaseRaw<MinWriteSize>`: for Flash backends constrained by minimum write-unit semantics, with the minimum write size expressed in the template parameter and the constructor taking the underlying `Flash` object plus a recycle threshold;
-- All data operations use `Save()` to write and `Restore()` to clear, supporting a full recovery workflow.
+- After a key value changes, the database implementation saves it automatically; `Restore()` clears the database and returns it to the initial state.
 
 ---
 
 ## Usage Example
 
 ### Create a Database Object
+
+The example uses `LinuxBinaryFileFlash<Size>` on Linux to emulate Flash with a file (`#include "linux_flash.hpp"`, in `driver/linux/`); the three arguments are the file path, the minimum erase unit, and the minimum write unit.
 
 ```cpp
 LinuxBinaryFileFlash<2048> flash("/tmp/flash.bin", 512, 8);
@@ -37,6 +39,8 @@ Or use `DatabaseRaw<MinWriteSize>`:
 LinuxBinaryFileFlash<2048> flash2("/tmp/flash2.bin", 512, 16);
 DatabaseRaw<16> db(flash2, 128);
 ```
+
+`DatabaseRawSequential(flash, max_buffer_size = 256)` allocates a RAM buffer of `max_buffer_size` bytes, at most half of the Flash size; for `DatabaseRaw<MinWriteSize>(flash, recycle_threshold = 128)`, the template argument is at least the Flash minimum write unit, and more than `recycle_threshold` invalidated keys at startup or during a key lookup triggers recycling.
 
 ### Define Type-Safe Keys
 
@@ -69,25 +73,26 @@ cfg = {115200, 0};
 cfg.Load();
 ```
 
-- Supports all **plain-old-data (POD) types** that are memory-flattenable (e.g., structs, arrays, primitives);
+- `T` should be trivially copyable, such as primitives, arrays, and structs made of them;
 - Assignment `key = value` automatically updates the database;
 - Use `key.Load()` to explicitly refresh content from the database.
+- A key's data size is fixed when it is first written. Binding the same name later with a type of a different size makes `Load()` and `Set()` return `ErrorCode::FAILED`; the variable takes the initial value given to the constructor, and the stored value is kept.
 
 ---
 
-## Method Overview (Base Interface)
+## Common Interfaces
 
-The following methods are provided by the abstract interface `Database` and its template class `Key<T>`:
-
-| Method/Operation                     | Description                                                  |
-|-------------------------------------|--------------------------------------------------------------|
-| `Database::Add(KeyBase&)`           | Add a key (only called if the key does not exist in the DB) |
-| `Database::Set(KeyBase&, RawData)`  | Update key content, requires same name and size             |
-| `Database::Get(KeyBase&)`           | Load key value from database into memory                    |
-| `Key<T>::Set(const T&)`             | Set key value and write to database                         |
-| `Key<T>::Load()`                    | Load key value from database into variable                  |
-| `Key<T>::operator=(const T&)`       | Set key value (equivalent to `Set()`)                       |
-| `Key<T>::operator T()`              | Type conversion operation, returns current variable value   |
+| Method/Operation | Description |
+|------------------|-------------|
+| `Key<T>(db, name, init)` | Bind a key; if the key does not exist, write `init` to the database |
+| `Key<T>(db, name)` | Same, with an all-zero initial value |
+| `Key<T>::Set(T)` / `operator=(T)` | Set the value and write it to the database; returns `ErrorCode` |
+| `Key<T>::Save()` | Write the current variable value to the database |
+| `Key<T>::Load()` | Load the stored value into the variable |
+| `Key<T>::operator T()` | Return the current variable value (does not load from the database) |
+| `DatabaseRawSequential::Restore()` | Clear the sequential database and reinitialize it |
+| `DatabaseRaw<MinWriteSize>::Restore()` | Clear the raw database and reinitialize it |
+| `DatabaseRaw<MinWriteSize>::Recycle()` | Compact the storage and reclaim space held by invalidated keys |
 
 ---
 
@@ -96,7 +101,7 @@ The following methods are provided by the abstract interface `Database` and its 
 Despite differences in underlying mechanisms, all implementations follow the same design principles:
 
 - Alternate writes between primary and backup blocks to ensure recoverability;
-- Store all key-value pairs in serialized name-value format with checksums;
+- Key-value pairs are stored as raw name-value records, and a fixed marker at the end of a block shows that the block was written completely;
 - `Init()` automatically detects valid blocks and attempts recovery;
 - `Restore()` actively clears primary and backup data to initialize an empty database;
 - Each derived class handles page alignment and space management internally — users do not need to worry about it.
@@ -106,10 +111,10 @@ Despite differences in underlying mechanisms, all implementations follow the sam
 ## Notes
 
 - Prefer using the `Database::Key<T>` wrapper for read/write operations;
-- Writing only occurs when calling `key = val` or `key.Set(val)`;
+- Constructing a `Key` whose key does not exist writes the initial value; later writes happen on `key = val`, `key.Set(val)`, or `key.Save()`, and Flash is not written when the value equals the stored content;
 - All key-value data types must be POD and copy-storable;
-- If storage is full or write fails, `Set()` will return an error code;
-- In normal usage, construct the concrete database object directly and bind `Database::Key<T>` to that instance.
+- `Set()` returns `ErrorCode::FAILED` when the key does not exist or its size differs from the stored key, and `DatabaseRaw` returns `ErrorCode::FULL` when space is still insufficient after recycling; a failed add while constructing a `Key`, or a failed Flash read, write, or erase, stops at `REQUIRE`;
+- To clear the database explicitly, call `Restore()` of the concrete implementation class.
 
 ---
 
@@ -118,10 +123,10 @@ Despite differences in underlying mechanisms, all implementations follow the sam
 - Parameter storage for embedded devices;
 - Persistent storage of state checkpoints;
 - Configuration persistence across multiple modules;
-- Safe key-value storage in memory-constrained environments;
+- Key-value storage on memory-constrained devices;
 
 ---
 
 ## Example Tests
 
-See [`test_database.cpp`] for complete examples demonstrating key-value read/write, struct support, and power-loss recovery scenarios.
+Tests are in [`test/automatic/middleware/database/`](https://github.com/xrobot-org/libxr/tree/master/test/automatic/middleware/database) of the LibXR repository: `database/test_database.cpp` checks `Key` reads, writes, and error codes; `raw_sequential/` checks repeated updates, reopening, and Flash failures; `raw/` also covers size mismatches and damaged-block recovery.

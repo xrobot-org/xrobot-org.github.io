@@ -8,13 +8,13 @@ sidebar_position: 0
 # Message System
 ## Contents
 
-- [Topic Basics, Subscription Models, and Thread Safety](./topic.md)
+- [Topic Basics, Subscription Models, and Dispatch Semantics](./topic.md)
 - [Packet Packing and Parsing](./packet-server.md)
 - [Linux Shared-Memory Topic](./linux-shared-topic.md)
 
-## Current Mainline Scope
+## Scope
 
-This group currently covers three public paths:
+This group covers three public paths:
 
 - `Topic`: in-process strongly typed message publish/subscribe
 - `Topic::Server` / `Packet`: packing and parsing over byte-stream transports such as UART, buses, or network links

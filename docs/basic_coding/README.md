@@ -1,10 +1,10 @@
 ---
 id: basic-coding
-title: 基础编程（libxr）
+title: 基础编程（LibXR）
 sidebar_position: 6
 ---
 
-# 基础编程（libxr）
+# 基础编程（LibXR）
 
 本章介绍 LibXR 的 CMake 配置和基础 API 的用法。基础 API 包括核心组件、数据结构、中间件、操作系统抽象、外设驱动以及数学与工具。
 

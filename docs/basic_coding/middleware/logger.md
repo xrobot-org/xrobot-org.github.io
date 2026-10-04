@@ -6,14 +6,14 @@ sidebar_position: 2
 
 # Logger 日志系统
 
-LibXR 中的日志系统基于 Topic 发布机制实现，支持多等级日志输出、格式化打印与终端显示颜色控制，适配嵌入式资源受限环境下的高性能日志收集。
+LibXR 的日志系统把每条日志发布到 Topic `/xr/log`，支持五个日志等级、格式化文本和按等级着色的终端输出。
 
-## 模块功能
+## 功能
 
-- **多级别日志分类**：支持 Debug、Info、Pass、Warn、Error 五种日志级别。
-- **Topic 发布机制**：所有日志通过 Topic 机制发布，可订阅并转发至终端或其他系统。
-- **彩色终端输出**：根据日志级别自动选择颜色打印。
-- **编译期控制输出等级**：通过 `LIBXR_LOG_LEVEL` 宏控制编译产出与运行时输出。
+- 五个日志等级：Debug、Info、Pass、Warn、Error。
+- 所有日志发布到 `/xr/log`，其他代码可以订阅并转发。
+- 终端输出按日志等级选择颜色。
+- `LIBXR_LOG_LEVEL` 决定哪些日志宏参与编译并发布到 `/xr/log`，`LIBXR_LOG_OUTPUT_LEVEL` 决定哪些日志打印到 `STDIO::write_`。
 
 ---
 
@@ -27,13 +27,13 @@ XR_LOG_WARN("Low battery");
 XR_LOG_ERROR("Sensor failure");
 ```
 
-默认情况下日志将发布到 `/xr/log` 主题，并在满足等级条件下通过终端输出。
+日志发布到 `/xr/log`；等级值不大于 `LIBXR_LOG_OUTPUT_LEVEL` 且 `STDIO::write_` 已设置时，同时打印到终端。
 
 ---
 
 ## 宏定义等级控制
 
-可通过配置 `LIBXR_LOG_LEVEL` 宏定义调整编译时保留的日志等级：
+CMake 变量 `LIBXR_LOG_LEVEL` 决定编译时保留的日志宏，`LIBXR_LOG_OUTPUT_LEVEL` 决定打印到 `STDIO::write_` 的日志。两者取值如下表，默认都是 4，在 `add_subdirectory(libxr)` 之前用 `set()` 设置：
 
 | 等级 | 宏值 | 宏示例         |
 |------|------|----------------|
@@ -43,7 +43,7 @@ XR_LOG_ERROR("Sensor failure");
 | INFO  | 3  | `XR_LOG_INFO(...)`  |
 | DEBUG | 4  | `XR_LOG_DEBUG(...)` |
 
-未达到等级的日志宏在编译时将被优化移除。
+等级值大于 `LIBXR_LOG_LEVEL` 的日志宏展开为空，参数不会被求值。
 
 ---
 
@@ -51,13 +51,13 @@ XR_LOG_ERROR("Sensor failure");
 
 - 所有日志封装为 `LogData` 结构体，通过 `Logger::Publish()` 发布。
 - 注册的回调函数会自动将日志输出到终端 `STDIO::write_`。
-- 当前日志路径主要按线程上下文使用来设计；如果放到 ISR 热路径里，需要额外评估格式化和输出开销。
+- 日志宏用互斥量串行化 `/xr/log` 的发布，第一次调用时还会创建该 Topic 并分配内存，因此只在线程上下文中调用，不在中断中使用。
 
 ---
 
 ## 与其他中间件的集成
 
-Logger 自动与 Topic 系统集成，可将日志同步转发到远程终端、文件系统或网络接口中。常与 Terminal/RamFS 联合用于 CLI 系统调试。
+日志发布在 `/xr/log`（类型 `LibXR::LogData`），其他代码可以订阅该 Topic，把日志转发到其他链路。常与 Terminal/RamFS 联合用于 CLI 系统调试。
 
 ---
 

@@ -94,6 +94,8 @@ enum class LinuxSharedSubscriberMode : uint8_t
 
 ## 订阅者用法
 
+按名称构造的订阅者附着到已存在的共享 Topic；发布者尚未创建该 Topic 时，构造出的订阅者无效（`Valid()` 为 `false`）。
+
 ### 方式一：`Wait()` 后直接从订阅者取数据
 
 ```cpp
@@ -178,12 +180,14 @@ if (topic.CreateData(data) == ErrorCode::OK) {
 - `Valid()`：订阅者是否有效；
 - `GetPendingNum()`：当前排队待消费消息数；
 - `GetDropNum()`：累计丢弃消息数；
-- `GetSequence()`：当前消息序号。
+- `GetSequence()`：当前消息序号；
+- `GetTimestamp()`：当前消息时间戳。
 
 ### 数据句柄
 
 - `Valid()` / `Empty()`：句柄是否有效；
 - `GetSequence()`：消息序号；
+- `GetTimestamp()`：消息时间戳（订阅者取得的句柄）；
 - `GetData()`：payload 指针；
 - `Reset()`：释放槽位。
 
@@ -191,7 +195,7 @@ if (topic.CreateData(data) == ErrorCode::OK) {
 
 - 普通 `Topic` 面向进程内发布订阅；
 - `LinuxSharedTopic<T>` 面向 Linux 主机进程间通信；
-- 普通 `Topic` 是进程内精确类型分发路径，本体不再保存 latest payload 缓存；
+- 普通 `Topic` 是进程内精确类型分发路径，本体不保存 latest payload 缓存；
 - `LinuxSharedTopic<T>` 的 payload 固定驻留在共享内存槽位中；
 - 普通 `Topic` 的订阅模型强调回调/同步/异步语义；
 - `LinuxSharedTopic<T>` 额外引入了每订阅者队列策略和 `BALANCE_RR`。

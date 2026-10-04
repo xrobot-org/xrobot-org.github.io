@@ -8,13 +8,13 @@ sidebar_position: 1
 
 `LibXR::Flag` provides a very lightweight set of boolean state utilities. It is suitable for simple states such as “busy or idle”, “request pending”, or “event has occurred”.
 
-Current mainline provides three pieces:
+`Flag` consists of three parts:
 
 - `Flag::Atomic`: atomic flag for shared state across threads / cores / ISRs
 - `Flag::Plain`: non-atomic flag for local or externally synchronized use
 - `Flag::ScopedRestore<FlagT>`: RAII helper that changes a flag on scope entry and restores the previous value on scope exit
 
-> `Flag` is not a mutex and not a spinlock. It only stores and exchanges a boolean state and does not provide critical-section exclusion semantics.
+`Flag` only stores and exchanges a boolean value; mutual exclusion uses [Mutex](../system/mutex.md).
 
 ---
 
@@ -102,4 +102,4 @@ LibXR::Flag::Plain in_callback;
 - Local single-thread state: prefer `Flag::Plain`
 - Need “set on entry, restore on exit”: use `ScopedRestore`
 
-If you actually need mutual exclusion rather than a simple state bit, use [Mutex](../system/mutex.md) or another synchronization primitive instead of `Flag`.
+Mutual exclusion uses [Mutex](../system/mutex.md) or another synchronization primitive.

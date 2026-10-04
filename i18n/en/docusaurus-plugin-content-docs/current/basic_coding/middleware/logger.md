@@ -6,14 +6,14 @@ sidebar_position: 2
 
 # Logger System
 
-The logging system in LibXR is implemented based on the Topic publish mechanism. It supports multi-level log output, formatted printing, and terminal color control, making it suitable for high-performance logging in resource-constrained embedded environments.
+The LibXR logger publishes each log record to the Topic `/xr/log`. It supports five log levels, formatted text, and terminal output colored by level.
 
-## Module Features
+## Features
 
-- **Multi-level log classification**: Supports Debug, Info, Pass, Warn, and Error log levels.
-- **Topic-based publishing**: All logs are published via the Topic system and can be subscribed to and forwarded to terminals or other systems.
-- **Colorful terminal output**: Automatically selects print color based on log level.
-- **Compile-time log level control**: The `LIBXR_LOG_LEVEL` macro controls both compiled output and runtime log visibility.
+- Five log levels: Debug, Info, Pass, Warn, Error.
+- Every log record is published to `/xr/log`, where other code can subscribe and forward it.
+- Terminal output is colored by log level.
+- `LIBXR_LOG_LEVEL` selects which log macros are compiled and published to `/xr/log`; `LIBXR_LOG_OUTPUT_LEVEL` selects which records are printed to `STDIO::write_`.
 
 ---
 
@@ -27,13 +27,13 @@ XR_LOG_WARN("Low battery");
 XR_LOG_ERROR("Sensor failure");
 ```
 
-By default, logs are published to the `/xr/log` topic and printed to the terminal if the level condition is met.
+Logs are published to `/xr/log`; when the level value is not greater than `LIBXR_LOG_OUTPUT_LEVEL` and `STDIO::write_` is set, they are also printed to the terminal.
 
 ---
 
 ## Macro Level Control
 
-You can configure the `LIBXR_LOG_LEVEL` macro to control the compiled log level:
+The CMake variable `LIBXR_LOG_LEVEL` selects which log macros are compiled, and `LIBXR_LOG_OUTPUT_LEVEL` selects which logs are printed to `STDIO::write_`. Both take the values below, default to 4, and are set with `set()` before `add_subdirectory(libxr)`:
 
 | Level | Value | Macro Example         |
 |-------|--------|------------------------|
@@ -43,7 +43,7 @@ You can configure the `LIBXR_LOG_LEVEL` macro to control the compiled log level:
 | INFO  | 3      | `XR_LOG_INFO(...)`     |
 | DEBUG | 4      | `XR_LOG_DEBUG(...)`    |
 
-Logs below the set level will be optimized out during compilation.
+Log macros whose level value is greater than `LIBXR_LOG_LEVEL` expand to nothing, and their arguments are not evaluated.
 
 ---
 
@@ -51,13 +51,13 @@ Logs below the set level will be optimized out during compilation.
 
 - All logs are encapsulated in the `LogData` structure and published via `Logger::Publish()`.
 - Registered callback functions automatically format and print logs to the terminal via `STDIO::write_`.
-- The current log path is primarily designed for thread-context use; if you want to place it on a hot ISR path, evaluate formatting and output cost explicitly first.
+- Log macros serialize publishing to `/xr/log` with a mutex, and the first call creates the topic and allocates memory; they are called from thread context only, not from interrupts.
 
 ---
 
 ## Integration with Other Middleware
 
-Logger is automatically integrated with the Topic system and can forward logs to remote terminals, file systems, or network interfaces. It's commonly used with Terminal/RamFS for CLI system debugging.
+Logs are published on `/xr/log` (type `LibXR::LogData`); other code can subscribe to that Topic to forward logs to other links. It is commonly used with Terminal/RamFS for CLI debugging.
 
 ---
 

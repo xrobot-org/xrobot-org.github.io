@@ -6,14 +6,14 @@ sidebar_position: 3
 
 # Event System
 
-The `Event` class is a core middleware in LibXR designed for event-driven mechanisms. It supports event registration, triggering, interrupt-safe invocation, and event bridging.
+`Event` registers and triggers callbacks by event ID, supports triggering from callbacks or interrupts, and can bind an event of one `Event` to an event of another.
 
-## Module Features
+## Features
 
 - Register multiple callbacks based on **event IDs**;
 - Supports **triggering in thread/interrupt contexts**;
 - Use `GetList()` for **interrupt-safe event triggering**;
-- Supports **event bridging**, allowing event forwarding across modules;
+- Supports **event bridging**, forwarding an event of one `Event` to another `Event`;
 - Internally implemented using **red-black tree + lock-free list** for efficient and thread-safe storage.
 
 ---
@@ -65,6 +65,7 @@ evt_dst.Bind(evt_src, 0xA, 0xB);  // Triggers evt_dst with event 0xB when evt_sr
 - `Event::ActiveFromCallback(list, event, in_isr)`: Trigger safely from callback/ISR paths;
 - `Event::GetList(event)`: Retrieve and cache event list;
 - `Event::Bind(src, id_src, id_dst)`: Set up event bridging;
+- `Register()`, `GetList()` (for an event seen for the first time), and `Bind()` allocate memory and are called from thread context during initialization; interrupts call only `ActiveFromCallback()`;
 - Internally uses `RBTree<uint32_t>` to manage event mappings, and `LockFreeList` to store callbacks.
 
 ---

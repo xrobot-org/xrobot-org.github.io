@@ -6,14 +6,14 @@ sidebar_position: 7
 
 # Terminal 命令行终端
 
-`LibXR::Terminal` 是一个支持 ANSI 控制、路径补全、命令解析与 RamFS 集成的嵌入式命令行终端组件，提供类 Unix 命令风格交互体验。支持运行模式灵活，可运行于线程或定时任务中，适用于多种嵌入式平台。
+`LibXR::Terminal` 是基于 `RamFS` 的命令行终端，提供 ANSI 行编辑、历史记录、路径补全和命令解析，可在线程或定时任务中运行。
 
 ## 功能概览
 
-- 与 `RamFS` 文件系统无缝集成，可解析并运行可执行文件；
+- 按路径查找并运行 `RamFS` 中的可执行文件；
 - 支持命令历史与上下翻阅；
-- 支持命令补全（Tab 补全目录与文件名）；
-- 支持参数解析、目录切换（cd）、列目录（ls）等内置命令；
+- Tab 补全第一个参数中的目录名和文件名；
+- 按空格切分参数，参数个数上限为 `MAX_ARG_NUMBER`（含命令本身），超出部分被丢弃；内建命令只有 `cd` 和 `ls`；
 - ANSI 控制字符兼容（支持方向键移动、光标控制）；
 - 可绑定自定义输入输出端口，兼容串口 / Pipe / TCP / 标准输入输出；
 - 提供线程驱动 (`ThreadFun`) 和任务驱动 (`TaskFun`) 两种运行模式。
@@ -40,14 +40,17 @@ Terminal(RamFS &ramfs,
 
 - `ramfs`: 所使用的文件系统实例；
 - `current_dir`: 当前默认目录，默认使用根目录；
-- `read_port`, `write_port`: 输入输出端口，可为串口、标准流等；
+- `read_port`, `write_port`: 输入输出端口，默认为 `STDIO::read_` / `STDIO::write_`，构造前须已设置（Linux 上由 `PlatformInit()` 设置），也可传入串口等其他端口；
 - `mode`: 行结束模式（CRLF、LF、CR）。
+
+下面两个示例使用默认的 STDIO 端口。Linux 上这两个端口由 `LibXR::PlatformInit()` 创建，因此先调用它，再构造 `Terminal`。
 
 ## 使用示例（线程模式）
 
 ```cpp
-  LibXR::RamFS ramfs;
-  LibXR::Terminal<> terminal(ramfs);
+  LibXR::PlatformInit();  // Linux：创建 STDIO 端口
+  static LibXR::RamFS ramfs;
+  static LibXR::Terminal<> terminal(ramfs);
   LibXR::Thread term_thread;
   term_thread.Create(&terminal, terminal.ThreadFun, "terminal", 1024,
                      LibXR::Thread::Priority::MEDIUM);
@@ -56,20 +59,22 @@ Terminal(RamFS &ramfs,
 ## 使用示例（任务模式）
 
 ```cpp
+  LibXR::PlatformInit();  // Linux：创建 STDIO 端口
   static LibXR::RamFS ramfs;
   static LibXR::Terminal<> terminal(ramfs);
-  auto terminal_task = Timer::CreateTask(terminal.TaskFun, &terminal, 10);
-  Timer::Add(terminal_task);
-  Timer::Start(terminal_task);
+  auto terminal_task = LibXR::Timer::CreateTask(terminal.TaskFun, &terminal, 10);
+  LibXR::Timer::Add(terminal_task);
+  LibXR::Timer::Start(terminal_task);
 ```
 
 ## 命令执行与自动补全
 
 - 命令输入被缓存在 `input_line_` 中，按回车自动解析并执行；
-- 使用 `ls`, `cd` 为内建命令；
-- 若输入命令匹配到 RamFS 中的可执行文件（`FileType::EXEC`），则自动运行；
+- 内建命令只有 `cd` 和 `ls`；`ls` 每行输出类型字母和名称：`d` 目录、`x` 可执行文件、`f` 普通文件、`?` 自定义节点；
+- 其他输入把第一个参数当作 RamFS 文件路径：不含 `/` 时只在当前目录查找，以 `/` 开头时从根目录解析；找到可执行文件则运行，找不到时输出 `Command not found.`，不是可执行文件时输出 `Not an executable file.`；
+- 命令通常用 `CreateCommand()` 创建后加入 `ramfs.bin_`，在根目录下以 `/bin/<name>` 调用，或先 `cd bin`；
 - 支持 ANSI 上下左右键移动与历史记录查阅；
-- 输入 Tab 键进行路径自动补全。
+- Tab 键补全第一个参数的路径。
 
 ## 运行原理
 
@@ -105,4 +110,4 @@ Terminal(RamFS &ramfs,
 
 ---
 
-本模块可配合串口、TCP、远程调试等方式使用。
+终端可通过串口、TCP 等任意 `ReadPort` / `WritePort` 使用。

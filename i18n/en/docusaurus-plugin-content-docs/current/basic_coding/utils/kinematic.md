@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Kinematic
 
-`kinematic.hpp` provides a set of kinematic-chain utilities in current mainline, based on `Transform / Inertia / List`, under the namespace:
+`kinematic.hpp` provides a set of kinematic-chain utilities based on `Transform / Inertia / List`, under the namespace:
 
 ```cpp
 namespace LibXR::Kinematic
@@ -22,22 +22,22 @@ Like [Transform](./transform.md) and [Inertia](./inertia.md), this group is gate
 
 ### 1.1 `Joint<Scalar>`
 
-`Joint` represents a rotational joint. Its current public configuration includes:
+`Joint` represents a rotational joint. Its configuration is stored in `param_`:
 
-- `parent2this`: transform from the parent frame to the joint frame
-- `this2child`: transform from the joint frame to the child object frame
-- `axis`: joint rotation axis
-- `ik_mult`: inverse-kinematics step multiplier
+- `param_.parent2this`: transform from the parent frame to the joint frame
+- `param_.this2child`: transform from the joint frame to the child object frame
+- `param_.axis`: joint rotation axis
+- `param_.ik_mult`: inverse-kinematics step multiplier, 1.0 by default, set with `SetBackwardMult()`
 
-Common APIs in current mainline:
+Common APIs:
 
 - `SetState(angle)`
 - `SetTarget(angle)`
 - `SetBackwardMult(mult)`
 
-Both `SetState()` and `SetTarget()` currently normalize angles into the `[-PI, PI]` range.
+`SetState()` and `SetTarget()` subtract 2π once from angles above π and add 2π once to angles below -π, so inputs within [-3π, 3π] end up in [-π, π].
 
-> In the current implementation, constructing a `Joint` performs one dynamic allocation for the joint-list node.
+> Constructing a `Joint` performs one dynamic allocation for the joint-list node.
 
 ### 1.2 `Object<Scalar>`
 
@@ -48,14 +48,14 @@ Both `SetState()` and `SetTarget()` currently normalize angles into the `[-PI, P
 - `param_`: inertia parameters of the object
 - `runtime_`: current and target pose runtime state
 
-Common APIs in current mainline:
+Common APIs:
 
 - `SetPosition(pos)`
 - `SetQuaternion(quat)`
 
 ### 1.3 `StartPoint<Scalar>`
 
-`StartPoint` represents the root of the chain. Current mainline provides:
+`StartPoint` represents the root of the chain. It provides:
 
 - `CalcForward()`
 - `CalcTargetForward()`
@@ -65,7 +65,7 @@ Common APIs in current mainline:
 
 ### 1.4 `EndPoint<Scalar>`
 
-`EndPoint` represents the chain end. Current mainline provides:
+`EndPoint` represents the chain end. It provides:
 
 - `SetTargetPosition(pos)`
 - `SetTargetQuaternion(quat)`
@@ -73,16 +73,17 @@ Common APIs in current mainline:
 - `SetMaxAngularVelocity(v)`
 - `SetMaxLineVelocity(v)`
 - `CalcBackward(dt, max_step, max_err, step_size)`
+- `GetPositionError()`, `GetQuaternionError()`: position and orientation error between the target pose and the end point's target state
 
-`CalcBackward(...)` currently uses a Jacobian pseudo-inverse based iterative inverse-kinematics path.
+`CalcBackward(...)` iterates inverse kinematics with the Jacobian pseudo-inverse and returns the weighted 6D error vector of the last iteration.
 
-> In the current implementation, the first call to `EndPoint::CalcBackward()` allocates storage for the Jacobian matrix and the joint-delta vector.
+> The first call to `EndPoint::CalcBackward()` allocates storage for the Jacobian matrix and the joint-delta vector.
 
 ---
 
 ## 2. Typical workflow
 
-In current mainline, a common usage flow is:
+Typical call order:
 
 1. create `StartPoint / Object / EndPoint` instances and their `Inertia` objects
 2. connect parent and child nodes with `Joint`
@@ -126,6 +127,6 @@ This example only shows the minimum call path. A real robot model normally adds 
 
 ## 4. Usage guidance
 
-- If you only need pose transforms, you do not need the full `Kinematic` stack; `Transform / Quaternion / Position` are enough.
-- If your runtime environment forbids dynamic allocation, note that current `Joint` construction and the first `EndPoint::CalcBackward()` call both use `new`.
+- For pose transforms only, `Transform / Quaternion / Position` are enough without the `Kinematic` types.
+- `Joint` construction and the first `EndPoint::CalcBackward()` call use `new`, which matters where dynamic allocation is restricted.
 - IK convergence speed and stability depend directly on parameters such as `ik_mult`, `err_weight_`, `max_step`, and `step_size`; tune them against the actual mechanism.

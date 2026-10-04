@@ -6,12 +6,12 @@ sidebar_position: 3
 
 # Inertia（惯性与质心）
 
-`inertia.hpp` 在当前主线中提供了两个直接公开的物理量类型：
+`inertia.hpp` 提供两个类型：
 
 - `LibXR::Inertia<Scalar>`：刚体惯性张量与质量；
 - `LibXR::CenterOfMass<Scalar>`：质心位置与质量。
 
-与 [Transform](./transform.md) 页面中的类型一样，这一组接口当前也受 `LIBXR_NO_EIGEN` 控制。
+与 [Transform](./transform.md) 页面中的类型一样，这一组接口也受 `LIBXR_NO_EIGEN` 控制。
 
 ---
 
@@ -19,7 +19,7 @@ sidebar_position: 3
 
 ### 1.1 数据组成
 
-`Inertia<Scalar>` 当前包含两部分公开数据：
+`Inertia<Scalar>` 包含两部分公开数据：
 
 - `data[9]`：3x3 惯性张量；
 - `mass`：质量。
@@ -31,7 +31,7 @@ sidebar_position: 3
 
 ### 1.2 构造方式
 
-当前主线支持以下几种主要构造方式：
+支持以下几种主要构造方式：
 
 - `Inertia(mass, data[9])`
 - `Inertia(mass, matrix[3][3])`
@@ -39,9 +39,9 @@ sidebar_position: 3
 - `Inertia(mass, xx, yy, zz, xy, yz, xz)`
 - `Inertia(mass, Eigen::Matrix<Scalar, 3, 3>)`
 
-其中 6 元形式与显式分量形式都适合直接表达惯性张量的主惯性矩和交叉惯性矩。
+6 元形式和 7 参数形式按 `xx, yy, zz, xy, yz, xz` 的顺序接收主惯性矩和惯性积，构造时把惯性积取负后存为非对角元（例如 `(0, 1)` 元为 `-xy`）；9 元数组、3x3 数组和 Eigen 矩阵形式按完整张量原样存储。
 
-### 1.3 当前主线提供的主要操作
+### 1.3 主要操作
 
 - 转换为 `Eigen::Matrix<Scalar, 3, 3>`
 - `operator()(i, j)` 访问张量元素
@@ -63,7 +63,7 @@ sidebar_position: 3
 - `position`
 - `mass`
 
-当前主线支持的常见构造方式：
+支持的常见构造方式：
 
 - `CenterOfMass(mass, Position)`
 - `CenterOfMass(mass, Eigen::Matrix<3,1>)`
