@@ -82,12 +82,18 @@ is a shared-load mode rather than a broadcast mode.
 
 ## 6. The practical difference between `FULL` and `DROP_OLD`
 
-Under a slow-subscriber overload, the two modes behave differently:
+The data in this section and in section 9 was measured with the benchmark functions `RunOverloadBenchmarks()`, `RunStandardBenchmarks()` and `RunLatencyBenchmarks()` in `test/automatic/middleware/message/topic/` of the LibXR repository (the `linux_shm_bench` case of `libxr_test` runs only reduced versions of them). The measurements were taken on 2026-10-04 in the Docker container `ghcr.io/xrobot-org/docker-image-linux:main` (Ubuntu 24.04, g++ 13.3.0, Release build, 2 GB `/dev/shm`) on a WSL2 host (kernel 6.6.87.2, AMD Ryzen 7 8845H, 16 threads), with LibXR at dev commit a2f5f01. The tables show a single run; the values vary with the machine and its load.
 
-- with `FULL`, the slow subscriber's full queue directly turns into publisher backpressure
-- with `DROP_OLD`, the slow subscriber loses history but keeps tracking newer data
+`bench_overload.cpp` makes the subscriber sleep 50 µs after each message it takes; the publisher publishes continuously and does not retry failures; the subscriber queue holds 8 entries (64 KiB payload) or 4 (1 MiB payload). Latency is the time from publication until the subscriber takes the data:
 
-The choice is about whether the system values complete delivery more than freshness and throughput.
+| Payload | Mode | Published | Received | Average latency | p50 | p99 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 64 KiB | `FULL` | 598 / 4000 | 598 | 1080 µs | 1026 µs | 2520 µs |
+| 64 KiB | `DROP_OLD` | 4000 / 4000 | 530 | 387 µs | 180 µs | 2381 µs |
+| 1 MiB | `FULL` | 167 / 256 | 167 | 470 µs | 433 µs | 1523 µs |
+| 1 MiB | `DROP_OLD` | 256 / 256 | 143 | 364 µs | 338 µs | 934 µs |
+
+Once the slow subscriber's queue is full, `FULL` makes further publications fail; every queued message is delivered, but it waits in the queue, so latency is higher. With `DROP_OLD` every publication succeeds, the subscriber queue drops old messages, the messages received are newer, and the average and median latency are lower. `FULL` fits when no sample may be lost, and `DROP_OLD` when new data must arrive as soon as possible, which matches the latest-value trade-off of control paths.
 
 ## 7. `BALANCE_RR` semantics
 
@@ -107,16 +113,16 @@ still holding slots, and a segment left by a dead publisher. Each subscriber slo
 identity (PID and process start time), so slots of dead subscribers are recycled; when the
 publisher creates the topic and finds a segment left by a dead process, it reclaims that segment.
 
-## 9. Why `latency_avg` is often not meaningful on its own
+## 9. Latency under continuous publication and per-message acknowledgement
 
-The standard-case `latency_avg` is easily skewed by the scheduler and the startup backlog: when the
-publisher starts sending before the subscriber has settled into waiting, the average includes time
-spent queued and differs from the latency of a single delivery.
+`bench_standard.cpp` publishes continuously; `bench_latency.cpp` waits for the subscriber's acknowledgement after each message before publishing the next. Both measure the time from publication until the subscriber takes the data, but the numbers mean different things. Results for a 64-byte payload (88-byte frame) with only the header and the first and last payload bytes written (transport mode), in the environment of section 6:
 
-Two measurements are more meaningful:
+| Benchmark | Messages | Average | p50 | p95 | p99 |
+| --- | --- | --- | --- | --- | --- |
+| `bench_standard` (continuous) | 100000 | 54.9 µs | 0.81 µs | 374 µs | 777 µs |
+| `bench_latency` (acknowledged) | 20000 | 47.1 µs | 33.6 µs | 104 µs | 293 µs |
 
-- saturated-throughput queueing latency: queueing behavior when the system is fully loaded
-- single-outstanding one-way latency: the path of one message from publish until a wait returns it
+Under continuous publication, the next message is usually already queued when the subscriber finishes the previous one, so taking it needs no wake-up and half of the samples take less than 1 µs; when publication outpaces consumption, messages pile up in the queue and the waiting time counts as latency, pushing p95 to hundreds of microseconds. The average therefore mostly reflects queueing and is not the delivery latency of a single message. With per-message acknowledgement, the subscriber waits on a futex every time, so latency includes wake-up and scheduling; the p50 of about 34 µs reflects how long one message takes from publication until it is taken. When comparing implementations or configurations, throughput comes from `bench_standard` and single-message latency from the percentiles of `bench_latency`.
 
 ## 10. Handle and shared-layout lifetime
 
