@@ -16,7 +16,7 @@ sidebar_position: 4
   - MaxPacketSize: 512
 - Compiler optimization: `-O3`
 - Target: STM32F401RC
-- SWD clock: host Speed=10000; measured max stable frequency ~10 MHz
+- SWD clock: `SwdGeneralGPIO` uses `loops_per_us = 0` (no-delay path; SWCLK is set by GPIO toggle speed and the host Speed setting does not change it), measured about 10 MHz
 
 ![daplink-benchmark](/img/dap.png)
 
@@ -52,7 +52,7 @@ This benchmark includes two groups of metrics:
 - Iterations=32
 - Vary Data length: 32 / 128 / 2048 / 32768 bytes
 
-1) SRAM read/write upper bound (fixed length): use OpenOCD + TCL scripts to measure write/read/e2e timing over a specified SRAM address range.
+2) SRAM read/write upper bound (fixed length): use OpenOCD + TCL scripts to measure write/read/e2e timing over a specified SRAM address range.
 
 ## Results
 

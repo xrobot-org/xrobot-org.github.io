@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Messaging System Performance Tests
 
-This page is an entry point to published messaging-performance benchmarks, not a place to state unconditional performance conclusions without the test context.
+This page lists published messaging-performance benchmarks.
 
 The currently public benchmark repository is:
 
@@ -23,5 +23,3 @@ If you first want to understand which mainline mechanisms are relevant, start fr
 - [Topic](../basic_coding/middleware/message/topic.md)
 - [Linux Shared-Memory Topic](../basic_coding/middleware/message/linux-shared-topic.md)
 - [Memory FastCopy / FastSet / FastCmp](../basic_coding/core/core-mem.md)
-
-If you are going to write a new performance claim, attach the code path, input scale, and measurement method directly instead of relying on short phrases such as "sub-microsecond" or "faster than `std::memcpy`" without context.

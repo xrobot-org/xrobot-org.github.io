@@ -6,9 +6,7 @@ sidebar_position: 1
 
 # UART Performance Testing
 
-A common question about this framework is whether its abstraction over low-level drivers causes significant performance loss.
-
-Using LibXR instead of vendor SDKs (e.g., HAL, ESP-IDF) and managing DMA directly can add slight overhead, but the loss is minimal. The following sections include test results for your own analysis.
+This page measures the transmit/receive rate of the LibXR UART driver at 2–9 Mbaud and the thread scheduling during transfer.
 
 ## Test Environment
 
@@ -39,10 +37,10 @@ Synchronous transmission and reception each use a separate thread. Although cont
   STDIO::write_ = uart_cdc.write_port_;
 
   void (*fun)(void *) = [](void *) {
-    LibXR::STDIO::Printf<"read count: %d, write count: %d, error count: %d\r\n">(
+    LibXR::STDIO::Printf<"read count: %u, write count: %u, error count: %u\r\n">(
         count_read, count_write, count_error);
-    LibXR::STDIO::Printf<"speed: %d BAUD\r\n">(
-        count_read * 10 * sizeof(write_buffer));
+    LibXR::STDIO::Printf<"speed: %u BAUD\r\n">(
+        static_cast<unsigned>(count_read * 10 * sizeof(write_buffer)));
     count_read = 0;
     count_write = 0;
   };
@@ -66,7 +64,7 @@ Synchronous transmission and reception each use a separate thread. Although cont
   };
 
   void (*thread_write)(LibXR::UART *) = [](LibXR::UART *uart) {
-    LibXR::Semaphore sem(1);
+    LibXR::Semaphore sem(0);
     LibXR::WriteOperation op(sem);
 
     uart->SetConfig({BAUDRATE, LibXR::UART::Parity::NO_PARITY, 8, 1});
@@ -176,7 +174,7 @@ speed: 8960000 BAUD
 
 ## System Call Analysis
 
-When the speed is already near the theoretical maximum, further benchmarking becomes meaningless. Here, STM32F4 and SystemView are used to visualize the system calls during transmission and reception. The transmission and reception processes themselves are completely lock-free; all system calls are related only to the semaphores required for thread wakeup and synchronization.
+The following uses STM32F4 and SystemView to show the system calls during transmission and reception. The only system calls are the semaphore operations for thread wakeup and synchronization.
 
 ### Lower Baud Rates
 
@@ -192,4 +190,4 @@ At higher baud rates, the transmit and receive threads are alternately woken up.
 
 ## Summary
 
-After abstracting low-level UART drivers, LibXR introduces minimal performance overhead. On the STM32F103 (72MHz, no FPU or Cache), it achieves up to **~4 Mbps** real throughput with **0 errors**, even under multithreaded FreeRTOS conditions.
+On STM32F103 (72 MHz), 32-byte packets at 2 Mbaud and 128-byte packets at 4 Mbaud reach a line rate close to the configured baud rate with no CRC errors; CH32V307 (144 MHz) at 9 Mbaud also stays close to the configured rate.

@@ -21,7 +21,7 @@ sidebar_position: 2
 
 时序由软件生成：通过目标时钟 `hz` 和延时标定系数 `loops_per_us` 计算“半周期应空转的循环次数”，从而逼近指定 SWCLK。
 
-推荐外围电路（强烈建议按此做）：
+推荐外围电路：
 - SWCLK/SWDIO 串联 33Ω（限流/抑制振铃）
 - SWDIO 端接 10k 上拉
 
@@ -43,17 +43,17 @@ class SwdGeneralGPIO final : public Swd;
 - `Read() -> bool`
 
 其中 SWDIO 需要支持：
-- 输入采样：`INPUT + PULL_UP`
+- 输入采样：`Direction::INPUT` + `Pull::UP`
 - 输出驱动由 `IO_DRIVE_MODE` 决定
   - `SwdIoDriveMode::PUSH_PULL` -> `OUTPUT_PUSH_PULL`
   - `SwdIoDriveMode::OPEN_DRAIN` -> `OUTPUT_OPEN_DRAIN`
 
-工程上选择输出模式时，可按下面这条经验先做：
+输出模式的一般选择：
 
 - 板上已有明确的外部上拉时，优先考虑开漏输出；
 - 没有外部上拉时，优先考虑推挽输出。
 
-但这只是起步经验，不是硬规则。SWDIO / SWCLK 的实际电气行为会受到 GPIO 驱动能力、布线长度、阻尼电阻、探头负载、目标板输入结构等多种因素共同影响。
+SWDIO / SWCLK 的实际电气行为还受 GPIO 驱动能力、布线长度、阻尼电阻、探头负载和目标板输入结构影响。
 
 ---
 
@@ -86,7 +86,7 @@ Probe probe(swclk, swdio, /*loops_per_us=*/calibrated, /*default_hz=*/500000);
 
 probe.EnterSwd();
 
-// 上层建议统一走带重试的路径（示意，具体看你的 Swd 基类封装）
+// 读取 DP IDCODE（ReadIdCode 不重试；带重试的事务接口见 Swd 基类的 DpReadTxn 等）
 uint32_t idcode = 0;
 LibXR::Debug::SwdProtocol::Ack ack;
 probe.ReadIdCode(idcode, ack);
@@ -100,7 +100,7 @@ probe.ReadIdCode(idcode, ack);
 
 `SetClockHz(hz)` 用于设置“期望的 SWCLK 频率”。
 
-- `hz` 会在实现支持的范围内被钳制（低于最小值会被抬高，高于最大值会被压低）。
+- 非零的 `hz` 钳制到 50 kHz～100 MHz（`MIN_HZ`/`MAX_HZ`）；构造时默认 500 kHz（`DEFAULT_CLOCK_HZ`）。
 - 频率是否“真的等于设定值”，取决于 `loops_per_us` 是否合理、GPIO 翻转速度、CPU 负载等。
 - `hz == 0` 会使内部进入“无延时路径”（不主动插入 BusyLoop 延时），此时 SWCLK 实际频率由 CPU 与 GPIO 翻转速度决定，通常是“尽可能快”。
 
@@ -119,7 +119,7 @@ probe.ReadIdCode(idcode, ack);
 ### 4.3 何时会进入“无延时路径”
 
 实际工作时有两种情况会进入“无延时路径”：
-- 你显式把 `loops_per_us` 设为 0；或
+- `loops_per_us` 为 0；或
 - 在某个较高的 `hz` 下，计算出来“半周期需要的循环次数 < 1”，内部会把半周期循环数置 0，从而自动走无延时路径。
 
 无延时路径的意义：
@@ -134,7 +134,7 @@ probe.ReadIdCode(idcode, ack);
 
 ## 5. `loops_per_us` 的选择与标定方法
 
-下面给出两种常用标定方法。原则是：标定应在与你最终固件“相同编译选项 + 相同主频”条件下进行。
+下面给出两种常用标定方法。标定应在与最终固件相同的编译选项和主频下进行。
 
 ### 方法 A：用硬件计时器/周期计数器标定
 
@@ -158,7 +158,7 @@ probe.ReadIdCode(idcode, ack);
 3) 按比例调整：`loops_per_us_new ≈ loops_per_us_old * (f_meas / f_target)`，反复迭代 1~2 次即可收敛。
 
 优点：不需要访问计时器资源；同时把 GPIO 翻转开销一并纳入拟合。  
-注意：当你已经进入无延时路径时（频率很高），这种方法会失效，因为再调 `loops_per_us` 也未必能“拉回”到有延时路径。
+已进入无延时路径（频率很高）时，调整 `loops_per_us` 不一定能回到有延时路径，此方法不适用。
 
 ---
 
@@ -181,7 +181,7 @@ probe.ReadIdCode(idcode, ack);
 3) 缩短线缆/改善接地；
 4) 再考虑重新标定 `loops_per_us`（尤其在改了优化选项之后）。
 
-另外，开漏 / 推挽的实际效果也不能只靠概念判断。尤其在较高 SWCLK 频率下，边沿速度、振铃、过冲/过充与回落时间都可能直接影响 ACK 与采样稳定性。遇到“低频正常、高频随机失败”的情况，最好直接上示波器看 SWCLK / SWDIO 边沿，而不是只在软件层继续猜。
+较高 SWCLK 频率下，边沿速度、振铃、过冲/下冲和回落时间都会影响 ACK 与采样稳定性。出现低频正常、高频随机失败时，用示波器检查 SWCLK / SWDIO 边沿。
 
 ---
 

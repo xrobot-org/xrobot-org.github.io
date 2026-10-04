@@ -6,15 +6,15 @@ sidebar_position: 1
 
 # Topic 设计
 
-基础用法见消息系统里的 `Topic`、`SyncSubscriber`、`ASyncSubscriber` 和 `QueuedSubscriber` 页面。本文说明这套机制为什么拆成现在这几个角色。
+基础用法见 [Topic](/docs/basic_coding/middleware/message/message-topic)。本文说明这套机制为什么拆成现在这几个角色。
 
 ## `Topic` 解决的问题
 
-`Topic` 把同一进程内几种最常见的数据交接方式统一起来：发布者写入，订阅者按需接收，多发布者时再加保护。它不涉及共享内存、进程间同步或持久队列，这些需求交给别的组件处理。
+`Topic` 把同一进程内几种最常见的数据交接方式统一起来：发布者写入，订阅者按需接收，多发布者时再加保护。进程间共享内存由 `LinuxSharedTopic<T>` 提供。
 
 ## `Block` 的角色
 
-`Topic` 的核心结构是 `Block`，里面存放 payload 类型契约、名称 CRC32 键、订阅者链表，以及并发控制状态。它默认针对单发布者优化：没有开启 `multi_publisher` 时，只用一个原子 `busy` 状态做串行化；开启后才改用 `Mutex`。这样做是为了让常见的单发布者场景走轻量路径，而不是让所有发布都加锁。
+`Topic` 的核心结构是 `Block`，里面存放 payload 类型契约、名称 CRC32 键、订阅者链表，以及并发控制状态。它默认针对单发布者优化：没有开启 `multi_publisher` 时，只用一个原子 `busy` 状态做串行化；开启后才改用 `Mutex`。常见的单发布者场景因此不需要加锁。
 
 ## 为什么不再内置 latest cache
 
@@ -28,15 +28,15 @@ sidebar_position: 1
 
 ## 订阅者为什么分类型
 
-订阅者分成同步、异步、队列、回调四种，是因为它们对应四种不同的消费方式。`SyncSubscriber` 是“有新数据时唤醒我”，`ASyncSubscriber` 是“我稍后自己来取最新结果”，`QueuedSubscriber` 是“把每次发布都排进队列”，回调订阅是“发布时立即触发我”。如果合并成一个统一接口，要么只能取最保守的子集，要么把大量分支判断留到运行期。
+订阅者分成同步、异步、队列、回调四种，是因为它们对应四种不同的消费方式。`SyncSubscriber` 在新数据到达时唤醒等待的线程；`ASyncSubscriber` 发起等待后由下一次发布填充本地缓冲区，订阅方稍后查询并取走；`QueuedSubscriber` 把每次发布写入队列；回调订阅在发布时立即执行回调。如果合并成一个统一接口，要么只能取最保守的子集，要么把大量分支判断留到运行期。
 
-## 它不是严格的消息队列
+## 分发方式
 
-`Topic` 更像一套“发布时按消费方式分发数据”的框架，而不是严格的消息队列：同步路径用 `Semaphore`，异步路径用状态块，队列路径用 `SPSCQueue`，回调路径挂在 `LockFreeList` 上。它适合进程内的模块交接、日志分发、状态广播。如果需要进程间共享大 payload、明确的 queue-full 策略或零拷贝共享槽位，请改用 `LinuxSharedTopic<T>`，而不是往 `Topic` 里堆系统级功能。
+`Topic` 在发布时按订阅方式分发数据：各类订阅者都挂在 `Block` 的 `LockFreeList` 上，同步订阅用 `Semaphore` 唤醒，异步订阅使用自身的状态块，队列订阅写入 `SPSCQueue`，回调订阅直接执行回调。它适合进程内的模块交接、日志分发和状态广播。进程间共享大 payload、明确的队列满策略或零拷贝共享槽位由 `LinuxSharedTopic<T>` 提供。
 
 ## `WaitTopic` 和 domain
 
-`Topic` 可以按 domain 组织，不是全局平铺命名。`WaitTopic` 用来等待某个主题在对应 domain 中出现，而不是立刻拿到对象，适合模块初始化顺序不固定的情况。它提供的是进程内的轻量发现与绑定，不承担服务注册中心或跨进程目录的功能。
+`Topic` 可以按 domain 分组命名。`WaitTopic` 等待某个主题在对应 domain 中出现后返回其句柄，用于模块初始化顺序不固定的情况。它在进程内完成主题的发现与绑定。
 
 ## 定位
 

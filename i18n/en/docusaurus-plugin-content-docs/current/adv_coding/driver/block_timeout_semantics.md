@@ -6,10 +6,9 @@ sidebar_position: 3
 
 # BLOCK Timeout and Completion Handoff
 
-This page is not about the `SPI / I2C / UART` APIs themselves. It is about what `BLOCK` timeout
-really means once the implementation runs on an asynchronous completion path. The core question is
-always the same: the caller stopped waiting, but will the backend still complete; if it will, is
-that completion still allowed to wake the old waiter.
+This page describes what a `BLOCK` timeout means on an asynchronous completion path: after the
+caller stops waiting, whether the backend still completes, and if it does, whether that completion
+may still wake the original waiter.
 
 ## 1. What `BLOCK timeout` really means
 
@@ -19,7 +18,7 @@ hardware has stopped. If the backend was already started, late completion can st
 
 ## 2. Why detach semantics exist
 
-If timeout simply clears the port or waiter state by force, a typical failure appears:
+If timeout clears the port or waiter state directly, the following happens:
 
 1. the caller already returned `TIMEOUT`
 2. the old backend completion arrives later
@@ -36,7 +35,11 @@ look synchronous from the outside but wait on asynchronous completion internally
 hardware. It only makes ownership of completion explicit: `Start(sem)` attaches a waiter in
 `PENDING`, `TryPost(...)` only wakes when `PENDING -> CLAIMED` succeeds, and `Wait(timeout)` turns
 the waiter into `DETACHED` after timeout. If a late completion only sees `DETACHED`, it must clean
-up silently and must not post again.
+up silently and must not post again. `Cancel()` returns the state to `IDLE` without posting when the
+hardware fails to start. `AsyncBlockWait` does not check whether the previous transfer has ended:
+`Start()` always enters `PENDING`, and a late completion of an older transfer arriving after that
+claims the new waiter. A driver therefore confirms that the hardware is idle before calling
+`Start()`; for example, `STM32SPI` returns `BUSY` unless the HAL state is `HAL_SPI_STATE_READY`.
 
 ## 4. Common bugs
 
@@ -64,14 +67,14 @@ Correct order:
 
 If the same semaphore is reused across multiple `BLOCK` calls and the wait path only checks
 `sem->Wait(timeout) == OK`, then a token left behind by the previous call can be misread as the
-current completion. What actually matters is whether `busy_` or waiter state has already reached the
-`CLAIMED` state for the current operation. Without that ownership check, the wakeup may just be a
+current completion. What matters is whether the completion side of the current operation has moved
+the wait state to `CLAIMED` (`AsyncBlockWait`'s `CLAIMED`, or the port's `BLOCK_CLAIMED`). Without
+that ownership check, the wakeup may just be a
 stale token.
 
 ### 4.3 Returning on timeout without detach
 
-This looks simple, but it almost always leaves damage behind. After timeout returns, the old
-completion path can still mutate shared state, post the semaphore again, or even overwrite the
+After timeout returns, the old completion path can still mutate shared state, post the semaphore again, or even overwrite the
 ownership of a new waiter. Before returning on timeout, the completion side must be told explicitly
 that this waiter no longer belongs to the current caller.
 
@@ -102,38 +105,20 @@ When timeout races completion, two outcomes exist.
 So `BLOCK timeout` is not simply "timeout means failure". The real answer depends on who finally
 owns that completion.
 
-## 6. Why `Reset()` cannot bypass the same semantics
-
-If `Reset()` forces state back to `IDLE` while an active `BLOCK` waiter still exists, it usually
-causes:
-
-- the old waiter to lose ownership
-- a new waiter to enter too early
-- the old completion to hit the new state later
-
-So the safer rule is:
-
-- `Reset()` detaches an active `BLOCK` waiter first
-- completion remains silent
-- reopen only after the old handoff drains
-
-That is the same problem as timeout, not a separate reset-only concern.
-
-## 7. Why `SPI / I2C` hits this easily
+## 6. Why `SPI / I2C` hits this easily
 
 Compared with long-lived streaming paths such as UART or USB, `SPI / I2C` is more often written in
 the shape of "launch one transaction, then wait synchronously in a thread". The surface looks
-synchronous, but the backend is still driven by DMA, IRQ, and a state machine. Once the synchronous
-surface is mistaken for a synchronous implementation, waiter-arm races, stale tokens after timeout,
-non-silent late completion, and reset reopening too early all appear at once.
+synchronous, but the backend is still driven by DMA, IRQ, and a state machine. Treating the
+synchronous surface as a synchronous implementation leads to problems such as arming the waiter
+after the hardware starts, stale semaphore tokens after timeout, and late completions that do not
+stay silent.
 
-## 8. A practical checklist
+## 7. A practical checklist
 
-To check whether a `BLOCK` driver path is sound, ask four things:
+A `BLOCK` driver path is checked for four points:
 
 - is the waiter armed before hardware becomes visible
 - does timeout explicitly detach
 - does late completion stay silent after detach
 - does the final result match the actual caller-visible buffer contents
-
-If all four hold, the `BLOCK` semantics are usually sound.

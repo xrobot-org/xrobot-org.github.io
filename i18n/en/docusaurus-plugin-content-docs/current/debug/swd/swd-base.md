@@ -6,13 +6,13 @@ sidebar_position: 1
 
 # SWD Base Class (`LibXR::Debug::Swd`)
 
-This document describes `LibXR::Debug::Swd`: an abstract base class for **SWD probes / link backends**. It provides the minimal link control interface, a single-transfer primitive (`Transfer()`), and higher-level utilities built on top of it, including **WAIT retry wrapping** and **DP/AP helper functions**, intended for reuse by higher layers (e.g., CMSIS-DAP, debuggers, flash programmers).
+This document describes `LibXR::Debug::Swd`: an abstract base class for SWD probes / link backends. It provides the minimal link control interface, a single-transfer primitive (`Transfer()`), and higher-level utilities built on top of it, including WAIT retry wrapping and DP/AP helper functions, intended for reuse by higher layers (e.g., CMSIS-DAP, debuggers, flash programmers).
 
 ---
 
 ## 1. Design Role
 
-`Swd` is positioned as a **portable SWD transaction-layer abstraction**:
+`Swd` is a portable SWD transaction-layer abstraction:
 
 - Hardware-specific parts are implemented by derived classes: GPIO/USART/SPI/bit-bang backends, timing, endpoint driving, concurrency strategy, etc.
 - The base class provides common logic:

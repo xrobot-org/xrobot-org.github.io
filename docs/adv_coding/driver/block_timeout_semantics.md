@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # BLOCK 超时与完成交接
 
-这页讨论的不是 `SPI / I2C / UART` 的接口，而是 `BLOCK` 超时在异步完成路径里的实际含义。问题的核心始终是同一个：调用者已经不等了，底层还会不会继续完成；如果会，这次完成还能不能再去唤醒旧的 waiter。
+本文说明异步完成路径中 `BLOCK` 超时的含义：调用者停止等待之后，底层是否还会完成；如果会，这次完成是否还能唤醒原来的等待者。
 
 ## 1. `BLOCK timeout` 的真实含义
 
@@ -14,7 +14,7 @@ sidebar_position: 3
 
 ## 2. 为什么要有 detach 语义
 
-如果 timeout 之后直接把端口或 waiter 粗暴清零，就会遇到一个典型问题：
+如果超时后直接把端口或等待状态清零，会出现以下问题：
 
 1. 调用者已经返回 `TIMEOUT`
 2. 老的底层完成稍后到来
@@ -24,7 +24,7 @@ sidebar_position: 3
 
 ## 3. `AsyncBlockWait` 解决什么问题
 
-`AsyncBlockWait` 做的事情很单纯，就是给驱动内部“同步等待一个异步完成”的路径提供标准 handoff。它不负责取消底层硬件，只负责说清楚这次完成还属不属于当前同步调用者：`Start(sem)` 把 waiter 挂起成 `PENDING`，`TryPost(...)` 只有在 `PENDING -> CLAIMED` 成功时才允许唤醒当前 waiter，`Wait(timeout)` 超时后则把 waiter 切成 `DETACHED`。如果迟到完成只看见 `DETACHED`，那就只能静默回收，不能再 post。
+`AsyncBlockWait` 做的事情很单纯，就是给驱动内部“同步等待一个异步完成”的路径提供标准 handoff。它不负责取消底层硬件，只负责说清楚这次完成还属不属于当前同步调用者：`Start(sem)` 把 waiter 挂起成 `PENDING`，`TryPost(...)` 只有在 `PENDING -> CLAIMED` 成功时才允许唤醒当前 waiter，`Wait(timeout)` 超时后则把 waiter 切成 `DETACHED`。如果迟到完成只看见 `DETACHED`，那就只能静默回收，不能再 post。`Cancel()` 在硬件启动失败时把状态清回 `IDLE`，不发送通知。`AsyncBlockWait` 不检查上一次传输是否结束：`Start()` 总是进入 `PENDING`，若旧传输的迟到完成在此之后到达，会认领新的等待者。因此驱动在调用 `Start()` 前须确认硬件空闲，例如 `STM32SPI` 在 HAL 状态不是 `HAL_SPI_STATE_READY` 时返回 `BUSY`。
 
 ---
 
@@ -54,13 +54,13 @@ sidebar_position: 3
 
 ### 4.2 把旧 semaphore token 当成本次完成
 
-如果一个 semaphore 被重复用于多次 `BLOCK` 调用，而等待路径只把 `sem->Wait(timeout) == OK` 当成成功，上一次残留的 token 就可能被误认成当前完成。这里真正要做的是先确认 `busy_` 或 waiter 状态已经进入当前操作对应的 `CLAIMED`。只有这样，这次 wake 才属于本次操作；否则就应该继续等待，把它当成 stale token。
+如果一个 semaphore 被重复用于多次 `BLOCK` 调用，而等待路径只把 `sem->Wait(timeout) == OK` 当成成功，上一次残留的 token 就可能被误认成当前完成。这里需要先确认等待状态已由本次操作的完成方切换为 `CLAIMED`（`AsyncBlockWait` 的 `CLAIMED`，或端口的 `BLOCK_CLAIMED`）。只有这样，这次 wake 才属于本次操作；否则就应该继续等待，把它当成 stale token。
 
 ---
 
 ### 4.3 `timeout` 后只返回，不做 detach
 
-这种实现看起来简单，但几乎一定会留下后患。因为 timeout 返回之后，老完成路径还可能修改共享状态、继续 post semaphore，甚至覆盖新 waiter 的 ownership。所以 timeout 返回前必须明确做一件事：让完成路径知道“这个 waiter 已经不属于当前调用者了”。
+超时返回之后，旧的完成路径仍可能修改共享状态、再次 post 信号量，甚至覆盖新等待者的归属。因此超时返回前必须让完成路径知道该等待者已不属于当前调用者。
 
 ---
 
@@ -91,30 +91,12 @@ sidebar_position: 3
 
 ---
 
-## 6. `Reset()` 也不能跳过这套语义
+## 6. 这件事为什么在 `SPI / I2C` 上特别容易出问题
 
-`Reset()` 如果在有活跃 `BLOCK` waiter 时直接把状态清回 `IDLE`，通常会造成：
-
-- 旧 waiter 丢失 ownership
-- 新 waiter 提前进入
-- 老完成再来时踩到新状态
-
-因此当前更稳妥的做法是：
-
-- `Reset()` 对活跃 `BLOCK` waiter 也先走 detach
-- 保持完成侧静默
-- 旧交接排空后再重新开放
-
-这和 timeout 是同一类问题，不是单独的“重置逻辑”。
+相对 UART、USB 这类长期流式路径，`SPI / I2C` 更容易写成“发起一次事务，再在线程里同步等一个结果”的形状。问题在于外观是同步的，底层往往仍然是 DMA、IRQ 和状态机推进。把同步外观当作同步实现时，容易出现等待者晚于硬件启动才挂起、超时后残留信号量 token、迟到完成未保持静默等问题。
 
 ---
 
-## 7. 这件事为什么在 `SPI / I2C` 上特别容易出问题
+## 7. 一个实用判断标准
 
-相对 UART、USB 这类长期流式路径，`SPI / I2C` 更容易写成“发起一次事务，再在线程里同步等一个结果”的形状。问题在于外观是同步的，底层往往仍然是 DMA、IRQ 和状态机推进。一旦把“同步外观”误当成“同步实现”，`waiter arm race`、timeout 后 stale token、completion 不静默、reset 提前 reopen 这些问题就都会冒出来。
-
----
-
-## 8. 一个实用判断标准
-
-看某个 `BLOCK` 驱动路径写得对不对，先问四件事：waiter 是不是在硬件可见之前就已经挂好；timeout 之后是否明确 detach；迟到完成是否会对已 detach 的 waiter 保持静默；最终结果是否和 caller-visible buffer 的实际内容一致。四条都成立，`BLOCK` 语义通常才算站住。
+检查一个 `BLOCK` 驱动路径时确认四点：waiter 是不是在硬件可见之前就已经挂好；timeout 之后是否明确 detach；迟到完成是否会对已 detach 的 waiter 保持静默；最终结果是否和 caller-visible buffer 的实际内容一致。
