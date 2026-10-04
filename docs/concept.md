@@ -1,7 +1,7 @@
 ---
 id: concept
 title: 设计思想
-sidebar_position: 2
+sidebar_position: 10
 ---
 
 # 设计思想

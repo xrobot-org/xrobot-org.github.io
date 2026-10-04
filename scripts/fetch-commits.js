@@ -2,22 +2,35 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 
-const repos = {
-  XRobot: {repo: 'xrobot-org/XRobot', ref: 'master'},
-  LibXR: {repo: 'xrobot-org/libxr', ref: 'master'},
-  CodeGen: {repo: 'xrobot-org/LibXR_CppCodeGenerator', ref: 'master'},
+// The homepage version card shows the released versions of the two pip
+// packages and the LibXR commit on master.
+const pypiPackages = {
+  xrobotVersion: 'xrobot',
+  codegenVersion: 'libxr',
+};
+
+const commits = {
+  libxrCommit: {repo: 'xrobot-org/libxr', ref: 'master'},
 };
 
 (async () => {
   const result = {};
-  for (const [name, info] of Object.entries(repos)) {
+  for (const [key, name] of Object.entries(pypiPackages)) {
+    try {
+      const res = await axios.get(`https://pypi.org/pypi/${name}/json`);
+      result[key] = res.data.info.version;
+    } catch {
+      result[key] = 'Error';
+    }
+  }
+  for (const [key, info] of Object.entries(commits)) {
     try {
       const res = await axios.get(
         `https://api.github.com/repos/${info.repo}/commits/${info.ref}`
       );
-      result[name] = res.data.sha.substring(0, 7);
+      result[key] = res.data.sha.substring(0, 7);
     } catch {
-      result[name] = 'Error';
+      result[key] = 'Error';
     }
   }
 

@@ -1,7 +1,7 @@
 ---
 id: debug
 title: 调试接口
-sidebar_position: 8
+sidebar_position: 7
 ---
 
 # 调试接口

@@ -78,6 +78,12 @@ module.exports = {
       },
       items: [
         {
+          type: 'docSidebar',
+          sidebarId: 'docs',
+          label: '文档',
+          position: 'left',
+        },
+        {
           type: 'localeDropdown',
           position: 'right',
         },

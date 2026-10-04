@@ -1,7 +1,7 @@
 ---
 id: debug
 title: Debug Interfaces
-sidebar_position: 8
+sidebar_position: 7
 ---
 
 # Debug Interfaces
