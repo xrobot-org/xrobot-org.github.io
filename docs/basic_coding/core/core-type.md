@@ -22,7 +22,7 @@ class RawData;
 
 - `RawData(void* addr, size_t size)`：直接指定地址与大小。
 - `RawData()`：默认构造，空数据。
-- `RawData(T&)`：从**可写对象**构造，指向其地址。
+- `RawData(T&)`：从**可写对象**构造，指向其地址，大小为 `sizeof(T)`；不接受 `std::string` 和 `std::string_view`。
 - `RawData(char*)`：从 C 字符串构造（不含结尾 `\0`）。
 - `RawData(char (&str)[N])`：从可写字符数组构造，最多裁掉一个尾随 `\0`。
 - `explicit RawData(std::string&)`：从可写 `std::string` 构造，指向其文本内容。
@@ -44,14 +44,14 @@ class ConstRawData;
 
 ### 构造方式
 
-- 支持从任意对象、`RawData`、`char* / const char*`、字符数组构造；从 `std::string`、`std::string_view` 构造需显式写出（构造函数为 `explicit`）。
+- 支持从任意对象（`std::string`、`std::string_view` 除外）、`RawData`、`char* / const char*`、字符数组构造；`std::string`、`std::string_view` 只能显式构造（构造函数为 `explicit`）。
 - 与 `RawData` 不同，`ConstRawData` 明确以 `const void*` 暴露地址，适合只读场景。
 
 补充说明：
 
 - 字符数组构造当前只会裁掉**一个尾随 `\0`**，其余字节保持原样；
 - `char* / const char*` 构造会以 `std::strlen(...)` 作为长度，因此要求文本本身是 NUL 结尾字符串。
-- `std::string`、`std::string_view` 隐式传给 `ConstRawData` 或 `RawData` 形参时会匹配任意对象构造，视图覆盖 `std::string` 对象本身（`sizeof(std::string)` 字节）而不是文本，因此应写成 `LibXR::ConstRawData(text)`。
+- `std::string`、`std::string_view` 不能隐式转换为 `ConstRawData` 或 `RawData`：直接传给这类形参或用 `=` 初始化时编译失败。文本视图须显式写成 `LibXR::ConstRawData(text)`（可写的 `std::string` 也可写成 `LibXR::RawData(text)`），大小为 `text.size()`。
 
 ### 字段
 

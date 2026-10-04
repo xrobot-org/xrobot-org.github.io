@@ -22,7 +22,7 @@ A generic data wrapper that stores a pointer and size in bytes.
 
 - `RawData(void* addr, size_t size)` – Specify address and size directly.
 - `RawData()` – Default constructor for empty data.
-- `RawData(T&)` – Construct from a **writable** object, referencing its address.
+- `RawData(T&)` – Construct from a **writable** object, referencing its address, with size `sizeof(T)`; `std::string` and `std::string_view` are not accepted.
 - `RawData(char*)` – Construct from a C-style string (excluding the trailing `\0`).
 - `RawData(char (&str)[N])` – Construct from a writable char array, trimming at most one trailing `\0`.
 - `explicit RawData(std::string&)` – Construct from a writable `std::string`, viewing its text.
@@ -44,14 +44,14 @@ Read-only data wrapper, similar to `RawData` but with an immutable address:
 
 ### Constructors
 
-- Constructible from arbitrary objects, `RawData`, `char* / const char*` and char arrays; construction from `std::string` and `std::string_view` must be explicit (the constructors are `explicit`).
+- Constructible from arbitrary objects (except `std::string` and `std::string_view`), `RawData`, `char* / const char*` and char arrays; `std::string` and `std::string_view` convert only explicitly (the constructors are `explicit`).
 - Ensures `addr_` is of type `const void*`, suitable for read-only views.
 
 Additional notes:
 
 - Char-array construction currently trims **at most one trailing `\0`**, not every zero byte in the array.
 - `char* / const char*` construction uses `std::strlen(...)`, so it expects a NUL-terminated string.
-- Passing a `std::string` or `std::string_view` implicitly to a `ConstRawData` or `RawData` parameter selects the any-object constructor, so the view covers the object itself (`sizeof(std::string)` bytes), not its text; write `LibXR::ConstRawData(text)`.
+- `std::string` and `std::string_view` do not convert implicitly to `ConstRawData` or `RawData`: passing one directly to such a parameter or initializing with `=` fails to compile. A text view must be written explicitly as `LibXR::ConstRawData(text)` (a writable `std::string` also as `LibXR::RawData(text)`), with size `text.size()`.
 
 ### Fields
 

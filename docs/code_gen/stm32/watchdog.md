@@ -16,7 +16,7 @@ sidebar_position: 12
   static STM32Watchdog iwdg(&hiwdg, 1000, 250);
 ```
 
-构造函数的参数是 HAL 句柄、溢出时间和喂狗间隔（毫秒）。构造函数按 LSI 时钟计算分频和重载值，然后启动看门狗。
+构造函数的参数是 HAL 句柄、溢出时间和喂狗间隔（毫秒）。构造函数按 LSI 时钟计算分频和重载值，在 IWDG 带窗口功能的系列上关闭窗口，然后调用 `HAL_IWDG_Init()` 写入配置并启动看门狗。
 
 随后是首次喂狗和定时器任务，默认每 250 ms 喂狗一次：
 
@@ -68,4 +68,8 @@ libxr stm32 setup -d .
 
 ## 注意事项
 
-STM32CubeMX 生成的 `MX_IWDG_Init()` 会直接使能看门狗，之后除复位外无法关闭和重新配置。可以在 CubeMX 的 Project Manager → Advanced Settings 中取消该函数的生成和调用，由 `STM32Watchdog` 的构造函数完成初始化。
+STM32CubeMX 生成的 `MX_IWDG_Init()` 保持生成和调用。它在 `main()` 中按 CubeMX 设置的分频和重载值调用 `HAL_IWDG_Init()`，IWDG 从此开始计数。IWDG 启动后只能由复位停止；`STM32Watchdog::Stop()` 只停止自动喂狗，返回 `ErrorCode::NOT_SUPPORT`。
+
+`STM32Watchdog` 的构造函数再次调用 `HAL_IWDG_Init()`，用 `timeout_ms` 对应的分频和重载值替换 CubeMX 的设置，并重载计数器。F0、F3、F7、G0、G4、H7、L0 等系列的 IWDG 带窗口功能（HAL 定义了 `IWDG_WINDOW_DISABLE`），构造函数同时关闭窗口，任何时刻喂狗都有效；F1、F4 的 IWDG 没有窗口。
+
+构造函数执行之前没有代码喂狗。CubeMX 中设置的溢出时间需长于从 `MX_IWDG_Init()` 到构造函数之间的启动过程，包括数据库首次初始化时擦除 Flash 扇区的时间。
