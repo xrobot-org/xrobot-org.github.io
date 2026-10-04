@@ -65,7 +65,7 @@ int main() {
 | 多线程/RTOS | Thread::SleepUntil + 管理线程 | 自动启动管理线程，1ms 精度循环检查并调度任务。          |
 | 裸机/单线程   | RefreshTimerInIdle 自动调用   | Thread 延时/Mutex/信号量等待时自动刷新，无需手动调用。 |
 
-移植到新平台时，仅需保证 Thread 及 Timebase 支持，无需修改 Timer 主体逻辑。
+管理线程的优先级和栈深度由 `PlatformInit()` 的参数设置，见[平台初始化](./README.md#平台初始化)。Timer 的实现不随平台变化，它依赖的 Thread 与 Timebase 由各平台提供，无线程后端还需提供 `RefreshTimerInIdle()`，见 [平台移植](../../adv_coding/porting.md)。
 
 ## 参考实现细节
 

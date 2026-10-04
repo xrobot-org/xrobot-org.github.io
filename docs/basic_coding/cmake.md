@@ -57,7 +57,7 @@ add_subdirectory(libxr)
 - `webasm`
 - `webots`
 
-CMake 内部会把配置名称转换为小写。Windows 可以作为 MCU 交叉编译和文档开发主机；当前仓库没有 `system/windows` 与 `driver/windows`，因此没有原生 Windows LibXR 后端。
+CMake 内部会把配置名称转换为小写。交叉编译时须设置 `LIBXR_SYSTEM`，未设置时配置阶段报 `No system selected.`。不交叉编译时，未设置的 `LIBXR_SYSTEM` 和 `LIBXR_DRIVER` 按主机选择：Linux 主机选择 `linux`，设置了 CMake 变量 `WEBOTS_HOME` 时选择 `webots`。Windows 主机用于 MCU 工程的交叉编译；主机程序在 WSL 或 `docker-image-linux` 镜像（见 [Docker 环境配置](../env_setup/docker.md)）的 Linux 环境中构建。
 
 ## 常用选项
 
@@ -85,7 +85,7 @@ XR_LOG_MESSAGE_MAX_LEN
 LIBXR_DEFAULT_SCALAR
 ```
 
-格式化功能还可以裁剪 64 位整数、double、科学计数、指针、显式参数索引等代码。具体选项见 `cmake/config.cmake`。
+格式化功能还可以裁剪 64 位整数、double、科学计数、指针、显式参数索引等代码。各选项及默认值见[编译期格式化输出](./core/core-print.md)的“打印配置”一节。
 
 ## XRobot 模块
 

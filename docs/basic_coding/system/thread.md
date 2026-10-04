@@ -72,11 +72,7 @@ int main() {
 | **Webots** | `system/webots/thread.hpp` + `thread.cpp` | `pthread_create`；`Sleep` / `SleepUntil` 等待仿真时间通知（`pthread_cond_timedwait`） |
 | **WebAssembly** | `system/webasm/thread.hpp` + `thread.cpp` | 与 None 相同：`Create()` 直接调用线程函数，延时期间轮询 `Timebase` 并调用 `Timer::RefreshTimerInIdle` |
 
-移植新平台时，仅需：
-
-1. 在 `system/<os>/` 下实现对应的 `thread.hpp / thread.cpp`；
-2. 在 `libxr_system.hpp` 中 typedef `libxr_thread_handle`；
-3. 更新构建系统以选择正确源文件。
+新平台的 `thread.hpp`、`thread.cpp` 与系统层的其他文件一起实现，所需文件见 [平台移植](../../adv_coding/porting.md)。
 
 ## 参考实现细节
 
