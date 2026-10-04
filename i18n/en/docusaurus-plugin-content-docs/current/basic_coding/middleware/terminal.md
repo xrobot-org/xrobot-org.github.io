@@ -28,6 +28,13 @@ template <size_t READ_BUFF_SIZE = 32,
 class Terminal;
 ```
 
+- `READ_BUFF_SIZE`: the maximum number of bytes taken from the read port at a time;
+- `MAX_LINE_SIZE`: the maximum number of characters in one line, equal to `READ_BUFF_SIZE` by default; further characters are not added to the input line and are not echoed;
+- `MAX_ARG_NUMBER`: the maximum number of arguments parsed from one line, including the command itself;
+- `MAX_HISTORY_NUMBER`: the number of history entries kept.
+
+When a command line can be longer than 32 characters, larger template arguments are used, for example `LibXR::Terminal<64>`, which sets both the read buffer and the line length to 64.
+
 ## Constructor
 
 ```cpp
@@ -80,16 +87,8 @@ LibXR::Timer::Start(terminal_task);
 
 - Receives stream data via `ReadPort`, parses ANSI and input characters sequentially;
 - Outputs prompts, echo, and feedback via `WritePort`;
-- Offers loop functions: `ThreadFun` for thread mode and `TaskFun` for periodic polling.
-
-## Internal Classes & Structures
-
-- `Stack<char> input_line_`: Input buffer;
-- `Queue<HistoryLine> history_`: Command history;
-- `arg_tab_[]`: Parsed argument array;
-- `Path2Dir`, `Path2File`: Path resolution utilities;
-- `AutoComplete()`: Completion handler;
-- `ExecuteCommand()`: Entry point for command execution.
+- `ThreadFun` reads the port in `BLOCK` mode, processes input in a loop and does not return; it runs in its own thread;
+- `TaskFun` reads the port by polling; each call processes the input that has arrived and returns, and a Timer calls it periodically.
 
 ## Interface Summary
 
@@ -99,14 +98,6 @@ LibXR::Timer::Start(terminal_task);
 - `AddCharToInputLine`, `DeleteChar`: Line editing support;
 - `ExecuteCommand()`: Execute command;
 - `ThreadFun()`, `TaskFun()`: Driver functions.
-
-## Design Principles
-
-- Supports both blocking and non-blocking modes: thread version uses blocking I/O, task version is suitable for polling or event-driven systems;
-- All output is unified via `WriteOperation`;
-- Compatible with console input and graphical terminal emulation;
-- Designed to integrate with standard embedded threads or task schedulers;
-- Works with `RamFS` to allow dynamic command extension via executable files.
 
 ---
 

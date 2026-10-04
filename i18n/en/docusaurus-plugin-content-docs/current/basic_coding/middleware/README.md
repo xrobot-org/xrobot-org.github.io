@@ -19,9 +19,4 @@ The middleware consists of logging, events, messaging (in-process Topic, packet 
 - [RamFS In-Memory File System](./ramfs.md)
 - [Terminal Command Interface](./terminal.md)
 
-Notes:
-
-- In current mainline, the message subsystem is no longer best understood as one catch-all page; the contracts and tradeoffs of `Topic`, `Packet/Server`, and `LinuxSharedTopic` are split into their own pages and should be read there.
-- Current `RamFS` public docs are based on the `Custom` node model, not the older `Device` node model that appeared in older materials.
-
 For detailed API descriptions, see the individual pages.

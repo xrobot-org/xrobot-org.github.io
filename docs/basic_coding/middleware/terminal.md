@@ -28,6 +28,13 @@ template <size_t READ_BUFF_SIZE = 32,
 class Terminal;
 ```
 
+- `READ_BUFF_SIZE`：每次从读端口取出的最大字节数；
+- `MAX_LINE_SIZE`：一行最多容纳的字符数，默认等于 `READ_BUFF_SIZE`，超出的字符不加入输入行，也不回显；
+- `MAX_ARG_NUMBER`：一行最多解析的参数个数（含命令本身）；
+- `MAX_HISTORY_NUMBER`：保存的历史命令条数。
+
+命令行可能超过 32 个字符时，增大模板参数，例如 `LibXR::Terminal<64>`，读缓冲区和行长度都为 64。
+
 ## 构造函数
 
 ```cpp
@@ -80,16 +87,8 @@ Terminal(RamFS &ramfs,
 
 - 通过 ReadPort 接收数据流，并依序解析 ANSI 控制字符与输入字符；
 - 通过 WritePort 输出命令行提示、回显字符、反馈信息；
-- 提供循环线程函数 `ThreadFun` 与任务函数 `TaskFun`，分别适用于线程与定时轮询任务。
-
-## 内部使用的类与结构
-
-- `Stack<char> input_line_`: 输入缓冲；
-- `Queue<HistoryLine> history_`: 命令历史；
-- `arg_tab_[]`: 解析后的参数数组；
-- `Path2Dir`, `Path2File`: 路径解析工具；
-- `AutoComplete()`: 补全处理；
-- `ExecuteCommand()`: 命令解析与运行入口。
+- `ThreadFun` 以 `BLOCK` 方式读取端口，循环处理输入，不返回，在独立线程中运行；
+- `TaskFun` 以轮询方式读取端口，每次调用处理已经到达的输入后返回，由 Timer 周期调用。
 
 ## 接口摘要
 
@@ -99,14 +98,6 @@ Terminal(RamFS &ramfs,
 - `AddCharToInputLine`, `DeleteChar`: 行编辑支持；
 - `ExecuteCommand()`: 命令执行；
 - `ThreadFun()`, `TaskFun()`: 驱动函数。
-
-## 设计思想
-
-- 支持阻塞与非阻塞运行模式；线程版本采用阻塞读写，适用于独立线程环境，任务版本适用于定期轮询或事件驱动；
-- 所有输出均通过 `WriteOperation` 统一调用；
-- 所有解析逻辑兼容控制台输入与图形终端模拟；
-- 支持标准嵌入式线程与任务调度系统接入；
-- 与 `RamFS` 协同工作，允许通过创建可执行文件动态扩展命令集。
 
 ---
 

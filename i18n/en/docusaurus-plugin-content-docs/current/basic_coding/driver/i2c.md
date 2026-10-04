@@ -57,6 +57,14 @@ virtual ErrorCode MemWrite(uint16_t slave_addr, uint16_t mem_addr,
 
 See [Operation Model](../core/core-op.md) and [BLOCK Timeout and Completion Handoff](../../adv_coding/driver/block_timeout_semantics.md) for completion modes of `ReadOperation` / `WriteOperation`.
 
+## Behavior
+
+- An I2C object handles one transfer at a time and does not queue. While the previous transfer on the bus is still running, a new call returns `BUSY`.
+- A `BLOCK` operation returns the transfer result, or `TIMEOUT` when the wait times out. Other operations return `OK` to mean that the transfer has started or has already completed; the result is reported through the `Operation`.
+- When the length exceeds the backend constructor parameter `dma_enable_min_size` (3 by default on STM32 and CH32, 8 on MSPM0), the transfer runs by DMA or interrupts; other transfers complete by polling inside the call, and the callback has run or the polling status has been updated before the call returns.
+- A 7-bit `slave_addr` takes `0x00`–`0x7F`. The STM32 backend accepts `0x000`–`0x3FF` when 10-bit addressing is selected in CubeMX.
+- Writes and DMA reads on the STM32 backend go through the `dma_buff` passed to the constructor, so the data length cannot exceed its size; `MemRead()` and `MemWrite()` check this with an `ASSERT`.
+
 ## Feature Summary
 
 - Supports reading and writing I2C devices and their registers;  
