@@ -1,10 +1,10 @@
 ---
 id: proj-man-source-man
-title: Module Catalogs
+title: Sources
 sidebar_position: 5
 ---
 
-# Module Catalogs
+# Sources
 
 A Source is an `index.yaml` that lists Module and BSP Git repositories. A BSP's `Modules/sources.yaml` combines several Sources; `xrobot setup` uses them to map `owner/Repo` to a repository.
 

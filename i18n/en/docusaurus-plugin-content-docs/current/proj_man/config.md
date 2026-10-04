@@ -1,10 +1,10 @@
 ---
 id: proj-man-config
-title: Application Configuration
+title: Configuration
 sidebar_position: 2
 ---
 
-# Application Configuration
+# Configuration
 
 A configuration describes one product: which Module instances are constructed, in which order, and the value of every constructor parameter. Every `*.yaml` under `User/` (including subdirectories) except `User/libxr_config.yaml` is a configuration, and `xrobot setup` checks all of them.
 
@@ -157,6 +157,10 @@ xrobot format [--check] [-c CONFIG]...
 ```
 
 The `set` value is read like a value in the config: C++ code without quotes or in single quotes, a C++ string in double quotes. Windows PowerShell 5.1 drops the double quotes from an argument it passes to `xrobot`, so there the string in the example is written `'\"bmi088_gyro\"'`. With `--json` the value is JSON whose strings are C++ text; the VS Code extension writes values this way. The path is `template_args[n]` or `args.<param>[.<field>|[n]]...`; an instance id is changed with `rename`, which also rewrites the references to it; `args` itself can be replaced by a whole list to switch to another constructor. `--if-match <sha256>` refuses the write if the file changed since it was read (the SHA-256 of the LF-normalized file).
+
+---
+
+## xrobot describe
 
 `xrobot describe` prints, as JSON, everything generation reads and checks: the configurations and the selected one, header freshness, tool pins, locked Modules, constructor signatures, the fields a mapping must name, registrations with their types, the names each parameter can bind to, and diagnostics. The VS Code extension renders and edits configurations from it.
 

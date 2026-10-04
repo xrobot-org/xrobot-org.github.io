@@ -1,10 +1,10 @@
 ---
 id: proj-man-source-man
-title: 模块源
+title: 源
 sidebar_position: 5
 ---
 
-# 模块源
+# 源
 
 源是一个 `index.yaml`，列出模块和 BSP 的 Git 仓库。BSP 的 `Modules/sources.yaml` 组合多个源；`xrobot setup` 用它把 `owner/Repo` 解析为仓库地址。
 

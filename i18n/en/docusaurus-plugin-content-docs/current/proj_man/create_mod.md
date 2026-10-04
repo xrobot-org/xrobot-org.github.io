@@ -107,43 +107,6 @@ xrobot instance add owner/MySensor
 
 Edit and build directly in the BSP's `Modules/owner/MySensor/`, keeping the changes uncommitted. When they are ready, commit and push them to a branch of the Module repository, then run `xrobot setup --update owner/MySensor` in the BSP to update the lock.
 
-To be added to a BSP, the Module must be listed in a Source; see [Module Catalogs](./src_man.md).
+To be added to a BSP, the Module must be listed in a Source; see [Sources](./src_man.md).
 
----
-
-## Module CI
-
-Module repositories call the shared workflow `xrobot-org/XRobot/.github/workflows/module-ci.yml`. The `.github/workflows/build.yml` of official Modules on their `dev` line:
-
-```yaml
-name: Module CI
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
-jobs:
-  build:
-    uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@dev
-    with:
-      xrobot-ref: dev
-      libxr-ref: dev
-      dependency-ref: refs/heads/dev
-      template-args: '[]'
-```
-
-In a Linux container the workflow resolves the Module's dependencies, runs `xrobot check-module` to write one constructor call, and compiles the Module sources and that call against LibXR. Dependencies are `void*` placeholders; the call is compiled, never executed. For a `standalone: false` library, only its headers and sources are compiled.
-
-`xrobot check-module` resolves Modules as `xrobot setup` does and updates `xrobot.lock` and `Modules/`; `-o FILE` names the output file (default `module_check.cpp`), `--template-arg` gives one template argument of a class template (once per argument), and `--offline` uses only the Modules already in `Modules/`.
-
-| Input | Default | Meaning |
-| --- | --- | --- |
-| `xrobot-ref` | `master` | XRobot version used |
-| `libxr-ref` | `master` | LibXR version used |
-| `dependency-ref` | `refs/heads/master` | Context for `same-or-dev` dependencies |
-| `template-args` | `'[]'` | Template arguments for a class template (JSON list) |
-| `sources` | empty | Further index URLs, one per line; the official indexes win when both list a package |
-| `image` | `ghcr.io/xrobot-org/docker-image-linux:main` | Build container |
-| `apt-packages` | empty | Extra Debian packages |
-| `cmake-options` | empty | Extra CMake configure options |
-| `ctest-regex` | empty | When set, build tests and run the matching CTest tests |
-| `ctest-timeout` | `15` | Per-test CTest timeout in seconds |
+The `.github/workflows/build.yml` that `new-module` writes calls the shared Module CI; its steps and inputs are described in [CI and Firmware Release](./ci.md#module-ci).

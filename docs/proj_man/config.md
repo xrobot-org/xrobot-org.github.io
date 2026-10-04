@@ -1,10 +1,10 @@
 ---
 id: proj-man-config
-title: 应用配置
+title: 配置
 sidebar_position: 2
 ---
 
-# 应用配置
+# 配置
 
 配置描述一个产品：按顺序构造哪些模块实例、每个构造参数的值。`User/` 下除 `User/libxr_config.yaml` 以外的每个 `*.yaml`（含子目录）都是一份配置，`xrobot setup` 会检查全部配置。
 
@@ -157,6 +157,10 @@ xrobot format [--check] [-c CONFIG]...
 ```
 
 `set` 的值按配置中值的规则读取：不加引号或用单引号的是 C++ 代码，双引号的是 C++ 字符串。Windows PowerShell 5.1 把参数传给 `xrobot` 时会去掉其中的双引号，上例中的字符串在其中要写成 `'\"bmi088_gyro\"'`。加 `--json` 时值按 JSON 读取，JSON 字符串是 C++ 文本，VS Code 插件用这种方式写入。路径是 `template_args[n]` 或 `args.<参数>[.<字段>|[n]]...`，实例 id 用 `rename` 修改，它同时改写对该实例的引用；`args` 本身可以整体替换为一个列表，用于换用另一个构造函数。`--if-match <sha256>` 在文件已被修改时拒绝写入（值为按 LF 规范化后文件内容的 SHA-256）。
+
+---
+
+## xrobot describe
 
 `xrobot describe` 以 JSON 输出生成器读取和检查的全部内容：配置列表与选中的配置、头文件是否过期、工具版本、锁定的模块、构造函数签名、映射需要的字段、注册名与类型、每个参数可绑定的名字以及诊断信息。VS Code 插件基于它显示和编辑配置。
 

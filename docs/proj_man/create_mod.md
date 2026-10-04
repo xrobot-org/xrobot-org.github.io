@@ -107,43 +107,6 @@ xrobot instance add owner/MySensor
 
 在 BSP 的 `Modules/owner/MySensor/` 中直接修改并构建；保持修改未提交。准备好后在模块仓库中提交并推送到一个分支，然后在 BSP 中运行 `xrobot setup --update owner/MySensor` 更新 lock。
 
-模块被加入 BSP 需要能在源中找到，见 [模块源](./src_man.md)。
+模块被加入 BSP 需要能在源中找到，见 [源](./src_man.md)。
 
----
-
-## 模块 CI
-
-模块仓库调用共享工作流 `xrobot-org/XRobot/.github/workflows/module-ci.yml`。官方模块在 `dev` 线上的 `.github/workflows/build.yml`：
-
-```yaml
-name: Module CI
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
-jobs:
-  build:
-    uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@dev
-    with:
-      xrobot-ref: dev
-      libxr-ref: dev
-      dependency-ref: refs/heads/dev
-      template-args: '[]'
-```
-
-工作流在 Linux 容器中解析模块依赖，运行 `xrobot check-module` 生成一个构造调用，然后用 LibXR 编译模块源文件和这个调用。依赖参数用 `void*` 占位，调用只编译、从不执行；`standalone: false` 的库只编译其头文件和源文件。
-
-`xrobot check-module` 像 `xrobot setup` 一样解析模块，会更新 `xrobot.lock` 和 `Modules/`；`-o FILE` 指定输出文件（默认 `module_check.cpp`），`--template-arg` 给出类模板的模板实参（每个写一次），`--offline` 只使用 `Modules/` 中已有的模块。
-
-| 输入 | 默认值 | 含义 |
-| --- | --- | --- |
-| `xrobot-ref` | `master` | 使用的 XRobot 版本 |
-| `libxr-ref` | `master` | 使用的 LibXR 版本 |
-| `dependency-ref` | `refs/heads/master` | 依赖 `same-or-dev` 的上下文 |
-| `template-args` | `'[]'` | 类模板的模板实参（JSON 列表） |
-| `sources` | 空 | 另外使用的 index URL，每行一个；与官方 index 列出同一个包时以官方为准 |
-| `image` | `ghcr.io/xrobot-org/docker-image-linux:main` | 构建容器 |
-| `apt-packages` | 空 | 额外的 Debian 包 |
-| `cmake-options` | 空 | 额外的 CMake 配置参数 |
-| `ctest-regex` | 空 | 非空时构建测试并运行匹配的 CTest |
-| `ctest-timeout` | `15` | 每个 CTest 测试的超时（秒） |
+`new-module` 生成的 `.github/workflows/build.yml` 调用共享的模块 CI，工作流的步骤和输入见 [CI 与固件发布](./ci.md#模块-ci)。
