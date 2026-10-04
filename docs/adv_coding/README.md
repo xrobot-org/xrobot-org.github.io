@@ -1,7 +1,7 @@
 ---
 id: adv-coding
 title: 进阶编程
-sidebar_position: 10
+sidebar_position: 9
 ---
 
 # 进阶编程

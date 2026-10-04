@@ -1,7 +1,7 @@
 ---
 id: basic-coding
 title: 基础编程（LibXR）
-sidebar_position: 6
+sidebar_position: 4
 ---
 
 # 基础编程（LibXR）

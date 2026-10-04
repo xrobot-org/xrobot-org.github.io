@@ -57,7 +57,7 @@ add_subdirectory(libxr)
 - `webasm`
 - `webots`
 
-CMake 内部会把配置名称转换为小写。交叉编译时须设置 `LIBXR_SYSTEM`，未设置时配置阶段报 `No system selected.`。不交叉编译时，未设置的 `LIBXR_SYSTEM` 和 `LIBXR_DRIVER` 按主机选择：Linux 主机选择 `linux`，设置了 CMake 变量 `WEBOTS_HOME` 时选择 `webots`。Windows 主机用于 MCU 工程的交叉编译；主机程序在 WSL 或 `docker-image-linux` 镜像（见 [Docker 环境配置](../env_setup/docker.md)）的 Linux 环境中构建。
+CMake 内部会把配置名称转换为小写。交叉编译时须设置 `LIBXR_SYSTEM`，未设置时配置阶段报 `No system selected.`。不交叉编译时，未设置的 `LIBXR_SYSTEM` 和 `LIBXR_DRIVER` 按主机选择：Linux 主机选择 `linux`，设置了 CMake 变量 `WEBOTS_HOME` 时选择 `webots`。Windows 主机用于 MCU 工程的交叉编译；主机程序在 WSL 或 `docker-image-linux` 镜像（见 [Docker 环境配置](../env_setup/docker.md)）的 Linux 环境中构建。在 Windows 主机上不交叉编译时，配置阶段报 `LibXR has no Windows system or driver layer.`，并给出这两种做法。
 
 ## 常用选项
 

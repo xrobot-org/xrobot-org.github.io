@@ -29,7 +29,7 @@ class Terminal;
 ```
 
 - `READ_BUFF_SIZE`: the maximum number of bytes taken from the read port at a time;
-- `MAX_LINE_SIZE`: the maximum number of characters in one line, equal to `READ_BUFF_SIZE` by default; further characters are not added to the input line and are not echoed;
+- `MAX_LINE_SIZE`: the maximum number of characters in one line, equal to `READ_BUFF_SIZE` by default; further characters are not added to the input line and are not echoed; on Enter the terminal first prints `Line truncated to <MAX_LINE_SIZE> characters (MAX_LINE_SIZE).` and then runs the kept part;
 - `MAX_ARG_NUMBER`: the maximum number of arguments parsed from one line, including the command itself;
 - `MAX_HISTORY_NUMBER`: the number of history entries kept.
 

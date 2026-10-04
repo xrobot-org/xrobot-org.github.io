@@ -57,7 +57,7 @@ Current `driver/` backends are:
 - `webasm`
 - `webots`
 
-Names are normalized to lowercase internally. Cross-compiling requires `LIBXR_SYSTEM`; without it, configuration stops with `No system selected.`. When not cross-compiling, an unset `LIBXR_SYSTEM` and `LIBXR_DRIVER` follow the host: a Linux host selects `linux`, or `webots` when the CMake variable `WEBOTS_HOME` is set. A Windows host is used to cross-compile MCU projects; host programs are built in the Linux environment of WSL or the `docker-image-linux` image (see [Docker Environment Setup](../env_setup/docker.md)).
+Names are normalized to lowercase internally. Cross-compiling requires `LIBXR_SYSTEM`; without it, configuration stops with `No system selected.`. When not cross-compiling, an unset `LIBXR_SYSTEM` and `LIBXR_DRIVER` follow the host: a Linux host selects `linux`, or `webots` when the CMake variable `WEBOTS_HOME` is set. A Windows host is used to cross-compile MCU projects; host programs are built in the Linux environment of WSL or the `docker-image-linux` image (see [Docker Environment Setup](../env_setup/docker.md)). Configuring on a Windows host without cross-compiling stops with `LibXR has no Windows system or driver layer.`, followed by these two ways.
 
 ## Common options
 

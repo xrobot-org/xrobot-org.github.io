@@ -76,6 +76,6 @@ On a new platform, `thread.hpp` and `thread.cpp` are implemented together with t
 
 ## Reference Implementation Notes
 
-* POSIX version attempts `SCHED_FIFO` and maps `Priority` within available range; falls back to default with a warning if not supported.
+* POSIX version attempts `SCHED_FIFO` and maps `Priority` within available range; falls back to the default policy if not supported, with one warning per process.
 * FreeRTOS/ThreadX versions calculate priority steps from `configMAX_PRIORITIES` or `TX_MAX_PRIORITIES`.
 * The current `none` implementation is a single-shot direct-call placeholder: `Create()` invokes the target function immediately and enforces one creation path via an internal guard, rather than providing a real scheduler-backed thread model.

@@ -1,7 +1,7 @@
 ---
 id: perf
 title: About Performance
-sidebar_position: 3
+sidebar_position: 11
 ---
 
 # About Performance

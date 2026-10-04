@@ -58,7 +58,7 @@ s.Pop(value);  // value == 2
 - This stack uses a mutex for protection, making it suitable for multithreaded use but not for interrupt contexts.
 - For ultra-high performance needs, consider using a lock-free structure instead.
 - Index-based access still requires careful bounds handling; the current `operator[](int32_t index)` negative-index rule is “offset downward from the current top”, not “index from the storage tail”.
-- The internal array is allocated at construction and is not freed when the `Stack` is destroyed, so the class suits long-lived objects.
+- The internal array is allocated at construction and freed when the `Stack` is destroyed; a `Stack` cannot be copied. `Insert()` requires a trivially copyable element type.
 
 ## Typical Applications
 

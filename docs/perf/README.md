@@ -1,7 +1,7 @@
 ---
 id: perf
 title: 关于性能
-sidebar_position: 3
+sidebar_position: 11
 ---
 
 # 关于性能

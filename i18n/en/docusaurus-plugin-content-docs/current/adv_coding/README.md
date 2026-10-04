@@ -1,7 +1,7 @@
 ---
 id: adv-coding
 title: Advanced Programming
-sidebar_position: 10
+sidebar_position: 9
 ---
 
 # Advanced Programming

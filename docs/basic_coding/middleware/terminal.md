@@ -29,7 +29,7 @@ class Terminal;
 ```
 
 - `READ_BUFF_SIZE`：每次从读端口取出的最大字节数；
-- `MAX_LINE_SIZE`：一行最多容纳的字符数，默认等于 `READ_BUFF_SIZE`，超出的字符不加入输入行，也不回显；
+- `MAX_LINE_SIZE`：一行最多容纳的字符数，默认等于 `READ_BUFF_SIZE`，超出的字符不加入输入行，也不回显；按回车时终端先输出 `Line truncated to <MAX_LINE_SIZE> characters (MAX_LINE_SIZE).`，再执行保留的部分；
 - `MAX_ARG_NUMBER`：一行最多解析的参数个数（含命令本身）；
 - `MAX_HISTORY_NUMBER`：保存的历史命令条数。
 
