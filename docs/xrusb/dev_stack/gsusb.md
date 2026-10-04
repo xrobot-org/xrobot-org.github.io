@@ -44,7 +44,13 @@ GsUsbClass(Endpoint::EPNumber data_in_ep_num,
 
 - `cans`：Classic CAN 指针列表，数量必须等于 `CanChNum`
 - 端点号必须显式给出；旧版内核的 `gs_usb` 驱动固定使用 EP1 IN / EP2 OUT，取这两个端点号可以兼容这些内核
-- Linux `gs_usb` 驱动通常会通过 VID:PID 白名单匹配设备，并要求匹配到 `bInterfaceNumber == 0` 的 USB interface（建议将该类放在配置中的第一个 interface）
+- Linux `gs_usb` 驱动按内核设备表中的 VID:PID 自动绑定，表中每一项都限定接口号为 0，因此该类放在配置中的第一个接口
+- 项目登记的 `1D50:6199`（见 [VID/PID 与 Serial 使用约定](/docs/xrusb/xrusb-id)）不在主线内核 `gs_usb` 的设备表中，主机不会自动绑定。加载驱动后，向 `new_id` 写入 VID、PID 和接口类 `ff`（本类的接口类），驱动即绑定该设备的厂商自定义接口；这项设置在驱动重新加载或主机重启后失效：
+
+```bash
+sudo modprobe gs_usb
+echo "1d50 6199 ff" | sudo tee /sys/bus/usb/drivers/gs_usb/new_id
+```
 
 ### 1.2 FDCAN 构造（启用 FD）
 

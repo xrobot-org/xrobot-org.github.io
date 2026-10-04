@@ -80,28 +80,4 @@ Notes:
 
 ## `ESP32CDCJtag` on ESP32-C3 / ESP32-C6
 
-`ESP32CDCJtag` lives in `driver/esp/esp_cdc_jtag.*`. It derives from `LibXR::UART` and wraps the chip’s built-in `USB Serial/JTAG` controller as a UART backend.
-
-This path is not part of the generic XRUSB device-controller implementation, so it does not participate in:
-
-- `USB::DeviceCore`
-- `EndpointPool`
-- USB class composition
-
-Constructor form:
-
-```cpp
-LibXR::ESP32CDCJtag usb_jtag_uart(
-    1024,
-    512,
-    5,
-    {115200, LibXR::UART::Parity::NO_PARITY, 8, 1});
-```
-
-Current constraints:
-
-- compiled only for `ESP32-C3 / ESP32-C6`
-- fixed to `8N1`
-- if `CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y`, it conflicts with the ESP-IDF primary console
-
-So this implementation is best understood as a USB-related UART backend rather than the `ESP32-S3` XRUSB platform-device path.
+The USB Serial/JTAG controller of the ESP32-C3 and ESP32-C6 is used by the UART driver `ESP32CDCJtag`; its constructor parameters and constraints are described in the "ESP32 path" section of [UART Driver Design](../../adv_coding/driver/uart_driver.md).

@@ -6,7 +6,7 @@ sidebar_position: 6
 
 # DAPLinkV2 设备协议栈
 
-本文档描述 XRUSB 的 CMSIS-DAP v2（Bulk）设备类实现：`LibXR::USB::DapLinkV2Class<SwdPort>`。测试可用的VID:PID：`0x0D28:0x2040`，BCD版本：`0x0201`。
+本文档描述 XRUSB 的 CMSIS-DAP v2（Bulk）设备类实现：`LibXR::USB::DapLinkV2Class<SwdPort>`。测试可用的 VID:PID 为 ARM DAPLink 使用的 `0x0D28:0x0204`，BCD 版本为 `0x0201`。
 
 该设备类面向通用 CMSIS-DAP v2 主机工具链（如 pyOCD、OpenOCD 的 CMSIS-DAP backend、DAPLink 兼容客户端等）的 USB Bulk 传输方式，采用 1 个 Vendor Interface + 2 个 Bulk 端点（1 IN + 1 OUT）的传输模型，实现 DAP v2 常用命令子集（以 SWD 为主），并提供 Windows 侧即插即用的 WinUSB（MS OS 2.0）能力宣告。
 

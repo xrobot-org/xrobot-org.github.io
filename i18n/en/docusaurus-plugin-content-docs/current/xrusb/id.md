@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # VID/PID and Serial Number Policy
 
-XRUSB has been allocated PID 0x6199 under OpenMoko’s VID 0x1D50 via the community USB PID registry, and this VID/PID is used for example code and general-purpose development board firmware.
+XRUSB has been allocated PID 0x6199 under OpenMoko’s VID 0x1D50 via the community USB PID registry, and this VID/PID is used for example code and general-purpose development board firmware. The registration record is [commit 27f3846 of openmoko-usb-oui](https://github.com/openmoko/openmoko-usb-oui/commit/27f3846d77e0d0d10271b809b831f70040c6197a).
 
 Under the following conditions, any firmware based on the XRUSB stack may reuse this VID/PID without purchasing an additional PID:
 
@@ -80,8 +80,8 @@ in order to have better control and brand independence.
 
 Vendor prefixes can be requested in any of the following ways (free of charge):
 
-1. Open a GitHub issue in the repository, describing the requested prefix and its intended use;
-2. Fork the repository, edit this document to add the requested vendor prefix under Assigned Prefixes, and submit a Pull Request;
+1. Open an issue in this website's repository, [xrobot-org/xrobot-org.github.io](https://github.com/xrobot-org/xrobot-org.github.io/issues), describing the requested prefix and its intended use;
+2. Fork that repository, edit this document to add the requested vendor prefix under Assigned Prefixes, and submit a Pull Request;
 3. Contact the maintainers via the project’s email / community / chat group (see the project homepage for details).
 
 Once approved, the vendor prefix is added to the list below and the shared VID/PID may be used under the rules of this document.
