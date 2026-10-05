@@ -1,0 +1,238 @@
+/* WebTerminal. XRobot Style tokens only: the terminal is a paper-sunken / ink panel (like CodeBlock), the board a Card
+   (paper-raised, top-right chamfer). The LED's lit colour is data channel ch3; its state is also written out. */
+
+.root {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 216px;
+  gap: var(--space-4, 16px);
+  height: 400px;
+  min-width: 320px;
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+.root[data-narrow='true'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 320px auto;
+  height: auto;
+  gap: var(--space-3, 12px);
+}
+
+/* ---------------------------------------------------------------- terminal panel */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--paper-sunken);
+  border: 1px solid var(--line);
+}
+.panel:focus { outline: none; }
+.panel:focus-visible,
+.panel[data-ring='true']:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  height: 36px;
+  padding: 0 var(--space-3, 12px);
+  border-bottom: 1px solid var(--line);
+}
+.path {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 700 12px/16px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.sep {
+  font-style: normal;
+  color: var(--line-strong);
+  margin: 0 var(--space-2, 8px);
+}
+.state {
+  flex: none;
+  font: 400 12px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink-muted);
+}
+
+.screen {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  cursor: text;
+}
+.xhost {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+/* the page keeps the wheel: no scrollback and no scrolling viewport inside the terminal */
+.xhost :global(.xterm .xterm-viewport) {
+  overflow-y: hidden !important;
+}
+.overlay {
+  position: absolute;
+  inset: var(--space-2, 8px) var(--space-3, 12px);
+  background: var(--paper-sunken);
+  font: 400 14px/22px var(--font-mono);
+  color: var(--ink-muted);
+  cursor: default;
+}
+.overlay p { margin: 0; }
+
+.hint {
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  border-top: 1px solid var(--line);
+  font: 400 12px/16px var(--font-sans);
+  color: var(--ink-muted);
+}
+
+/* ---------------------------------------------------------------- board (a Card) */
+.board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+  min-width: 0;
+  padding: var(--space-4, 16px);
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+}
+.board::after { /* the Card chamfer: a 45-degree cut on the top-right, drawn in the border colour */
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(45deg, transparent calc(50% - 0.75px), var(--line) calc(50% - 0.75px), var(--line) calc(50% + 0.75px), var(--paper) calc(50% + 0.75px));
+}
+.part {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2, 8px);
+}
+.ledRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  align-self: stretch;
+  min-height: 36px;
+}
+.led { /* an 0603 LED seen from above */
+  flex: none;
+  width: 20px;
+  height: 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--line-strong);
+  background: var(--paper-sunken);
+}
+.led[data-on='true'] {
+  background: var(--ch3);
+  border-color: var(--ch3);
+}
+.name {
+  font: 700 12px/16px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.ledState {
+  margin-left: auto;
+  font: 700 12px/16px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.note {
+  font: 400 12px/16px var(--font-mono);
+  color: var(--ink-muted);
+  overflow-wrap: anywhere;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 36px;
+  min-width: 96px;
+  margin: 0;
+  padding: 0 var(--space-4, 16px);
+  font: 700 14px/22px var(--font-sans);
+  white-space: nowrap;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color var(--duration-fast, 80ms) linear, color var(--duration-fast, 80ms) linear;
+}
+.btn:hover { background: var(--ink); color: var(--on-ink); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ghost {
+  min-width: 0;
+  padding: 0 var(--space-2, 8px);
+  border-color: transparent;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+.ghost:hover {
+  background: transparent;
+  color: var(--ink);
+  text-decoration-thickness: 2px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+  margin-top: auto;
+  padding-top: var(--space-3, 12px);
+  border-top: 1px solid var(--line);
+  font: 400 12px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+/* narrow: the board becomes a strip under the terminal */
+.root[data-narrow='true'] .board {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3, 12px) var(--space-4, 16px);
+}
+.root[data-narrow='true'] .board > .path,
+.root[data-narrow='true'] .meta {
+  flex-basis: 100%;
+}
+.root[data-narrow='true'] .note { display: none; }
+.root[data-narrow='true'] .part { flex-direction: row; align-items: center; }
+.root[data-narrow='true'] .ledRow { align-self: auto; }
+.root[data-narrow='true'] .ledState { margin-left: 0; min-width: 2em; }
+.root[data-narrow='true'] .meta {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-top: 0;
+}
+
+/* page animation switch off (see Showcase.tsx) */
+:global(html[data-motion='off']) .btn { transition: none;
+}
+:global(html[data-motion='off']) .btn:active { transform: none;
+}

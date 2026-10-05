@@ -1,0 +1,415 @@
+/* SameCode widget. XRobot Style tokens only; ch0 is the LED signal (trace and LED body). */
+
+.root {
+  /* Board drawings carry model materials (--m-*); their own <style> is scoped to .sc-board. */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--paper-raised);
+  border: var(--stroke) solid var(--line);
+}
+
+/* ---- Tabs: one per board; the selected one is inverted ---- */
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--size-control);
+  padding: 0 var(--space-2);
+  border: var(--stroke) solid var(--line-strong);
+  margin-left: calc(-1 * var(--stroke));
+  background: transparent;
+  color: var(--ink);
+  font: 400 14px/22px var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--duration-fast) linear, color var(--duration-fast) linear;
+}
+
+.tab:first-child {
+  margin-left: 0;
+}
+
+.tab:hover {
+  background: var(--paper-sunken);
+}
+
+.tab:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: var(--stroke-strong) solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tabSelected,
+.tabSelected:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+}
+
+.tabPlatform {
+  font-weight: 700;
+}
+
+.tabSystem {
+  color: inherit;
+}
+
+/* ---- Body: board on the left, code on the right ---- */
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.boardColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.codeColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* ---- Board drawing ---- */
+
+.board {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--paper-sunken);
+  border: var(--stroke) solid var(--line);
+}
+
+.art {
+  animation: artIn var(--duration-base) ease-out;
+}
+
+@keyframes artIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Overlay on the 2.5D drawing: LED glow, the LED net (ch0, the signal), the binding from the name tag. */
+
+.glow line {
+  stroke-width: 1.5;
+}
+
+.netHalo,
+.bindingHalo {
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: 5;
+  stroke-linejoin: round;
+}
+
+.net {
+  fill: none;
+  stroke: var(--ch0);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  animation: draw 600ms ease-out 650ms both;
+}
+
+.binding {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-dasharray: 1 1;
+  animation: draw 500ms ease-out 100ms both;
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.pinPad {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 1;
+}
+
+.pinPulse {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse 600ms ease-out 600ms both;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+
+.tag {
+  fill: var(--ink);
+  animation: tagFlash 700ms ease-out both;
+}
+
+@keyframes tagFlash {
+  0%,
+  40% {
+    fill: var(--focus);
+  }
+  100% {
+    fill: var(--ink);
+  }
+}
+
+.tagText {
+  font: 700 12px var(--font-mono);
+  fill: var(--on-ink);
+}
+
+/* ---- LED trace (logic-analyzer row) ---- */
+
+.trace {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  height: 32px;
+  padding: 0 var(--space-3);
+  background: var(--paper-sunken);
+  border: var(--stroke) solid var(--line);
+}
+
+.traceName,
+.traceNote {
+  font: 700 12px/16px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.traceNote {
+  letter-spacing: 0.02em;
+}
+
+.laneName {
+  font: 700 12px/16px var(--font-mono);
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.laneWake {
+  stroke: var(--ink-muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.laneBand {
+  fill: var(--line-strong);
+}
+
+.laneRun {
+  stroke: var(--ink);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.traceSvg {
+  display: block;
+  width: 100%;
+  height: 24px;
+  overflow: visible;
+}
+
+.traceBase {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.traceLine {
+  fill: none;
+  stroke: var(--ch0);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: miter;
+}
+
+/* ---- Code panels ---- */
+
+.panel {
+  max-width: none;
+}
+
+.panel :global(.xr-code-title) {
+  flex-wrap: wrap;
+  row-gap: var(--space-1);
+}
+
+.file {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.aside {
+  flex: none;
+  margin-left: auto;
+}
+
+.pre {
+  padding: var(--space-2) var(--space-3);
+}
+
+.markName {
+  padding: 0 var(--space-1);
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.markPin {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: var(--stroke-strong);
+  text-underline-offset: 3px;
+}
+
+.flash {
+  animation: flash 900ms ease-out;
+}
+
+.markFlash {
+  animation: markFlash 900ms ease-out;
+}
+
+@keyframes markFlash {
+  0%,
+  35% {
+    background: var(--focus);
+    color: var(--on-ink);
+  }
+}
+
+.zeroFlash {
+  display: inline-block;
+  animation: zeroFlash 900ms ease-out;
+}
+
+@keyframes zeroFlash {
+  0%,
+  45% {
+    outline: var(--stroke-strong) solid var(--focus);
+    outline-offset: 2px;
+  }
+  100% {
+    outline: var(--stroke-strong) solid transparent;
+    outline-offset: 2px;
+  }
+}
+
+@keyframes flash {
+  from {
+    border-color: var(--ink);
+  }
+  to {
+    border-color: var(--line);
+  }
+}
+
+.caption {
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: var(--stroke) solid var(--line);
+  font-size: var(--type-small-size);
+  line-height: var(--type-small-line);
+  color: var(--ink-muted);
+}
+
+.caption code {
+  font-size: 14px;
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: 0;
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+/* ---- Narrower containers: wider board column; then tabs 2 x 2 and the board above the code ---- */
+
+@container (max-width: 600px) {
+  .tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tab:nth-child(3) {
+    margin-left: 0;
+  }
+
+  .tab:nth-child(n + 3) {
+    margin-top: calc(-1 * var(--stroke));
+  }
+
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.still .art,
+.still .flash,
+.still .markFlash,
+.still .zeroFlash,
+.still .net,
+.still .binding,
+.still .pinPulse,
+.still .tag {
+  animation: none;
+}
+
+/* page animation switch off (see Showcase.tsx) */
+:global(html[data-motion='off']) .art,
+:global(html[data-motion='off']) .flash,
+:global(html[data-motion='off']) .markFlash,
+:global(html[data-motion='off']) .zeroFlash,
+:global(html[data-motion='off']) .net,
+:global(html[data-motion='off']) .binding,
+:global(html[data-motion='off']) .pinPulse,
+:global(html[data-motion='off']) .tag {
+    animation: none;
+}
+:global(html[data-motion='off']) .tab {
+    transition: none;
+}

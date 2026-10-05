@@ -12,6 +12,8 @@
   "dependencies": {
     "@cmfcmf/docusaurus-search-local": "^2.0.0",
     "@node-rs/jieba": "^2.0.1",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
     "axios": "^1.12.2",
     "cheerio": "1.0.0-rc.12",
     "framer-motion": "^12.23.24",
