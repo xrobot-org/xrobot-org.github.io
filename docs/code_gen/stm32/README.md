@@ -35,9 +35,9 @@ libxr stm32 setup -d .
 ## 示例输出
 
 ```text
-[信息] 默认的 LibXR 提交：4e9670164541b6af6b600a6d544115a9b3e49d98
+[信息] 默认的 LibXR 提交：783b157fb3e9e5a7801edc9083834ba3ac49801f
 [信息] User/app_main.cpp 使用了 XRobot，继续按 --xrobot 生成（--no-xrobot 可关闭）。
-[信息] 保留现有的 LibXR 检出 4e9670164541。
+[信息] 保留现有的 LibXR 检出 783b157fb3e9。
 [信息] 找到 .ioc 文件：.\STM32F103RC.ioc
 [信息] 正在解析 .ioc 文件……
 [信息] 正在处理 STM32F103RC.ioc……

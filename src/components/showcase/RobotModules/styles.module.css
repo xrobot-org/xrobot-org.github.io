@@ -1,0 +1,317 @@
+/* RobotModules widget. XRobot Style tokens only; the drawing's faces use the model materials (src/css/xrstyle-materials.css). */
+
+.root {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--paper-raised);
+  border: var(--stroke) solid var(--line);
+}
+
+/* ---- Segmented control: one per robot; the selected one is inverted ---- */
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tab {
+  min-height: var(--size-control);
+  padding: 0 var(--space-2);
+  border: var(--stroke) solid var(--line-strong);
+  margin-left: calc(-1 * var(--stroke));
+  background: transparent;
+  color: var(--ink);
+  font: 700 14px/22px var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--duration-fast) linear, color var(--duration-fast) linear;
+}
+
+.tab:first-child {
+  margin-left: 0;
+}
+
+.tab:hover {
+  background: var(--paper-sunken);
+}
+
+.tab:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: var(--stroke-strong) solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tabSelected,
+.tabSelected:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+}
+
+/* ---- Body: drawing on the left, modules and configuration on the right ---- */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stage {
+  position: relative;
+  height: 300px;
+  background: var(--paper-sunken);
+  border: var(--stroke) solid var(--line);
+  overflow: hidden;
+}
+
+.art {
+  position: absolute;
+  inset: var(--space-2);
+  animation: artIn var(--duration-base) ease-out;
+}
+
+.art > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.art [data-p] {
+  cursor: pointer;
+}
+
+@keyframes artIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* highlight: everything else steps back, the hot parts keep full contrast */
+.art :global(svg) :is(polygon, path, polyline, line, circle, rect, ellipse, text) {
+  transition: opacity var(--duration-base) linear;
+}
+
+.dim :is(polygon, path, polyline, line, circle, rect, ellipse, text) {
+  opacity: 0.3;
+}
+
+/* data-p sits on single faces (arm) or on groups (quadrotor, chassis) */
+.dim .hot,
+.dim .hot :is(polygon, path, polyline, line, circle, rect, ellipse, text) {
+  opacity: 1;
+}
+
+.frame {
+  position: absolute;
+  border: var(--stroke-strong) solid var(--ink);
+  pointer-events: none;
+  transition:
+    left var(--duration-base) ease-out,
+    top var(--duration-base) ease-out,
+    width var(--duration-base) ease-out,
+    height var(--duration-base) ease-out;
+}
+
+.frameLabel {
+  position: absolute;
+  left: calc(-1 * var(--stroke-strong));
+  bottom: 100%;
+  padding: 0 var(--space-1);
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 700 12px/18px var(--font-mono);
+  white-space: nowrap;
+}
+
+/* ---- Module list ---- */
+
+.side {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.cfg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--stroke) solid var(--line);
+}
+
+.row {
+  margin: 0;
+  border-bottom: var(--stroke) solid var(--line);
+}
+
+.rowOwn {
+  animation: rowIn var(--duration-base) ease-out both;
+}
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.rowButton {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) linear, color var(--duration-fast) linear;
+}
+
+.rowButton:hover {
+  background: var(--paper-sunken);
+}
+
+.rowButton:focus-visible {
+  outline: var(--stroke-strong) solid var(--focus);
+  outline-offset: -2px;
+}
+
+.rowOn,
+.rowOn:hover {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.rowPinned .modName::after {
+  content: ' ·';
+}
+
+.modName {
+  font: 700 13px/20px var(--font-mono);
+  white-space: nowrap;
+}
+
+.modRole {
+  font-size: var(--type-small-size);
+  line-height: 20px;
+  color: inherit;
+  opacity: 0.78;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowOn .sharedTag {
+  border-color: var(--on-ink);
+  color: var(--on-ink);
+}
+
+/* ---- Configuration excerpt ---- */
+
+.config {
+  max-width: none;
+  margin: 0;
+}
+
+.config :global(.xr-code-title) {
+  flex-wrap: wrap;
+  row-gap: var(--space-1);
+}
+
+.file {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.aside {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-muted);
+}
+
+.pre {
+  min-height: calc(9 * 17px + 2 * var(--space-2));
+  white-space: pre;
+  padding: var(--space-2) var(--space-3);
+  font-size: 12px;
+  line-height: 17px;
+  overflow-x: auto;
+  animation: artIn var(--duration-base) ease-out;
+}
+
+.comment {
+  color: var(--ink-muted);
+}
+
+.gen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  font-size: var(--type-small-size);
+  color: var(--ink-muted);
+}
+
+.gen code {
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: 0;
+  background: var(--paper-sunken);
+  color: var(--ink);
+  font-size: 12px;
+}
+
+/* ---- Narrow containers: drawing above the list ---- */
+
+@container (max-width: 600px) {
+  .tab {
+    padding: var(--space-1);
+    font-size: 13px;
+    line-height: 16px;
+    white-space: normal;
+  }
+
+  .side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stage {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* page animation switch off (see Showcase.tsx) */
+:global(html[data-motion='off']) .art,
+:global(html[data-motion='off']) .rowOwn,
+:global(html[data-motion='off']) .pre {
+    animation: none;
+}
+:global(html[data-motion='off']) .tab,
+:global(html[data-motion='off']) .rowButton,
+:global(html[data-motion='off']) .frame,
+:global(html[data-motion='off']) .art :global(svg) :is(polygon, path, polyline, line, circle, rect, ellipse, text) {
+    transition: none;
+}

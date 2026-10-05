@@ -1,0 +1,431 @@
+/* ModuleFlow. XRobot Style tokens only: the terminal and the file are paper-sunken panels (like CodeBlock); the selected
+   step and file are inverted; lines the step changed carry a 2 px ink rule and the paper-raised fill; the locked commit is
+   inverted. Code colours are the shared xr-tk-* classes. */
+
+.root {
+  container-type: inline-size;
+  min-width: 320px;
+}
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  height: 460px;
+  padding: var(--space-4);
+  background: var(--paper-raised);
+  border: var(--stroke) solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+/* ---- Toolbar: step tabs and playback ---- */
+
+.toolbar {
+  flex: none;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.steps {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--size-control);
+  margin: 0 0 0 calc(-1 * var(--stroke));
+  padding: 0 var(--space-2);
+  border: var(--stroke) solid var(--line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 400 14px/22px var(--font-sans);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) linear, color var(--duration-fast) linear;
+}
+.step:first-child {
+  margin-left: 0;
+}
+.step:hover {
+  background: var(--paper-sunken);
+}
+.step:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: var(--stroke-strong) solid var(--focus);
+  outline-offset: 2px;
+}
+.stepSelected,
+.stepSelected:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+}
+.stepNo {
+  font: 700 12px/16px var(--font-mono);
+}
+.stepName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.play {
+  flex: none;
+  min-width: 96px;
+  min-height: var(--size-control);
+  margin: 0;
+  padding: 0 var(--space-4);
+  border: var(--stroke) solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 700 14px/22px var(--font-sans);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) linear, color var(--duration-fast) linear;
+}
+.play:hover {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.play:active {
+  transform: translateY(1px);
+}
+.play:focus-visible {
+  outline: var(--stroke-strong) solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- Body: terminal | files ---- */
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--space-3);
+}
+
+.term,
+.files {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--paper-sunken);
+  border: var(--stroke) solid var(--line);
+}
+
+.bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-bottom: var(--stroke) solid var(--line);
+  font: 700 12px/16px var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--ink-muted);
+}
+.barTitle {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.barNote {
+  flex: none;
+  font-weight: 400;
+}
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-3);
+  font: 400 12px/18px var(--font-mono);
+}
+.termLine {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.past {
+  color: var(--ink-muted);
+}
+.prompt {
+  color: var(--ink-muted);
+}
+.cmd {
+  font-weight: 700;
+}
+.past .cmd {
+  font-weight: 400;
+}
+.cursor {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  vertical-align: -2px;
+  background: var(--ink);
+}
+
+/* ---- Files ---- */
+
+.fileTabs {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: var(--stroke) solid var(--line);
+}
+.fileTab {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 6px;
+  border: 0;
+  border-right: var(--stroke) solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font: 400 11px/16px var(--font-mono);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) linear, color var(--duration-fast) linear;
+}
+.fileTab:last-child {
+  border-right: 0;
+}
+.fileTab:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+.fileTab:focus-visible {
+  z-index: 1;
+  outline: var(--stroke-strong) solid var(--focus);
+  outline-offset: -2px;
+}
+.fileTabSelected,
+.fileTabSelected:hover {
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 700;
+}
+/* changed by this step: a square in the top-right corner */
+.fileTab[data-touched='true']::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+}
+
+.fileHead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border-bottom: var(--stroke) solid var(--line);
+}
+.filePath {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 700 12px/16px var(--font-mono);
+  color: var(--ink-muted);
+}
+
+.code {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.code:focus-visible {
+  outline: var(--stroke-strong) solid var(--focus);
+  outline-offset: -2px;
+}
+.pre {
+  margin: 0;
+  padding: var(--space-2) 0;
+  background: transparent;
+  border-radius: 0;
+  font: 400 12px/18px var(--font-mono);
+  color: var(--ink);
+}
+.pre code {
+  display: block;
+  font: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+.line {
+  display: grid;
+  grid-template-columns: 3.5ch minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: 0 var(--space-3) 0 var(--space-1);
+  border-left: var(--stroke-strong) solid transparent;
+}
+.ln {
+  text-align: right;
+  color: var(--ink-muted);
+  user-select: none;
+}
+.text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.marked {
+  background: var(--paper-raised);
+  border-left-color: var(--ink);
+}
+.marked .ln {
+  color: var(--ink);
+  font-weight: 700;
+}
+.key {
+  color: var(--ink-muted);
+}
+.commit {
+  padding: 0 2px;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.absent {
+  margin: 0;
+  padding: var(--space-3);
+  font: 400 12px/18px var(--font-sans);
+  color: var(--ink-muted);
+}
+
+/* ---- Foot: what the step does, and the second Module ---- */
+
+.foot {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 44px;
+}
+.caption {
+  margin: 0;
+  min-width: 0;
+  font: 400 14px/22px var(--font-sans);
+  color: var(--ink-muted);
+}
+.caption code,
+.toggle code {
+  font: 400 13px/22px var(--font-mono);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--ink);
+}
+.toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--size-control);
+  font: 400 14px/22px var(--font-sans);
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.toggle input {
+  appearance: none;
+  flex: none;
+  display: grid;
+  place-content: center;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: var(--stroke) solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.toggle input::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+  transform: scale(0);
+}
+.toggle input:checked::before {
+  transform: scale(1);
+}
+.toggle input:focus-visible {
+  outline: var(--stroke-strong) solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- Narrow: stacked, the page grows instead of the panels ---- */
+
+@container (max-width: 640px) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .step:nth-child(3) {
+    margin-left: 0;
+  }
+  .step:nth-child(n + 3) {
+    margin-top: calc(-1 * var(--stroke));
+  }
+  .toolbar {
+    flex-direction: column;
+  }
+  .body {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 200px 340px;
+  }
+  .fileTab {
+    flex: 1 1 40%;
+    border-bottom: var(--stroke) solid var(--line);
+    margin-bottom: calc(-1 * var(--stroke));
+  }
+  .foot {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .toggle {
+    white-space: normal;
+  }
+}
+
+@container (max-width: 640px) {
+  .frame {
+    height: auto;
+  }
+}
+
+/* page animation switch off (see Showcase.tsx) */
+:global(html[data-motion='off']) .step,
+:global(html[data-motion='off']) .play,
+:global(html[data-motion='off']) .fileTab {
+    transition: none;
+}
+:global(html[data-motion='off']) .play:active {
+    transform: none;
+}

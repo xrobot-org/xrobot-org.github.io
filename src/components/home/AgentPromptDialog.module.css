@@ -1,0 +1,118 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+}
+
+.dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(880px, 100%);
+  max-height: calc(100vh - 2 * var(--space-8));
+  padding: var(--space-6);
+  background: var(--paper-raised);
+  border: var(--stroke) solid var(--line-strong);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.title {
+  margin: var(--space-1) 0 0;
+  font-size: var(--type-heading-size);
+  line-height: var(--type-heading-line);
+}
+
+.close {
+  flex: none;
+}
+
+.lead {
+  margin: 0;
+  max-width: var(--measure-prose);
+  font-size: var(--type-small-size);
+  line-height: var(--type-small-line);
+  color: var(--ink-muted);
+}
+
+.meta {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--type-small-size);
+  line-height: var(--type-small-line);
+}
+
+.meta dt {
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.meta dd {
+  margin: 0;
+}
+
+.meta code {
+  font-size: 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--paper-sunken);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--type-small-size);
+  line-height: var(--type-small-line);
+}
+
+.preview {
+  flex: 1 1 auto;
+  min-height: 160px;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-y: auto;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 400 14px/22px var(--font-mono);
+  color: var(--ink);
+  background: var(--paper-sunken);
+  border: var(--stroke) solid var(--line);
+  border-radius: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.status {
+  margin: 0;
+  font-size: var(--type-small-size);
+  line-height: var(--type-small-line);
+  color: var(--ink-muted);
+}
+
+@media (max-width: 720px) {
+  .dialog {
+    padding: var(--space-4);
+    max-height: calc(100vh - 2 * var(--space-4));
+  }
+}

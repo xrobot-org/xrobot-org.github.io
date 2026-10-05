@@ -1,5 +1,3 @@
-const { themes: prismThemes } = require('prism-react-renderer');
-
 module.exports = {
   title: 'XRobot Docs',
   tagline: 'Want to be the best embedded framework',
@@ -63,7 +61,12 @@ module.exports = {
           editLocalizedFiles: true,
         },
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: [
+            require.resolve('./src/css/xrstyle-tokens.css'),
+            require.resolve('./src/css/xrstyle-components.css'),
+            require.resolve('./src/css/xrstyle-materials.css'),
+            require.resolve('./src/css/custom.css'),
+          ],
         },
       },
     ],
@@ -71,10 +74,12 @@ module.exports = {
 
   themeConfig: {
     navbar: {
-      title: 'XRobot Docs',
       logo: {
-        alt: 'XRobot Logo',
-        src: 'img/XRobot.png',
+        alt: 'XRobot',
+        src: 'img/xrobot-wordmark.svg',
+        srcDark: 'img/xrobot-wordmark-paper.svg',
+        width: 77,
+        height: 28,
       },
       items: [
         {
@@ -178,9 +183,10 @@ module.exports = {
       theme: { light: 'neutral', dark: 'forest' },
     },
 
+    // XRobot Style colours code through CSS (src/css/custom.css), so both Prism themes are empty.
     prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      theme: { plain: {}, styles: [] },
+      darkTheme: { plain: {}, styles: [] },
       additionalLanguages: ['cmake', 'bash'],
     },
   },

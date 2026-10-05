@@ -1,0 +1,89 @@
+/* XRobot Style tokens (version 1).
+ * Generated from proj/tokens.json; edit the JSON and regenerate instead of editing this file.
+ * Docusaurus writes data-theme="light|dark" on <html>; both themes switch here.
+ */
+:root,
+html[data-theme='light'] {
+  color-scheme: light;
+  --paper: #f2f3f2;
+  --paper-raised: #ffffff;
+  --paper-sunken: #e6e8e6;
+  --line: #d3d6d3;
+  --line-strong: #7c827e;
+  --ink: #111312;
+  --ink-muted: #4d524f;
+  --on-ink: #f2f3f2;
+  --ch0: #7a5c00;
+  --ch1: #006573;
+  --ch2: #a1206f;
+  --ch3: #2a6e1b;
+  --pass: #16693a;
+  --fail: #b42318;
+  --blocked: #7d5100;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #0c0e0d;
+  --paper-raised: #151816;
+  --paper-sunken: #070908;
+  --line: #2a2e2c;
+  --line-strong: #6f7672;
+  --ink: #e6e8e6;
+  --ink-muted: #a3a9a5;
+  --on-ink: #0c0e0d;
+  --ch0: #ffd84d;
+  --ch1: #4fdded;
+  --ch2: #ff85cb;
+  --ch3: #8be36a;
+  --pass: #5bd68a;
+  --fail: #ff8a7a;
+  --blocked: #f0b54a;
+}
+
+:root {
+  --focus: var(--ink);
+  --link: var(--ink);
+  --font-sans: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Consolas, "Noto Sans Mono CJK SC", monospace;
+  --type-display-size: 40px;
+  --type-display-line: 48px;
+  --type-title-size: 28px;
+  --type-title-line: 36px;
+  --type-heading-size: 20px;
+  --type-heading-line: 28px;
+  --type-body-size: 16px;
+  --type-body-line: 28px;
+  --type-small-size: 14px;
+  --type-small-line: 22px;
+  --type-code-size: 14px;
+  --type-code-line: 22px;
+  --type-label-size: 12px;
+  --type-label-line: 16px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-none: 0;
+  --chamfer: 8px;
+  --stroke: 1px;
+  --stroke-strong: 2px;
+  --duration-fast: 80ms;
+  --duration-base: 160ms;
+  --measure-prose: 40em;
+  --measure-code: 100ch;
+  --measure-page: 1200px;
+  --size-control: 36px;
+  --size-target: 32px;
+  --size-nav: 56px;
+}
+
+/* page animation switch off (see Showcase.tsx) */
+html[data-motion='off'] {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+}

@@ -1,82 +1,4 @@
 {
-  "homepage.title": {
-    "message": "Home"
-  },
-  "homepage.description": {
-    "message": "Development documentation for XRobot and LibXR."
-  },
-  "homepage.hero.title": {
-    "message": "XRobot / LibXR"
-  },
-  "homepage.hero.lead": {
-    "message": "A modular framework for robotics development, device interfaces, and engineering automation. LibXR provides core semantics, driver abstractions, and XRUSB; the CodeGenerator generates LibXR peripheral code from STM32CubeMX projects; XRobot manages Modules and generates the main function XRobotMain."
-  },
-  "homepage.hero.cta.quickStart": {
-    "message": "Quick Start"
-  },
-  "homepage.hero.cta.read": {
-    "message": "Read the Docs"
-  },
-  "homepage.hero.cta.concept": {
-    "message": "Read the Design Concepts"
-  },
-  "homepage.hero.cta.demo": {
-    "message": "Web Demo"
-  },
-  "homepage.versionCard.eyebrow": {
-    "message": "Documentation Baseline"
-  },
-  "homepage.guide.onboarding.title": {
-    "message": "Onboarding Tasks (Chinese)"
-  },
-  "homepage.guide.onboarding.desc": {
-    "message": "Pick the right starting path by platform, then get familiar with XR design ideas and the basic coding style step by step."
-  },
-  "homepage.guide.agent.title": {
-    "message": "Agent Quick Start"
-  },
-  "homepage.guide.agent.desc": {
-    "message": "A one-page startup context for a dedicated XRobot / LibXR assistant: identify the repository role first, then jump into the right docs and code entry points."
-  },
-  "homepage.panel.eyebrow": {
-    "message": "Document Entry Map"
-  },
-  "homepage.panel.title": {
-    "message": "Enter the docs by project type"
-  },
-  "homepage.route.libxr.title": {
-    "message": "LibXR Only"
-  },
-  "homepage.route.libxr.desc": {
-    "message": "Use the LibXR core API, peripheral drivers, and middleware in an existing project."
-  },
-  "homepage.route.codegen.title": {
-    "message": "STM32 and the CodeGenerator"
-  },
-  "homepage.route.codegen.desc": {
-    "message": "Generate the peripheral objects and the entry function app_main from an STM32CubeMX project and add LibXR to its CMake build."
-  },
-  "homepage.route.xrobot.title": {
-    "message": "XRobot BSP"
-  },
-  "homepage.route.xrobot.desc": {
-    "message": "Fetching and locking Modules, configurations, and main function generation."
-  },
-  "homepage.route.port.title": {
-    "message": "Porting to a New Platform"
-  },
-  "homepage.route.port.desc": {
-    "message": "The peripheral driver interfaces and their implementation on each platform."
-  },
-  "homepage.foot.eyebrow": {
-    "message": "Project"
-  },
-  "homepage.foot.title": {
-    "message": "Project Background & Community"
-  },
-  "homepage.foot.desc": {
-    "message": "Project background, how to contribute, and community entry points."
-  },
   "theme.ErrorPageContent.title": {
     "message": "This page crashed.",
     "description": "The title of the fallback page when the page crashed"
@@ -163,7 +85,7 @@
   },
   "theme.colorToggle.ariaLabel": {
     "message": "Switch between dark and light mode (currently {mode})",
-    "description": "The ARIA label for the navbar color mode toggle"
+    "description": "The ARIA label for the color mode toggle"
   },
   "theme.colorToggle.ariaLabel.mode.dark": {
     "message": "dark mode",
@@ -368,7 +290,1252 @@
     "message": "No results found.",
     "description": "message shown if no results are found"
   },
-  "homepage.onlineDemo": {
-    "message": "Online Demo"
+  "showcase.webterminal.label": {
+    "message": "LibXR web terminal"
+  },
+  "showcase.webterminal.path": {
+    "message": "LIBXR / WASM / TERMINAL"
+  },
+  "showcase.webterminal.panel.label": {
+    "message": "LibXR terminal: Enter to type, Esc to leave"
+  },
+  "showcase.webterminal.state.idle": {
+    "message": "Not loaded"
+  },
+  "showcase.webterminal.state.loading": {
+    "message": "Loading"
+  },
+  "showcase.webterminal.state.error": {
+    "message": "Load failed"
+  },
+  "showcase.webterminal.state.running": {
+    "message": "Uptime {s} s"
+  },
+  "showcase.webterminal.state.paused": {
+    "message": "Paused · {s} s"
+  },
+  "showcase.webterminal.state.title": {
+    "message": "Runtime clock: the milliseconds in square brackets in the log come from it"
+  },
+  "showcase.webterminal.screen.idle": {
+    "message": "The LibXR runtime (libxr.wasm, 126 KB) loads when the terminal enters the viewport"
+  },
+  "showcase.webterminal.screen.loading": {
+    "message": "Loading the LibXR runtime (libxr.wasm, 126 KB)"
+  },
+  "showcase.webterminal.screen.error": {
+    "message": "The LibXR runtime did not load: {message}"
+  },
+  "showcase.webterminal.screen.retry": {
+    "message": "Reload the page to try again."
+  },
+  "showcase.webterminal.hint.idle": {
+    "message": "Click the terminal to type a command such as led on; Esc leaves the terminal"
+  },
+  "showcase.webterminal.hint.focus": {
+    "message": "Keystrokes go straight to the runtime; Esc leaves the terminal"
+  },
+  "showcase.webterminal.hint.enter": {
+    "message": "Press Enter to type in the terminal"
+  },
+  "showcase.webterminal.hint.demo": {
+    "message": "Automatic demo: one command is typed every so often; a key or click in the terminal stops it"
+  },
+  "showcase.webterminal.board.path": {
+    "message": "LIBXR / WASM / BOARD"
+  },
+  "showcase.webterminal.board.label": {
+    "message": "Board LED and button"
+  },
+  "showcase.webterminal.led.name": {
+    "message": "LED"
+  },
+  "showcase.webterminal.led.on": {
+    "message": "ON"
+  },
+  "showcase.webterminal.led.off": {
+    "message": "OFF"
+  },
+  "showcase.webterminal.led.note": {
+    "message": "Terminal commands led on / led off"
+  },
+  "showcase.webterminal.button.label": {
+    "message": "Button"
+  },
+  "showcase.webterminal.button.note": {
+    "message": "Calls button_click(); the runtime logs one line"
+  },
+  "showcase.webterminal.reset.label": {
+    "message": "Reset"
+  },
+  "showcase.webterminal.reset.note": {
+    "message": "Starts a new runtime instance and runs main() again"
+  },
+  "showcase.webterminal.io": {
+    "message": "RX {rx} B · TX {tx} B"
+  },
+  "showcase.webterminal.size": {
+    "message": "libxr.wasm · 126 KB"
+  },
+  "showcase.ringbuffer.aria": {
+    "message": "UART receive path: DMA ring, SPSC queue and read thread"
+  },
+  "showcase.ringbuffer.ring.aria": {
+    "message": "Outer ring: DMA ring. Inner ring: SPSC queue. The DMA write position, head and tail are marked."
+  },
+  "showcase.ringbuffer.strip.aria": {
+    "message": "Timeline: UART byte stream, interrupts and threads"
+  },
+  "showcase.ringbuffer.caption": {
+    "message": "Outer: DMA ring. Inner: SPSC queue."
+  },
+  "showcase.ringbuffer.ring.center": {
+    "message": "SPSC queue"
+  },
+  "showcase.ringbuffer.ring.held": {
+    "message": "IRQ held off {n} B"
+  },
+  "showcase.ringbuffer.ring.twoCopies": {
+    "message": "2 copies"
+  },
+  "showcase.ringbuffer.lane.isr": {
+    "message": "IRQ"
+  },
+  "showcase.ringbuffer.lane.thread": {
+    "message": "Thread"
+  },
+  "showcase.ringbuffer.lane.read": {
+    "message": "R"
+  },
+  "showcase.ringbuffer.lane.write": {
+    "message": "W"
+  },
+  "showcase.ringbuffer.strip.slow": {
+    "message": "Time slowed 1:{n}"
+  },
+  "showcase.ringbuffer.strip.held": {
+    "message": "IRQ held off"
+  },
+  "showcase.ringbuffer.mode.group": {
+    "message": "UART rate and packet size"
+  },
+  "showcase.ringbuffer.waiting.label": {
+    "message": "Read thread waiting"
+  },
+  "showcase.ringbuffer.waiting.on": {
+    "message": "Read is pending: after queuing, the bytes are copied to the read thread within the same interrupt."
+  },
+  "showcase.ringbuffer.waiting.off": {
+    "message": "Read is not called: bytes stay in the queue, and once it is full the surplus bytes are dropped."
+  },
+  "showcase.ringbuffer.burst.label": {
+    "message": "Burst"
+  },
+  "showcase.ringbuffer.burst.hint": {
+    "message": "Hold: the receive interrupt is held off and the bytes stay in the DMA ring; on release they are copied into the queue in one pass."
+  },
+  "showcase.ringbuffer.burst.hintReduced": {
+    "message": "The receive interrupt is held off for a while and the bytes stay in the DMA ring; they are then copied into the queue in one pass."
+  },
+  "showcase.ringbuffer.burst.held": {
+    "message": "{n} B held off"
+  },
+  "showcase.ringbuffer.burst.auto": {
+    "message": "The DMA ring was about to fill; released automatically."
+  },
+  "showcase.ringbuffer.read.pps": {
+    "message": "Received"
+  },
+  "showcase.ringbuffer.read.unit": {
+    "message": "pkt/s"
+  },
+  "showcase.ringbuffer.read.err": {
+    "message": "CRC errors"
+  },
+  "showcase.ringbuffer.read.drop": {
+    "message": "Dropped"
+  },
+  "showcase.ringbuffer.reader.label": {
+    "message": "Read thread"
+  },
+  "showcase.ringbuffer.reader.waiting": {
+    "message": "Pending in Read"
+  },
+  "showcase.ringbuffer.reader.running": {
+    "message": "Reading, checking CRC"
+  },
+  "showcase.ringbuffer.reader.away": {
+    "message": "Busy elsewhere"
+  },
+  "showcase.ringbuffer.buf.title": {
+    "message": "Read thread buffer"
+  },
+  "showcase.ringbuffer.buf.crcOk": {
+    "message": "CRC OK"
+  },
+  "showcase.ringbuffer.buf.crcBad": {
+    "message": "CRC mismatch"
+  },
+  "showcase.ringbuffer.inspect.hint": {
+    "message": "Select a cell on the rings to see its index and content."
+  },
+  "showcase.ringbuffer.cell.dma": {
+    "message": "DMA ring #{i} · packet {pid} byte {k} = 0x{hex} · {state}"
+  },
+  "showcase.ringbuffer.cell.dmaEmpty": {
+    "message": "DMA ring #{i} · not written yet"
+  },
+  "showcase.ringbuffer.cell.queue": {
+    "message": "SPSC queue #{i} · packet {pid} byte {k} = 0x{hex} · between head and tail"
+  },
+  "showcase.ringbuffer.cell.queueHead": {
+    "message": "SPSC queue #{i} · cell at head: packet {pid} byte {k} = 0x{hex}, taken next"
+  },
+  "showcase.ringbuffer.cell.queueFree": {
+    "message": "SPSC queue #{i} · free"
+  },
+  "showcase.ringbuffer.cell.queueTail": {
+    "message": "SPSC queue #{i} · cell at tail, kept free; tail + 1 == head means the queue is full"
+  },
+  "showcase.ringbuffer.cell.pending": {
+    "message": "waiting to be copied"
+  },
+  "showcase.ringbuffer.cell.copied": {
+    "message": "copied to the queue"
+  },
+  "showcase.ringbuffer.cell.crc": {
+    "message": "CRC8 byte"
+  },
+  "showcase.ringbuffer.legend": {
+    "message": "Color: packet number mod 4"
+  },
+  "showcase.ringbuffer.step": {
+    "message": "Advance 1 s"
+  },
+  "showcase.ringbuffer.reduced.note": {
+    "message": "Reduced motion: the picture stays still; each action advances it to the next state."
+  },
+  "home.chapter.concept": {
+    "message": "Design Concept"
+  },
+  "home.chapter.setup": {
+    "message": "Environment Setup"
+  },
+  "home.chapter.basic": {
+    "message": "Basic Programming"
+  },
+  "home.chapter.advanced": {
+    "message": "Advanced Programming"
+  },
+  "home.chapter.codegen": {
+    "message": "Code Generation"
+  },
+  "home.chapter.projman": {
+    "message": "Project Management"
+  },
+  "home.chapter.xrusb": {
+    "message": "XRUSB"
+  },
+  "home.chapter.debug": {
+    "message": "Debug Interfaces"
+  },
+  "home.cap.terminal.title": {
+    "message": "The LibXR terminal runs in the browser"
+  },
+  "home.cap.terminal.p1": {
+    "message": "The terminal here is LibXR compiled to WebAssembly and running in the browser. `Terminal` provides line editing, history and path completion, and runs the commands stored in `RamFS` by path."
+  },
+  "home.cap.terminal.p2": {
+    "message": "On a microcontroller, the same `Terminal` provides a command line over a UART or a USB virtual serial port."
+  },
+  "home.cap.terminal.doc1": {
+    "message": "Terminal Command Interface"
+  },
+  "home.cap.terminal.doc2": {
+    "message": "In-Memory File System"
+  },
+  "home.cap.terminal.doc3": {
+    "message": "Web Demo, full window"
+  },
+  "home.cap.terminal.figAlt": {
+    "message": "Line drawing of a terminal window"
+  },
+  "home.cap.terminal.figCaption": {
+    "message": "The terminal loads the LibXR WebAssembly program in the browser."
+  },
+  "home.cap.ring.title": {
+    "message": "UART receive: the hardware keeps writing, software reads on demand"
+  },
+  "home.cap.ring.p1": {
+    "message": "On microcontrollers the UART driver keeps the receive DMA running. The interrupt works out the new bytes from the DMA write pointer, writes them with `PushBatch` into `SPSCQueue`, the ring queue of the `ReadPort`, and calls `Publish()` to complete pending reads."
+  },
+  "home.cap.ring.p2": {
+    "message": "The receive path has no step that stops and restarts the DMA; software only catches up with the hardware write pointer."
+  },
+  "home.cap.ring.doc1": {
+    "message": "UART Driver Design"
+  },
+  "home.cap.ring.doc2": {
+    "message": "IO Read/Write Abstraction"
+  },
+  "home.cap.ring.figAlt": {
+    "message": "Line drawing of DMA writing into a ring queue"
+  },
+  "home.cap.topic.title": {
+    "message": "Topic: publish and subscribe with an exact type"
+  },
+  "home.cap.topic.p1": {
+    "message": "`Topic` is an in-process publish/subscribe channel with an exact payload type. A publish is delivered synchronously to the registered subscribers, each of which receives it in one of four ways: synchronous, asynchronous, queued or callback."
+  },
+  "home.cap.topic.p2": {
+    "message": "On Linux, `LinuxSharedTopic` keeps the data in shared-memory slots and subscribers read the same memory through descriptors, so no data is copied between processes."
+  },
+  "home.cap.topic.doc1": {
+    "message": "Topic Basics, Subscription Models, and Dispatch Semantics"
+  },
+  "home.cap.topic.doc2": {
+    "message": "Linux Shared-Memory Topic"
+  },
+  "home.cap.topic.doc3": {
+    "message": "Topic Design"
+  },
+  "home.cap.topic.figAlt": {
+    "message": "Line drawing of one publisher, four kinds of subscriber and shared-memory slots"
+  },
+  "home.cap.topic.figCaption": {
+    "message": "Left: a publisher delivers through a Topic to synchronous, asynchronous, queued and callback subscribers. Right: two Linux processes exchange data through shared-memory slots."
+  },
+  "home.cap.workflow.title": {
+    "message": "Fetching and locking Modules, generating the main function"
+  },
+  "home.cap.workflow.p1": {
+    "message": "A BSP lists the Modules it needs in `Modules/modules.yaml`. `xrobot setup` fetches them and locks each one to a commit in `xrobot.lock`, and `xrobot gen` generates the main function `XRobotMain` from a configuration under `User/`."
+  },
+  "home.cap.workflow.p2": {
+    "message": "The CI of an STM32 BSP calls a shared workflow: it checks that the generated files match the commit, builds every configuration, and uploads the firmware on a push to `master`, a `v*` tag or a published release."
+  },
+  "home.cap.workflow.doc1": {
+    "message": "Project Management (XRobot)"
+  },
+  "home.cap.workflow.doc2": {
+    "message": "Module Requests and the Lock"
+  },
+  "home.cap.workflow.doc3": {
+    "message": "Entry and Generation"
+  },
+  "home.cap.workflow.figAlt": {
+    "message": "Line drawing of Module repositories, the lock, the generated header and the firmware"
+  },
+  "home.cap.workflow.cmdTitle": {
+    "message": "BSP root"
+  },
+  "home.cap.xrusb.title": {
+    "message": "XRUSB: the device-side USB stack and debug interfaces"
+  },
+  "home.cap.xrusb.p1": {
+    "message": "XRUSB is the USB device stack in LibXR. It provides device classes such as CDC, HID, UAC, GSUSB, CMSIS-DAP v1/v2 and DFU, and one device can contain several device classes at once."
+  },
+  "home.cap.xrusb.p2": {
+    "message": "The debug interfaces implement SWD and JTAG with GPIO timing; the DAPLink device classes use them to access a target chip, for example to read the DP `IDCODE`."
+  },
+  "home.cap.xrusb.doc1": {
+    "message": "XRUSB Stack"
+  },
+  "home.cap.xrusb.doc2": {
+    "message": "Device Stack"
+  },
+  "home.cap.xrusb.doc3": {
+    "message": "Debug Interfaces"
+  },
+  "home.cap.xrusb.figAlt": {
+    "message": "Line drawing of a host, a debug probe and a target board"
+  },
+  "home.cap.xrusb.figCaption": {
+    "message": "The host connects over USB to a probe running XRUSB; the probe connects to the target board over SWD."
+  },
+  "home.cap.robots.title": {
+    "message": "Robots built from Modules"
+  },
+  "home.cap.robots.p1": {
+    "message": "The official Source includes Modules for IMUs, magnetometers, barometers, optical flow, laser ranging, grey-scale line following, RC receivers, displays and attitude estimation."
+  },
+  "home.cap.robots.p2": {
+    "message": "A configuration selects Modules and fills in their parameters, and `xrobot gen` generates the main function of one robot from it; different configurations make up the firmware of different robots."
+  },
+  "home.cap.robots.doc1": {
+    "message": "Module Catalogs"
+  },
+  "home.cap.robots.doc2": {
+    "message": "Application Configuration"
+  },
+  "home.cap.robots.doc3": {
+    "message": "Writing a Module"
+  },
+  "home.cap.robots.figAlt": {
+    "message": "Line drawing of a multirotor, a wheeled chassis and a robot arm"
+  },
+  "home.cap.robots.figCaption": {
+    "message": "Multirotor, wheeled chassis, robot arm."
+  },
+  "home.route.xrobot.title": {
+    "message": "XRobot BSP"
+  },
+  "home.route.xrobot.desc": {
+    "message": "Fetching and locking Modules, configurations and main function generation."
+  },
+  "home.route.xrobot.more1": {
+    "message": "Application Configuration"
+  },
+  "home.route.xrobot.more2": {
+    "message": "Writing a Module"
+  },
+  "home.route.xrobot.more3": {
+    "message": "CI and Firmware Release"
+  },
+  "home.path.intro.title": {
+    "message": "New to LibXR / XRobot"
+  },
+  "home.path.intro.desc": {
+    "message": "What LibXR, the CodeGenerator and XRobot each do, and the reading order for each kind of project."
+  },
+  "home.path.port.title": {
+    "message": "Porting to a new hardware platform"
+  },
+  "home.path.port.desc": {
+    "message": "A new chip adds a peripheral driver directory, a new operating system adds a system layer directory; each layer can reuse an existing implementation."
+  },
+  "home.path.device.title": {
+    "message": "Device-side interfaces and links"
+  },
+  "home.path.device.desc": {
+    "message": "Device interfaces, protocol stacks and link implementations, including device communication, identification and updates."
+  },
+  "home.path.run.title": {
+    "message": "Building a first program"
+  },
+  "home.path.run.desc": {
+    "message": "From installing the tools to building a first program, starting from an existing BSP, an STM32CubeMX project or a new BSP."
+  },
+  "home.recent.xrobot.title": {
+    "message": "XRobot 1.0 generates the main function statically from the configuration"
+  },
+  "home.recent.xrobot.desc": {
+    "message": "The entry source registers hardware with `XR_REGISTER`, and `xrobot gen` generates an `XRobotMain` that constructs the instances in configuration order."
+  },
+  "home.recent.platform.title": {
+    "message": "Platform drivers cover STM32, CH32, ESP32, HPM, MSPM0, Linux, Webots and WebAssembly"
+  },
+  "home.recent.platform.desc": {
+    "message": "Each platform's drivers are in their own subdirectory under `driver` in LibXR."
+  },
+  "home.recent.xrusb.title": {
+    "message": "XRUSB provides the CDC, DAP, DFU, GSUSB, HID and UAC device classes"
+  },
+  "home.recent.xrusb.desc": {
+    "message": "The documentation has one page per device class."
+  },
+  "home.recent.debug.title": {
+    "message": "The debug link supports SWD and JTAG"
+  },
+  "home.recent.debug.desc": {
+    "message": "This includes SWD and JTAG implemented with GPIO timing, and the CMSIS-DAP v1/v2 device classes."
+  },
+  "home.hero.title": {
+    "message": "The same Module code runs on different hardware and operating systems"
+  },
+  "home.hero.lead.libxr": {
+    "message": "LibXR is a cross-platform C++ compatibility layer with peripheral drivers, data structures, communication middleware, OS abstractions and math utilities, plus the USB protocol stack XRUSB."
+  },
+  "home.hero.cta.read": {
+    "message": "Read the Docs"
+  },
+  "home.hero.cta.demo": {
+    "message": "Try the Web Demo"
+  },
+  "home.hero.cta.onboarding": {
+    "message": "Open Onboarding"
+  },
+  "home.hero.chapters": {
+    "message": "Chapters"
+  },
+  "home.hero.widgetLabel": {
+    "message": "One BlinkLED on four kinds of hardware and operating systems"
+  },
+  "home.version.title": {
+    "message": "Documentation Baseline"
+  },
+  "home.version.desc": {
+    "message": "The xrobot and libxr releases and the LibXR commit this documentation corresponds to."
+  },
+  "home.docs.title": {
+    "message": "Enter the docs by project type"
+  },
+  "home.docs.lead": {
+    "message": "The four entries match four kinds of projects; the scenario list gives starting points for common tasks."
+  },
+  "home.docs.scenarios": {
+    "message": "By scenario"
+  },
+  "home.recent.title": {
+    "message": "Recent Development"
+  },
+  "home.join.title": {
+    "message": "Getting Started and Contributing"
+  },
+  "home.join.onboarding.title": {
+    "message": "Onboarding Tasks (Chinese)"
+  },
+  "home.join.onboarding.desc": {
+    "message": "Starting paths by platform that introduce the design ideas and the basic usage of XRobot and LibXR step by step."
+  },
+  "home.join.agent.title": {
+    "message": "Agent Quick Start"
+  },
+  "home.join.agent.desc": {
+    "message": "A one-page start-up context: the coding agent first decides whether the repository is an XRobot BSP, a platform project or a driver project, then opens the matching docs and code."
+  },
+  "home.join.agent.open": {
+    "message": "Open the Prompt"
+  },
+  "home.join.modules.title": {
+    "message": "Module Catalogs"
+  },
+  "home.join.modules.desc": {
+    "message": "The official Source lists the Modules that a BSP can add; `xrobot source` searches and shows its entries."
+  },
+  "home.join.contribute.title": {
+    "message": "Contribution Guide"
+  },
+  "home.join.about": {
+    "message": "Project Background"
+  },
+  "home.join.github": {
+    "message": "GitHub Organization"
+  },
+  "home.join.contribute.desc": {
+    "message": "Repository and branch conventions, coding and documentation style, testing rules, and how to submit changes."
+  },
+  "home.meta.title": {
+    "message": "Home"
+  },
+  "home.meta.description": {
+    "message": "Development documentation for XRobot and LibXR."
+  },
+  "home.closing.slogan": {
+    "message": "XRobot is all you need"
+  },
+  "home.agent.status.idle": {
+    "message": "The prompt determines the project type first, then decides which document to open or which step to take."
+  },
+  "home.agent.status.copied": {
+    "message": "Copied to the clipboard."
+  },
+  "home.agent.status.downloaded": {
+    "message": "The Markdown download has started."
+  },
+  "home.agent.status.copyFailed": {
+    "message": "The browser refused the clipboard write. The downloaded .md file has the same content."
+  },
+  "home.agent.title": {
+    "message": "Agent Quick Start"
+  },
+  "home.agent.close": {
+    "message": "Close"
+  },
+  "home.agent.lead": {
+    "message": "This prompt makes the Agent first decide whether the current project is an XRobot BSP, a platform project or a driver project, and then choose the documentation entry points in a fixed order."
+  },
+  "home.agent.filename": {
+    "message": "Filename"
+  },
+  "home.agent.link.projman": {
+    "message": "Project Management (XRobot)"
+  },
+  "home.agent.link.onboarding": {
+    "message": "Onboarding Tasks (Chinese)"
+  },
+  "home.agent.download": {
+    "message": "Download the Prompt"
+  },
+  "home.agent.copy": {
+    "message": "Copy the Prompt"
+  },
+  "showcase.shell.readDocs": {
+    "message": "Read the docs"
+  },
+  "showcase.section.docsAria": {
+    "message": "Related documentation"
+  },
+  "showcase.section.readDocs": {
+    "message": "Read the docs"
+  },
+  "showcase.SameCode.system.threadx": {
+    "message": "ThreadX"
+  },
+  "showcase.SameCode.system.freertos": {
+    "message": "FreeRTOS"
+  },
+  "showcase.SameCode.system.none": {
+    "message": "bare metal"
+  },
+  "showcase.SameCode.system.linux": {
+    "message": "Linux user space"
+  },
+  "showcase.SameCode.boardAria": {
+    "message": "{platform} · {system}: the name {name} is bound to pin {pin}, LED {state}"
+  },
+  "showcase.SameCode.ledOn": {
+    "message": "on"
+  },
+  "showcase.SameCode.ledOff": {
+    "message": "off"
+  },
+  "showcase.SameCode.unchanged": {
+    "message": "0 lines changed"
+  },
+  "showcase.SameCode.tablist": {
+    "message": "Hardware and operating system"
+  },
+  "showcase.SameCode.traceNote": {
+    "message": "toggles every {ms} ms"
+  },
+  "showcase.SameCode.generated": {
+    "message": "by libxr gen --xrobot"
+  },
+  "showcase.SameCode.handwritten": {
+    "message": "BSP entry source"
+  },
+  "showcase.SameCode.caption": {
+    "message": "The Module declares the GPIO type it needs, the configuration binds it by the name `LED`, and each platform's entry source registers that name with `XR_REGISTER`."
+  },
+  "showcase.SameCode.lane.loop": {
+    "message": "main loop"
+  },
+  "showcase.SameCode.lane.loopNote": {
+    "message": "refreshes every 1 ms while idle"
+  },
+  "showcase.SameCode.lane.loopAria": {
+    "message": "Bare metal has no threads: while waiting, the main loop checks the 1 ms time base and refreshes the timers once per elapsed millisecond; after {ms} refreshes the timer calls BlinkLED."
+  },
+  "showcase.SameCode.lane.threadNote": {
+    "message": "wakes every 1 ms"
+  },
+  "showcase.SameCode.lane.threadAria": {
+    "message": "{system}: the timer thread libxr_timer_task wakes every 1 ms; after {ms} wake-ups the timer calls BlinkLED."
+  },
+  "showcase.topic.pub.thread": {
+    "message": "Publisher thread"
+  },
+  "showcase.topic.pub.original": {
+    "message": "Original"
+  },
+  "showcase.topic.list.title": {
+    "message": "Subscriber list"
+  },
+  "showcase.topic.list.walk": {
+    "message": "dispatched from the head"
+  },
+  "showcase.topic.lane.callback": {
+    "message": "Callback"
+  },
+  "showcase.topic.lane.sync": {
+    "message": "Sync"
+  },
+  "showcase.topic.lane.async": {
+    "message": "Async"
+  },
+  "showcase.topic.lane.queue": {
+    "message": "Queued"
+  },
+  "showcase.topic.sync.wait": {
+    "message": "In Wait() for the next message"
+  },
+  "showcase.topic.sync.claimed": {
+    "message": "Claimed by this publish, waking"
+  },
+  "showcase.topic.sync.work": {
+    "message": "Handling what it received, not waiting"
+  },
+  "showcase.topic.async.waiting": {
+    "message": "StartWaiting() called, waiting"
+  },
+  "showcase.topic.async.ready": {
+    "message": "One copy ready to take"
+  },
+  "showcase.topic.async.idle": {
+    "message": "Not waiting"
+  },
+  "showcase.topic.queue.fill": {
+    "message": "Queue {n}/{cap}"
+  },
+  "showcase.topic.cb.state": {
+    "message": "Called during the publish"
+  },
+  "showcase.topic.res.copy": {
+    "message": "Copy {b}"
+  },
+  "showcase.topic.res.miss": {
+    "message": "Not waiting, missed"
+  },
+  "showcase.topic.res.ignoreIdle": {
+    "message": "Not waiting, ignored"
+  },
+  "showcase.topic.res.ignoreReady": {
+    "message": "Last copy not taken, ignored"
+  },
+  "showcase.topic.res.drop": {
+    "message": "Queue full, dropped"
+  },
+  "showcase.topic.res.run": {
+    "message": "Reads original, 0 B"
+  },
+  "showcase.topic.cb.reads": {
+    "message": "Reads the publisher's original"
+  },
+  "showcase.topic.shm.pub": {
+    "message": "Publisher process"
+  },
+  "showcase.topic.shm.write": {
+    "message": "Writes slot #{k} in place"
+  },
+  "showcase.topic.shm.title": {
+    "message": "Shared memory · {n} slots"
+  },
+  "showcase.topic.shm.free": {
+    "message": "free"
+  },
+  "showcase.topic.shm.freeQueue": {
+    "message": "Free queue"
+  },
+  "showcase.topic.shm.subWait": {
+    "message": "In Wait()"
+  },
+  "showcase.topic.shm.subRead": {
+    "message": "Reading slot #{k}"
+  },
+  "showcase.topic.shm.subWake": {
+    "message": "futex wake"
+  },
+  "showcase.topic.shm.desc": {
+    "message": "Descriptor queue"
+  },
+  "showcase.topic.shm.dropOld": {
+    "message": "Oldest descriptor dropped"
+  },
+  "showcase.topic.shm.pubFail": {
+    "message": "Queue full, publish failed"
+  },
+  "showcase.topic.shm.noSlot": {
+    "message": "No free slot"
+  },
+  "showcase.topic.shm.subA": {
+    "message": "Subscriber process A"
+  },
+  "showcase.topic.shm.subB": {
+    "message": "Subscriber process B"
+  },
+  "showcase.topic.shm.subC": {
+    "message": "Subscriber process C"
+  },
+  "showcase.topic.aria": {
+    "message": "How one Topic publish reaches each subscriber"
+  },
+  "showcase.topic.canvas.topic": {
+    "message": "Publisher thread, subscriber list and the four kinds of subscriber"
+  },
+  "showcase.topic.canvas.shared": {
+    "message": "Publisher process, shared-memory slots and three subscriber processes"
+  },
+  "showcase.topic.mode.group": {
+    "message": "Delivery"
+  },
+  "showcase.topic.mode.topic": {
+    "message": "In-process Topic"
+  },
+  "showcase.topic.mode.shared": {
+    "message": "Shared memory"
+  },
+  "showcase.topic.size.group": {
+    "message": "Payload size"
+  },
+  "showcase.topic.publish": {
+    "message": "Publish one"
+  },
+  "showcase.topic.key.label": {
+    "message": "Data copied for subscribers per publish"
+  },
+  "showcase.topic.key.shared": {
+    "message": "{n} subscribers read the same slot #{k}; each receives a {d} descriptor"
+  },
+  "showcase.topic.key.sharedNone": {
+    "message": "Each subscriber receives a {d} descriptor"
+  },
+  "showcase.topic.caption.topic": {
+    "message": "One publish walks the subscriber list: a sync subscriber waiting in Wait() is woken with its own copy, an async subscriber gets a copy after StartWaiting(), a queued subscriber gets a copy in its queue, and a callback reads the publisher's data directly."
+  },
+  "showcase.topic.caption.shared": {
+    "message": "The publisher writes the data into a shared-memory slot; subscribers receive only the slot number and read the same memory. When every subscriber has released it, the reference count reaches zero and the slot returns to the free queue."
+  },
+  "showcase.topic.details": {
+    "message": "Details"
+  },
+  "showcase.topic.d.topicNote": {
+    "message": "`LockFreeList::Add` inserts each new subscriber at the head, so the walk starts with the subscriber registered last. During a publish the Topic's busy flag is LOCKED; a default single-publisher Topic runs one publish at a time."
+  },
+  "showcase.topic.d.sub": {
+    "message": "Subscriber"
+  },
+  "showcase.topic.d.state": {
+    "message": "State"
+  },
+  "showcase.topic.d.last": {
+    "message": "Last publish"
+  },
+  "showcase.topic.d.count": {
+    "message": "{n} published, {b} copied in total"
+  },
+  "showcase.topic.d.sharedNote": {
+    "message": "The publisher here takes a slot with `CreateData()` and writes into it in place; `Publish(data)` by value first copies the data into the slot once. `PublishData()` sets the reference count to the number of receivers and gives each receiver a `{slot_index, sequence}` descriptor; `Release()` decrements the count, and at 0 the slot returns to the free queue."
+  },
+  "showcase.topic.d.slot": {
+    "message": "Slot"
+  },
+  "showcase.topic.d.reading": {
+    "message": "Reading"
+  },
+  "showcase.topic.d.queued": {
+    "message": "Queued"
+  },
+  "showcase.topic.d.mode": {
+    "message": "Mode"
+  },
+  "showcase.topic.d.pending": {
+    "message": "Pending"
+  },
+  "showcase.topic.d.dropped": {
+    "message": "Dropped"
+  },
+  "showcase.topic.d.config": {
+    "message": "slot_num = {s}, subscriber_num = {u}, queue_num = {q} (the ring holds at most {m} descriptors)"
+  },
+  "showcase.topic.reduced": {
+    "message": "Reduced motion: the picture stays still; \"Publish one\" shows the finished delivery."
+  },
+  "showcase.ModuleFlow.step.add": {
+    "message": "Add a Module"
+  },
+  "showcase.ModuleFlow.step.setup": {
+    "message": "Fetch and lock"
+  },
+  "showcase.ModuleFlow.step.instance": {
+    "message": "Configure"
+  },
+  "showcase.ModuleFlow.step.gen": {
+    "message": "Generate main"
+  },
+  "showcase.ModuleFlow.caption.add": {
+    "message": "`xrobot module add` writes the Module request to `Modules/modules.yaml`."
+  },
+  "showcase.ModuleFlow.caption.setup": {
+    "message": "`xrobot setup` fetches the Modules, locks each one to a commit in `xrobot.lock` and generates `User/xrobot_main.hpp`."
+  },
+  "showcase.ModuleFlow.caption.instance": {
+    "message": "`xrobot instance add` writes the constructor arguments with their defaults; `xrobot instance set` fills each dependency with the name of an object registered in the entry source."
+  },
+  "showcase.ModuleFlow.caption.gen": {
+    "message": "`xrobot gen` generates the main function `XRobotMain` from `User/xrobot.yaml`; each instance is a static object constructed in configuration order."
+  },
+  "showcase.ModuleFlow.out.moduleAdded": {
+    "message": "Added {req}; run `xrobot setup` to fetch it"
+  },
+  "showcase.ModuleFlow.out.resolvedOne": {
+    "message": "Resolved {n} Module commit"
+  },
+  "showcase.ModuleFlow.out.resolvedMany": {
+    "message": "Resolved {n} Module commits"
+  },
+  "showcase.ModuleFlow.out.setupDone": {
+    "message": "Checked 1 config; generated User/xrobot_main.hpp for User/xrobot.yaml"
+  },
+  "showcase.ModuleFlow.out.instanceAdded": {
+    "message": "Added {id} to User/xrobot.yaml; fill the null values (dependencies) before generating"
+  },
+  "showcase.ModuleFlow.out.candidates": {
+    "message": "  {arg} ({type}): {names}"
+  },
+  "showcase.ModuleFlow.out.listSep": {
+    "message": ", "
+  },
+  "showcase.ModuleFlow.out.set": {
+    "message": "Set {path} of {id} in User/xrobot.yaml"
+  },
+  "showcase.ModuleFlow.out.genDone": {
+    "message": "Generated User/xrobot_main.hpp for User/xrobot.yaml"
+  },
+  "showcase.ModuleFlow.file.absent": {
+    "message": "Not generated yet"
+  },
+  "showcase.ModuleFlow.file.new": {
+    "message": "New file"
+  },
+  "showcase.ModuleFlow.file.unchanged": {
+    "message": "Unchanged"
+  },
+  "showcase.ModuleFlow.file.touched": {
+    "message": "changed in this step"
+  },
+  "showcase.ModuleFlow.file.absentNote": {
+    "message": "`xrobot setup` writes this file."
+  },
+  "showcase.ModuleFlow.stepsLabel": {
+    "message": "Steps"
+  },
+  "showcase.ModuleFlow.pause": {
+    "message": "Pause"
+  },
+  "showcase.ModuleFlow.play": {
+    "message": "Play"
+  },
+  "showcase.ModuleFlow.termLabel": {
+    "message": "Terminal"
+  },
+  "showcase.ModuleFlow.termTitle": {
+    "message": "BSP root"
+  },
+  "showcase.ModuleFlow.filesLabel": {
+    "message": "Files"
+  },
+  "showcase.ModuleFlow.second": {
+    "message": "Also add the IMU driver `BMI088`"
+  },
+  "showcase.usbdebug.kind.device": {
+    "message": "Device descriptor"
+  },
+  "showcase.usbdebug.kind.config": {
+    "message": "Configuration descriptor header"
+  },
+  "showcase.usbdebug.kind.interface": {
+    "message": "Interface descriptor"
+  },
+  "showcase.usbdebug.kind.endpoint": {
+    "message": "Endpoint descriptor"
+  },
+  "showcase.usbdebug.kind.iad": {
+    "message": "Interface association descriptor (IAD)"
+  },
+  "showcase.usbdebug.kind.cdcHeader": {
+    "message": "CDC header functional descriptor"
+  },
+  "showcase.usbdebug.kind.cdcCall": {
+    "message": "CDC call management functional descriptor"
+  },
+  "showcase.usbdebug.kind.cdcAcm": {
+    "message": "CDC ACM functional descriptor"
+  },
+  "showcase.usbdebug.kind.cdcUnion": {
+    "message": "CDC union functional descriptor"
+  },
+  "showcase.usbdebug.kind.dfuFunc": {
+    "message": "DFU functional descriptor"
+  },
+  "showcase.usbdebug.kind.bos": {
+    "message": "BOS header"
+  },
+  "showcase.usbdebug.kind.msos": {
+    "message": "MS OS 2.0 platform capability"
+  },
+  "showcase.usbdebug.kind.usb2ext": {
+    "message": "USB 2.0 extension capability"
+  },
+  "showcase.usbdebug.kind.string": {
+    "message": "String descriptor"
+  },
+  "showcase.usbdebug.kind.other": {
+    "message": "Descriptor"
+  },
+  "showcase.usbdebug.aria": {
+    "message": "Descriptors of an XRUSB composite device, and the waveform of DAPLink reading DPIDR over SWD"
+  },
+  "showcase.usbdebug.dev.path": {
+    "message": "XRUSB / COMPOSITE"
+  },
+  "showcase.usbdebug.dev.listNote": {
+    "message": "Interface numbers follow this order"
+  },
+  "showcase.usbdebug.dev.rows": {
+    "message": "The three device classes of the composite device; select one to see its descriptor bytes"
+  },
+  "showcase.usbdebug.func.dap": {
+    "message": "Debug probe"
+  },
+  "showcase.usbdebug.func.cdc": {
+    "message": "Virtual serial port"
+  },
+  "showcase.usbdebug.func.dfu": {
+    "message": "Firmware update"
+  },
+  "showcase.usbdebug.itf": {
+    "message": "ITF {n}"
+  },
+  "showcase.usbdebug.ep.bulk": {
+    "message": "bulk"
+  },
+  "showcase.usbdebug.ep.interrupt": {
+    "message": "interrupt"
+  },
+  "showcase.usbdebug.ep.ep0only": {
+    "message": "EP0 only"
+  },
+  "showcase.usbdebug.sum.cfg": {
+    "message": "Config {n} B ="
+  },
+  "showcase.usbdebug.sum.cfgHead": {
+    "message": "Configuration header"
+  },
+  "showcase.usbdebug.sum.dev": {
+    "message": "Device"
+  },
+  "showcase.usbdebug.sum.label": {
+    "message": "Descriptor composition"
+  },
+  "showcase.usbdebug.owner.hdr": {
+    "message": "BOS header"
+  },
+  "showcase.usbdebug.owner.dap": {
+    "message": "from CMSIS-DAP"
+  },
+  "showcase.usbdebug.owner.dfu": {
+    "message": "from the DFU runtime"
+  },
+  "showcase.usbdebug.owner.stack": {
+    "message": "added by the stack"
+  },
+  "showcase.usbdebug.byte.info": {
+    "message": "{desc} · byte {i} · {field} = {value}"
+  },
+  "showcase.usbdebug.byte.label": {
+    "message": "Descriptor bytes; arrow keys move byte by byte"
+  },
+  "showcase.usbdebug.byte.hint": {
+    "message": "Point at or tap a byte to see its field."
+  },
+  "showcase.usbdebug.swd.path": {
+    "message": "DEBUG / SWD · 1 MHz"
+  },
+  "showcase.usbdebug.state.done": {
+    "message": "Read complete"
+  },
+  "showcase.usbdebug.state.out": {
+    "message": "DAP_Transfer on EP1 OUT"
+  },
+  "showcase.usbdebug.state.swd": {
+    "message": "Reading over SWD"
+  },
+  "showcase.usbdebug.state.in": {
+    "message": "Reply on EP1 IN"
+  },
+  "showcase.usbdebug.state.paused": {
+    "message": "paused"
+  },
+  "showcase.usbdebug.read": {
+    "message": "Read chip ID"
+  },
+  "showcase.usbdebug.next": {
+    "message": "Next field"
+  },
+  "showcase.usbdebug.key.cap": {
+    "message": "DPIDR · DP address 0x0"
+  },
+  "showcase.usbdebug.legend.host": {
+    "message": "Host drives"
+  },
+  "showcase.usbdebug.legend.target": {
+    "message": "Target drives"
+  },
+  "showcase.usbdebug.legend.z": {
+    "message": "Released, pulled high"
+  },
+  "showcase.usbdebug.wave.aria": {
+    "message": "SWCLK and SWDIO waveform: request 0xA5, turnaround, ACK 100, 32 data bits LSB first, even parity, turnaround; 46 clocks. Arrow keys step clock by clock."
+  },
+  "showcase.usbdebug.wave.cycle": {
+    "message": "Clock {k} · {name} = {v} · {who}"
+  },
+  "showcase.usbdebug.wave.host": {
+    "message": "the host writes it in the low half, the target samples on the rising edge"
+  },
+  "showcase.usbdebug.wave.target": {
+    "message": "the target drives it from the previous rising edge, the host samples before the rising edge"
+  },
+  "showcase.usbdebug.wave.trn": {
+    "message": "turnaround: the host releases SWDIO, the pull-up holds it high, the target takes over on the rising edge"
+  },
+  "showcase.usbdebug.wave.trn2": {
+    "message": "turnaround: the target releases SWDIO, the host takes it back and holds it high"
+  },
+  "showcase.usbdebug.wave.hint": {
+    "message": "Point at the waveform to see each clock's bit and driver."
+  },
+  "showcase.usbdebug.usb.out": {
+    "message": "DAP_Transfer: read DP 0x0"
+  },
+  "showcase.usbdebug.usb.in": {
+    "message": "ACK OK, data low byte first"
+  },
+  "showcase.usbdebug.usb.label": {
+    "message": "CMSIS-DAP command and reply"
+  },
+  "showcase.usbdebug.dpidr.label": {
+    "message": "DPIDR fields"
+  },
+  "showcase.usbdebug.dpidr.designer": {
+    "message": "Arm"
+  },
+  "showcase.topic.legend": {
+    "message": "Colour: seq mod 4"
+  },
+  "showcase.RobotModules.robot.drone": {
+    "message": "Multirotor"
+  },
+  "showcase.RobotModules.robot.chassis": {
+    "message": "Wheeled chassis"
+  },
+  "showcase.RobotModules.robot.arm": {
+    "message": "Robot arm"
+  },
+  "showcase.RobotModules.role.BMI088": {
+    "message": "6-axis IMU"
+  },
+  "showcase.RobotModules.role.MadgwickAHRS": {
+    "message": "Attitude estimation"
+  },
+  "showcase.RobotModules.role.R9DS": {
+    "message": "RC receiver"
+  },
+  "showcase.RobotModules.role.IST8310": {
+    "message": "Magnetometer"
+  },
+  "showcase.RobotModules.role.SPL06": {
+    "message": "Barometer"
+  },
+  "showcase.RobotModules.role.LC307": {
+    "message": "Optical flow"
+  },
+  "showcase.RobotModules.role.STP23L": {
+    "message": "Laser ranging"
+  },
+  "showcase.RobotModules.role.GreySensor": {
+    "message": "Line tracking"
+  },
+  "showcase.RobotModules.role.ST7735": {
+    "message": "Display"
+  },
+  "showcase.RobotModules.role.BuzzerAlarm": {
+    "message": "Buzzer"
+  },
+  "showcase.RobotModules.role.INA228": {
+    "message": "Power monitor"
+  },
+  "showcase.RobotModules.role.BlinkLED": {
+    "message": "Status LED"
+  },
+  "showcase.RobotModules.shared": {
+    "message": "Shared"
+  },
+  "showcase.RobotModules.tablist": {
+    "message": "Choose a robot"
+  },
+  "showcase.RobotModules.artAria": {
+    "message": "{robot}: {modules}"
+  },
+  "showcase.RobotModules.listAria": {
+    "message": "Modules in this configuration"
+  },
+  "showcase.RobotModules.rest": {
+    "message": "{n} more"
+  },
+  "showcase.usbdebug.byte.desc": {
+    "message": "{desc} · {n} B"
+  },
+  "showcase.ringbuffer.scene.idle": {
+    "message": "Receiving continuously: the read thread waits in Read and gets each byte in the interrupt that queued it."
+  },
+  "showcase.ringbuffer.scene.awayOn": {
+    "message": "Demo in progress: the read thread stops reading and the queue fills."
+  },
+  "showcase.ringbuffer.scene.awayOff": {
+    "message": "Demo in progress: the read thread reads again and the queue drains."
+  },
+  "showcase.ringbuffer.scene.burstOn": {
+    "message": "Demo in progress: the receive interrupt is held off and the bytes stay in the DMA ring."
+  },
+  "showcase.ringbuffer.scene.burstOff": {
+    "message": "Demo in progress: the interrupt runs again and the backlog is copied into the queue at once."
+  },
+  "home.motion.label": {
+    "message": "Animation"
+  },
+  "home.motion.on": {
+    "message": "On"
+  },
+  "home.motion.off": {
+    "message": "Off"
+  },
+  "home.hero.lead.tools": {
+    "message": "The CodeGenerator and XRobot are two command-line tools used with LibXR: the CodeGenerator generates the peripheral objects and the entry function `app_main` from an STM32CubeMX project, and XRobot fetches Modules, locks each one to a commit, and generates the main function `XRobotMain` from a configuration."
+  },
+  "home.hero.cta.quickStart": {
+    "message": "Quick Start"
+  },
+  "home.agent.link.quickStart": {
+    "message": "Quick Start"
+  },
+  "home.cap.workflow.doc4": {
+    "message": "CI and Firmware Release"
+  },
+  "home.route.libxr.title": {
+    "message": "LibXR Only"
+  },
+  "home.route.libxr.desc": {
+    "message": "Use the LibXR core API, peripheral drivers and middleware in an existing project."
+  },
+  "home.route.libxr.more1": {
+    "message": "Core API"
+  },
+  "home.route.libxr.more2": {
+    "message": "Device Drivers"
+  },
+  "home.route.libxr.more3": {
+    "message": "Middleware"
+  },
+  "home.route.codegen.title": {
+    "message": "STM32 and the CodeGenerator"
+  },
+  "home.route.codegen.desc": {
+    "message": "Generate the peripheral objects and the entry function `app_main` from an STM32CubeMX project and add LibXR to its CMake build."
+  },
+  "home.route.codegen.more1": {
+    "message": "STM32 Environment Setup"
+  },
+  "home.route.codegen.more2": {
+    "message": "STM32 Code Generation"
+  },
+  "home.route.codegen.more3": {
+    "message": "Integrate with XRobot"
+  },
+  "home.route.port.title": {
+    "message": "Porting to a New Platform"
+  },
+  "home.route.port.desc": {
+    "message": "The system layer and peripheral drivers a new operating system or chip implements."
+  },
+  "home.route.port.more1": {
+    "message": "Operating System"
+  },
+  "home.route.port.more2": {
+    "message": "Driver Development"
+  },
+  "home.route.port.more3": {
+    "message": "About Performance"
   }
 }
