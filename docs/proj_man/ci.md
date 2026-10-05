@@ -6,13 +6,13 @@ sidebar_position: 6
 
 # CI 与固件发布
 
-模块仓库和 STM32 BSP 的 CI 调用 XRobot 仓库中的共享工作流：模块使用 `module-ci.yml`，STM32 BSP 使用 `bsp-stm32-ci.yml`，后者还在打 `v*` tag 或发布 Release 时上传固件。
+模块仓库和 STM32 BSP 的 CI 调用 XRobot 仓库中的共享工作流：模块使用 `module-ci.yml`，STM32 BSP 使用 `bsp-stm32-ci.yml`，后者还在推送到 `master`、打 `v*` tag 或发布 Release 时上传固件。
 
 ---
 
 ## 模块 CI
 
-模块仓库调用共享工作流 `xrobot-org/XRobot/.github/workflows/module-ci.yml`。官方模块在 `dev` 线上的 `.github/workflows/build.yml`：
+模块仓库调用共享工作流 `xrobot-org/XRobot/.github/workflows/module-ci.yml`。官方模块的 `.github/workflows/build.yml`（`dev` 与 `master` 相同），XRobot 和 LibXR 使用默认的 `master`：
 
 ```yaml
 name: Module CI
@@ -22,11 +22,8 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@dev
+    uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@v1
     with:
-      xrobot-ref: dev
-      libxr-ref: dev
-      dependency-ref: refs/heads/dev
       template-args: '[]'
 ```
 
@@ -79,7 +76,7 @@ jobs:
 3. `xrobot format --check` 检查配置格式；
 4. `xrobot setup --frozen` 按 lock 检出模块并检查每份配置；
 5. 对每份配置配置并构建；要发布的构建（见[固件发布](#固件发布)）打包固件（`.elf`、`.hex`、`.bin`、配置文件和记录构建信息的 `build-info.json`）并上传为构建产物；
-6. 打 `v*` tag 或发布 Release 时，一个作业下载全部构建产物，生成发布文件、校验和、清单和说明，并一次上传到 Release。
+6. 推送到 `master`、打 `v*` tag 或发布 Release 时，一个作业下载全部构建产物，生成发布文件、校验和、清单和说明，并一次上传到 Release。
 
 | 输入 | 默认值 | 含义 |
 | --- | --- | --- |
@@ -96,7 +93,7 @@ jobs:
 
 ### 固件发布
 
-打 `v*` tag 或发布 Release 时，工作流上传固件。发布哪些配置按以下规则确定：
+推送到 `master`（或 `main`）、打 `v*` tag 或发布 Release 时，工作流上传固件。`master` 只在发版时从 `dev` 合入，推送到 `master` 时工作流在合并提交上打下一个 tag：已有 `vX.Y.Z` tag 中最大的版本补丁号加一，没有时为 `v1.0.0`；合并提交已有 `v` tag 时，由那个 tag 的运行发布。发布哪些配置按以下规则确定：
 
 - `configs` 只有 `default` 时，发布 `default`；
 - 否则发布除 `default` 外的每份配置；
@@ -168,7 +165,7 @@ jobs:
 }
 ```
 
-推送 tag 时，工作流创建 Release，说明是各构建的大小表和工具版本：
+推送到 `master` 或推送 tag 时，工作流创建 Release，说明是各构建的大小表和工具版本：
 
 ```markdown
 ## CtrBoard-H7_ALL v1.0.0
