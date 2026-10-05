@@ -6,13 +6,13 @@ sidebar_position: 6
 
 # CI and Firmware Release
 
-The CI of Module repositories and STM32 BSPs calls shared workflows of the XRobot repository: Modules use `module-ci.yml`, STM32 BSPs use `bsp-stm32-ci.yml`, which also uploads the firmware when a `v*` tag is pushed or a Release is published.
+The CI of Module repositories and STM32 BSPs calls shared workflows of the XRobot repository: Modules use `module-ci.yml`, STM32 BSPs use `bsp-stm32-ci.yml`, which also uploads the firmware on a push to `master`, a `v*` tag push or a published Release.
 
 ---
 
 ## Module CI
 
-Module repositories call the shared workflow `xrobot-org/XRobot/.github/workflows/module-ci.yml`. The `.github/workflows/build.yml` of official Modules on their `dev` line:
+Module repositories call the shared workflow `xrobot-org/XRobot/.github/workflows/module-ci.yml`. The `.github/workflows/build.yml` of official Modules (the same on `dev` and `master`), which use the default `master` of XRobot and LibXR:
 
 ```yaml
 name: Module CI
@@ -22,11 +22,8 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@dev
+    uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@v1
     with:
-      xrobot-ref: dev
-      libxr-ref: dev
-      dependency-ref: refs/heads/dev
       template-args: '[]'
 ```
 
@@ -79,7 +76,7 @@ The check job and the build jobs install the tools at the versions pinned by `xr
 3. checks the layout of the configurations with `xrobot format --check`;
 4. checks out the locked Modules and checks every configuration with `xrobot setup --frozen`;
 5. configures and builds every configuration; the builds to publish (see [Publishing Firmware](#publishing-firmware)) package the firmware (`.elf`, `.hex`, `.bin`, the configuration and a `build-info.json` with the build information) and upload it as a build artifact;
-6. for a `v*` tag or a published Release, one job downloads all build artifacts, writes the release files, the checksums, the manifest and the description, and uploads them to the Release once.
+6. for a push to `master`, a `v*` tag or a published Release, one job downloads all build artifacts, writes the release files, the checksums, the manifest and the description, and uploads them to the Release once.
 
 | Input | Default | Meaning |
 | --- | --- | --- |
@@ -96,7 +93,7 @@ The workflow sets `XR_CONTEXT_REF` and `XR_RELEASE_REF` (the `--context-ref` and
 
 ### Publishing Firmware
 
-A `v*` tag or a published Release makes the workflow upload the firmware. These rules choose the configurations to publish:
+A push to `master` (or `main`), a `v*` tag or a published Release makes the workflow upload the firmware. `master` receives `dev` only at a release; on a push to `master` the workflow tags the merge commit with the next tag: the patch number of the highest existing `vX.Y.Z` tag plus one, or `v1.0.0` when there is none; when the merge commit already has a `v` tag, the run of that tag publishes it. These rules choose the configurations to publish:
 
 - when `configs` has only `default`, `default` is published;
 - otherwise every configuration except `default` is published;
@@ -168,7 +165,7 @@ Each build uploads its files as a build artifact. One job then downloads all bui
 }
 ```
 
-A tag push makes the workflow create the Release, with the size table of the builds and the tool versions as its description:
+A push to `master` or a tag push makes the workflow create the Release, with the size table of the builds and the tool versions as its description:
 
 ```markdown
 ## CtrBoard-H7_ALL v1.0.0
