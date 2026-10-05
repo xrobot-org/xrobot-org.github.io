@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Double Buffering
 
-For the basic API, see [DoubleBuffer](/en/docs/basic_coding/structure/double_buffer).
+For the basic API, see [DoubleBuffer](/docs/basic_coding/structure/double_buffer).
 
 This page describes the role of `DoubleBuffer` in drivers. Double buffering separates three things
 in time: the hardware transfer, preparation of the next block, and submission from upper layers.

@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Topic Design
 
-For basic usage, see [Topic](/en/docs/basic_coding/middleware/message/message-topic). This page
+For basic usage, see [Topic](/docs/basic_coding/middleware/message/message-topic). This page
 covers why the mechanism is split into these roles.
 
 ## What `Topic` is solving

@@ -7,7 +7,7 @@ sidebar_position: 2
 # LinuxSharedTopic Design
 
 For the basic API, see
-[Shared-Memory Topic (Linux)](/en/docs/basic_coding/middleware/message/message-linux-shared-topic).
+[Shared-Memory Topic (Linux)](/docs/basic_coding/middleware/message/message-linux-shared-topic).
 The material below covers the boundary between `LinuxSharedTopic<T>` and ordinary `Topic`, and the
 tradeoffs behind the current implementation.
 

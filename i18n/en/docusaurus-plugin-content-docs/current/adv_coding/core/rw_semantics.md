@@ -6,8 +6,8 @@ sidebar_position: 1
 
 # I/O Completion Semantics and Port State Machines
 
-For the basic APIs, see [I/O Read/Write Abstraction](/en/docs/basic_coding/core/core-rw) and
-[Operation Model](/en/docs/basic_coding/core/core-op). This page describes the state machines of
+For the basic APIs, see [I/O Read/Write Abstraction](/docs/basic_coding/core/core-rw) and
+[Operation Model](/docs/basic_coding/core/core-op). This page describes the state machines of
 `ReadPort` and `WritePort`, the interface between a driver backend and a port, and when read and
 write requests complete.
 

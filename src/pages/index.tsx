@@ -1,555 +1,335 @@
-import React from 'react';
+/**
+ * Home page (XRobot Style). Content and links: src/data/home.tsx; widgets: src/components/showcase.
+ * Order: first screen (value, actions, chapters, SameCode) -> capabilities -> documentation entry
+ * -> getting started and contributing -> "XRobot is all you need".
+ */
+import React, { useCallback, useEffect, useState } from 'react';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import Translate, { translate } from '@docusaurus/Translate';
-import commitInfo from '../data/commitInfo.json';
-import './Home.css';
+import { translate } from '@docusaurus/Translate';
+import { Button, Card, Logo, PathLabel, Tag, inlineCode } from '@site/src/components/xr';
+import Showcase, { readMotionOff, setMotionOff, useReducedMotion } from '@site/src/components/showcase/Showcase';
+import ShowcaseSection, { StaticFigure } from '@site/src/components/showcase/ShowcaseSection';
+import AgentPromptDialog from '@site/src/components/home/AgentPromptDialog';
+import { capabilities, chapters, heroActions, links, recent, routes, scenarios, versionRows, type FigureSpec } from '@site/src/data/home';
+import commitInfo from '@site/src/data/commitInfo.json';
+import styles from './index.module.css';
 
-const agentQuickDeployFilename = 'xrobot-agent-context.md';
-
-const agentQuickDeployPromptZh = [
-  '# XRobot / LibXR 专用 Agent 启动提示词',
-  '',
-  '你正在协助的是 XRobot / LibXR 相关仓库。这里的仓库不一定是 STM32 工程，也不一定是 XRobot BSP；它也可能是 CH32、ESP32、Linux、Webots、HPM、MSPM0 平台工程，或者驱动、XRUSB、调试、CodeGen、示例与测试仓库。',
-  '',
-  '开始分析前，先根据当前仓库的目录和关键文件判断它属于哪一类，再进入对应文档和代码入口。',
-  '',
-  '## 这几个项目分别是什么',
-  '- LibXR：运行时框架，负责核心语义、驱动抽象、中间件和 XRUSB。',
-  '- XRobot：`xrobot` 命令，LibXR 的模块管理与主函数生成工具：拉取模块、用 `xrobot.lock` 把每个模块锁定到具体的提交，并根据 `User/` 下的配置生成主函数 `XRobotMain`。',
-  '- CodeGen：`libxr` 命令（pip 包 `libxr`），读取 STM32CubeMX 工程的 `.ioc`，生成外设对象、入口函数 `app_main`，并把 LibXR 接入工程的 CMake 构建。',
-  '',
-  '## 使用原则',
-  '- 这是 XRobot / LibXR 专用助手提示词，不是通用嵌入式模板。',
-  '- 不要在看目录之前就默认它是 STM32、ESP32、Linux，或者默认它一定要先跑 XRobot 命令。',
-  '- 先判断仓库角色，再决定看哪份文档、读哪部分代码、执行哪类命令。',
-  '',
-  '## 第一步先看什么',
-  '- 先检查仓库根目录与关键配置文件，确认它更像 XRobot BSP、平台工程、驱动仓库，还是工具仓库。',
-  '- XRobot BSP 常见痕迹：`Modules/modules.yaml`、`Modules/sources.yaml`、`xrobot.lock`、`User/*.yaml`、调用 `XROBOT_MAIN()` 的入口源文件。',
-  '- LibXR 平台工程常见痕迹：`CMakeLists.txt`、`CMakePresets.json`、`libxr_config.yaml`、平台目录、芯片配置文件、板级实现目录。',
-  '- 平台或 SDK 线索也要纳入判断：`.ioc`、CubeMX 工程、`idf.py`、`platformio.ini`、Linux / Webots 目录、厂商 SDK 目录。',
-  '- 如果重点文件集中在 `driver`、`system`、`USB`、`DAP`、`Debug`、协议栈或设备枚举实现，优先按驱动 / XRUSB / 调试工程理解。',
-  '- XRobot BSP 在 `Modules/modules.yaml` 的 `xrobot:` 字段固定 xrobot 的版本；使用 CodeGenerator 的 STM32 工程在 `User/libxr_config.yaml` 的 `generator:` 字段固定 libxr 的版本。运行 `xrobot` 或 `libxr` 命令之前，先用 `xrobot --version`、`libxr --version` 确认安装的版本与这两个字段相同，不同时先安装相同的版本。',
-  '',
-  '## 工程类型判断',
-  '- 如果当前仓库有 `Modules/modules.yaml`，按 XRobot BSP 处理；`xrobot describe` 以 JSON 给出它的配置、锁定模块、注册和诊断。',
-  '- 如果当前仓库主要围绕 LibXR 集成、平台工程、芯片/板级配置、驱动实现展开，按 LibXR 平台工程处理。',
-  '- 如果当前仓库重点是设备接口、协议栈、调试链路、USB/CAN/UART 等实现，按驱动 / XRUSB 工程处理。',
-  '- 如果当前仓库主要是代码生成、模板、示例、测试或基准，按工具 / 示例仓库处理，不要硬套到板级移植流程。',
-  '- 如果仓库里同时存在多类入口，先说明你看到的证据，再决定主入口，不要直接跳到某个工具命令。',
-  '',
-  '## 文档入口',
-  '- 总入口：https://xrobot.work/docs/intro',
-  '- 快速开始：https://xrobot.work/docs/quick_start',
-  '- 设计思想：https://xrobot.work/docs/concept',
-  '- 环境配置：https://xrobot.work/docs/env_setup',
-  '- 基础编程：https://xrobot.work/docs/basic_coding',
-  '- 代码生成（CodeGenerator）：https://xrobot.work/docs/code_gen',
-  '- 项目管理（XRobot）：https://xrobot.work/docs/proj_man',
-  '- XRUSB：https://xrobot.work/docs/xrusb',
-  '- 调试：https://xrobot.work/docs/debug',
-  '',
-  '## 入口选择规则',
-  '- 只有确认是 XRobot BSP 时，才优先看 `proj_man`、`xrobot setup`、`xrobot describe`、`Modules/`、`User/`。',
-  '- 如果是 LibXR 平台工程，优先看 `env_setup`、`concept`、`basic_coding`，再按实际平台进入对应环境页。',
-  '- 如果是带 `.ioc` 文件的 STM32CubeMX 工程，外设对象和 `app_main` 由 CodeGenerator 生成，相关规则看 `code_gen`。',
-  '- 如果是驱动或设备接口问题，再转去 `xrusb`、`debug`、`basic_coding/driver`。',
-  '- 如果是中间件、消息系统、调度、Topic 等运行时机制问题，优先看 `basic_coding` 下对应章节。',
-  '- 如果当前仓库只是某个平台或某个芯片工程，不要把它强行解释成 XRobot BSP。',
-  '',
-  '## 遇到问题时怎么处理',
-  '- 先确认问题属于哪一层：环境、工程工作流、运行时语义、驱动/XRUSB。',
-  '- 先打开上面的对应文档链接，不要脱离文档自行猜测接口或目录结构。',
-  '- 如果文档里没有，再结合当前仓库代码和命令输出继续判断。',
-  '- 如果仍然解决不了，再整理最小问题描述、命令输出和环境信息后提问。',
-  '',
-  '## 需要进一步求助时',
-  '- 补充当前平台、目标芯片/系统、使用的命令、报错原文。',
-  '- 如果是 XRobot BSP 问题，优先附上 `Modules/` 和 `User/` 下相关文件状态。',
-  '- 如果是 LibXR 平台工程问题，优先附上 `CMakeLists.txt`、`CMakePresets.json`、平台配置文件、`libxr_config.yaml` 等文件状态。',
-  '- 如果是驱动、XRUSB、调试或运行时问题，优先附上相关源码位置、最小复现代码和日志。',
-  '',
-  '## 补充入口',
-  '- 新手任务引导：https://xrobot.work/XRobot-Onboarding/',
-].join('\n');
-
-const agentQuickDeployPromptEn = [
-  '# XRobot / LibXR Agent Startup Prompt',
-  '',
-  'You are assisting with a repository related to XRobot / LibXR. It may be an STM32, CH32, ESP32, Linux, Webots, HPM, or MSPM0 platform project; it may also be an XRobot BSP, a driver repository, an XRUSB/debug project, CodeGen, examples, or tests.',
-  '',
-  'Before changing code or running setup commands, inspect the repository layout and key files first, identify what kind of repository this is, and then choose the corresponding docs and code entry points.',
-  '',
-  '## What these projects are',
-  '- LibXR: the runtime framework, covering core semantics, driver abstractions, middleware, and XRUSB.',
-  '- XRobot: the `xrobot` command, the Module manager and main function generator for LibXR: it fetches Modules, locks each one to a commit in `xrobot.lock`, and generates the main function `XRobotMain` from the configurations under `User/`.',
-  '- CodeGen: the `libxr` command (pip package `libxr`); it reads the `.ioc` of an STM32CubeMX project, generates the peripheral objects and the entry function `app_main`, and adds LibXR to the project\'s CMake build.',
-  '',
-  '## Ground rules',
-  '- This is a dedicated XRobot / LibXR assistant prompt, not a generic embedded template.',
-  '- Do not assume STM32, ESP32, Linux, or an XRobot BSP before you inspect the repository.',
-  '- Classify the repository role first, then decide which docs to read, which code to inspect, and which commands to run.',
-  '',
-  '## What to inspect first',
-  '- Start from the repository root and key config files, and decide whether it looks like an XRobot BSP, a platform project, a driver repository, or a tooling repository.',
-  '- Common XRobot BSP traces: `Modules/modules.yaml`, `Modules/sources.yaml`, `xrobot.lock`, `User/*.yaml`, and an entry source that calls `XROBOT_MAIN()`.',
-  '- Common LibXR platform-project traces: `CMakeLists.txt`, `CMakePresets.json`, `libxr_config.yaml`, platform directories, chip config files, and board-level implementation directories.',
-  '- Platform or SDK clues also matter: `.ioc`, CubeMX projects, `idf.py`, `platformio.ini`, Linux / Webots directories, vendor SDK directories.',
-  '- If key files are concentrated around `driver`, `system`, `USB`, `DAP`, `Debug`, protocol stacks, or device-enumeration logic, treat it first as a driver / XRUSB / debug project.',
-  '- An XRobot BSP pins the xrobot version in the `xrobot:` field of `Modules/modules.yaml`; an STM32 project that uses the CodeGenerator pins the libxr version in the `generator:` field of `User/libxr_config.yaml`. Before running `xrobot` or `libxr` commands, check with `xrobot --version` and `libxr --version` that the installed versions match these fields, and install the matching versions first if they differ.',
-  '',
-  '## Repository classification',
-  '- If the repository contains `Modules/modules.yaml`, treat it as an XRobot BSP; `xrobot describe` prints its configurations, locked modules, registrations, and diagnostics as JSON.',
-  '- If the repository mainly centers on LibXR integration, platform bring-up, chip / board configuration, and driver implementation, treat it as a LibXR platform project.',
-  '- If the repository mainly focuses on device interfaces, protocol stacks, debug links, or USB/CAN/UART implementation, treat it as a driver / XRUSB project.',
-  '- If the repository mainly contains code generation, templates, examples, tests, or benchmarks, treat it as a tooling / example repository instead of forcing it into a board-porting flow.',
-  '- If multiple entry styles coexist, describe the evidence first and then pick the main entry point. Do not jump straight to one tool command.',
-  '',
-  '## Documentation entry points',
-  '- Overview: https://xrobot.work/en/docs/intro',
-  '- Quick start: https://xrobot.work/en/docs/quick_start',
-  '- Design concepts: https://xrobot.work/en/docs/concept',
-  '- Environment setup: https://xrobot.work/en/docs/env_setup',
-  '- Basic coding: https://xrobot.work/en/docs/basic_coding',
-  '- Code generation (CodeGenerator): https://xrobot.work/en/docs/code_gen',
-  '- Project management (XRobot): https://xrobot.work/en/docs/proj_man',
-  '- XRUSB: https://xrobot.work/en/docs/xrusb',
-  '- Debug: https://xrobot.work/en/docs/debug',
-  '',
-  '## Entry selection rules',
-  '- Only prioritize `proj_man`, `xrobot setup`, `xrobot describe`, `Modules/`, and `User/` after confirming that the repository is an XRobot BSP.',
-  '- For a LibXR platform project, start from `env_setup`, `concept`, and `basic_coding`, then drill into the actual platform page.',
-  '- For an STM32CubeMX project with an `.ioc` file, the peripheral objects and `app_main` are generated by the CodeGenerator; its rules are in `code_gen`.',
-  '- For driver or device-interface problems, move to `xrusb`, `debug`, and `basic_coding/driver`.',
-  '- For runtime mechanisms such as middleware, messaging, scheduling, or Topic semantics, go to the corresponding `basic_coding` sections first.',
-  '- If the repository is only a platform project or chip-specific project, do not force it into an XRobot BSP explanation.',
-  '',
-  '## How to proceed when there is a problem',
-  '- First identify which layer the problem belongs to: environment, project workflow, runtime semantics, or driver / XRUSB.',
-  '- Open the corresponding docs links above first. Do not guess APIs or directory structure without the docs.',
-  '- If the docs are not enough, continue by combining the current repository code and command output.',
-  '- If it is still unresolved, provide a minimal problem statement, command output, and environment details before asking for help.',
-  '',
-  '## What to include when asking for help',
-  '- Include the current platform, target chip / system, commands used, and the exact error message.',
-  '- For XRobot BSP problems, include the relevant file state under `Modules/` and `User/` first.',
-  '- For LibXR platform-project problems, include the relevant state of `CMakeLists.txt`, `CMakePresets.json`, platform config files, and `libxr_config.yaml` first.',
-  '- For driver, XRUSB, debug, or runtime problems, include the related source location, a minimal repro, and logs.',
-  '',
-  '## Extra entry',
-  '- Onboarding guide (Chinese): https://xrobot.work/XRobot-Onboarding/',
-].join('\n');
-
-type AgentPromptStatus = 'idle' | 'copied' | 'downloaded' | 'copy-failed';
-
-async function copyTextToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.setAttribute('readonly', 'true');
-  textarea.style.position = 'fixed';
-  textarea.style.opacity = '0';
-  textarea.style.pointerEvents = 'none';
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textarea);
+function Figure({ spec }: { spec: FigureSpec }): JSX.Element {
+  return (
+    <StaticFigure src={spec.src} alt={spec.alt} ratio={spec.ratio} caption={spec.caption}>
+      {spec.commands ? (
+        <figure className="xr-code">
+          {spec.commandsTitle ? <figcaption className="xr-code-title">{spec.commandsTitle}</figcaption> : null}
+          <pre className="xr-code-pre">
+            <code>{spec.commands}</code>
+          </pre>
+        </figure>
+      ) : null}
+    </StaticFigure>
+  );
 }
 
-
-function VersionCard(): JSX.Element {
+/** Page-wide animation switch; on by default, stored in localStorage (see Showcase.tsx). */
+function MotionSwitch(): JSX.Element {
+  const off = useReducedMotion();
+  useEffect(() => {
+    document.documentElement.dataset.motion = readMotionOff() ? 'off' : 'on';
+  }, []);
+  const label = translate({ id: 'home.motion.label', message: '动画' });
   return (
-    <div className="homeVersionCard homeMetaCard">
-      <div className="homePanelEyebrow">
-        <Translate id="homepage.versionCard.eyebrow">Documentation Baseline</Translate>
-      </div>
-      <div className="homeVersionList">
-        <div className="homeVersionItem">
-          <span>xrobot</span>
-          <code>{commitInfo.xrobotVersion || 'N/A'}</code>
-        </div>
-        <div className="homeVersionItem">
-          <span>libxr (CodeGenerator)</span>
-          <code>{commitInfo.codegenVersion || 'N/A'}</code>
-        </div>
-        <div className="homeVersionItem">
-          <span>LibXR master</span>
-          <code>{commitInfo.libxrCommit || 'N/A'}</code>
-        </div>
-      </div>
+    <div className={styles.motionSwitch} role="group" aria-label={label}>
+      <span className={styles.motionLabel}>{label}</span>
+      <button type="button" aria-pressed={!off} className={!off ? styles.motionOn : undefined} onClick={() => setMotionOff(false)}>
+        {translate({ id: 'home.motion.on', message: '开' })}
+      </button>
+      <button type="button" aria-pressed={off} className={off ? styles.motionOn : undefined} onClick={() => setMotionOff(true)}>
+        {translate({ id: 'home.motion.off', message: '关' })}
+      </button>
     </div>
   );
 }
 
+function Hero({ isEnglish }: { isEnglish: boolean }): JSX.Element {
+  return (
+    <section className={styles.hero} aria-labelledby="home-title">
+      <div className={`${styles.inner} ${styles.heroTop}`}>
+        <div className={styles.heroCopy}>
+          <PathLabel path="XROBOT / LIBXR" />
+          <h1 id="home-title" className={styles.heroTitle}>
+            {translate({ id: 'home.hero.title', message: '同一份模块代码，在不同的硬件和系统上运行' })}
+          </h1>
+          <p className={styles.heroLead}>
+            {inlineCode(
+              translate({
+                id: 'home.hero.lead.libxr',
+                message:
+                  'LibXR 是跨平台的 C++ 兼容层，包含外设驱动、数据结构、通信中间件、操作系统封装与数学工具，以及 USB 协议栈 XRUSB。',
+              }),
+            )}
+          </p>
+          <p className={styles.heroLead}>
+            {inlineCode(
+              translate({
+                id: 'home.hero.lead.tools',
+                message:
+                  'CodeGenerator 和 XRobot 是配合 LibXR 使用的两个命令行工具：CodeGenerator 由 STM32CubeMX 工程生成外设对象和入口函数 `app_main`，XRobot 负责拉取模块、把每个模块锁定到具体的提交，并根据配置生成主函数 `XRobotMain`。',
+              }),
+            )}
+          </p>
+          <div className={styles.heroActions}>
+            {heroActions(isEnglish).map((action) => (
+              <Button key={action.href} variant={action.primary ? 'primary' : undefined} href={action.href}>
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <nav className={styles.chapters} aria-labelledby="home-chapters">
+          <Logo height={96} className={styles.heroLogo} />
+          <span id="home-chapters" className={`xr-path ${styles.chaptersLabel}`}>
+            {translate({ id: 'home.hero.chapters', message: '文档章节' })}
+          </span>
+          <ul className={styles.chapterList}>
+            {chapters().map((chapter) => (
+              <li key={chapter.href}>
+                <Link className={styles.chapter} to={chapter.href}>
+                  <span className={styles.chapterPath}>{chapter.path}</span>
+                  <span className={styles.chapterLabel}>{chapter.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+      <div className={`${styles.inner} ${styles.heroStage}`}>
+        <MotionSwitch />
+        <Showcase
+          name="SameCode"
+          height={{ desktop: 476, mobile: 952 }}
+          label={translate({ id: 'home.hero.widgetLabel', message: '同一份 BlinkLED 在四种硬件和系统上运行' })}
+        />
+      </div>
+    </section>
+  );
+}
+
+function VersionCard(): JSX.Element {
+  const rows = versionRows.map((row) => {
+    const value = (commitInfo as Record<string, string>)[row.key] || 'N/A';
+    return { name: row.name, sha: value, href: row.href(value) };
+  });
+  return (
+    <Card label="DOCS / BASELINE" title={translate({ id: 'home.version.title', message: '文档基线' })}>
+      <p>{translate({ id: 'home.version.desc', message: '本文档对应的 xrobot、libxr 发布版本与 LibXR 提交。' })}</p>
+      <dl className={styles.versionList}>
+        {rows.map((row) => (
+          <div key={row.name} className={styles.versionRow}>
+            <dt>{row.name}</dt>
+            <dd>
+              {row.href ? (
+                <Link className="xr-link" to={row.href}>
+                  <code>{row.sha}</code>
+                </Link>
+              ) : (
+                <code>{row.sha}</code>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </Card>
+  );
+}
+
+function DocsArea(): JSX.Element {
+  return (
+    <section className={styles.block} aria-labelledby="home-docs">
+      <div className={styles.inner}>
+        <div className={styles.blockHead}>
+          <PathLabel path="DOCS" />
+          <h2 id="home-docs" className={styles.blockTitle}>
+            {translate({ id: 'home.docs.title', message: '按工程类型进入文档' })}
+          </h2>
+          <p className={styles.blockLead}>
+            {translate({
+              id: 'home.docs.lead',
+              message: '四个入口对应四类工程；场景列表给出常见任务的起点。',
+            })}
+          </p>
+        </div>
+
+        <div className={styles.routeGrid}>
+          {routes().map((route) => (
+            <Card
+              key={route.href}
+              label={route.path}
+              title={route.title}
+              href={route.href}
+              footer={route.more.map((more) => (
+                <Link key={more.href} className={`xr-link ${styles.routeMore}`} to={more.href}>
+                  {more.label}
+                </Link>
+              ))}
+            >
+              <p>{inlineCode(route.desc)}</p>
+            </Card>
+          ))}
+        </div>
+
+        <div className={styles.docsSplit}>
+          <div>
+            <h3 className={styles.subTitle}>{translate({ id: 'home.docs.scenarios', message: '按场景进入' })}</h3>
+            <ol className={styles.scenarios}>
+              {scenarios().map((item) => (
+                <li key={item.index}>
+                  <Link className={styles.scenario} to={item.href}>
+                    <span className={styles.scenarioIndex}>{item.index}</span>
+                    <span className={styles.scenarioText}>
+                      <span className={styles.scenarioTitle}>{item.title}</span>
+                      <span className={styles.scenarioDesc}>{item.desc}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div className={styles.docsSide}>
+            <VersionCard />
+            <div>
+              <h3 className={styles.subTitle}>{translate({ id: 'home.recent.title', message: '近期动态' })}</h3>
+              <ul className={styles.recent}>
+                {recent().map((item) => (
+                  <li key={item.tag} className={styles.recentItem}>
+                    <Tag>{item.tag}</Tag>
+                    <span className={styles.recentTitle}>{item.title}</span>
+                    <span className={styles.recentDesc}>{inlineCode(item.desc)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Join({ onAgent }: { onAgent: () => void }): JSX.Element {
+  return (
+    <section className={styles.block} aria-labelledby="home-join">
+      <div className={styles.inner}>
+        <div className={styles.blockHead}>
+          <PathLabel path="COMMUNITY" />
+          <h2 id="home-join" className={styles.blockTitle}>
+            {translate({ id: 'home.join.title', message: '上手与参与' })}
+          </h2>
+        </div>
+        <div className={styles.joinGrid}>
+          <Card
+            label="ONBOARDING"
+            title={translate({ id: 'home.join.onboarding.title', message: '新手任务引导' })}
+            href={links.onboarding}
+          >
+            <p>
+              {translate({
+                id: 'home.join.onboarding.desc',
+                message: '按平台给出起步路径，逐步介绍 XRobot 与 LibXR 的设计思想和基本写法。',
+              })}
+            </p>
+          </Card>
+          <article className={`xr-card ${styles.agentCard}`}>
+            <PathLabel path="AGENT" />
+            <h3 className="xr-card-title">{translate({ id: 'home.join.agent.title', message: 'Agent 快速部署' })}</h3>
+            <div className="xr-card-body">
+              <p>
+                {translate({
+                  id: 'home.join.agent.desc',
+                  message: '一页启动上下文：编程助手先判断仓库属于 XRobot BSP、平台工程还是驱动工程，再进入对应的文档和代码。',
+                })}
+              </p>
+            </div>
+            <div className="xr-card-footer">
+              <Button onClick={onAgent}>{translate({ id: 'home.join.agent.open', message: '打开提示词' })}</Button>
+            </div>
+          </article>
+          <Card
+            label="MODULES"
+            title={translate({ id: 'home.join.modules.title', message: '模块源' })}
+            href="/docs/proj_man/proj-man-source-man"
+            footer={
+              <Link className={`xr-link ${styles.routeMore}`} to={links.modulesRepo}>
+                xrobot-org/xrobot-modules
+              </Link>
+            }
+          >
+            <p>
+              {inlineCode(
+                translate({
+                  id: 'home.join.modules.desc',
+                  message: '官方模块源列出可以加入 BSP 的模块，`xrobot source` 可以搜索和查看其中的条目。',
+                }),
+              )}
+            </p>
+          </Card>
+          <Card
+            label="CONTRIBUTE"
+            title={translate({ id: 'home.join.contribute.title', message: '贡献指南' })}
+            href="/docs/con_guide"
+            footer={
+              <>
+                <Link className={`xr-link ${styles.routeMore}`} to="/docs/about">
+                  {translate({ id: 'home.join.about', message: '项目起源' })}
+                </Link>
+                <Link className={`xr-link ${styles.routeMore}`} to={links.github}>
+                  {translate({ id: 'home.join.github', message: 'GitHub 组织' })}
+                </Link>
+              </>
+            }
+          >
+            <p>
+              {translate({
+                id: 'home.join.contribute.desc',
+                message: '仓库与分支约定、编码与文档规范、测试规范，以及提交改动的方式。',
+              })}
+            </p>
+          </Card>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home(): JSX.Element {
-  const {i18n} = useDocusaurusContext();
+  const { i18n } = useDocusaurusContext();
   const isEnglish = i18n.currentLocale === 'en';
-  const agentQuickDeployPrompt = isEnglish ? agentQuickDeployPromptEn : agentQuickDeployPromptZh;
-  const [isAgentPromptOpen, setIsAgentPromptOpen] = React.useState(false);
-  const [agentPromptStatus, setAgentPromptStatus] = React.useState<AgentPromptStatus>('idle');
-
-  React.useEffect(() => {
-    if (!isAgentPromptOpen) {
-      return undefined;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsAgentPromptOpen(false);
-      }
-    };
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [isAgentPromptOpen]);
-
-  const handleAgentPromptOpen = () => {
-    setAgentPromptStatus('idle');
-    setIsAgentPromptOpen(true);
-  };
-
-  const handleAgentPromptClose = () => {
-    setIsAgentPromptOpen(false);
-  };
-
-  const handleAgentPromptDownload = () => {
-    const blob = new Blob([agentQuickDeployPrompt], {type: 'text/markdown;charset=utf-8'});
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = agentQuickDeployFilename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    setAgentPromptStatus('downloaded');
-  };
-
-  const handleAgentPromptCopy = async () => {
-    try {
-      await copyTextToClipboard(agentQuickDeployPrompt);
-      setAgentPromptStatus('copied');
-    } catch (error) {
-      setAgentPromptStatus('copy-failed');
-    }
-  };
+  const [agentOpen, setAgentOpen] = useState(false);
+  const closeAgent = useCallback(() => setAgentOpen(false), []);
 
   return (
     <Layout
-      title={translate({ message: '首页', id: 'homepage.title' })}
-      description={translate({
-        message: 'XRobot 与 LibXR 的开发文档。',
-        id: 'homepage.description',
-      })}
+      title={translate({ id: 'home.meta.title', message: '首页' })}
+      description={translate({ id: 'home.meta.description', message: 'XRobot 与 LibXR 的开发文档。' })}
     >
-      <main className="homePage">
-        <div className="homeBackdrop" />
+      <main className={styles.page}>
+        <Hero isEnglish={isEnglish} />
 
-        <section className="homeHero">
-          <div className="container homeHeroColumns">
-            <div className="homeHeroColumn homeHeroColumnMain">
-              <div className="homeHeroCopy">
-                <div className="homeEyebrow">XRobot / LibXR / XRUSB</div>
+        {capabilities(isEnglish).map(({ figure, ...section }) => (
+          <ShowcaseSection key={section.id} {...section} fallback={figure ? <Figure spec={figure} /> : undefined} />
+        ))}
 
-                <h1 className="homeTitle">
-                  <Translate id="homepage.hero.title">XRobot / LibXR</Translate>
-                </h1>
+        <DocsArea />
+        <Join onAgent={() => setAgentOpen(true)} />
 
-                <p className="homeLead">
-                  <Translate id="homepage.hero.lead">
-                    面向机器人开发、设备接口与工程自动化的模块化框架。LibXR 提供核心语义、驱动抽象与 XRUSB；CodeGenerator 由 STM32CubeMX 工程生成使用 LibXR 的外设代码；XRobot 管理模块并生成主函数 XRobotMain。
-                  </Translate>
-                </p>
-
-                <div className="homeActionRow">
-                  <Link className="button button--lg homeButton homeButtonPrimary" to="/docs/quick_start">
-                    <Translate id="homepage.hero.cta.quickStart">快速开始</Translate>
-                  </Link>
-                  <Link className="button button--lg homeButton homeButtonSecondary" to="/docs/intro">
-                    <Translate id="homepage.hero.cta.read">阅读文档</Translate>
-                  </Link>
-                  <Link className="button button--lg homeButton homeButtonSecondary" to="/docs/concept">
-                    <Translate id="homepage.hero.cta.concept">理解设计思想</Translate>
-                  </Link>
-                  <Link
-                    className="button button--lg homeButton homeButtonGhost"
-                    to={isEnglish
-                      ? 'https://xrobot.work/libxr_web_demo/index_en.html'
-                      : 'https://xrobot.work/libxr_web_demo/'}
-                  >
-                    <Translate id="homepage.hero.cta.demo">Web Demo</Translate>
-                  </Link>
-                </div>
-
-                <div className="homeHeroFlowRail" aria-label="Abstract Module Workflow shortcuts">
-                  <Link className="homeHeroFlowStep homeHeroFlowStepAbstract" to="/docs/basic_coding/driver">
-                    <span className="homeHeroFlowStepKicker">Abstract</span>
-                    <strong>{isEnglish ? 'Platform Abstraction' : '平台抽象'}</strong>
-                    <div className="homeHeroFlowMini homeHeroFlowMiniAbstract">
-                      <div className="homeHeroFlowMiniRow homeHeroFlowMiniRowFour">
-                        <span className="homeHeroFlowMiniChip">STM32</span>
-                        <span className="homeHeroFlowMiniChip">ESP32</span>
-                        <span className="homeHeroFlowMiniChip">Linux</span>
-                        <span className="homeHeroFlowMiniChip">...</span>
-                      </div>
-                      <div className="homeHeroFlowMiniMerge" />
-                      <span className="homeHeroFlowMiniCore">XR API</span>
-                    </div>
-                  </Link>
-
-                  <Link className="homeHeroFlowStep homeHeroFlowStepModule" to="/docs/proj_man">
-                    <span className="homeHeroFlowStepKicker">Module</span>
-                    <strong>{isEnglish ? 'Module Composition' : '模块编排'}</strong>
-                    <div className="homeHeroFlowMini homeHeroFlowMiniModule">
-                      <span className="homeHeroFlowMiniPill homeHeroFlowMiniPillTop">XRobotMain</span>
-                      <div className="homeHeroFlowMiniBridge" />
-                      <div className="homeHeroFlowMiniRow homeHeroFlowMiniRowTwo">
-                        <span className="homeHeroFlowMiniPill">Module</span>
-                        <span className="homeHeroFlowMiniPill">Config</span>
-                      </div>
-                    </div>
-                  </Link>
-
-                  <Link className="homeHeroFlowStep homeHeroFlowStepWorkflow" to="/docs/quick_start">
-                    <span className="homeHeroFlowStepKicker">Workflow</span>
-                    <strong>{isEnglish ? 'Project Workflow' : '工程工作流'}</strong>
-                    <div className="homeHeroFlowMini homeHeroFlowMiniWorkflow">
-                      <div className="homeHeroWorkflowGrid">
-                        <span className="homeHeroFlowMiniCmd">CodeGen</span>
-                        <span className="homeHeroWorkflowArrowInline">→</span>
-                        <span className="homeHeroFlowMiniCmd">Build</span>
-                        <span className="homeHeroWorkflowDrop">↓</span>
-                        <span className="homeHeroFlowMiniCmd">CI/CD</span>
-                        <span className="homeHeroWorkflowArrowInline">→</span>
-                        <span className="homeHeroFlowMiniDemo">Deploy</span>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-
-                <div className="homeGuideGrid homeGuideGridInline">
-                  <Link className="homeGuideCard" to="https://xrobot.work/XRobot-Onboarding/">
-                    <span className="homeGuideTag">Guide</span>
-                    <h3>
-                      <Translate id="homepage.guide.onboarding.title">新手任务引导</Translate>
-                    </h3>
-                    <p>
-                      <Translate id="homepage.guide.onboarding.desc">
-                        按平台选择合适的起步路径，逐步了解 XR 的设计理念与基础写法。
-                      </Translate>
-                    </p>
-                  </Link>
-
-                  <button type="button" className="homeGuideCard homeGuideCardButton" onClick={handleAgentPromptOpen}>
-                    <span className="homeGuideTag">Agent</span>
-                    <h3>
-                      <Translate id="homepage.guide.agent.title">Agent 快速部署</Translate>
-                    </h3>
-                    <p>
-                      <Translate id="homepage.guide.agent.desc">
-                        给 XRobot / LibXR 专用助手的一页启动上下文，先判断仓库角色，再进入对应文档和代码入口。
-                      </Translate>
-                    </p>
-                  </button>
-
-                </div>
-              </div>
-            </div>
-
-            <div className="homeHeroColumn homeHeroColumnSide">
-              <div className="homeHeroPanel">
-                <div className="homePanelSurface">
-                  <div className="homePanelHeader">
-                    <div className="homePanelTitleBlock">
-                      <div className="homePanelEyebrow">
-                        <Translate id="homepage.panel.eyebrow">Document Entry Map</Translate>
-                      </div>
-                      <h2>
-                        <Translate id="homepage.panel.title">按工程类型进入文档</Translate>
-                      </h2>
-                    </div>
-                    <div className="homePanelState">
-                      <span className="homePanelDot" />
-                      docs live
-                    </div>
-                  </div>
-
-                  <div className="homeRouteGrid">
-                    <Link className="homeRouteCard" to="/docs/basic_coding">
-                      <span className="homeRouteTag">LibXR</span>
-                      <strong>
-                        <Translate id="homepage.route.libxr.title">只使用 LibXR</Translate>
-                      </strong>
-                      <p>
-                        <Translate id="homepage.route.libxr.desc">
-                          在已有工程中使用 LibXR 的核心 API、外设驱动与中间件。
-                        </Translate>
-                      </p>
-                    </Link>
-
-                    <Link className="homeRouteCard" to="/docs/code_gen">
-                      <span className="homeRouteTag">CodeGenerator</span>
-                      <strong>
-                        <Translate id="homepage.route.codegen.title">STM32 与 CodeGenerator</Translate>
-                      </strong>
-                      <p>
-                        <Translate id="homepage.route.codegen.desc">
-                          由 STM32CubeMX 工程生成外设对象、入口函数 app_main，并接入 CMake 构建。
-                        </Translate>
-                      </p>
-                    </Link>
-
-                    <Link className="homeRouteCard" to="/docs/proj_man">
-                      <span className="homeRouteTag">XRobot</span>
-                      <strong>
-                        <Translate id="homepage.route.xrobot.title">XRobot BSP</Translate>
-                      </strong>
-                      <p>
-                        <Translate id="homepage.route.xrobot.desc">
-                          模块的拉取与锁定、配置和主函数生成。
-                        </Translate>
-                      </p>
-                    </Link>
-
-                    <Link className="homeRouteCard" to="/docs/adv_coding/adv-coding-porting">
-                      <span className="homeRouteTag">Port</span>
-                      <strong>
-                        <Translate id="homepage.route.port.title">移植到新平台</Translate>
-                      </strong>
-                      <p>
-                        <Translate id="homepage.route.port.desc">
-                          新操作系统和新芯片需要实现的系统层与外设驱动。
-                        </Translate>
-                      </p>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <VersionCard />
-            </div>
+        <section className={styles.closing} aria-label="XRobot is all you need">
+          <div className={`${styles.inner} ${styles.closingInner}`}>
+            <Logo height={56} />
+            <p className={styles.slogan}>{translate({ id: 'home.closing.slogan', message: 'XRobot is all you need' })}</p>
           </div>
         </section>
 
-        {isAgentPromptOpen ? (
-          <div className="homeAgentModalBackdrop" role="presentation" onClick={handleAgentPromptClose}>
-            <div
-              className="homeAgentModal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="home-agent-modal-title"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="homeAgentModalHeader">
-                <div>
-                  <div className="homePanelEyebrow">Agent Prompt</div>
-                  <h2 id="home-agent-modal-title">
-                    {isEnglish ? 'Agent Quick Start' : 'Agent 快速部署'}
-                  </h2>
-                </div>
-                <button
-                  type="button"
-                  className="homeAgentModalClose"
-                  onClick={handleAgentPromptClose}
-                  aria-label={isEnglish ? 'Close Agent prompt dialog' : '关闭 Agent 提示词弹框'}
-                >
-                  ×
-                </button>
-              </div>
-              <p className="homeAgentModalLead">
-                {isEnglish
-                  ? 'This prompt makes the Agent classify the repository as an XRobot BSP, a platform project, or a driver project first, and then choose the documentation entry points in a fixed order.'
-                  : '这份提示词让 Agent 先判断当前工程属于 XRobot BSP、平台工程还是驱动工程，再按固定顺序选择文档入口。'}
-              </p>
-              <div className="homeAgentModalMeta">
-                <span>{isEnglish ? 'Filename' : '文件名'}</span>
-                <code>{agentQuickDeployFilename}</code>
-              </div>
-              <div className="homeAgentModalLinks">
-                <Link className="homeAgentModalLink" to="/docs/quick_start">
-                  {isEnglish ? 'Quick Start' : '快速开始'}
-                </Link>
-                <Link className="homeAgentModalLink" to="/docs/proj_man">
-                  {isEnglish ? 'Project Management' : '项目管理总览'}
-                </Link>
-                <Link className="homeAgentModalLink" to="https://xrobot.work/XRobot-Onboarding/">
-                  {isEnglish ? 'Onboarding Guide (Chinese)' : '新手任务引导'}
-                </Link>
-              </div>
-              <pre className="homeAgentModalPreview">{agentQuickDeployPrompt}</pre>
-              <div className="homeAgentModalActions">
-                <button type="button" className="homeAgentModalAction is-primary" onClick={handleAgentPromptDownload}>
-                  {isEnglish ? 'Download Prompt .md' : '下载提示词 .md'}
-                </button>
-                <button type="button" className="homeAgentModalAction" onClick={() => void handleAgentPromptCopy()}>
-                  {isEnglish ? 'Copy' : '直接复制'}
-                </button>
-              </div>
-              <p className="homeAgentModalStatus" aria-live="polite">
-                {agentPromptStatus === 'copied'
-                  ? isEnglish
-                    ? 'Copied to clipboard.'
-                    : '已复制到剪贴板。'
-                  : agentPromptStatus === 'downloaded'
-                    ? isEnglish
-                      ? 'Markdown download started.'
-                      : 'Markdown 文件已开始下载。'
-                    : agentPromptStatus === 'copy-failed'
-                      ? isEnglish
-                        ? 'Copy failed. Please use download instead.'
-                        : '复制失败，请改用下载。'
-                      : isEnglish
-                        ? 'This prompt is for classifying the repository first, then deciding which docs or commands should come next.'
-                        : '提示词用于先判定工程类型，再决定后续阅读哪份文档或执行哪一步。'}
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        <section className="homeSection homeSectionFoot">
-          <div className="container homeFootGrid">
-            <div className="homeFootCopy">
-              <div className="homeSectionEyebrow">
-                <Translate id="homepage.foot.eyebrow">Project</Translate>
-              </div>
-              <h2>
-                <Translate id="homepage.foot.title">项目背景与社区入口</Translate>
-              </h2>
-              <p>
-                <Translate id="homepage.foot.desc">
-                  项目起源、参与方式与开发者社区入口。
-                </Translate>
-              </p>
-            </div>
-
-            <div className="homeFootPanel">
-              <Link className="homeFootStat" to="/docs/about">
-                <span>About</span>
-                <strong>{isEnglish ? 'Project Background' : '项目起源'}</strong>
-              </Link>
-              <Link className="homeFootStat" to="/docs/con_guide">
-                <span>Contribute</span>
-                <strong>{isEnglish ? 'Contribution Guide' : '贡献指南'}</strong>
-              </Link>
-              <Link className="homeFootStat" to="https://github.com/xrobot-org">
-                <span>Community</span>
-                <strong>{isEnglish ? 'Developers & Repos' : '开发者与仓库'}</strong>
-              </Link>
-            </div>
-          </div>
-        </section>
+        <AgentPromptDialog open={agentOpen} onClose={closeAgent} isEnglish={isEnglish} />
       </main>
     </Layout>
   );

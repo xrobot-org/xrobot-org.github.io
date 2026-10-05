@@ -6,9 +6,9 @@ sidebar_position: 2
 
 # ISR, Callback, and Thread Boundaries
 
-For the basic background, see [Design Concepts](/en/docs/concept),
-[ASync](/en/docs/basic_coding/system/async), and
-[Semaphore](/en/docs/basic_coding/system/semaphore). This page describes how work is divided between
+For the basic background, see [Design Concepts](/docs/concept),
+[ASync](/docs/basic_coding/system/async), and
+[Semaphore](/docs/basic_coding/system/semaphore). This page describes how work is divided between
 ISRs, callbacks, and threads.
 
 ## Concurrency on a single-core MCU
