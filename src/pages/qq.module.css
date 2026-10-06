@@ -1,0 +1,262 @@
+/* QQ group page (/qq) — xiaoshuaijie.online/qq/ layout on XRobot ink tokens. */
+
+.page {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4) var(--space-10);
+}
+
+.card {
+  width: min(100%, 44rem);
+  padding: var(--space-8) var(--space-5);
+  border: var(--stroke) solid var(--line);
+  border-radius: 4px;
+  background: var(--paper-raised);
+}
+
+html[data-card-decor='soft'] .card {
+  border-radius: 0.85rem;
+  box-shadow: 0 0 0 1px var(--line), 0 10px 30px rgb(0 0 0 / 0.08);
+}
+
+.header {
+  margin-bottom: var(--space-7);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  color: var(--ink);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--type-display-size);
+  line-height: var(--type-display-line);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.lead {
+  margin: 0;
+  max-width: var(--measure-prose);
+  color: var(--ink-muted);
+  line-height: 1.8;
+}
+
+/* ---- QR zone ---- */
+
+.qrZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-8);
+}
+
+.qrCard {
+  padding: var(--space-4);
+  border: var(--stroke) solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.06);
+}
+
+html[data-card-decor='soft'] .qrCard {
+  border-radius: 0.75rem;
+}
+
+.qrImg {
+  display: block;
+  width: min(60vw, 15rem);
+  height: auto;
+  border-radius: 4px;
+}
+
+html[data-card-decor='soft'] .qrImg {
+  border-radius: 0.5rem;
+}
+
+.groupName {
+  margin-top: var(--space-4);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.groupNumberRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+}
+
+.groupNumber {
+  padding: 0.2rem 0.6rem;
+  border: 0;
+  border-radius: 3px;
+  background: var(--paper-sunken);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  user-select: all;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border: var(--stroke) solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease;
+}
+
+.copyBtn:hover {
+  border-color: var(--xr-accent);
+  color: var(--xr-accent);
+}
+
+.copyBtn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.copyDone {
+  color: var(--pass);
+  font-weight: 600;
+}
+
+.joinBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: var(--space-4);
+  padding: 0.65rem 1.4rem;
+  border-radius: 4px;
+  background: #12b7f5;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+
+html[data-card-decor='soft'] .joinBtn {
+  border-radius: 0.6rem;
+}
+
+.joinBtn:hover {
+  color: #fff;
+  opacity: 0.85;
+  text-decoration: none;
+}
+
+.joinBtn:active {
+  transform: scale(0.97);
+}
+
+.joinBtn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.hint {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+}
+
+/* ---- repository list ---- */
+
+.reposTitle {
+  margin: 0 0 var(--space-4);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.repoList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--stroke) solid var(--line);
+}
+
+.repoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: var(--stroke) solid var(--line);
+}
+
+.repoName {
+  flex: 0 0 7.5em;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.repoUrl {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--duration-fast) ease;
+}
+
+.repoUrl:hover {
+  color: var(--xr-accent);
+}
+
+.repoUrl:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .repoRow {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+
+  .repoName {
+    flex-basis: 100%;
+  }
+
+  .repoUrl {
+    flex-basis: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media print {
+  .copyBtn,
+  .joinBtn {
+    display: none;
+  }
+}

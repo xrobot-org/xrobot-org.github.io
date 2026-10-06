@@ -183,19 +183,34 @@ html.is-theme-transitioning:not(.use-view-transition) .xr-progress-circle {
   transition: transform 80ms linear;
 }
 
-/* Corner circle (/docs only). React renders:
- *   <div class="xr-progress-circle" role="img" aria-label="...">
- *     <svg viewBox="0 0 48 48">
- *       <circle class="xr-progress-circle__track" ... pathLength="100" />
- *       <circle class="xr-progress-circle__value" ... pathLength="100" />
- *     </svg>
- *     <span class="xr-progress-circle__label">0%</span>
+/* Bottom-right floating dock (xiaoshuaijie-style stack): the reading circle
+ * (/docs only) sits above the back-to-top button, right-aligned column.
+ * React renders:
+ *   <div class="xr-float-dock">
+ *     [<div class="xr-progress-circle" ...>…</div>]
+ *     <button class="xr-top-btn">…</button>
  *   </div>
- * and writes stroke-dashoffset on __value. */
-.xr-progress-circle {
+ */
+.xr-float-dock {
   position: fixed;
   right: 1.25rem;
   bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  /* Above page content and the fixed navbar, below the overlay layer
+   * (Infima --ifm-z-index-overlay: 400), so menus can cover it. */
+  z-index: 300;
+  pointer-events: none;
+}
+
+.xr-float-dock > * {
+  pointer-events: auto;
+}
+
+.xr-progress-circle {
+  position: relative;
   width: 3rem;
   height: 3rem;
   pointer-events: none;
@@ -205,9 +220,6 @@ html.is-theme-transitioning:not(.use-view-transition) .xr-progress-circle {
   background: color-mix(in oklch, var(--paper-raised) 88%, transparent);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
-  /* Above page content and the fixed navbar, below the overlay layer
-   * (Infima --ifm-z-index-overlay: 400), so menus can cover it. */
-  z-index: 300;
 }
 
 .xr-progress-circle > svg {
@@ -243,6 +255,97 @@ html.is-theme-transitioning:not(.use-view-transition) .xr-progress-circle {
   font-size: var(--type-label-size);
   line-height: var(--type-label-line);
   color: var(--ink);
+}
+
+/* Back-to-top button (dock style: outlined square, inverted on hover, icon
+ * flies up while the "Top" label slides in). Hidden until scrollY > 200
+ * (toggled by the progress component with .xr-top-btn--show). */
+.xr-top-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid var(--xr-accent);
+  border-radius: 0;
+  background: color-mix(in oklch, var(--paper-raised) 88%, transparent);
+  color: var(--xr-accent);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  opacity: 0;
+  transform: translateY(0.5rem);
+  visibility: hidden;
+  transition: opacity 200ms ease, transform 200ms ease, visibility 200ms,
+    background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+.xr-top-btn--show {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+}
+
+.xr-top-btn:hover {
+  background: var(--xr-accent);
+  border-color: var(--xr-accent);
+  color: var(--paper-raised);
+}
+
+.xr-top-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.xr-top-btn__icon,
+.xr-top-btn__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 200ms ease-out, opacity 200ms ease-out;
+}
+
+.xr-top-btn__label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.xr-top-btn:hover .xr-top-btn__icon,
+.xr-top-btn:focus-visible .xr-top-btn__icon {
+  transform: translateY(-8px);
+  opacity: 0;
+}
+
+.xr-top-btn:hover .xr-top-btn__label,
+.xr-top-btn:focus-visible .xr-top-btn__label {
+  opacity: 1;
+  transform: none;
+}
+
+html[data-card-decor='soft'] .xr-progress-circle,
+html[data-card-decor='soft'] .xr-top-btn {
+  border-radius: 0.75rem;
+}
+
+@media (max-width: 480px) {
+  .xr-float-dock {
+    right: 0.9rem;
+    bottom: 0.9rem;
+  }
+
+  .xr-progress-circle,
+  .xr-top-btn {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
 }
 
 /* ==========================================================================
@@ -544,6 +647,129 @@ html[data-motion='off'].is-theme-transitioning:not(.use-view-transition) *::afte
 
   html[data-bg-mode='grid'] body::before,
   html[data-bg-mode='dots'] body::before {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   h) Long-code folding (>15 lines): 8 preview lines + fade gradient + pill
+   toggle. Ported from the rainzt.cn reference (expressive-code-collapsible).
+   The React CodeBlock wrapper renders:
+     <div class="xr-code-fold [--collapsed]">
+       <CodeBlock/> <span class="xr-fold-status"/> <button class="xr-fold-toggle"/>
+     </div>
+   and writes --xr-fold-preview-height after measuring the real line height.
+   ========================================================================== */
+
+.xr-code-fold--collapsed .theme-code-block pre {
+  max-height: var(--xr-fold-preview-height, calc(8 * 1.5em + 2rem));
+  overflow: hidden;
+}
+
+.xr-code-fold--collapsed .theme-code-block {
+  position: relative;
+}
+
+.xr-code-fold--collapsed .theme-code-block::after {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  left: 1px;
+  height: 6.5rem;
+  content: "";
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--prism-background-color, var(--paper-sunken))
+  );
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.xr-code-fold {
+  position: relative;
+}
+
+.xr-fold-toggle {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 6px 16px;
+  border: 1px solid color-mix(in oklch, var(--xr-accent) 45%, var(--line));
+  border-radius: 20px;
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  transform: translateX(-50%);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.14);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.xr-fold-toggle:hover {
+  border-color: var(--xr-accent);
+  color: var(--xr-accent);
+}
+
+.xr-fold-toggle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.xr-fold-toggle svg {
+  transition: transform 200ms ease;
+}
+
+/* Expanded: the toggle drops back into normal flow under the block. */
+.xr-code-fold:not(.xr-code-fold--collapsed) .xr-fold-toggle {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  display: flex;
+  width: fit-content;
+  margin: 10px auto 0;
+  transform: none;
+}
+
+.xr-code-fold:not(.xr-code-fold--collapsed) .xr-fold-toggle svg {
+  transform: rotate(180deg);
+}
+
+.xr-fold-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+html[data-motion='off'] .xr-fold-toggle svg,
+html[data-motion='off'] .xr-code-fold--collapsed .theme-code-block::after,
+html[data-motion='off'] .xr-top-btn,
+html[data-motion='off'] .xr-top-btn__icon,
+html[data-motion='off'] .xr-top-btn__label {
+  transition: none;
+}
+
+@media print {
+  .xr-float-dock,
+  .xr-fold-toggle,
+  .xr-fold-status {
+    display: none !important;
+  }
+
+  .xr-code-fold--collapsed .theme-code-block pre {
+    max-height: none;
+  }
+
+  .xr-code-fold--collapsed .theme-code-block::after {
     display: none;
   }
 }

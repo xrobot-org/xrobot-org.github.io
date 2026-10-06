@@ -52,6 +52,135 @@ function MotionSwitch(): JSX.Element {
   );
 }
 
+const BILIBILI_ICON =
+  'M17.813 4.653h.854q2.266.08 3.773 1.574Q23.946 7.72 24 9.987v7.36q-.054 2.266-1.56 3.773c-1.506 1.507-2.262 1.524-3.773 1.56H5.333q-2.266-.054-3.773-1.56C.053 19.614.036 18.858 0 17.347v-7.36q.054-2.267 1.56-3.76t3.773-1.574h.774l-1.174-1.12a1.23 1.23 0 0 1-.373-.906q0-.534.373-.907l.027-.027q.4-.373.92-.373t.92.373L9.653 4.44q.107.106.187.213h4.267a.8.8 0 0 1 .16-.213l2.853-2.747q.4-.373.92-.373c.347 0 .662.151.929.4s.391.551.391.907q0 .532-.373.906zM5.333 7.24q-1.12.027-1.88.773q-.76.748-.786 1.894v7.52q.026 1.146.786 1.893t1.88.773h13.334q1.12-.026 1.88-.773t.786-1.893v-7.52q-.026-1.147-.786-1.894t-1.88-.773zM8 11.107q.56 0 .933.373q.375.374.4.96v1.173q-.025.586-.4.96q-.373.375-.933.374c-.56-.001-.684-.125-.933-.374q-.375-.373-.4-.96V12.44q0-.56.386-.947q.387-.386.947-.386m8 0q.56 0 .933.373q.375.374.4.96v1.173q-.025.586-.4.96q-.373.375-.933.374c-.56-.001-.684-.125-.933-.374q-.375-.373-.4-.96V12.44q.025-.586.4-.96q.373-.373.933-.373';
+
+const GITHUB_ICON =
+  'M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12';
+
+const MAIL_ICON = 'M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm8-7L4 8v10h16V8zm0-2l8-5H4zM4 8V6v12z';
+
+const QQ_ICON =
+  'M21.395 15.035a40 40 0 0 0-.803-2.264l-1.079-2.695c.001-.032.014-.562.014-.836C19.526 4.632 17.351 0 12 0S4.474 4.632 4.474 9.241c0 .274.013.804.014.836l-1.08 2.695a39 39 0 0 0-.802 2.264c-1.021 3.283-.69 4.643-.438 4.673c.54.065 2.103-2.472 2.103-2.472c0 1.469.756 3.387 2.394 4.771c-.612.188-1.363.479-1.845.835c-.434.32-.379.646-.301.778c.343.578 5.883.369 7.482.189c1.6.18 7.14.389 7.483-.189c.078-.132.132-.458-.301-.778c-.483-.356-1.233-.646-1.846-.836c1.637-1.384 2.393-3.302 2.393-4.771c0 0 1.563 2.537 2.103 2.472c.251-.03.581-1.39-.438-4.673';
+
+const BOOK_ICON =
+  'M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z';
+
+/** Hanging tag cards under the hero wordmark (bilibili / GitHub / email / QQ group). */
+function HeroTags(): JSX.Element {
+  const [copied, setCopied] = useState(false);
+  const copyEmail = async () => {
+    const email = 'Cong.Liu_Xiao@outlook.com';
+    try {
+      await navigator.clipboard.writeText(email);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = email;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  };
+  const tags: Array<{
+    key: string;
+    color: string;
+    ink: string;
+    label: string;
+    icon: string;
+    href?: string;
+    onClick?: () => void;
+  }> = [
+    {
+      key: 'bilibili',
+      color: 'rgb(255 150 165 / 0.95)',
+      ink: '#5a1020',
+      label: translate({ id: 'home.hero.tag.bilibili', message: 'B站' }),
+      icon: BILIBILI_ICON,
+      href: 'https://space.bilibili.com/339766655',
+    },
+    {
+      key: 'github',
+      color: 'rgb(255 210 80 / 0.95)',
+      ink: '#553500',
+      label: translate({ id: 'home.hero.tag.github', message: 'GitHub' }),
+      icon: GITHUB_ICON,
+      href: 'https://github.com/xrobot-org',
+    },
+    {
+      key: 'email',
+      color: 'rgb(144 211 173 / 0.95)',
+      ink: '#174b38',
+      label: copied
+        ? translate({ id: 'home.hero.tag.copied', message: '已复制 ✓' })
+        : translate({ id: 'home.hero.tag.email', message: '邮箱' }),
+      icon: MAIL_ICON,
+      onClick: () => void copyEmail(),
+    },
+    {
+      key: 'qq',
+      color: 'rgb(135 190 236 / 0.95)',
+      ink: '#173b61',
+      label: translate({ id: 'home.hero.tag.qq', message: 'QQ群' }),
+      icon: QQ_ICON,
+      href: '/qq',
+    },
+    {
+      key: 'docs',
+      color: 'rgb(246 184 98 / 0.95)',
+      ink: '#5b3510',
+      label: translate({ id: 'home.hero.tag.docs', message: '文档' }),
+      icon: BOOK_ICON,
+      href: '/docs/intro',
+    },
+  ];
+  return (
+    <div className={styles.heroTagZone}>
+      <p className={styles.heroSlogan}>XRobot is all you need</p>
+      <div className={styles.heroTags} role="list" aria-label={translate({ id: 'home.hero.tags', message: '联系我们' })}>
+        {tags.map((tag) => {
+          const style = {
+            ['--tag-color' as string]: tag.color,
+            ['--tag-ink' as string]: tag.ink,
+          } as React.CSSProperties;
+          const inner = (
+            <>
+              <span className={styles.heroTagIcon} aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor">
+                  <path d={tag.icon} />
+                </svg>
+              </span>
+              <span className={styles.heroTagName}>{tag.label}</span>
+            </>
+          );
+          if (tag.href) {
+            return tag.href.startsWith('/')
+              ? (
+                <Link key={tag.key} role="listitem" to={tag.href} className={styles.heroTag} style={style}>
+                  {inner}
+                </Link>
+              )
+              : (
+                <a key={tag.key} role="listitem" href={tag.href} target="_blank" rel="noopener noreferrer"
+                  className={styles.heroTag} style={style}>
+                  {inner}
+                </a>
+              );
+          }
+          return (
+            <button key={tag.key} role="listitem" type="button" className={styles.heroTag} style={style}
+              onClick={tag.onClick}>
+              {inner}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function Hero({ isEnglish }: { isEnglish: boolean }): JSX.Element {
   return (
     <section className={styles.hero} aria-labelledby="home-title">
@@ -89,6 +218,7 @@ function Hero({ isEnglish }: { isEnglish: boolean }): JSX.Element {
         </div>
         <nav className={styles.chapters} aria-labelledby="home-chapters">
           <Logo height={96} className={styles.heroLogo} />
+          <HeroTags />
           <span id="home-chapters" className={`xr-path ${styles.chaptersLabel}`}>
             {translate({ id: 'home.hero.chapters', message: '文档章节' })}
           </span>

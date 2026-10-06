@@ -19,6 +19,23 @@ const ariaTemplate = translate({
   description: 'The aria-label of the reading progress circle; {n} is the percentage',
 });
 
+const backToTopLabel = translate({
+  id: 'appearance.backToTop',
+  message: '回到顶部',
+  description: 'The aria-label and hover label of the back-to-top floating button',
+});
+
+function prefersInstantScroll(): boolean {
+  return (
+    document.documentElement.dataset.motion === 'off' ||
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+function scrollToTop(): void {
+  window.scroll({ top: 0, behavior: prefersInstantScroll() ? 'auto' : 'smooth' });
+}
+
 function updateProgress(): void {
   const root = document.documentElement;
   const scrollTop = window.scrollY || root.scrollTop || 0;
@@ -41,6 +58,10 @@ function updateProgress(): void {
   const circle = document.querySelector<HTMLElement>('.xr-progress-circle');
   if (circle) {
     circle.setAttribute('aria-label', ariaTemplate.replace('{n}', String(percent)));
+  }
+  const topBtn = document.querySelector<HTMLElement>('.xr-top-btn');
+  if (topBtn) {
+    topBtn.classList.toggle('xr-top-btn--show', window.scrollY > 200);
   }
 }
 
@@ -73,15 +94,32 @@ export default function ReadingProgress(): JSX.Element {
       <div className="xr-progress-track" aria-hidden="true">
         <div className="xr-progress-bar" />
       </div>
-      {showCircle ? (
-        <div className="xr-progress-circle" role="img" aria-label={ariaTemplate.replace('{n}', '0')}>
-          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-            <circle className="xr-progress-circle__track" cx="24" cy="24" r="19" pathLength="100" />
-            <circle className="xr-progress-circle__value" cx="24" cy="24" r="19" pathLength="100" />
-          </svg>
-          <span className="xr-progress-circle__label">0%</span>
-        </div>
-      ) : null}
+      <div className="xr-float-dock">
+        {showCircle ? (
+          <div className="xr-progress-circle" role="img" aria-label={ariaTemplate.replace('{n}', '0')}>
+            <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <circle className="xr-progress-circle__track" cx="24" cy="24" r="19" pathLength="100" />
+              <circle className="xr-progress-circle__value" cx="24" cy="24" r="19" pathLength="100" />
+            </svg>
+            <span className="xr-progress-circle__label">0%</span>
+          </div>
+        ) : null}
+        <button
+          type="button"
+          className="xr-top-btn"
+          aria-label={backToTopLabel}
+          title={backToTopLabel}
+          onClick={scrollToTop}>
+          <span className="xr-top-btn__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="m12 10.8l-3.9 3.9q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7l4.6-4.6q.3-.3.7-.3t.7.3l4.6 4.6q.275.275.275.7t-.275.7t-.7.275t-.7-.275z" />
+            </svg>
+          </span>
+          <span className="xr-top-btn__label" aria-hidden="true">
+            Top
+          </span>
+        </button>
+      </div>
     </>
   );
 }

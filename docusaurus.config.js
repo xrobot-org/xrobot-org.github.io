@@ -179,10 +179,10 @@ module.exports = {
               label: '邮箱',
               href: 'mailto:Cong.Liu_Xiao@outlook.com',
             },
-            {
-              label: 'QQ群: 608182228',
-              href: 'https://qm.qq.com/q/RPgE71OXmw',
-            }
+              {
+                label: 'QQ群',
+                to: '/qq',
+              }
           ],
         },
       ],

@@ -1649,5 +1649,86 @@
   "appearance.animationsOff": {
     "message": "Off",
     "description": "The animations-off option"
+  },
+  "home.hero.tags": {
+    "message": "Contact us"
+  },
+  "home.hero.tag.bilibili": {
+    "message": "Bilibili"
+  },
+  "home.hero.tag.github": {
+    "message": "GitHub"
+  },
+  "home.hero.tag.email": {
+    "message": "Email, click to copy"
+  },
+  "home.hero.tag.emailName": {
+    "message": "Email"
+  },
+  "home.hero.tag.copied": {
+    "message": "Copied ✓"
+  },
+  "qq.title": {
+    "message": "Join the community"
+  },
+  "qq.description": {
+    "message": "Join the XRobot QQ group: scan the QR code, search the group ID or join in one click, plus links to all organization repositories and docs."
+  },
+  "qq.lead": {
+    "message": "This group is for the XRobot (Qingdao University embedded-software open-source) organization and its derived projects. Star us on GitHub! Questions are welcome directly in the group."
+  },
+  "qq.groupCard": {
+    "message": "Group QR code"
+  },
+  "qq.groupName": {
+    "message": "XRobot Group"
+  },
+  "qq.qrAlt": {
+    "message": "QR code of the XRobot QQ group"
+  },
+  "qq.groupNumber": {
+    "message": "Group ID"
+  },
+  "qq.copy": {
+    "message": "Copy"
+  },
+  "qq.copied": {
+    "message": "Copied ✓"
+  },
+  "qq.join": {
+    "message": "Join via QQ"
+  },
+  "qq.hint": {
+    "message": "Scan the QR code with QQ on your phone, or search the group ID in QQ."
+  },
+  "qq.repos": {
+    "message": "Organization & projects"
+  },
+  "qq.repo.github": {
+    "message": "GitHub"
+  },
+  "qq.repo.gitee": {
+    "message": "Gitee"
+  },
+  "qq.repo.docs": {
+    "message": "Docs"
+  },
+  "appearance.backToTop": {
+    "message": "Back to top"
+  },
+  "appearance.codeFold.expand": {
+    "message": "Show more"
+  },
+  "appearance.codeFold.collapse": {
+    "message": "Show less"
+  },
+  "appearance.codeFold.expanded": {
+    "message": "Code block expanded"
+  },
+  "appearance.codeFold.collapsed": {
+    "message": "Code block collapsed"
+  },
+  "home.hero.tag.docs": {
+    "message": "Docs"
   }
 }
