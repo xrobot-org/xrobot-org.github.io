@@ -181,36 +181,40 @@ export default function AppearancePanel({ onClose }: { onClose: () => void }): J
       <h3 className={styles.sectionTitle}>
         {translate({ id: 'appearance.cardDecor', message: '卡片装饰' })}
       </h3>
-      <div className={styles.options}>
+      <div className={styles.optGrid2}>
         <button
           type="button"
-          className={`${styles.option} ${styles.decorCard} ${styles.decorCardSharp} ${
-            cardDecor === 'ink' ? styles.optionActive : ''
-          }`}
+          className={`${styles.optCard} ${cardDecor === 'ink' ? styles.optCardActive : ''}`}
           aria-pressed={cardDecor === 'ink'}
           onClick={() => pickCardDecor('ink')}>
-          <span className={styles.decorPreview} aria-hidden="true">
-            <span className={`${styles.decorChip} ${styles.decorChipSharp}`} />
-            <span className={`${styles.decorBtn} ${styles.decorBtnSharp}`} />
+          <span className={styles.optPreview} aria-hidden="true">
+            <span className={`${styles.mockCard} ${styles.mockCardSharp}`}>
+              <span className={styles.mockChipSharp} />
+              <span className={styles.mockBarSharp} />
+            </span>
           </span>
-          {translate({ id: 'appearance.cardDecorSharp', message: '刀锋直角' })}
-          <span className={styles.optionDesc}>
+          <span className={styles.optName}>
+            {translate({ id: 'appearance.cardDecorSharp', message: '刀锋直角' })}
+          </span>
+          <span className={styles.optDesc}>
             {translate({ id: 'appearance.cardDecorSharpDesc', message: '直角切割，无阴影' })}
           </span>
         </button>
         <button
           type="button"
-          className={`${styles.option} ${styles.decorCard} ${styles.decorCardSoft} ${
-            cardDecor === 'soft' ? styles.optionActive : ''
-          }`}
+          className={`${styles.optCard} ${cardDecor === 'soft' ? styles.optCardActive : ''}`}
           aria-pressed={cardDecor === 'soft'}
           onClick={() => pickCardDecor('soft')}>
-          <span className={styles.decorPreview} aria-hidden="true">
-            <span className={`${styles.decorChip} ${styles.decorChipSoft}`} />
-            <span className={`${styles.decorBtn} ${styles.decorBtnSoft}`} />
+          <span className={styles.optPreview} aria-hidden="true">
+            <span className={`${styles.mockCard} ${styles.mockCardSoft}`}>
+              <span className={styles.mockChipSoft} />
+              <span className={styles.mockBarSoft} />
+            </span>
           </span>
-          {translate({ id: 'appearance.cardDecorSoft', message: '柔和圆角' })}
-          <span className={styles.optionDesc}>
+          <span className={styles.optName}>
+            {translate({ id: 'appearance.cardDecorSoft', message: '柔和圆角' })}
+          </span>
+          <span className={styles.optDesc}>
             {translate({ id: 'appearance.cardDecorSoftDesc', message: '圆角描边，柔和阴影' })}
           </span>
         </button>
@@ -220,24 +224,43 @@ export default function AppearancePanel({ onClose }: { onClose: () => void }): J
       <h3 className={styles.sectionTitle}>
         {translate({ id: 'appearance.navbar', message: '导航栏' })}
       </h3>
-      <div className={styles.options}>
+      <div className={styles.optGrid2}>
         <button
           type="button"
-          className={`${styles.option} ${navbarMode === 'autohide' ? styles.optionActive : ''}`}
+          className={`${styles.optCard} ${navbarMode === 'autohide' ? styles.optCardActive : ''}`}
           aria-pressed={navbarMode === 'autohide'}
           onClick={() => pickNavbarMode('autohide')}>
-          {translate({ id: 'appearance.navbarAutohide', message: '滚动收缩' })}
-          <span className={styles.optionDesc}>
+          <span className={styles.optPreview} aria-hidden="true">
+            <span className={styles.mockNav}>
+              <span className={styles.mockPill} />
+            </span>
+          </span>
+          <span className={styles.optName}>
+            {translate({ id: 'appearance.navbarAutohide', message: '滚动收缩' })}
+          </span>
+          <span className={styles.optDesc}>
             {translate({ id: 'appearance.navbarAutohideDesc', message: '下滚隐藏，上滚展开' })}
           </span>
         </button>
         <button
           type="button"
-          className={`${styles.option} ${navbarMode === 'always' ? styles.optionActive : ''}`}
+          className={`${styles.optCard} ${navbarMode === 'always' ? styles.optCardActive : ''}`}
           aria-pressed={navbarMode === 'always'}
           onClick={() => pickNavbarMode('always')}>
-          {translate({ id: 'appearance.navbarAlways', message: '始终展开' })}
-          <span className={styles.optionDesc}>
+          <span className={styles.optPreview} aria-hidden="true">
+            <span className={styles.mockNav}>
+              <span className={styles.mockCircles}>
+                <span className={styles.mockCircle} />
+                <span className={styles.mockCircle} />
+                <span className={styles.mockCircle} />
+                <span className={styles.mockCircle} />
+              </span>
+            </span>
+          </span>
+          <span className={styles.optName}>
+            {translate({ id: 'appearance.navbarAlways', message: '始终展开' })}
+          </span>
+          <span className={styles.optDesc}>
             {translate({ id: 'appearance.navbarAlwaysDesc', message: '滚动时保持完整导航' })}
           </span>
         </button>
@@ -247,30 +270,42 @@ export default function AppearancePanel({ onClose }: { onClose: () => void }): J
       <h3 className={styles.sectionTitle}>
         {translate({ id: 'appearance.bgMode', message: '背景纹理' })}
       </h3>
-      <div className={styles.options}>
+      <div className={styles.optGrid3}>
         <button
           type="button"
-          className={`${styles.bgBtn} ${bgMode === 'plain' ? styles.optionActive : ''}`}
+          className={`${styles.optCard} ${bgMode === 'plain' ? styles.optCardActive : ''}`}
           aria-pressed={bgMode === 'plain'}
           onClick={() => pickBgMode('plain')}>
-          <span className={styles.bgPreview} aria-hidden="true" />
-          {translate({ id: 'appearance.bgPlain', message: '纯色' })}
+          <span className={`${styles.optPreview} ${styles.optPreviewFill}`} aria-hidden="true" />
+          <span className={styles.optName}>
+            {translate({ id: 'appearance.bgPlain', message: '纯色' })}
+          </span>
         </button>
         <button
           type="button"
-          className={`${styles.bgBtn} ${bgMode === 'grid' ? styles.optionActive : ''}`}
+          className={`${styles.optCard} ${bgMode === 'grid' ? styles.optCardActive : ''}`}
           aria-pressed={bgMode === 'grid'}
           onClick={() => pickBgMode('grid')}>
-          <span className={`${styles.bgPreview} ${styles.bgPreviewGrid}`} aria-hidden="true" />
-          {translate({ id: 'appearance.bgGrid', message: '网格' })}
+          <span
+            className={`${styles.optPreview} ${styles.optPreviewFill} ${styles.optPreviewGrid}`}
+            aria-hidden="true"
+          />
+          <span className={styles.optName}>
+            {translate({ id: 'appearance.bgGrid', message: '网格' })}
+          </span>
         </button>
         <button
           type="button"
-          className={`${styles.bgBtn} ${bgMode === 'dots' ? styles.optionActive : ''}`}
+          className={`${styles.optCard} ${bgMode === 'dots' ? styles.optCardActive : ''}`}
           aria-pressed={bgMode === 'dots'}
           onClick={() => pickBgMode('dots')}>
-          <span className={`${styles.bgPreview} ${styles.bgPreviewDots}`} aria-hidden="true" />
-          {translate({ id: 'appearance.bgDots', message: '点阵' })}
+          <span
+            className={`${styles.optPreview} ${styles.optPreviewFill} ${styles.optPreviewDots}`}
+            aria-hidden="true"
+          />
+          <span className={styles.optName}>
+            {translate({ id: 'appearance.bgDots', message: '点阵' })}
+          </span>
         </button>
       </div>
 
@@ -278,22 +313,23 @@ export default function AppearancePanel({ onClose }: { onClose: () => void }): J
       <h3 className={styles.sectionTitle}>
         {translate({ id: 'appearance.preferences', message: '偏好' })}
       </h3>
-      <div className={styles.options}>
+      <div className={styles.switchRow}>
+        <span className={styles.switchText}>
+          <span className={styles.switchLabel}>
+            {translate({ id: 'appearance.animations', message: '动画' })}
+          </span>
+          <span className={styles.switchDesc}>
+            {translate({ id: 'appearance.motion.desc', message: '关闭后全站过渡将立即完成' })}
+          </span>
+        </span>
         <button
           type="button"
-          className={`${styles.option} ${motionOn ? styles.optionActive : ''}`}
-          aria-pressed={motionOn}
-          onClick={() => pickMotion(true)}>
-          {translate({ id: 'appearance.animations', message: '动画' })} ·{' '}
-          {translate({ id: 'appearance.animationsOn', message: '开' })}
-        </button>
-        <button
-          type="button"
-          className={`${styles.option} ${!motionOn ? styles.optionActive : ''}`}
-          aria-pressed={!motionOn}
-          onClick={() => pickMotion(false)}>
-          {translate({ id: 'appearance.animations', message: '动画' })} ·{' '}
-          {translate({ id: 'appearance.animationsOff', message: '关' })}
+          role="switch"
+          aria-checked={motionOn}
+          aria-label={translate({ id: 'appearance.animations', message: '动画' })}
+          className={`${styles.switch} ${motionOn ? styles.switchOn : ''}`}
+          onClick={() => pickMotion(!motionOn)}>
+          <span className={styles.switchKnob} />
         </button>
       </div>
     </div>

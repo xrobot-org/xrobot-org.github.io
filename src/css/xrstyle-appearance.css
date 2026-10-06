@@ -91,44 +91,18 @@
 }
 
 /* ==========================================================================
-   b) Theme-switch cross-fade (port of Aemeath's ::view-transition fade)
+   b) Theme-switch color fade
    ========================================================================== */
 
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 340ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-::view-transition-old(root) {
-  animation-name: xr-theme-fade-out;
-  z-index: 2;
-}
-
-::view-transition-new(root) {
-  animation-name: xr-theme-fade-in;
-  z-index: 1;
-}
-
-@keyframes xr-theme-fade-out {
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes xr-theme-fade-in {
-  from {
-    opacity: 0;
-  }
-}
-
-/* Fallback for browsers without the View Transitions API: the React toggle
- * sets html.is-theme-transitioning for the duration and opts itself out with
- * .use-view-transition when the API is available. Colour-ish properties only,
- * so backdrop-filter/transform are never animated. */
-html.is-theme-transitioning:not(.use-view-transition) *,
-html.is-theme-transitioning:not(.use-view-transition) *::before,
-html.is-theme-transitioning:not(.use-view-transition) *::after {
+/* The React toggle sets html.is-theme-transitioning for ~360ms and every
+ * color-ish property fades in place over 320ms. We intentionally do NOT use
+ * document.startViewTransition: its snapshot crossfade freezes the whole page
+ * and stalls rendering for seconds in some environments, while this in-place
+ * fade keeps the page live (rAF sampling shows no dropped frames). Colour-ish
+ * properties only, so backdrop-filter/transform are never animated. */
+html.is-theme-transitioning *,
+html.is-theme-transitioning *::before,
+html.is-theme-transitioning *::after {
   transition-property: color, background-color, border-color, outline-color,
     fill, stroke, box-shadow !important;
   transition-duration: 320ms !important;
@@ -137,8 +111,8 @@ html.is-theme-transitioning:not(.use-view-transition) *::after {
 
 /* The frosted layers (navbar, progress circle) get the cheapest list: their
  * backdrop-filter is kept resident (see section e) and never interpolated. */
-html.is-theme-transitioning:not(.use-view-transition) .navbar,
-html.is-theme-transitioning:not(.use-view-transition) .xr-progress-circle {
+html.is-theme-transitioning .navbar,
+html.is-theme-transitioning .xr-progress-circle {
   transition-property: color, background-color, border-color, outline-color,
     box-shadow !important;
 }
@@ -542,6 +516,14 @@ html[data-card-decor='soft'] .markdown table {
   font-size: 0.875em;
 }
 
+/* Theme-aware images: the intro-page logo PNG is ink-on-transparent, which
+ * disappears on the dark card (the md file keeps its plain image syntax; match by filename —
+ * Docusaurus rewrites markdown image URLs to hashed /assets/images paths).
+ * Inverting in the dark theme turns the ink strokes white (paper variant). */
+html[data-theme='dark'] .markdown img[src*='XRobot'] {
+  filter: invert(1);
+}
+
 /* Links: the underline is a half-strength accent, full strength on hover.
  * mono = half-strength ink, close to the current look. */
 .markdown a {
@@ -590,15 +572,57 @@ html[data-card-decor='soft'] .markdown img:not(.emoji) {
 }
 
 /* ==========================================================================
+   g2) Current-page indication: sidebar, TOC, breadcrumbs. Mono accent = ink,
+   so the active state leans on a left indicator bar, weight and a tinted
+   background rather than hue alone (Aemeath's indicator-bar language).
+   ========================================================================== */
+
+/* Exact current page: tinted pill + accent bar on the left edge. */
+.theme-doc-sidebar-container .menu__link--active:not(.menu__link--sublist) {
+  position: relative;
+  color: var(--xr-accent);
+  font-weight: 650;
+  background: color-mix(in oklch, var(--xr-accent) 12%, transparent);
+}
+
+.theme-doc-sidebar-container .menu__link--active:not(.menu__link--sublist)::before {
+  position: absolute;
+  top: 0.3rem;
+  bottom: 0.3rem;
+  left: 0.1rem;
+  width: 3px;
+  content: '';
+  border-radius: 2px;
+  background: var(--xr-accent);
+}
+
+html[data-card-decor='soft'] .theme-doc-sidebar-container .menu__link--active:not(.menu__link--sublist) {
+  border-radius: 0.5rem;
+}
+
+/* Category whose section contains the current page: tint-free, accent text. */
+.sidebar .menu__link--sublist.menu__link--active {
+  color: var(--xr-accent);
+  font-weight: 650;
+}
+
+/* Right TOC: the heading of the section on screen. */
+.table-of-contents .table-of-contents__link--active {
+  color: var(--xr-accent);
+  font-weight: 650;
+}
+
+/* Breadcrumb tail = current page. */
+.breadcrumbs__item--active .breadcrumbs__link {
+  color: var(--xr-accent);
+  font-weight: 650;
+}
+
+/* ==========================================================================
    h) Motion switches, reduced motion, print
    ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 0ms;
-  }
-
   .xr-progress-bar,
   .xr-progress-circle__value,
   .markdown .hash-link,
@@ -611,15 +635,16 @@ html[data-card-decor='soft'] .markdown img:not(.emoji) {
   html[data-navbar-mode='autohide'] .navbar {
     transition: none;
   }
+
+  html.is-theme-transitioning *,
+  html.is-theme-transitioning *::before,
+  html.is-theme-transitioning *::after {
+    transition-duration: 0ms !important;
+  }
 }
 
 /* data-motion='off' zeroes every duration this layer adds (same approach as
  * the tail of xrstyle-tokens.css / xrstyle-components.css). */
-html[data-motion='off']::view-transition-old(root),
-html[data-motion='off']::view-transition-new(root) {
-  animation-duration: 0ms;
-}
-
 html[data-motion='off'] .xr-progress-bar,
 html[data-motion='off'] .xr-progress-circle__value,
 html[data-motion='off'] .markdown .hash-link,
@@ -633,9 +658,9 @@ html[data-motion='off'][data-navbar-mode='autohide'] .navbar {
   transition: none;
 }
 
-html[data-motion='off'].is-theme-transitioning:not(.use-view-transition) *,
-html[data-motion='off'].is-theme-transitioning:not(.use-view-transition) *::before,
-html[data-motion='off'].is-theme-transitioning:not(.use-view-transition) *::after {
+html[data-motion='off'].is-theme-transitioning *,
+html[data-motion='off'].is-theme-transitioning *::before,
+html[data-motion='off'].is-theme-transitioning *::after {
   transition-duration: 0ms !important;
 }
 
