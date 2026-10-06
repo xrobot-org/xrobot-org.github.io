@@ -1539,8 +1539,7 @@
     "message": "About Performance"
   },
   "appearance.panelTitle": {
-    "message": "Appearance settings",
-    "description": "The title (aria-label) of the appearance settings panel"
+    "message": "Appearance settings"
   },
   "appearance.panelToggle": {
     "message": "Appearance settings",
@@ -1555,92 +1554,70 @@
     "description": "The aria-label of the reading progress circle; {n} is the percentage"
   },
   "appearance.fontStyle": {
-    "message": "Font style",
-    "description": "The font style section of the appearance panel"
+    "message": "Font style"
   },
   "appearance.fontDefault": {
-    "message": "Default font",
-    "description": "The default font option"
+    "message": "Default font"
   },
   "appearance.fontWenkai": {
-    "message": "LXGW WenKai",
-    "description": "The LXGW WenKai font option"
+    "message": "LXGW WenKai"
   },
   "appearance.hue": {
-    "message": "Theme hue",
-    "description": "The theme hue section of the appearance panel"
+    "message": "Theme hue"
   },
   "appearance.accentMono": {
-    "message": "Ink (mono)",
-    "description": "The mono (ink) accent option"
+    "message": "Ink (mono)"
   },
   "appearance.hueReset": {
-    "message": "Reset",
-    "description": "The aria-label of the button that resets the accent back to mono"
+    "message": "Reset"
   },
   "appearance.cardDecor": {
-    "message": "Card decor",
-    "description": "The card decoration section of the appearance panel"
+    "message": "Card decor"
   },
   "appearance.cardDecorSharp": {
-    "message": "Sharp edges",
-    "description": "The sharp (square) card decoration option"
+    "message": "Sharp edges"
   },
   "appearance.cardDecorSharpDesc": {
-    "message": "Square cut, no shadow",
-    "description": "The description of the sharp card decoration option"
+    "message": "Square cut, no shadow"
   },
   "appearance.cardDecorSoft": {
-    "message": "Soft rounded",
-    "description": "The soft rounded card decoration option"
+    "message": "Soft rounded"
   },
   "appearance.cardDecorSoftDesc": {
-    "message": "Rounded border, soft shadow",
-    "description": "The description of the soft rounded card decoration option"
+    "message": "Rounded border, soft shadow"
   },
   "appearance.navbar": {
-    "message": "Navbar",
-    "description": "The navbar section of the appearance panel"
+    "message": "Navbar"
   },
   "appearance.navbarAutohide": {
-    "message": "Auto-hide on scroll",
-    "description": "The auto-hide navbar option"
+    "message": "Auto-hide on scroll"
   },
   "appearance.navbarAutohideDesc": {
-    "message": "Hides when scrolling down, returns when scrolling up",
-    "description": "The description of the auto-hide navbar option"
+    "message": "Hides when scrolling down, returns when scrolling up"
   },
   "appearance.navbarAlways": {
-    "message": "Always expanded",
-    "description": "The always-expanded navbar option"
+    "message": "Always expanded"
   },
   "appearance.navbarAlwaysDesc": {
-    "message": "Keeps the full navigation while scrolling",
-    "description": "The description of the always-expanded navbar option"
+    "message": "Keeps the full navigation while scrolling"
   },
   "appearance.bgMode": {
-    "message": "Background",
-    "description": "The background texture section of the appearance panel"
+    "message": "Background"
   },
   "appearance.bgPlain": {
-    "message": "Plain",
-    "description": "The plain background option"
+    "message": "Plain"
   },
   "appearance.bgGrid": {
-    "message": "Grid",
-    "description": "The grid background option"
+    "message": "Grid"
   },
   "appearance.bgDots": {
-    "message": "Dots",
-    "description": "The dots background option"
+    "message": "Dots"
   },
   "appearance.preferences": {
-    "message": "Preferences",
-    "description": "The preferences section of the appearance panel"
+    "message": "Preferences"
   },
   "appearance.animations": {
-    "message": "Animations",
-    "description": "The animation preference label"
+    "message": "Animations"
   },
   "appearance.animationsOn": {
     "message": "On",
@@ -1714,24 +1691,96 @@
     "message": "Docs"
   },
   "appearance.backToTop": {
-    "message": "Back to top"
+    "message": "Back to top",
+    "description": "The aria-label and hover label of the back-to-top floating button"
   },
   "appearance.codeFold.expand": {
-    "message": "Show more"
+    "message": "Show more",
+    "description": "Button label to expand a collapsed long code block"
   },
   "appearance.codeFold.collapse": {
-    "message": "Show less"
+    "message": "Show less",
+    "description": "Button label to collapse a long code block again"
   },
   "appearance.codeFold.expanded": {
-    "message": "Code block expanded"
+    "message": "Code block expanded",
+    "description": "Screen-reader announcement after a code block is expanded"
   },
   "appearance.codeFold.collapsed": {
-    "message": "Code block collapsed"
+    "message": "Code block collapsed",
+    "description": "Screen-reader announcement after a code block is collapsed"
   },
   "home.hero.tag.docs": {
     "message": "Docs"
   },
   "appearance.motion.desc": {
     "message": "Transitions finish instantly when off"
+  },
+  "home.hero.tag.qq": {
+    "message": "QQ群"
+  },
+  "theme.colorToggle.ariaLabel.mode.system": {
+    "message": "system mode",
+    "description": "The name for the system color mode"
+  },
+  "theme.docs.DocCard.categoryDescription.plurals": {
+    "message": "1 item|{count} items",
+    "description": "The default description for a category card in the generated index about how many items this category includes"
+  },
+  "theme.admonition.warning": {
+    "message": "warning",
+    "description": "The default label used for the Warning admonition (:::warning)"
+  },
+  "theme.DocSidebarItem.expandCategoryAriaLabel": {
+    "message": "Expand sidebar category '{label}'",
+    "description": "The ARIA label to expand the sidebar category"
+  },
+  "theme.DocSidebarItem.collapseCategoryAriaLabel": {
+    "message": "Collapse sidebar category '{label}'",
+    "description": "The ARIA label to collapse the sidebar category"
+  },
+  "theme.IconExternalLink.ariaLabel": {
+    "message": "(opens in new tab)",
+    "description": "The ARIA label for the external link icon"
+  },
+  "theme.navbar.mobileDropdown.collapseButton.expandAriaLabel": {
+    "message": "Expand the dropdown",
+    "description": "The ARIA label of the button to expand the mobile dropdown navbar item"
+  },
+  "theme.navbar.mobileDropdown.collapseButton.collapseAriaLabel": {
+    "message": "Collapse the dropdown",
+    "description": "The ARIA label of the button to collapse the mobile dropdown navbar item"
+  },
+  "theme.blog.author.pageTitle": {
+    "message": "{authorName} - {nPosts}",
+    "description": "The title of the page for a blog author"
+  },
+  "theme.blog.authorsList.pageTitle": {
+    "message": "Authors",
+    "description": "The title of the authors page"
+  },
+  "theme.blog.authorsList.viewAll": {
+    "message": "View all authors",
+    "description": "The label of the link targeting the blog authors page"
+  },
+  "theme.blog.author.noPosts": {
+    "message": "This author has not written any posts yet.",
+    "description": "The text for authors with 0 blog post"
+  },
+  "theme.contentVisibility.unlistedBanner.title": {
+    "message": "Unlisted page",
+    "description": "The unlisted content banner title"
+  },
+  "theme.contentVisibility.unlistedBanner.message": {
+    "message": "This page is unlisted. Search engines will not index it, and only users having a direct link can access it.",
+    "description": "The unlisted content banner message"
+  },
+  "theme.contentVisibility.draftBanner.title": {
+    "message": "Draft page",
+    "description": "The draft content banner title"
+  },
+  "theme.contentVisibility.draftBanner.message": {
+    "message": "This page is a draft. It will only be visible in dev and be excluded from the production build.",
+    "description": "The draft content banner message"
   }
 }

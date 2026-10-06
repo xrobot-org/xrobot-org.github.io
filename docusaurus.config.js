@@ -190,7 +190,7 @@ module.exports = {
     },
 
     mermaid: {
-      theme: { light: 'neutral', dark: 'forest' },
+      theme: { light: 'neutral', dark: 'dark' },
     },
 
     // XRobot Style colours code through CSS (src/css/custom.css), so both Prism themes are empty.

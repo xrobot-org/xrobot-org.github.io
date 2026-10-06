@@ -67,7 +67,8 @@ function updateProgress(): void {
 
 export default function ReadingProgress(): JSX.Element {
   const { pathname } = useLocation();
-  const showCircle = pathname.startsWith('/docs');
+  // Docs routes live at /docs/... (zh) and /en/docs/... (en locale).
+  const showCircle = /^\/(en\/)?docs(\/|$)/.test(pathname);
 
   React.useEffect(() => {
     let raf = 0;
