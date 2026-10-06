@@ -1717,7 +1717,7 @@
     "message": "Transitions finish instantly when off"
   },
   "home.hero.tag.qq": {
-    "message": "QQ群"
+    "message": "QQ Group"
   },
   "theme.colorToggle.ariaLabel.mode.system": {
     "message": "system mode",
@@ -1782,5 +1782,8 @@
   "theme.contentVisibility.draftBanner.message": {
     "message": "This page is a draft. It will only be visible in dev and be excluded from the production build.",
     "description": "The draft content banner message"
+  },
+  "qq.copyFailed": {
+    "message": "Copy failed"
   }
 }

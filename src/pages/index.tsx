@@ -11,6 +11,7 @@ import { translate } from '@docusaurus/Translate';
 import { Button, Card, Logo, PathLabel, Tag, inlineCode } from '@site/src/components/xr';
 import Showcase from '@site/src/components/showcase/Showcase';
 import { readMotionOff, setMotionOff, useReducedMotion } from '@site/src/utils/motion';
+import { copyTextToClipboard } from '@site/src/utils/clipboard';
 import ShowcaseSection, { StaticFigure } from '@site/src/components/showcase/ShowcaseSection';
 import AgentPromptDialog from '@site/src/components/home/AgentPromptDialog';
 import { capabilities, chapters, heroActions, links, recent, routes, scenarios, versionRows, type FigureSpec } from '@site/src/data/home';
@@ -69,20 +70,12 @@ const BOOK_ICON =
 /** Hanging tag cards under the hero wordmark (bilibili / GitHub / email / QQ group). */
 function HeroTags(): JSX.Element {
   const [copied, setCopied] = useState(false);
-  const copyEmail = async () => {
-    const email = 'Cong.Liu_Xiao@outlook.com';
-    try {
-      await navigator.clipboard.writeText(email);
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = email;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-    }
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
+  const copyEmail = () => {
+    void copyTextToClipboard('Cong.Liu_Xiao@outlook.com').then((ok) => {
+      if (!ok) return; // never claim success when every copy strategy failed
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    });
   };
   const tags: Array<{
     key: string;

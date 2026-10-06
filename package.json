@@ -8,7 +8,8 @@
     "prebuild": "node scripts/fetch-commits.js && node scripts/copy-fonts.js",
     "build": "docusaurus build",
     "deploy": "docusaurus deploy",
-    "serve": "docusaurus serve"
+    "serve": "docusaurus serve",
+    "postbuild": "node scripts/strip-nul.js"
   },
   "dependencies": {
     "@cmfcmf/docusaurus-search-local": "^2.0.0",

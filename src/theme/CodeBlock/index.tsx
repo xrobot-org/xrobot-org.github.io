@@ -103,7 +103,12 @@ export default function CodeBlockWrapper(props: Props): ReactNode {
       className={`xr-code-fold${collapsed ? ' xr-code-fold--collapsed' : ''}`}
       data-collapsed={collapsed || undefined}
     >
-      <CodeBlock {...props} />
+      {/* aria-controls target: the region that actually expands/collapses. The
+          code stays in the DOM when collapsed (max-height only), so screen
+          readers can still read it. */}
+      <div id={contentId} className="xr-fold-region">
+        <CodeBlock {...props} />
+      </div>
       <span className="xr-fold-status" role="status" aria-live="polite">
         {collapsed ? collapsedMsg : expandedMsg}
       </span>
@@ -118,9 +123,6 @@ export default function CodeBlockWrapper(props: Props): ReactNode {
         </svg>
         {collapsed ? expandText : collapseText}
       </button>
-      <span id={contentId} hidden>
-        {text}
-      </span>
     </div>
   );
 }

@@ -7,6 +7,7 @@
 import React, { useCallback, useState } from 'react';
 import Layout from '@theme/Layout';
 import { translate } from '@docusaurus/Translate';
+import { copyTextToClipboard } from '@site/src/utils/clipboard';
 import styles from './qq.module.css';
 
 const QQ_ICON =
@@ -31,39 +32,28 @@ const REPOS: Array<{ name: string; url: string }> = [
   { name: 'MiniFlashDB', url: 'https://github.com/Jiu-xiao/MiniFlashDB.git' },
 ];
 
-async function copyText(text: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
-  }
-}
-
-/** Small copy button with a transient "copied" state. */
+/** Small copy button with success/failure feedback ("copied ✓" only on real success). */
 function CopyButton({ text, label }: { text: string; label: string }): JSX.Element {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<boolean | null>(null);
   const onCopy = useCallback(() => {
-    void copyText(text).then(() => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
+    void copyTextToClipboard(text).then((ok) => {
+      setCopied(ok);
+      window.setTimeout(() => setCopied(null), 1600);
     });
   }, [text]);
   return (
     <button type="button" className={styles.copyBtn} onClick={onCopy} aria-label={label}>
-      {copied ? (
-        <span className={styles.copyDone}>{translate({ id: 'qq.copied', message: '已复制 ✓' })}</span>
-      ) : (
+      {copied === null ? (
         <>
           <svg viewBox="0 0 24 24" width="0.9em" height="0.9em" fill="currentColor" aria-hidden="true">
             <path d={COPY_ICON} />
           </svg>
           {label}
         </>
+      ) : copied ? (
+        <span className={styles.copyDone}>{translate({ id: 'qq.copied', message: '已复制 ✓' })}</span>
+      ) : (
+        <span className={styles.copyFailed}>{translate({ id: 'qq.copyFailed', message: '复制失败' })}</span>
       )}
     </button>
   );
