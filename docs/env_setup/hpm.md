@@ -88,6 +88,13 @@ HPM 工程按以下顺序接入：
 2. 再检查工程里是否已经能正常 `add_subdirectory(libxr)`。
 3. 最后再按需要接入具体外设类，例如 `HPMGPIO`、`HPMI2C`、`HPMPWM`、`HPMTimebase`。
 
+外设的引脚复用和时钟由工程在创建 LibXR 对象之前配置，例如调用 HPM Pinmux Tool 生成的引脚函数和时钟函数；LibXR 的 HPM 驱动只调用 SDK 驱动，不调用 `board.c` 中的板级函数：
+
+```cpp
+static LibXR::HPMI2C i2c3(HPM_I2C3, clock_i2c3, {100000});
+static LibXR::HPMPWM pwm(HPM_PWM0, clock_mot0, 0, 0, LibXR::HPMPWM::Polarity::NORMAL);
+```
+
 ## 当前 I2C 支持情况
 
 `HPMI2C` 已不是简单的 blocking-only 包装，当前主线还覆盖了：
@@ -101,8 +108,8 @@ HPM 工程按以下顺序接入：
 上述能力在具体工程中能否使用，取决于：
 
 - HPM SDK 头文件是否完整；
-- 是否存在对应 DMA / interrupt helper；
-- 目标板级时钟、引脚和总线恢复路径是否已验证。
+- 工程是否启用了 SDK 的 `dma_mgr` 组件（`CONFIG_DMA_MGR`），未启用时编译报错；
+- 引脚和时钟是否已在创建对象前配置。总线恢复使用 I2C 控制器自身产生的复位信号（9 个 SCL 脉冲）。
 
 ## 当前 PWM 支持情况
 
