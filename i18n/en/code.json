@@ -1538,13 +1538,6 @@
   "home.route.port.more3": {
     "message": "About Performance"
   },
-  "appearance.panelTitle": {
-    "message": "Appearance settings"
-  },
-  "appearance.panelToggle": {
-    "message": "Appearance settings",
-    "description": "The aria-label of the appearance settings (palette) navbar button"
-  },
   "appearance.colorModeToggle": {
     "message": "Toggle color mode",
     "description": "The aria-label of the light/dark mode toggle button"
@@ -1552,80 +1545,6 @@
   "appearance.scrollProgress.aria": {
     "message": "Page scroll progress {n}%",
     "description": "The aria-label of the reading progress circle; {n} is the percentage"
-  },
-  "appearance.fontStyle": {
-    "message": "Font style"
-  },
-  "appearance.fontDefault": {
-    "message": "Default font"
-  },
-  "appearance.fontWenkai": {
-    "message": "LXGW WenKai"
-  },
-  "appearance.hue": {
-    "message": "Theme hue"
-  },
-  "appearance.accentMono": {
-    "message": "Ink (mono)"
-  },
-  "appearance.hueReset": {
-    "message": "Reset"
-  },
-  "appearance.cardDecor": {
-    "message": "Card decor"
-  },
-  "appearance.cardDecorSharp": {
-    "message": "Sharp edges"
-  },
-  "appearance.cardDecorSharpDesc": {
-    "message": "Square cut, no shadow"
-  },
-  "appearance.cardDecorSoft": {
-    "message": "Soft rounded"
-  },
-  "appearance.cardDecorSoftDesc": {
-    "message": "Rounded border, soft shadow"
-  },
-  "appearance.navbar": {
-    "message": "Navbar"
-  },
-  "appearance.navbarAutohide": {
-    "message": "Auto-hide on scroll"
-  },
-  "appearance.navbarAutohideDesc": {
-    "message": "Hides when scrolling down, returns when scrolling up"
-  },
-  "appearance.navbarAlways": {
-    "message": "Always expanded"
-  },
-  "appearance.navbarAlwaysDesc": {
-    "message": "Keeps the full navigation while scrolling"
-  },
-  "appearance.bgMode": {
-    "message": "Background"
-  },
-  "appearance.bgPlain": {
-    "message": "Plain"
-  },
-  "appearance.bgGrid": {
-    "message": "Grid"
-  },
-  "appearance.bgDots": {
-    "message": "Dots"
-  },
-  "appearance.preferences": {
-    "message": "Preferences"
-  },
-  "appearance.animations": {
-    "message": "Animations"
-  },
-  "appearance.animationsOn": {
-    "message": "On",
-    "description": "The animations-on option"
-  },
-  "appearance.animationsOff": {
-    "message": "Off",
-    "description": "The animations-off option"
   },
   "home.hero.tags": {
     "message": "Contact us"
@@ -1652,7 +1571,7 @@
     "message": "Join the XRobot QQ group: scan the QR code, search the group ID or join in one click, plus links to all organization repositories and docs."
   },
   "qq.lead": {
-    "message": "This group is for the XRobot (Qingdao University embedded-software open-source) organization and its derived projects. Star us on GitHub! Questions are welcome directly in the group."
+    "message": "QQ group of the XRobot organization (Qingdao University embedded-software open source) and its derived projects. Questions about using them can be raised directly in the group."
   },
   "qq.groupCard": {
     "message": "Group QR code"
@@ -1712,9 +1631,6 @@
   },
   "home.hero.tag.docs": {
     "message": "Docs"
-  },
-  "appearance.motion.desc": {
-    "message": "Transitions finish instantly when off"
   },
   "home.hero.tag.qq": {
     "message": "QQ Group"

@@ -26,10 +26,7 @@ const backToTopLabel = translate({
 });
 
 function prefersInstantScroll(): boolean {
-  return (
-    document.documentElement.dataset.motion === 'off' ||
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  );
+  return document.documentElement.dataset.motion === 'off';
 }
 
 function scrollToTop(): void {

@@ -1,38 +1,23 @@
-/* QQ group page (/qq) — xiaoshuaijie.online/qq/ layout on XRobot ink tokens. */
+/* QQ group page (/qq). XRobot Style tokens only (src/css/xrstyle-tokens.css). */
 
 .page {
-  display: flex;
-  justify-content: center;
-  padding: var(--space-8) var(--space-4) var(--space-10);
-}
-
-.card {
-  width: min(100%, 44rem);
-  padding: var(--space-8) var(--space-5);
-  border: var(--stroke) solid var(--line);
-  border-radius: 4px;
-  background: var(--paper-raised);
-}
-
-html[data-card-decor='soft'] .card {
-  border-radius: 0.85rem;
-  box-shadow: 0 0 0 1px var(--line), 0 10px 30px rgb(0 0 0 / 0.08);
-}
-
-.header {
-  margin-bottom: var(--space-7);
-}
-
-.titleRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  background: var(--paper);
   color: var(--ink);
 }
 
+.inner {
+  max-width: var(--measure-page);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-8) var(--space-16);
+}
+
+.header {
+  max-width: var(--measure-prose);
+  margin-bottom: var(--space-8);
+}
+
 .title {
-  margin: 0;
+  margin: var(--space-2) 0 var(--space-3);
   font-size: var(--type-display-size);
   line-height: var(--type-display-line);
   font-weight: 700;
@@ -41,148 +26,104 @@ html[data-card-decor='soft'] .card {
 
 .lead {
   margin: 0;
-  max-width: var(--measure-prose);
   color: var(--ink-muted);
-  line-height: 1.8;
 }
 
-/* ---- QR zone ---- */
+/* ---- Group: QR on the left, ID and join link on the right ---- */
 
-.qrZone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: var(--space-8);
+.group {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+  padding: var(--space-8) 0;
+  border-top: var(--stroke) solid var(--line);
+  border-bottom: var(--stroke) solid var(--line);
 }
 
-.qrCard {
+/* The QR code is light-on-dark; it keeps its own dark ground in both themes. */
+.qrFrame {
+  margin: 0;
   padding: var(--space-4);
-  border: var(--stroke) solid var(--line);
-  border-radius: 4px;
-  background: var(--paper);
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.06);
-}
-
-html[data-card-decor='soft'] .qrCard {
-  border-radius: 0.75rem;
+  border: var(--stroke) solid var(--line-strong);
+  background: #1b1b1b;
 }
 
 .qrImg {
   display: block;
-  width: min(60vw, 15rem);
-  height: auto;
-  border-radius: 4px;
+  width: 240px;
+  height: 240px;
 }
 
-html[data-card-decor='soft'] .qrImg {
-  border-radius: 0.5rem;
+.groupInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  min-width: 0;
 }
 
 .groupName {
-  margin-top: var(--space-4);
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--ink);
+  margin: 0;
+  font-size: var(--type-title-size);
+  line-height: var(--type-title-line);
 }
 
-.groupNumberRow {
+.fields {
+  margin: 0;
+}
+
+.field {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  color: var(--ink-muted);
-  font-size: 0.92rem;
+  gap: var(--space-4);
 }
 
-.groupNumber {
-  padding: 0.2rem 0.6rem;
+.field dt {
+  font: 700 12px/16px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.field dd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.mono {
+  padding: 0;
   border: 0;
-  border-radius: 3px;
-  background: var(--paper-sunken);
+  background: transparent;
+  font: 700 20px/28px var(--font-mono);
   color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.95rem;
-  user-select: all;
 }
 
 .copyBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.25rem 0.6rem;
-  border: var(--stroke) solid var(--line);
-  border-radius: 3px;
-  background: transparent;
-  color: var(--ink-muted);
-  font-size: 0.78rem;
-  line-height: 1.4;
-  cursor: pointer;
-  transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease,
-    background var(--duration-fast) ease;
-}
-
-.copyBtn:hover {
-  border-color: var(--xr-accent);
-  color: var(--xr-accent);
-}
-
-.copyBtn:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.copyDone {
-  color: var(--pass);
-  font-weight: 600;
-}
-
-.joinBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-top: var(--space-4);
-  padding: 0.65rem 1.4rem;
-  border-radius: 4px;
-  background: #12b7f5;
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: opacity var(--duration-fast) ease, transform var(--duration-fast) ease;
-}
-
-html[data-card-decor='soft'] .joinBtn {
-  border-radius: 0.6rem;
-}
-
-.joinBtn:hover {
-  color: #fff;
-  opacity: 0.85;
-  text-decoration: none;
-}
-
-.joinBtn:active {
-  transform: scale(0.97);
-}
-
-.joinBtn:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  height: 28px;
+  padding: 0 var(--space-3);
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .hint {
-  margin: var(--space-3) 0 0;
+  margin: 0;
+  font-size: var(--type-small-size);
+  line-height: var(--type-small-line);
   color: var(--ink-muted);
-  font-size: 0.88rem;
 }
 
-/* ---- repository list ---- */
+/* ---- Repositories ---- */
 
-.reposTitle {
+.repos {
+  padding-top: var(--space-12);
+}
+
+.sectionTitle {
   margin: 0 0 var(--space-4);
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--ink);
+  font-size: var(--type-heading-size);
+  line-height: var(--type-heading-line);
 }
 
 .repoList {
@@ -193,70 +134,44 @@ html[data-card-decor='soft'] .joinBtn {
 }
 
 .repoRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr) auto;
+  gap: var(--space-4);
   align-items: center;
-  gap: var(--space-3);
   padding: var(--space-3) 0;
   border-bottom: var(--stroke) solid var(--line);
 }
 
 .repoName {
-  flex: 0 0 7.5em;
-  color: var(--ink);
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .repoUrl {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--ink-muted);
+  overflow-wrap: anywhere;
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color var(--duration-fast) ease;
+  font-size: 14px;
 }
 
-.repoUrl:hover {
-  color: var(--xr-accent);
-}
+@media (max-width: 720px) {
+  .inner {
+    padding: var(--space-8) var(--space-4) var(--space-12);
+  }
 
-.repoUrl:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
+  .title {
+    font-size: var(--type-title-size);
+    line-height: var(--type-title-line);
+  }
 
-.copyBtn {
-  flex-shrink: 0;
-}
-
-@media (max-width: 640px) {
-  .card {
-    padding: var(--space-6) var(--space-4);
+  .group {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .repoRow {
-    flex-wrap: wrap;
-    row-gap: var(--space-2);
-  }
-
-  .repoName {
-    flex-basis: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .repoUrl {
-    flex-basis: 100%;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-}
-
-@media print {
-  .copyBtn,
-  .joinBtn {
-    display: none;
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 }

@@ -1,9 +1,8 @@
 /**
  * Page-level animation switch, shared by every UI that reads or writes it.
  *
- * Previously this logic lived in src/components/showcase/Showcase.tsx (the "动画 开 / 关"
- * control in the hero); it moved here so the appearance panel (AppearancePanel) and any
- * other component can reuse the exact same storage key, data attribute and event.
+ * Used by the "动画 开 / 关" control in the home page hero and by the showcase widgets;
+ * static/motion-init.js applies the stored value before first paint.
  *
  * Animation is on by default, independent of the OS `prefers-reduced-motion` setting;
  * the choice is stored in localStorage and broadcast with the `xr-motion` event so every

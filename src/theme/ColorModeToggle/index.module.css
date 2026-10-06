@@ -1,5 +1,5 @@
-/* Custom light/dark toggle button. Two stacked icons cross-fade/rotate on
-   html[data-theme='dark'] (ported from the Aemeath LightDarkSwitch). */
+/* Light/dark toggle button: two stacked icons cross-fade and rotate on
+   html[data-theme='dark']. */
 
 .toggle {
   position: relative;
@@ -47,8 +47,7 @@ html[data-theme='dark'] .iconMoon {
   transform: rotate(0deg);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .icon {
-    transition: none;
-  }
+/* page animation switch off (src/utils/motion.ts) */
+:global(html[data-motion='off']) .icon {
+  transition: none;
 }

@@ -13,8 +13,8 @@ module.exports = {
 
   scripts: [
     {
-      // Anti-FOUC appearance init: must run synchronously in <head>.
-      src: '/appearance-init.js',
+      // Page animation switch, applied before first paint: must run synchronously in <head>.
+      src: '/motion-init.js',
       async: false,
     },
     {
@@ -68,7 +68,7 @@ module.exports = {
         theme: {
           customCss: [
             require.resolve('./src/css/xrstyle-tokens.css'),
-            require.resolve('./src/css/xrstyle-appearance.css'),
+            require.resolve('./src/css/xrstyle-reading.css'),
             require.resolve('./src/css/xrstyle-components.css'),
             require.resolve('./src/css/xrstyle-materials.css'),
             require.resolve('./src/css/custom.css'),
@@ -96,10 +96,6 @@ module.exports = {
         },
         {
           type: 'localeDropdown',
-          position: 'right',
-        },
-        {
-          type: 'custom-xr-appearance',
           position: 'right',
         },
         {

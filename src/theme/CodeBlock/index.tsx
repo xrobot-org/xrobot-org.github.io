@@ -7,9 +7,8 @@ import { translate } from '@docusaurus/Translate';
 type Props = WrapperProps<typeof CodeBlockType>;
 
 /**
- * Long-code folding, ported from the rainzt.cn reference (the
- * expressive-code-collapsible plugin): blocks with more than 15 lines start
- * collapsed to 8 preview lines with a fade-out gradient and a pill toggle at
+ * Long-code folding: blocks with more than 15 lines start
+ * collapsed to 8 preview lines with a fade-out gradient and a toggle at
  * the bottom center; expanding returns the toggle to normal flow below the
  * block, collapsing again scrolls the block back into view when needed.
  *
@@ -24,10 +23,7 @@ const PREVIEW_LINES = 8;
 
 function instantMotion(): boolean {
   if (typeof document === 'undefined') return true;
-  return (
-    document.documentElement.dataset.motion === 'off' ||
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  );
+  return document.documentElement.dataset.motion === 'off';
 }
 
 export default function CodeBlockWrapper(props: Props): ReactNode {
