@@ -13,6 +13,11 @@ module.exports = {
 
   scripts: [
     {
+      // Page animation switch, applied before first paint: must run synchronously in <head>.
+      src: '/motion-init.js',
+      async: false,
+    },
+    {
       src: 'https://static.cloudflareinsights.com/beacon.min.js',
       defer: true,
       'data-cf-beacon': '{"token": "8659aca76cfa4141bdd852a2f5652c32"}',
@@ -63,6 +68,7 @@ module.exports = {
         theme: {
           customCss: [
             require.resolve('./src/css/xrstyle-tokens.css'),
+            require.resolve('./src/css/xrstyle-reading.css'),
             require.resolve('./src/css/xrstyle-components.css'),
             require.resolve('./src/css/xrstyle-materials.css'),
             require.resolve('./src/css/custom.css'),
@@ -169,10 +175,10 @@ module.exports = {
               label: '邮箱',
               href: 'mailto:Cong.Liu_Xiao@outlook.com',
             },
-            {
-              label: 'QQ群: 608182228',
-              href: 'https://qm.qq.com/q/RPgE71OXmw',
-            }
+              {
+                label: 'QQ群',
+                to: '/qq',
+              }
           ],
         },
       ],
@@ -180,7 +186,7 @@ module.exports = {
     },
 
     mermaid: {
-      theme: { light: 'neutral', dark: 'forest' },
+      theme: { light: 'neutral', dark: 'dark' },
     },
 
     // XRobot Style colours code through CSS (src/css/custom.css), so both Prism themes are empty.

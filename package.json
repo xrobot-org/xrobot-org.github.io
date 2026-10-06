@@ -7,7 +7,8 @@
     "prebuild": "node scripts/fetch-commits.js",
     "build": "docusaurus build",
     "deploy": "docusaurus deploy",
-    "serve": "docusaurus serve"
+    "serve": "docusaurus serve",
+    "postbuild": "node scripts/strip-nul.js"
   },
   "dependencies": {
     "@cmfcmf/docusaurus-search-local": "^2.0.0",
@@ -25,6 +26,9 @@
     "@docusaurus/core": "3.9.2",
     "@docusaurus/preset-classic": "3.9.2",
     "@docusaurus/theme-mermaid": "3.9.2",
-    "prism-react-renderer": "^2.4.1"
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "prism-react-renderer": "^2.4.1",
+    "typescript": "^5.9.3"
   }
 }

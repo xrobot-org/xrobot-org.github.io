@@ -17,7 +17,7 @@
   },
   "link.item.label.入门": {
     "message": "Start here",
-    "description": "The label of footer link with label=入门 linking to /"
+    "description": "The label of footer link with label=入门 linking to /docs/intro"
   },
   "link.item.label.LibXR 类文档": {
     "message": "LibXR API Reference",
@@ -59,8 +59,16 @@
     "message": "Email",
     "description": "The label of footer link with label=邮箱 linking to mailto:Cong.Liu_Xiao@outlook.com"
   },
-  "link.item.label.QQ群: 608182228": {
-    "message": "QQ Group: 608182228",
-    "description": "The label of footer link with label=QQ群: 608182228 linking to https://qm.qq.com/q/RPgE71OXmw"
+  "link.item.label.XRobot": {
+    "message": "XRobot",
+    "description": "The label of footer link with label=XRobot linking to https://github.com/xrobot-org/XRobot"
+  },
+  "link.item.label.QQ群": {
+    "message": "QQ Group",
+    "description": "The label of footer link with label=QQ群 linking to /qq"
+  },
+  "copyright": {
+    "message": "Copyright © 2026 XRobot",
+    "description": "The footer copyright"
   }
 }

@@ -1,0 +1,520 @@
+/* XRobot Style reading layer for the documentation pages (loaded by docusaurus.config.js
+ * customCss after xrstyle-tokens.css): theme-switch colour fade, reading progress and the
+ * back-to-top button, prose details, current-page indication, long-code folding.
+ * Ink on paper, square corners, 1px lines; motion follows html[data-motion] (the page
+ * animation switch, src/utils/motion.ts).
+ */
+
+/* ==========================================================================
+   b) Theme-switch color fade
+   ========================================================================== */
+
+/* The React toggle sets html.is-theme-transitioning for ~360ms and every
+ * color-ish property fades in place over 320ms. We intentionally do NOT use
+ * document.startViewTransition: its snapshot crossfade freezes the whole page
+ * and stalls rendering for seconds in some environments, while this in-place
+ * fade keeps the page live (rAF sampling shows no dropped frames). Colour-ish
+ * properties only, so transform is never animated. */
+html.is-theme-transitioning *,
+html.is-theme-transitioning *::before,
+html.is-theme-transitioning *::after {
+  transition-property: color, background-color, border-color, outline-color,
+    fill, stroke, box-shadow !important;
+  transition-duration: 320ms !important;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* ==========================================================================
+   c) Reading progress: top bar + corner circle
+   ========================================================================== */
+
+/* Top bar (all routes). React renders:
+ *   <div class="xr-progress-track" aria-hidden="true">
+ *     <div class="xr-progress-bar"></div>
+ *   </div>
+ * and writes scaleX(progress) on the bar. */
+.xr-progress-track {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  overflow: hidden;
+  pointer-events: none;
+  /* Above the fixed navbar (Infima --ifm-z-index-fixed: 200) and the overlay
+   * layer (400); sit on the View Transitions root snapshot as well. */
+  z-index: 2010;
+}
+
+.xr-progress-bar {
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  will-change: transform;
+  background: var(--ink);
+  transition: transform 80ms linear;
+}
+
+/* Bottom-right floating dock: the reading circle
+ * (/docs only) sits above the back-to-top button, right-aligned column.
+ * React renders:
+ *   <div class="xr-float-dock">
+ *     [<div class="xr-progress-circle" ...>…</div>]
+ *     <button class="xr-top-btn">…</button>
+ *   </div>
+ */
+.xr-float-dock {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  /* Above page content and the fixed navbar, below the overlay layer
+   * (Infima --ifm-z-index-overlay: 400), so menus can cover it. */
+  z-index: 300;
+  pointer-events: none;
+}
+
+.xr-float-dock > * {
+  pointer-events: auto;
+}
+
+.xr-progress-circle {
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+  pointer-events: none;
+  border: var(--stroke) solid var(--line);
+  border-radius: 0;
+  background: var(--paper-raised);
+}
+
+.xr-progress-circle > svg {
+  position: absolute;
+  inset: 0.18rem;
+  transform: rotate(-90deg);
+}
+
+.xr-progress-circle circle {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.xr-progress-circle__track {
+  stroke: var(--line-strong);
+}
+
+.xr-progress-circle__value {
+  stroke: var(--ink);
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 120ms linear;
+}
+
+.xr-progress-circle__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-line);
+  color: var(--ink);
+}
+
+/* Back-to-top button (dock style: outlined square, inverted on hover, icon
+ * flies up while the "Top" label slides in). Hidden until scrollY > 200
+ * (toggled by the progress component with .xr-top-btn--show). */
+.xr-top-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper-raised);
+  color: var(--ink);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(0.5rem);
+  visibility: hidden;
+  transition: opacity 200ms ease, transform 200ms ease, visibility 200ms,
+    background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+.xr-top-btn--show {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+}
+
+.xr-top-btn:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-raised);
+}
+
+.xr-top-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.xr-top-btn__icon,
+.xr-top-btn__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 200ms ease-out, opacity 200ms ease-out;
+}
+
+.xr-top-btn__label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.xr-top-btn:hover .xr-top-btn__icon,
+.xr-top-btn:focus-visible .xr-top-btn__icon {
+  transform: translateY(-8px);
+  opacity: 0;
+}
+
+.xr-top-btn:hover .xr-top-btn__label,
+.xr-top-btn:focus-visible .xr-top-btn__label {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 480px) {
+  .xr-float-dock {
+    right: 0.9rem;
+    bottom: 0.9rem;
+  }
+
+  .xr-progress-circle,
+  .xr-top-btn {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+}
+
+/* ==========================================================================
+   g) Prose polish (markdown). Token-driven and always on; tuned to sit
+      inside the ink language (hairlines, sunken panels, no new hues).
+   ========================================================================== */
+
+/* Heading anchors: Docusaurus already keeps them opacity:0; ease them in and
+ * rest them at half strength until they are hovered themselves. */
+.markdown .hash-link {
+  opacity: 0;
+  transition: opacity var(--duration-base, 160ms) ease;
+}
+
+.markdown :is(h1, h2, h3, h4, h5, h6):hover .hash-link,
+.markdown .hash-link:focus-visible {
+  opacity: 0.55;
+}
+
+.markdown .hash-link:hover {
+  opacity: 1;
+}
+
+/* Blockquote: a 3px accent bar (round-cornered) on a sunken panel. */
+.markdown blockquote {
+  padding: var(--space-3) var(--space-4);
+  background-color: color-mix(in oklch, var(--paper-sunken) 60%, transparent);
+  border-left: 3px solid var(--ink-muted);
+  border-radius: 3px;
+}
+
+/* Tables: one outer frame, hairline row rules, no double borders. Infima's
+ * block display + overflow:auto stays, so wide tables still scroll inside
+ * the rounded frame. */
+.markdown table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: var(--stroke) solid var(--line);
+  border-radius: 4px;
+}
+
+.markdown table :is(th, td) {
+  border: none;
+  border-bottom: var(--stroke) solid var(--line);
+}
+
+.markdown table th {
+  background-color: var(--paper-sunken);
+}
+
+.markdown table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown table tr:nth-child(2n) {
+  background-color: color-mix(in oklch, var(--paper-sunken) 45%, transparent);
+}
+
+/* Inline code: sunken chip with a hairline frame (pre code is excluded). */
+.markdown :not(pre) > code {
+  background-color: var(--paper-sunken);
+  border: var(--stroke) solid var(--line);
+  border-radius: 3px;
+  padding: 0.15em 0.4em;
+  font-size: 0.875em;
+}
+
+/* Theme-aware images: the intro-page logo PNG is ink-on-transparent, which
+ * disappears on the dark card (the md file keeps its plain image syntax; match by filename —
+ * Docusaurus rewrites markdown image URLs to hashed /assets/images paths).
+ * Inverting in the dark theme turns the ink strokes white (paper variant). */
+html[data-theme='dark'] .markdown img[src*='XRobot'] {
+  filter: invert(1);
+}
+
+/* Links: the underline is a half-strength accent, full strength on hover.
+ * mono = half-strength ink, close to the current look. */
+.markdown a {
+  text-decoration-color: var(--ink-muted);
+  transition: text-decoration-color var(--duration-base, 160ms) ease;
+}
+
+.markdown a:hover {
+  text-decoration-color: var(--ink);
+}
+
+/* hr fades out at both ends (Infima's border:0/height stay in charge). */
+.markdown hr {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--line-strong) 18%,
+    var(--line-strong) 82%,
+    transparent
+  );
+}
+
+/* Figures get a hairline frame and a small radius (site emoji stay bare). */
+.markdown img:not(.emoji) {
+  border: var(--stroke) solid var(--line);
+  border-radius: 2px;
+}
+
+/* Breadcrumbs and the prev/next cards pick up a quiet accent on hover. */
+.breadcrumbs__link,
+.pagination-nav__link {
+  transition: border-color var(--duration-base, 160ms) ease,
+    background-color var(--duration-base, 160ms) ease;
+}
+
+.breadcrumbs__link:hover {
+  border-color: var(--line-strong);
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--line-strong);
+}
+
+/* ==========================================================================
+   g2) Current-page indication: sidebar, TOC, breadcrumbs. The active state
+   is marked by a left indicator bar, weight and a tinted background, not by hue.
+   ========================================================================== */
+
+/* Exact current page: sunken background + ink bar on the left edge. */
+.theme-doc-sidebar-container .menu__link--active:not(.menu__link--sublist) {
+  position: relative;
+  color: var(--ink);
+  font-weight: 650;
+  background: var(--paper-sunken);
+}
+
+.theme-doc-sidebar-container .menu__link--active:not(.menu__link--sublist)::before {
+  position: absolute;
+  top: 0.3rem;
+  bottom: 0.3rem;
+  left: 0.1rem;
+  width: 3px;
+  content: '';
+  background: var(--ink);
+}
+
+/* Category whose section contains the current page: bold ink text. */
+.sidebar .menu__link--sublist.menu__link--active {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+/* Right TOC: the heading of the section on screen. */
+.table-of-contents .table-of-contents__link--active {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+/* Breadcrumb tail = current page. */
+.breadcrumbs__item--active .breadcrumbs__link {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+/* ==========================================================================
+   h) Page animation switch (html[data-motion='off']), print
+   ========================================================================== */
+
+/* data-motion='off' zeroes every duration this layer adds (same approach as
+ * the tail of xrstyle-tokens.css / xrstyle-components.css). */
+html[data-motion='off'] .xr-progress-bar,
+html[data-motion='off'] .xr-progress-circle__value,
+html[data-motion='off'] .markdown .hash-link,
+html[data-motion='off'] .markdown a,
+html[data-motion='off'] .breadcrumbs__link,
+html[data-motion='off'] .pagination-nav__link {
+  transition: none;
+}
+
+html[data-motion='off'].is-theme-transitioning *,
+html[data-motion='off'].is-theme-transitioning *::before,
+html[data-motion='off'].is-theme-transitioning *::after {
+  transition-duration: 0ms !important;
+}
+
+@media print {
+  .xr-progress-track,
+  .xr-progress-circle {
+    display: none !important;
+  }
+
+}
+
+/* ==========================================================================
+   i) Long-code folding (>15 lines): 8 preview lines + fade gradient + a
+   toggle button at the bottom centre.
+   The React CodeBlock wrapper renders:
+     <div class="xr-code-fold [--collapsed]">
+       <CodeBlock/> <span class="xr-fold-status"/> <button class="xr-fold-toggle"/>
+     </div>
+   and writes --xr-fold-preview-height after measuring the real line height.
+   ========================================================================== */
+
+.xr-code-fold--collapsed .theme-code-block pre {
+  max-height: var(--xr-fold-preview-height, calc(8 * 1.5em + 2rem));
+  overflow: hidden;
+}
+
+.xr-code-fold--collapsed .theme-code-block {
+  position: relative;
+}
+
+.xr-code-fold--collapsed .theme-code-block::after {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  left: 1px;
+  height: 6.5rem;
+  content: "";
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--prism-background-color, var(--paper-sunken))
+  );
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.xr-code-fold {
+  position: relative;
+}
+
+.xr-fold-toggle {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 6px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  transform: translateX(-50%);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.xr-fold-toggle:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.xr-fold-toggle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.xr-fold-toggle svg {
+  transition: transform 200ms ease;
+}
+
+/* Expanded: the toggle drops back into normal flow under the block. */
+.xr-code-fold:not(.xr-code-fold--collapsed) .xr-fold-toggle {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  display: flex;
+  width: fit-content;
+  margin: 10px auto 0;
+  transform: none;
+}
+
+.xr-code-fold:not(.xr-code-fold--collapsed) .xr-fold-toggle svg {
+  transform: rotate(180deg);
+}
+
+.xr-fold-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+html[data-motion='off'] .xr-fold-toggle svg,
+html[data-motion='off'] .xr-code-fold--collapsed .theme-code-block::after,
+html[data-motion='off'] .xr-top-btn,
+html[data-motion='off'] .xr-top-btn__icon,
+html[data-motion='off'] .xr-top-btn__label {
+  transition: none;
+}
+
+@media print {
+  .xr-float-dock,
+  .xr-fold-toggle,
+  .xr-fold-status {
+    display: none !important;
+  }
+
+  .xr-code-fold--collapsed .theme-code-block pre {
+    max-height: none;
+  }
+
+  .xr-code-fold--collapsed .theme-code-block::after {
+    display: none;
+  }
+}

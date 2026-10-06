@@ -7,12 +7,13 @@
  *   comes within LOAD_MARGIN of the viewport, inside BrowserOnly + Suspense.
  * - `active` is true while the frame intersects the viewport and the page is visible; widgets
  *   stop their timers when it turns false (they are not unmounted).
- * - `reducedMotion` follows the page animation switch (see useReducedMotion below), not the OS setting.
+ * - `reducedMotion` follows the page animation switch (see src/utils/motion.ts), not the OS setting.
  */
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import Link from '@docusaurus/Link';
 import { translate } from '@docusaurus/Translate';
+import { useReducedMotion } from '@site/src/utils/motion';
 import styles from './showcase.module.css';
 
 export type ShowcaseWidgetProps = {
@@ -56,40 +57,6 @@ function lazyWidget(name: string) {
 
 /** Mount a little before the frame scrolls in, so the chunk is ready when it is seen. */
 const LOAD_MARGIN = '400px 0px';
-
-/**
- * Page-level animation switch (the "动画 开 / 关" control in the hero). Animation is on by default,
- * independent of the OS `prefers-reduced-motion` setting; the choice is stored in localStorage and
- * broadcast with the `xr-motion` event so every widget follows it at once.
- */
-export const MOTION_KEY = 'xr-motion';
-export function readMotionOff(): boolean {
-  try {
-    return window.localStorage.getItem(MOTION_KEY) === 'off';
-  } catch {
-    return false;
-  }
-}
-export function setMotionOff(off: boolean): void {
-  try {
-    window.localStorage.setItem(MOTION_KEY, off ? 'off' : 'on');
-  } catch {
-    /* storage unavailable: the switch still works for this page view */
-  }
-  document.documentElement.dataset.motion = off ? 'off' : 'on';
-  window.dispatchEvent(new CustomEvent('xr-motion', { detail: off }));
-}
-
-export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const update = (e?: Event) => setReduced(e instanceof CustomEvent ? Boolean(e.detail) : readMotionOff());
-    update();
-    window.addEventListener('xr-motion', update);
-    return () => window.removeEventListener('xr-motion', update);
-  }, []);
-  return reduced;
-}
 
 function usePageVisible(): boolean {
   const [visible, setVisible] = useState(true);
