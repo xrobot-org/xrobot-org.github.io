@@ -1,17 +1,21 @@
 /* XRobot Style for Docusaurus: Infima variables bound to the tokens in xrstyle-tokens.css
  * (proj/platforms.md). Light and dark switch inside the tokens, so one block covers both;
  * it repeats the dark selector because Infima's own dark block has the same specificity.
+ *
+ * The primary chain routes through the --xr-accent ramp defined in
+ * xrstyle-appearance.css: in the default mono mode --xr-accent is var(--ink)
+ * (unchanged look); data-accent='hue' rewrites it to the oklch ramp of --xr-hue.
  */
 :root,
 html[data-theme='light'],
 html[data-theme='dark'] {
-  --ifm-color-primary: var(--ink);
-  --ifm-color-primary-dark: var(--ink);
-  --ifm-color-primary-darker: var(--ink);
-  --ifm-color-primary-darkest: var(--ink);
-  --ifm-color-primary-light: var(--ink-muted);
-  --ifm-color-primary-lighter: var(--ink-muted);
-  --ifm-color-primary-lightest: var(--ink-muted);
+  --ifm-color-primary: var(--xr-accent);
+  --ifm-color-primary-dark: var(--xr-accent-dark);
+  --ifm-color-primary-darker: var(--xr-accent-darker);
+  --ifm-color-primary-darkest: var(--xr-accent-darkest);
+  --ifm-color-primary-light: var(--xr-accent-light);
+  --ifm-color-primary-lighter: var(--xr-accent-lighter);
+  --ifm-color-primary-lightest: var(--xr-accent-lightest);
   --ifm-color-primary-contrast-background: var(--paper-sunken);
   --ifm-color-primary-contrast-foreground: var(--ink);
   --ifm-color-emphasis-0: var(--paper);
@@ -32,7 +36,9 @@ html[data-theme='dark'] {
   --ifm-heading-color: var(--ink);
   --ifm-color-content: var(--ink);
   --ifm-color-content-secondary: var(--ink-muted);
-  --ifm-link-color: var(--link);
+  /* Infima 3.9.2 also drives .table-of-contents__link--active from
+   * --ifm-color-primary, so the TOC follows the accent through that binding. */
+  --ifm-link-color: var(--xr-accent);
   --ifm-link-decoration: underline;
   --ifm-link-hover-color: var(--link);
   --ifm-link-hover-decoration: underline;
@@ -74,7 +80,7 @@ html[data-theme='dark'] {
   --ifm-dropdown-link-color: var(--ink);
   --ifm-dropdown-hover-background-color: var(--paper-sunken);
   --ifm-menu-color: var(--ink-muted);
-  --ifm-menu-color-active: var(--ink);
+  --ifm-menu-color-active: var(--xr-accent);
   --ifm-menu-color-background-active: var(--paper-sunken);
   --ifm-menu-color-background-hover: var(--paper-sunken);
   --ifm-footer-background-color: var(--paper-sunken);
@@ -100,7 +106,7 @@ body {
 }
 
 :focus-visible {
-  outline: var(--stroke-strong) solid var(--focus);
+  outline: var(--stroke-strong) solid var(--xr-accent);
   outline-offset: 2px;
 }
 

@@ -13,6 +13,11 @@ module.exports = {
 
   scripts: [
     {
+      // Anti-FOUC appearance init: must run synchronously in <head>.
+      src: '/appearance-init.js',
+      async: false,
+    },
+    {
       src: 'https://static.cloudflareinsights.com/beacon.min.js',
       defer: true,
       'data-cf-beacon': '{"token": "8659aca76cfa4141bdd852a2f5652c32"}',
@@ -63,6 +68,7 @@ module.exports = {
         theme: {
           customCss: [
             require.resolve('./src/css/xrstyle-tokens.css'),
+            require.resolve('./src/css/xrstyle-appearance.css'),
             require.resolve('./src/css/xrstyle-components.css'),
             require.resolve('./src/css/xrstyle-materials.css'),
             require.resolve('./src/css/custom.css'),
@@ -90,6 +96,10 @@ module.exports = {
         },
         {
           type: 'localeDropdown',
+          position: 'right',
+        },
+        {
+          type: 'custom-xr-appearance',
           position: 'right',
         },
         {

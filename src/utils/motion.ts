@@ -1,0 +1,43 @@
+/**
+ * Page-level animation switch, shared by every UI that reads or writes it.
+ *
+ * Previously this logic lived in src/components/showcase/Showcase.tsx (the "动画 开 / 关"
+ * control in the hero); it moved here so the appearance panel (AppearancePanel) and any
+ * other component can reuse the exact same storage key, data attribute and event.
+ *
+ * Animation is on by default, independent of the OS `prefers-reduced-motion` setting;
+ * the choice is stored in localStorage and broadcast with the `xr-motion` event so every
+ * widget follows it at once. CSS keys off `html[data-motion]`.
+ */
+import { useEffect, useState } from 'react';
+
+export const MOTION_KEY = 'xr-motion';
+
+export function readMotionOff(): boolean {
+  try {
+    return window.localStorage.getItem(MOTION_KEY) === 'off';
+  } catch {
+    return false;
+  }
+}
+
+export function setMotionOff(off: boolean): void {
+  try {
+    window.localStorage.setItem(MOTION_KEY, off ? 'off' : 'on');
+  } catch {
+    /* storage unavailable: the switch still works for this page view */
+  }
+  document.documentElement.dataset.motion = off ? 'off' : 'on';
+  window.dispatchEvent(new CustomEvent('xr-motion', { detail: off }));
+}
+
+export function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const update = (e?: Event) => setReduced(e instanceof CustomEvent ? Boolean(e.detail) : readMotionOff());
+    update();
+    window.addEventListener('xr-motion', update);
+    return () => window.removeEventListener('xr-motion', update);
+  }, []);
+  return reduced;
+}

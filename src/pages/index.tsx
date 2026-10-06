@@ -9,7 +9,8 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { translate } from '@docusaurus/Translate';
 import { Button, Card, Logo, PathLabel, Tag, inlineCode } from '@site/src/components/xr';
-import Showcase, { readMotionOff, setMotionOff, useReducedMotion } from '@site/src/components/showcase/Showcase';
+import Showcase from '@site/src/components/showcase/Showcase';
+import { readMotionOff, setMotionOff, useReducedMotion } from '@site/src/utils/motion';
 import ShowcaseSection, { StaticFigure } from '@site/src/components/showcase/ShowcaseSection';
 import AgentPromptDialog from '@site/src/components/home/AgentPromptDialog';
 import { capabilities, chapters, heroActions, links, recent, routes, scenarios, versionRows, type FigureSpec } from '@site/src/data/home';
@@ -31,7 +32,7 @@ function Figure({ spec }: { spec: FigureSpec }): JSX.Element {
   );
 }
 
-/** Page-wide animation switch; on by default, stored in localStorage (see Showcase.tsx). */
+/** Page-wide animation switch; on by default, stored in localStorage (see src/utils/motion.ts). */
 function MotionSwitch(): JSX.Element {
   const off = useReducedMotion();
   useEffect(() => {

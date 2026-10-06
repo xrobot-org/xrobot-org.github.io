@@ -1537,5 +1537,117 @@
   },
   "home.route.port.more3": {
     "message": "About Performance"
+  },
+  "appearance.panelTitle": {
+    "message": "Appearance settings",
+    "description": "The title (aria-label) of the appearance settings panel"
+  },
+  "appearance.panelToggle": {
+    "message": "Appearance settings",
+    "description": "The aria-label of the appearance settings (palette) navbar button"
+  },
+  "appearance.colorModeToggle": {
+    "message": "Toggle color mode",
+    "description": "The aria-label of the light/dark mode toggle button"
+  },
+  "appearance.scrollProgress.aria": {
+    "message": "Page scroll progress {n}%",
+    "description": "The aria-label of the reading progress circle; {n} is the percentage"
+  },
+  "appearance.fontStyle": {
+    "message": "Font style",
+    "description": "The font style section of the appearance panel"
+  },
+  "appearance.fontDefault": {
+    "message": "Default font",
+    "description": "The default font option"
+  },
+  "appearance.fontWenkai": {
+    "message": "LXGW WenKai",
+    "description": "The LXGW WenKai font option"
+  },
+  "appearance.hue": {
+    "message": "Theme hue",
+    "description": "The theme hue section of the appearance panel"
+  },
+  "appearance.accentMono": {
+    "message": "Ink (mono)",
+    "description": "The mono (ink) accent option"
+  },
+  "appearance.hueReset": {
+    "message": "Reset",
+    "description": "The aria-label of the button that resets the accent back to mono"
+  },
+  "appearance.cardDecor": {
+    "message": "Card decor",
+    "description": "The card decoration section of the appearance panel"
+  },
+  "appearance.cardDecorSharp": {
+    "message": "Sharp edges",
+    "description": "The sharp (square) card decoration option"
+  },
+  "appearance.cardDecorSharpDesc": {
+    "message": "Square cut, no shadow",
+    "description": "The description of the sharp card decoration option"
+  },
+  "appearance.cardDecorSoft": {
+    "message": "Soft rounded",
+    "description": "The soft rounded card decoration option"
+  },
+  "appearance.cardDecorSoftDesc": {
+    "message": "Rounded border, soft shadow",
+    "description": "The description of the soft rounded card decoration option"
+  },
+  "appearance.navbar": {
+    "message": "Navbar",
+    "description": "The navbar section of the appearance panel"
+  },
+  "appearance.navbarAutohide": {
+    "message": "Auto-hide on scroll",
+    "description": "The auto-hide navbar option"
+  },
+  "appearance.navbarAutohideDesc": {
+    "message": "Hides when scrolling down, returns when scrolling up",
+    "description": "The description of the auto-hide navbar option"
+  },
+  "appearance.navbarAlways": {
+    "message": "Always expanded",
+    "description": "The always-expanded navbar option"
+  },
+  "appearance.navbarAlwaysDesc": {
+    "message": "Keeps the full navigation while scrolling",
+    "description": "The description of the always-expanded navbar option"
+  },
+  "appearance.bgMode": {
+    "message": "Background",
+    "description": "The background texture section of the appearance panel"
+  },
+  "appearance.bgPlain": {
+    "message": "Plain",
+    "description": "The plain background option"
+  },
+  "appearance.bgGrid": {
+    "message": "Grid",
+    "description": "The grid background option"
+  },
+  "appearance.bgDots": {
+    "message": "Dots",
+    "description": "The dots background option"
+  },
+  "appearance.preferences": {
+    "message": "Preferences",
+    "description": "The preferences section of the appearance panel"
+  },
+  "appearance.animations": {
+    "message": "Animations",
+    "description": "The animation preference label"
+  },
+  "appearance.animationsOn": {
+    "message": "On",
+    "description": "The animations-on option"
+  },
+  "appearance.animationsOff": {
+    "message": "Off",
+    "description": "The animations-off option"
   }
 }

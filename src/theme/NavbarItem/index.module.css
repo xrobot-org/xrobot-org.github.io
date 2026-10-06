@@ -1,0 +1,24 @@
+/* Appearance (palette) navbar button; matches the custom color mode toggle. */
+
+.wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.toggle {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--ifm-button-border-radius);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.toggle:hover {
+  background: var(--paper-sunken);
+}
