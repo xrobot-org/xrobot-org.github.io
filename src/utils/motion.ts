@@ -34,9 +34,20 @@ export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
     const update = (e?: Event) => setReduced(e instanceof CustomEvent ? Boolean(e.detail) : readMotionOff());
+    // another tab changed the switch: follow it here too
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== MOTION_KEY) return;
+      const off = e.newValue === 'off';
+      document.documentElement.dataset.motion = off ? 'off' : 'on';
+      setReduced(off);
+    };
     update();
     window.addEventListener('xr-motion', update);
-    return () => window.removeEventListener('xr-motion', update);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('xr-motion', update);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
   return reduced;
 }
