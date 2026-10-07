@@ -1,7 +1,7 @@
 ---
 id: code-gen-xrobot-inter
 title: 与XRobot集成
-sidebar_position: 2
+sidebar_position: 5
 ---
 
 # 与XRobot集成

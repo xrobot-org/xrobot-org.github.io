@@ -1,7 +1,7 @@
 ---
 id: code-gen-xrobot-inter
 title: Integrate with XRobot
-sidebar_position: 2
+sidebar_position: 5
 ---
 
 # Integrate with XRobot

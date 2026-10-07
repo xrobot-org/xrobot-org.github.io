@@ -75,9 +75,11 @@ BSP 使用的 xrobot 版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段
 
 ### VS Code 扩展
 
-VS Code 扩展 [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot) 在活动栏中提供 XRobot 和 LibXR 两个视图。打开包含 `Modules/modules.yaml` 的 BSP 时，XRobot 视图显示其中的模块、配置和实例，修改通过 `xrobot` 命令完成；打开根目录有 `.ioc` 文件的 STM32CubeMX 工程时，LibXR 视图显示 `User/libxr_config.yaml` 和内部 Flash 布局，并运行 `libxr` 命令。
+VS Code 扩展 [`XRobot.xrobot`](https://marketplace.visualstudio.com/items?itemName=XRobot.xrobot) 在活动栏中提供 XRobot 和 LibXR 两个视图。打开包含 `Modules/modules.yaml` 的 BSP 时，XRobot 视图显示其中的模块、配置和实例，修改通过 `xrobot` 命令完成。
 
-扩展 2.0.0 要求 VS Code 1.108 及以上版本。XRobot 视图需要 xrobot 1.0.0 和 `git`，LibXR 视图需要 libxr 6.0.0，两者按上一节安装。扩展在 `PATH`、pip 的用户脚本目录和设置项 `xrobot.cli.extraPath` 中查找这些命令；命令装在虚拟环境中时，把虚拟环境中 `bin` 目录（Windows 上为 `Scripts` 目录）的完整路径写入 `xrobot.cli.extraPath`。
+LibXR 视图按工程根目录识别平台：根目录有 `.ioc` 的是 STM32CubeMX 工程，`app.yaml` 加 `boards/*/*.hpmpc` 的是 HPM 工程，SysConfig 的 `.syscfg` 是 MSPM0 工程。视图显示平台和 `User/libxr_config.yaml` 中的各项设置，设置可以直接修改，修改后重新生成代码；"Generate LibXR Code" 运行 `libxr parse` 和 `libxr gen`，还没有 `libxr_config.yaml` 时则是对应平台的 `libxr stm32 setup`、`libxr mspm0 setup` 或 `libxr hpm setup`。MSPM0 工程的 "Open in SysConfig" 用独立版 SysConfig 打开 `.syscfg`，HPM 工程的 "Open in HPM Pinmux Tool" 用 HPMicro 的 HPM Pinmux Tool 扩展打开 `.hpmpc`。两个视图都能打开芯片的封装图（引脚布局，`libxr pins`，需要带有该命令的 libxr）：已选引脚按外设类别着色，MSPM0 的封装取自 SysConfig 工程，面板只读。
+
+扩展 2.0.0 要求 VS Code 1.108 及以上版本。XRobot 视图需要 xrobot 1.0.0 和 `git`，LibXR 视图需要 libxr 6.0.0，两者按上一节安装。扩展在 `PATH`、pip 的用户脚本目录和设置项 `xrobot.cli.extraPath` 中查找这些命令；命令装在虚拟环境中时，把虚拟环境中 `bin` 目录（Windows 上为 `Scripts` 目录）的完整路径写入 `xrobot.cli.extraPath`。MSPM0 的 "Open in SysConfig" 另需设置 `xrobot.libxr.sysconfigTool` 和 `xrobot.libxr.mspm0SdkDir`，留空时使用同名环境变量 `SYSCONFIG_TOOL` 与 `MSPM0_SDK_INSTALL_DIR`。
 
 ## 平台
 
