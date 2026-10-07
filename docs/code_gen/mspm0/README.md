@@ -208,12 +208,14 @@ extern "C" void app_main(void)
 | UART、I2C、SPI | 外设实例名的小写 | `uart0`、`i2c1`、`spi1` |
 | PWM | `pwm_<定时器>_c<通道号>` | `pwm_tima1_c0` |
 
+GPIO 引脚的 `$name` 去掉 `PIN_` 前缀后不是合法标识符时（SysConfig 默认的 `PIN_0` 去掉后是 `0`），对象改用小写的组名加引脚名（如 `gpio_btn_pin_0`），并给出警告提示在 SysConfig 中给引脚命名。
+
 定时器的每个 CCP 通道生成一个 PWM 对象，同一 TIMER 的通道共用一个周期，周期由 SysConfig 配置。`libxr_config.yaml` 给同一定时器的通道设置了不同的频率时，生成器给出警告，以最后一次 `SetConfig` 为准。
 
 各配置的生成要求：
 
 - UART 需要发送 DMA 通道，接收默认按字节中断（`MSPM0_UART_MAIN_INIT`）。UART Extend 实例配置了接收 DMA 时按循环 DMA 接收（`MSPM0_UART_EXTEND_INIT`，接收环的字节数见 `rx_dma_buffer_size`），接收通道须为 FULL-DMA 通道；UART Main 实例的接收 DMA 通道用不上，生成器给出警告。缺少发送 DMA 的 UART 使生成报错。
-- SPI 需要一对 DMA 通道，否则生成报错。
+- SPI 需要一对 DMA 通道，否则生成报错；接收通道须由 RX 触发（SysConfig 的 SPI > DMA Configuration 中，DMA Event 触发选 `DL_SPI_DMA_INTERRUPT_RX`），RX timeout 触发使生成报错。
 - I2C 以轮询工作，缓冲区是 DMA 传输的中转。
 
 ---

@@ -14,6 +14,8 @@ sidebar_position: 3
 
 工程是根目录有 `app.yaml`、`boards/<board>/` 下恰有一个 `.hpmpc` 文件的目录。选中的信号来自 `.hpmpc` 的 `selectPins`，以及 `main.c` 中 `main` 在预处理条件之外调用的 pinmux 函数；`.hpmpc` 中有而 `main` 没有调用的函数不参与。函数里的每个信号按 `hpm_iomux.h` 的宏名对照 SoC 封装的布局核对，封装没有的 pad 或 pad 不能承载的信号给出警告。
 
+gpiom 设置把引脚分给 GPIO0 以外的控制器（`gpioController` 不为 1，未写时是 GPIO0）时，不为它生成对象，每个这样的引脚给出一条警告。
+
 `main` 只在预处理条件里调用的 pinmux 函数同样不读（生成的对象不能依赖编译选项），每个这样的函数给出一条警告；调用全部在预处理条件里时读不到引脚。`main` 一次 pinmux 函数都没有调用时退回读 `init_bsp_pins`，工程没有这个函数时读不到引脚。
 
 ---
@@ -161,7 +163,7 @@ extern "C" void app_main(void)
 }
 ```
 
-引脚和时钟在 `main.c` 调用的 pinmux 函数中配置完毕，构造参数引用 SDK 的宏（`HPM_GPIO0`、`GPIO_DI_GPIOA`、`IRQn_GPIO0_A`、`HPM_I2C3`、`clock_i2c3`）。GPIO 对象带所属端口的 IRQ，端口的中断服务程序由 LibXR 驱动提供，边沿来自 pinmux，回调的登记（`RegisterCallback` 和 `EnableInterrupt`）由使用方完成。I2C 使用 dma_mgr 的后台路径时需要工程启用 `CONFIG_DMA_MGR`。
+引脚和时钟在 `main.c` 调用的 pinmux 函数中配置完毕，构造参数引用 SDK 的宏（`HPM_GPIO0`、`GPIO_DI_GPIOA`、`IRQn_GPIO0_A`、`HPM_I2C3`、`clock_i2c3`）。GPIO 对象带所属端口的 IRQ，端口的中断服务程序由 LibXR 驱动提供，边沿来自 pinmux，回调的登记（`RegisterCallback` 和 `EnableInterrupt`）由使用方完成。LibXR 的 HPM 驱动依赖 SDK 的 `dma_mgr` 组件，工程需要启用 `CONFIG_DMA_MGR`（BSP 已启用）。
 
 ---
 
@@ -187,7 +189,7 @@ GPTMR 的每个比较器（COMP_n）生成一个 PWM 对象，走 `HPMPWM` 的 G
 
 | 段 | 键与默认值 | 说明 |
 | --- | --- | --- |
-| `I2C` | `speed: 100000` | 总线速率，单位 Hz，段中每个实例一项，键为小写的实例名 |
+| `I2C` | `speed: 100000` | 总线速率，单位 Hz，段中每个实例一项，键为小写的实例名；取值须为 100000、400000 或 1000000（HPM 的 I2C 驱动支持的档位），其他值使生成报错 |
 | `PWM` | `frequency`（默认 null） | 每个对象一项；null 时不调用 `SetConfig`，设置了必须是正整数（Hz） |
 | `GPIO` | 键为引脚名，值为新名字 | 引脚改名；值为 null 时保留默认名。段中列出工程读到的每个引脚 |
 

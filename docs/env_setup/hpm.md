@@ -40,7 +40,7 @@ HPM SDK 从环境变量 `GNURISCV_TOOLCHAIN_PATH` 读取工具链的安装目录
 `-- libxr/
 ```
 
-* `CMakeLists.txt` 用 `find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})` 引入 HPM SDK，`BOARD_SEARCH_PATH` 指向 `boards/`，并设置 `CONFIG_DMA_MGR 1`（I2C 驱动的 DMA 后台路径使用它）
+* `CMakeLists.txt` 用 `find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})` 引入 HPM SDK，`BOARD_SEARCH_PATH` 指向 `boards/`，并设置 `CONFIG_DMA_MGR 1`（LibXR 的 HPM 驱动依赖 SDK 的 dma_mgr 组件）
 * `app.yaml` 声明对 `board_gpt_pin` 的依赖；`boards/<board>/` 下有唯一的 `.hpmpc` 文件（BSP 命名为 `tool_config.hpmpc`）——两者共同构成 HPM 工程的特征，`libxr hpm setup` 和 VS Code 扩展据此识别工程
 * `boards/<board>/pinmux.c` 由 HPM Pinmux Tool 从 `tool_config.hpmpc` 生成，提供 `init_bsp_pins()`
 * `main.c` 在工程根目录：先 `init_bsp_pins()`，再 SDK 板级的 `board_init()`，然后调用各外设的时钟函数（`init_uart3_clock()` 一类），最后进入 `app_main()`
@@ -79,9 +79,9 @@ set(LIBXR_NO_EIGEN True)
 - `hpm_pwm.*`：PWM
 - `hpm_timebase.*`：基于 MCHTMR 的时间基准
 
-驱动只调用 SDK 的驱动函数；外设的引脚复用、时钟和初始化顺序由工程负责（`init_bsp_pins()`、`board_init()` 和 `init_*_clock()`），LibXR 对象在 `app_main()` 中创建。I2C 的 DMA 后台路径依赖 dma_mgr，BSP 用 `CONFIG_DMA_MGR 1` 启用它。
+驱动只调用 SDK 的驱动函数；外设的引脚复用、时钟和初始化顺序由工程负责（`init_bsp_pins()`、`board_init()` 和 `init_*_clock()`），LibXR 对象在 `app_main()` 中创建。驱动依赖 SDK 的 `dma_mgr` 组件，BSP 用 `CONFIG_DMA_MGR 1` 启用它。
 
-`HPMI2C` 在 SDK 的 `hpm_i2c_drv` 之上实现 LibXR 的 I2C 主机抽象：阻塞式字节流传输和寄存器/存储器地址式传输；默认 7 位主机寻址，`SetAddressMode()` 可切换到 SDK 支持的 10 位主机寻址；提供 dma_mgr 时，POLLING、CALLBACK 等等待策略可以走 DMA 后台路径；超时、总线忙、无响应等典型主机故障出现时，驱动按最近一次成功配置重建控制器。
+`HPMI2C` 在 SDK 的 `hpm_i2c_drv` 之上实现 LibXR 的 I2C 主机抽象：阻塞式字节流传输和寄存器/存储器地址式传输；默认 7 位主机寻址，`SetAddressMode()` 可切换到 SDK 支持的 10 位主机寻址；POLLING、CALLBACK 等等待策略可以走 dma_mgr 的 DMA 后台路径；超时、总线忙、无响应等典型主机故障出现时，驱动按最近一次成功配置重建控制器。
 
 `HPMPWM` 的构造参数在两条代码路径下相同（外设地址、时钟、输出通道索引、比较器索引、极性）：SoC 提供标准 PWM 外设时走 SDK 的 `hpm_pwm_drv`，其余 SoC 走 GPTMR 路径。`SetDutyCycle()` 接受 0.0 到 1.0 的占空比，`SetConfig()` 配置频率。
 

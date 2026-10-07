@@ -14,6 +14,8 @@ The CodeGenerator's `libxr hpm setup` command brings an HPM Pinmux Tool project 
 
 The project is a directory with an `app.yaml` at its root and exactly one `.hpmpc` file under `boards/<board>/`. The selected signals come from the `selectPins` of the `.hpmpc` and the pinmux functions that `main` in the root `main.c` calls outside preprocessor conditions; functions present in the `.hpmpc` but never called by `main` do not take part. Every signal is checked, as the macro name of `hpm_iomux.h`, against the layout of the SoC package, and a pad the package does not have, or a signal its pad cannot carry, is warned about.
 
+When the gpiom settings assign a pin to a controller other than GPIO0 (`gpioController` other than 1; unset means GPIO0), no object is generated for it, one warning per pin.
+
 Pinmux functions that `main` calls only inside preprocessor conditions are not read either (the generated objects must not depend on build options), one warning per function; when every call sits inside a condition, no pin is read. When `main` calls no pinmux function at all, the parser falls back to `init_bsp_pins`, and when the project has no such function, no pin is read.
 
 ---
@@ -161,7 +163,7 @@ extern "C" void app_main(void)
 }
 ```
 
-The pins and clocks are configured by the pinmux functions `main.c` calls, and the construction arguments reference SDK macros (`HPM_GPIO0`, `GPIO_DI_GPIOA`, `IRQn_GPIO0_A`, `HPM_I2C3`, `clock_i2c3`). A GPIO object carries the IRQ of its port, the port's interrupt service routine comes from the LibXR driver, the edge comes from the pinmux, and registering the callback (`RegisterCallback` and `EnableInterrupt`) belongs to the consumer. The DMA-backed background path of an I2C needs `CONFIG_DMA_MGR` enabled in the project.
+The pins and clocks are configured by the pinmux functions `main.c` calls, and the construction arguments reference SDK macros (`HPM_GPIO0`, `GPIO_DI_GPIOA`, `IRQn_GPIO0_A`, `HPM_I2C3`, `clock_i2c3`). A GPIO object carries the IRQ of its port, the port's interrupt service routine comes from the LibXR driver, the edge comes from the pinmux, and registering the callback (`RegisterCallback` and `EnableInterrupt`) belongs to the consumer. The HPM drivers of LibXR depend on the `dma_mgr` component of the SDK, and the project needs `CONFIG_DMA_MGR` enabled (the BSPs enable it).
 
 ---
 
@@ -187,7 +189,7 @@ Every comparator (COMP_n) of a GPTMR gets a PWM object through the GPTMR path of
 
 | Section | Keys and defaults | Notes |
 | --- | --- | --- |
-| `I2C` | `speed: 100000` | the bus speed in Hz, one entry per instance keyed by the lower-case instance name |
+| `I2C` | `speed: 100000` | the bus speed in Hz, one entry per instance keyed by the lower-case instance name; the value must be 100000, 400000 or 1000000 (the steps the HPM I2C driver supports), anything else stops generation with an error |
 | `PWM` | `frequency` (default null) | one entry per object; null calls no `SetConfig`, a given value must be a positive integer (Hz) |
 | `GPIO` | the key is a pin name, the value is the new name | renames a pin; a null value keeps the default name. The section lists every pin the project read |
 

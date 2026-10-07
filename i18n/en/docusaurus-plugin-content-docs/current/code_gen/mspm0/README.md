@@ -208,12 +208,14 @@ The objects are named:
 | UART, I2C, SPI | the lower-case peripheral instance name | `uart0`, `i2c1`, `spi1` |
 | PWM | `pwm_<timer>_c<channel>` | `pwm_tima1_c0` |
 
+When the `$name` of a GPIO pin without its `PIN_` prefix is not a valid identifier (the SysConfig default `PIN_0` leaves `0`), the object takes the lower-case group plus pin name instead (such as `gpio_btn_pin_0`), and a warning asks for naming the pin in SysConfig.
+
 Every CCP channel of a timer gets a PWM object; the channels of one timer share one period, which SysConfig configures. When `libxr_config.yaml` sets different frequencies for the channels of one timer, the generator prints a warning and the last `SetConfig` wins.
 
 The generation requirements of each configuration:
 
 - A UART needs a transmit DMA channel; the receive side runs on byte interrupts by default (`MSPM0_UART_MAIN_INIT`). A UART Extend instance with a receive DMA receives through a circular DMA (`MSPM0_UART_EXTEND_INIT`, the bytes of the receive ring in `rx_dma_buffer_size`), and its receive channel must be a FULL-DMA channel; the receive DMA channel of a UART Main instance is unused and warned about. A UART without transmit DMA makes generation fail.
-- An SPI needs a pair of DMA channels, otherwise generation fails.
+- An SPI needs a pair of DMA channels, otherwise generation fails; the receive channel must be triggered by RX (in SysConfig's SPI > DMA Configuration, pick `DL_SPI_DMA_INTERRUPT_RX` as the DMA Event trigger), an RX timeout trigger makes generation fail.
 - An I2C works by polling; its buffer stages DMA transfers.
 
 ---
