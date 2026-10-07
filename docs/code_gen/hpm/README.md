@@ -214,7 +214,7 @@ GPIO:
 
 ## 支持的 SoC 与封装
 
-当前数据覆盖 HPM5301（QFN48）和 HPM5361（LQFP100、LQFP64、QFN48）；HPM53M1 暂不支持。引脚数据来自 HPM SDK 的 `hpm_iomux.h` 和 HPM5300 数据手册的引脚表。
+当前数据覆盖 HPM5301（QFN48）和 HPM5361（LQFP100、LQFP64、QFN48）；HPM53M1 暂不支持。引脚数据来自 HPM SDK 的 `hpm_iomux.h`、`hpm_soc_ip.h` 和 HPM5300 数据手册的引脚表。
 
 ---
 

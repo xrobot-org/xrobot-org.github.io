@@ -40,7 +40,7 @@ HPM SDK 从环境变量 `GNURISCV_TOOLCHAIN_PATH` 读取工具链的安装目录
 `-- libxr/
 ```
 
-* `CMakeLists.txt` 用 `find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})` 引入 HPM SDK，`BOARD_SEARCH_PATH` 指向 `boards/`，并设置 `CONFIG_DMA_MGR 1`（LibXR 的 HPM 驱动依赖 SDK 的 dma_mgr 组件）
+* `CMakeLists.txt` 用 `find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})` 引入 HPM SDK，`BOARD_SEARCH_PATH` 指向 `boards/`，并设置 `CONFIG_DMA_MGR 1`（I2C 驱动的 DMA 后台路径使用它）
 * `app.yaml` 声明对 `board_gpt_pin` 的依赖；`boards/<board>/` 下有唯一的 `.hpmpc` 文件（BSP 命名为 `tool_config.hpmpc`）——两者共同构成 HPM 工程的特征，`libxr hpm setup` 和 VS Code 扩展据此识别工程
 * `boards/<board>/pinmux.c` 由 HPM Pinmux Tool 从 `tool_config.hpmpc` 生成，提供 `init_bsp_pins()`
 * `main.c` 在工程根目录：先 `init_bsp_pins()`，再 SDK 板级的 `board_init()`，然后调用各外设的时钟函数（`init_uart3_clock()` 一类），最后进入 `app_main()`

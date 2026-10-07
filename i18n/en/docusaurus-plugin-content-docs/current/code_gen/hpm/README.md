@@ -214,7 +214,7 @@ After changing the value of `pa10` in the `GPIO` section to `LED` and regenerati
 
 ## Supported SoCs and Packages
 
-The data currently covers HPM5301 (QFN48) and HPM5361 (LQFP100, LQFP64, QFN48); HPM53M1 is not supported yet. The pin data comes from the `hpm_iomux.h` of the HPM SDK and the pin tables of the HPM5300 datasheet.
+The data currently covers HPM5301 (QFN48) and HPM5361 (LQFP100, LQFP64, QFN48); HPM53M1 is not supported yet. The pin data comes from the `hpm_iomux.h` and `hpm_soc_ip.h` of the HPM SDK and the pin tables of the HPM5300 datasheet.
 
 ---
 

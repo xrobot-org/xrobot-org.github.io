@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # MSPM0 代码生成
 
-代码生成器的 `libxr mspm0 setup` 命令把 TI SysConfig 工程接入 LibXR：解析工程根目录的 `.syscfg` 文件，生成 C++ 初始化代码。SysConfig 负责时钟、引脚、DMA 通道和外设的配置（`main.c` 中的 `SYSCFG_DL_init()`），生成的代码声明 LibXR 对象并把对象注册到 XRobot，构造参数全部使用 SysConfig 生成的宏。
+代码生成器的 `libxr mspm0 setup` 命令把 TI SysConfig 工程接入 LibXR：解析工程根目录的 `.syscfg` 文件，生成 C++ 初始化代码。SysConfig 负责时钟、引脚、DMA 通道和外设的配置（`main.c` 中的 `SYSCFG_DL_init()`），生成的代码声明 LibXR 对象，XRobot 工程在生成时用 `XR_REGISTER` 把对象注册进去，构造参数全部使用 SysConfig 生成的宏。
 
 ---
 
@@ -18,7 +18,7 @@ sidebar_position: 2
 libxr mspm0 setup -d .
 ```
 
-工程根目录放置一个 `.syscfg` 文件。该命令依次完成以下步骤：
+工程根目录有一份 `.syscfg` 文件。该命令依次完成以下步骤：
 
 1. 工程目录还没有 `.gitignore` 时创建一个，忽略 `build`、`.history`、`.cache`、`CMakeFiles` 和 `.config.yaml`；已有的 `.gitignore` 保持不变；
 2. 解析 `.syscfg`，写出 `.config.yaml`；
