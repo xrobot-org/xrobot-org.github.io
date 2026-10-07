@@ -53,7 +53,7 @@ BSP 的目录结构如下：
 ```
 
 * `main.c` 在工程根目录，先调用 SysConfig 生成的 `SYSCFG_DL_init()` 完成时钟、引脚和外设的初始化，然后进入 `app_main()`
-* `.syscfg` 是 SysConfig 工程，在工程根目录；芯片、时钟、引脚和外设都由它描述，更换芯片只更换这份文件
+* `.syscfg` 是 SysConfig 工程，在工程根目录；芯片、时钟、引脚和外设都由它描述
 * `cmake/MSPM0SysConfig.cmake` 在 CMake 配置阶段调用 SysConfig 命令行，把 `ti_msp_dl_config.c/.h`、`device.opt`、链接脚本等输出生成到构建目录；CMake 跟踪 `.syscfg` 的修改，下一次构建自动重新生成
 * `User/` 存放代码生成的 `app_main.cpp` 和 `libxr_config.yaml`
 * `libxr/` 是 LibXR 子模块
@@ -68,13 +68,14 @@ set(LIBXR_DRIVER mspm0)
 set(LIBXR_NO_EIGEN True)
 ```
 
-`LIBXR_SYSTEM None` 表示裸机系统，`LIBXR_DRIVER mspm0` 启用 LibXR 的 `driver/mspm0` 驱动目录。newlib 的系统调用由 `libxr/driver/mspm0/mspm0_syscalls.c` 提供，工程里另写 `_write`、`_read` 一类的桩函数会与它重复。
+`LIBXR_SYSTEM None` 表示裸机系统，`LIBXR_DRIVER mspm0` 启用 LibXR 的 `driver/mspm0` 驱动目录。链接选项与 SDK 例程的 gcc makefile 相同（`-nostartfiles`、`--specs=nano.specs`、`--specs=nosys.specs`），C++ 运行时因此缺少的 `__dso_handle`、`_getpid` 和 `_kill` 由 LibXR 的 `driver/mspm0/mspm0_syscalls.c` 以弱定义提供，工程需要时可以自行定义。
 
 ## 构建
 
-`CMakePresets.json` 提供 `debug` 和 `release` 两个 preset（Ninja 生成器，工具链文件 `cmake/arm-none-eabi-gcc.cmake`）：
+`CMakePresets.json` 提供 `debug` 和 `release` 两个 preset（Ninja 生成器，工具链文件 `cmake/arm-none-eabi-gcc.cmake`）。BSP 使用 XRobot 模块，配置前先运行一次 `xrobot setup`，它按 `xrobot.lock` 拉取模块并生成 `Modules/CMakeLists.txt`（xrobot 的安装见[环境配置](./README.md)）：
 
 ```bash
+xrobot setup
 cmake --preset debug
 cmake --build --preset debug
 ```
@@ -87,7 +88,7 @@ cmake --build --preset debug
 
 ```bash
 docker run --rm -v "$PWD:/work" -w /work ghcr.io/xrobot-org/docker-image-mspm0:main \
-  bash -c 'cmake --preset release && cmake --build --preset release'
+  bash -c 'pip install xrobot==1.0.0 && xrobot setup && cmake --preset release && cmake --build --preset release'
 ```
 
 ## 常见问题

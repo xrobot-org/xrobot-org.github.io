@@ -41,7 +41,7 @@ HPM SDK 从环境变量 `GNURISCV_TOOLCHAIN_PATH` 读取工具链的安装目录
 ```
 
 * `CMakeLists.txt` 用 `find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})` 引入 HPM SDK，`BOARD_SEARCH_PATH` 指向 `boards/`，并设置 `CONFIG_DMA_MGR 1`（LibXR 的 HPM 驱动依赖 SDK 的 dma_mgr 组件）
-* `app.yaml` 声明对 `board_gpt_pin` 的依赖；`boards/<board>/` 下有唯一的 `.hpmpc` 文件（BSP 命名为 `tool_config.hpmpc`）——两者共同构成 HPM 工程的特征，`libxr hpm setup` 和 VS Code 扩展据此识别工程
+* `app.yaml` 声明对 `board_gpt_pin` 的依赖；`boards/<board>/` 下有唯一的 `.hpmpc` 文件（BSP 命名为 `tool_config.hpmpc`）；`libxr hpm setup` 和 VS Code 扩展按这两项识别 HPM 工程
 * `boards/<board>/pinmux.c` 由 HPM Pinmux Tool 从 `tool_config.hpmpc` 生成，提供 `init_bsp_pins()`
 * `main.c` 在工程根目录：先 `init_bsp_pins()`，再 SDK 板级的 `board_init()`，然后调用各外设的时钟函数（`init_uart3_clock()` 一类），最后进入 `app_main()`
 * `User/` 存放代码生成的 `app_main.cpp`；`libxr hpm setup` 会在其中生成 `libxr_config.yaml`
@@ -49,9 +49,10 @@ HPM SDK 从环境变量 `GNURISCV_TOOLCHAIN_PATH` 读取工具链的安装目录
 
 ## 构建
 
-`CMakePresets.json` 提供 `debug-flash-xip`、`debug-ram` 和 `release-flash-xip` 三个 preset（Ninja 生成器，`HPM_BUILD_TYPE` 对应 `flash_xip` 或 `ram`）：
+`CMakePresets.json` 提供 `debug-flash-xip`、`debug-ram` 和 `release-flash-xip` 三个 preset（Ninja 生成器，`HPM_BUILD_TYPE` 对应 `flash_xip` 或 `ram`）。BSP 使用 XRobot 模块，配置前先运行一次 `xrobot setup`，它按 `xrobot.lock` 拉取模块并生成 `Modules/CMakeLists.txt`：
 
 ```bash
+xrobot setup
 cmake --preset release-flash-xip
 cmake --build --preset release-flash-xip
 ```
@@ -72,12 +73,13 @@ set(LIBXR_NO_EIGEN True)
 
 ## LibXR 的 HPM 驱动
 
-`driver/hpm` 提供四个驱动，由该目录的 `CMakeLists.txt` 统一加入构建：
+`driver/hpm` 中的驱动由该目录的 `CMakeLists.txt` 统一加入构建：
 
 - `hpm_gpio.*`：GPIO
 - `hpm_i2c.*`：I2C 主机
 - `hpm_pwm.*`：PWM
 - `hpm_timebase.*`：基于 MCHTMR 的时间基准
+- `hpm_dma.*`：初始化 SDK 的 dma_mgr（只做一次），供 I2C 的 DMA 后台路径使用
 
 驱动只调用 SDK 的驱动函数；外设的引脚复用、时钟和初始化顺序由工程负责（`init_bsp_pins()`、`board_init()` 和 `init_*_clock()`），LibXR 对象在 `app_main()` 中创建。驱动依赖 SDK 的 `dma_mgr` 组件，BSP 用 `CONFIG_DMA_MGR 1` 启用它。
 
@@ -91,5 +93,5 @@ set(LIBXR_NO_EIGEN True)
 
 ```bash
 docker run --rm -v "$PWD:/work" -w /work ghcr.io/xrobot-org/docker-image-hpm:main \
-  bash -c 'cmake --preset release-flash-xip && cmake --build --preset release-flash-xip'
+  bash -c 'pip install xrobot==1.0.0 && xrobot setup && cmake --preset release-flash-xip && cmake --build --preset release-flash-xip'
 ```

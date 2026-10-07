@@ -22,17 +22,14 @@ libxr pins -d path/to/project
 
 The model is a positional argument. The package of an MSPM0 comes from the package code in the model suffix first (`PM` of `MSPM0G3507SPMR`); when it cannot be told, give it with `--package` (`LQFP-64`, `PM` and the like all work). The model of an HPM is the SoC name; when the SoC has several packages, give it with `--package`.
 
-With `-d` naming a project directory, the printed layout overlays the signals the project has selected and their `libxr_config.yaml` settings. An STM32 project reads the `.ioc` file, an MSPM0 project reads the `.syscfg` at the root (the package comes from the SysConfig project), and an HPM project reads the `.hpmpc` under `boards/` and the pinmux functions `main.c` calls (the package comes with the parse result). The settings are read from the file `--libxr-config` names, by default `User/libxr_config.yaml` in the project.
+With `-d` naming a project directory, the printed layout overlays the signals the project has selected and their `libxr_config.yaml` settings. An STM32 project reads the `.ioc` file, an MSPM0 project reads the `.syscfg` at the root (the package comes from the SysConfig project), and an HPM project reads the `.hpmpc` under `boards/` and the pinmux functions `main.c` calls outside preprocessor conditions (the package comes from the `.hpmpc`). The settings are read from the file `--libxr-config` names, by default `User/libxr_config.yaml` in the project.
 
 ---
 
 ## Output
 
-```bash
-$ libxr pins MSPM0G3507 --package LQFP-64
-```
-
 ```yaml
+$ libxr pins MSPM0G3507 --package LQFP-64
 model: MSPM0G3507
 platform: mspm0
 part: MSPM0G3507
@@ -60,14 +57,18 @@ peripherals:
 
 ## Project Overlay
 
-```bash
-$ libxr pins -d .
-```
-
-With the project overlaid, the output gains two parts. The `pins` section lists the selected signals pin by pin, and a GPIO pin carries its label from the vendor project:
+With `-d` the output gains a `project` section: `directory` and `source` record the project directory and the project file read, `libxr_config` and `sysconfig_file` the settings file and the SysConfig project read (the `sysconfig_file` of an HPM project is its `.hpmpc`); `assignments` lists the selected signals pin by pin, with the object name of a GPIO pin in the generated code as `label`; and `peripherals` lists per peripheral the pins it occupies, for an MSPM0 project its parameters in SysConfig (`sysconfig`), and its settings entries in `libxr_config.yaml` (`config`). The following is taken from bsp-mspm0g3507-mini:
 
 ```yaml
-  pins:
+$ libxr pins -d .
+# ...
+project:
+  directory: .
+  source: mspm0g3507_minidb48.syscfg
+  libxr_config: User\libxr_config.yaml
+  sysconfig_file: mspm0g3507_minidb48.syscfg
+  assignments:
+    # ...
     PB8:
       signal: PB8
       peripheral: GPIOB
@@ -75,12 +76,9 @@ With the project overlaid, the output gains two parts. The `pins` section lists 
       function: P8
       matched: true
       label: LED1
-# ...
-```
-
-The `peripherals` section lists, per instance, the pins it occupies, its parameters in the vendor project, and the matching settings in `libxr_config.yaml`:
-
-```yaml
+    # ...
+  peripherals:
+    # ...
     TIMA1:
       kind: TIMA
       pins:
@@ -101,10 +99,10 @@ The `peripherals` section lists, per instance, the pins it occupies, its paramet
         present: true
         params:
           frequency: null
-# ...
+    # ...
 ```
 
-A `matched` of `false` means the signal does not agree with what the pin can multiplex; it is given as it is. `config` is the list of the instance's settings entries in `libxr_config.yaml`: `present` tells whether the entry is already in the file, and `params` are the settings written; one PWM instance has one entry per channel. The GPIO renames of an HPM project are a whole section mapping: the `section: GPIO` entry has no `key`, and its `params` map pin names to new names.
+A `matched` of `false` means the signal does not agree with what the pin can multiplex; it is given as it is. `config` is the list of the instance's settings entries in `libxr_config.yaml`: `present` tells whether the entry is already in the file, and `params` are the settings written; one PWM instance has one entry per channel. The GPIO renames of an HPM project are a whole section mapping: the `section: GPIO` entry has the `key` `null`, and its `params` map pin names to new names, a `null` value keeping the default name.
 
 ---
 
@@ -115,7 +113,7 @@ A `matched` of `false` means the signal does not agree with what the pin can mul
 | `model` | the model (default: the one of the project given with `-d`) |
 | `-d`, `--directory` | the project directory: overlay the signals it has selected and their settings |
 | `-c`, `--libxr-config` | the libxr_config.yaml to read the settings from (default: `User/libxr_config.yaml` in the project) |
-| `-p`, `--package` | the package, for a model that does not name it (MSPM0: `LQFP-64`, `PM`, ...); with `-d` an MSPM0 takes it from the SysConfig project |
+| `-p`, `--package` | the package, for a model that does not name it (MSPM0: `LQFP-64`, `PM`, ...; HPM: `QFN48`, ...); with `-d` it comes from the SysConfig or Pinmux Tool project |
 | `-f`, `--format` | the output format: `yaml` (default) or `json` |
 | `--verbose` | enable debug logging |
 

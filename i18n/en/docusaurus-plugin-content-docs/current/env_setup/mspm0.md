@@ -53,7 +53,7 @@ The BSP directory structure:
 ```
 
 * `main.c` sits in the project root, calls the SysConfig-generated `SYSCFG_DL_init()` for the clocks, pins and peripherals, and then enters `app_main()`
-* The `.syscfg` file is the SysConfig project, in the project root; it describes the device, clocks, pins and peripherals, and changing the device means changing this one file
+* The `.syscfg` file is the SysConfig project, in the project root; it describes the device, clocks, pins and peripherals
 * `cmake/MSPM0SysConfig.cmake` runs the SysConfig command line at the CMake configure step and generates `ti_msp_dl_config.c/.h`, `device.opt`, the linker script and the rest into the build directory; CMake tracks changes to the `.syscfg` and regenerates on the next build
 * `User/` holds the generated `app_main.cpp` and `libxr_config.yaml`
 * `libxr/` is the LibXR submodule
@@ -68,13 +68,14 @@ set(LIBXR_DRIVER mspm0)
 set(LIBXR_NO_EIGEN True)
 ```
 
-`LIBXR_SYSTEM None` is the bare-metal system and `LIBXR_DRIVER mspm0` enables the LibXR `driver/mspm0` driver directory. The newlib system calls come from `libxr/driver/mspm0/mspm0_syscalls.c`; stub functions such as `_write` or `_read` written elsewhere in the project would duplicate it.
+`LIBXR_SYSTEM None` is the bare-metal system and `LIBXR_DRIVER mspm0` enables the LibXR `driver/mspm0` driver directory. The link options are those of the SDK example gcc makefiles (`-nostartfiles`, `--specs=nano.specs`, `--specs=nosys.specs`), and `__dso_handle`, `_getpid` and `_kill`, which the C++ runtime then lacks, are provided as weak definitions by the LibXR `driver/mspm0/mspm0_syscalls.c`; a project can define its own.
 
 ## Build
 
-`CMakePresets.json` provides the `debug` and `release` presets (Ninja generator, toolchain file `cmake/arm-none-eabi-gcc.cmake`):
+`CMakePresets.json` provides the `debug` and `release` presets (Ninja generator, toolchain file `cmake/arm-none-eabi-gcc.cmake`). The BSP uses XRobot Modules, so `xrobot setup` runs once before configuring; it fetches the Modules from `xrobot.lock` and generates `Modules/CMakeLists.txt` (installing xrobot is described in [Environment Setup](./README.md)):
 
 ```bash
+xrobot setup
 cmake --preset debug
 cmake --build --preset debug
 ```
@@ -87,7 +88,7 @@ The image `ghcr.io/xrobot-org/docker-image-mspm0:main` ships `arm-none-eabi-gcc`
 
 ```bash
 docker run --rm -v "$PWD:/work" -w /work ghcr.io/xrobot-org/docker-image-mspm0:main \
-  bash -c 'cmake --preset release && cmake --build --preset release'
+  bash -c 'pip install xrobot==1.0.0 && xrobot setup && cmake --preset release && cmake --build --preset release'
 ```
 
 ## FAQ
