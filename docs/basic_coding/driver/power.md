@@ -47,7 +47,7 @@ public:
 
 MSPM0 的 `MSPM0PowerManager` 中，`Reset()` 触发 boot 配置流程，复位绝大部分核内逻辑并给 SRAM 重新上电，效果等同整机重新从 Flash 启动；`Shutdown()` 进入 SHUTDOWN 模式，由 NRST、SWD 活动或配置了唤醒功能的 IO 唤醒，退出 SHUTDOWN 触发 BOR，唤醒后等同一次复位重启；`JumpToBootloader()` 复位进入 ROM BSL，复位前按 SDK 示例清零 SRAM 的数据与 ECC 码，规避 `BSL_ERR_01`。MSPM0 的 ROM BSL 走串口，因此 `power bootloader` 之后可以用串口烧录固件。
 
-HPM 的 `HPMPowerManager` 中，`Reset()` 使能 PPOR 软件复位源后触发复位；`Shutdown()` 在带 PDGO 的 SoC 上设置关断计数后等待断电，由 RESETN 或 WAKEUP 引脚唤醒，没有 PDGO 的 SoC 退化为关中断后执行 WFI；`JumpToBootloader()` 关中断后调用 ROM API 进入 ROM ISP，外设由 ROM 自动探测，调用正常不返回，返回时复位整机。经 USB 的 ROM ISP 在 HPM5301 和 HPM5361 上未能枚举。
+HPM 的 `HPMPowerManager` 中，`Reset()` 使能 PPOR 软件复位源后触发复位；`Shutdown()` 在带 PDGO 的 SoC 上设置关断计数后等待断电，由 RESETN 引脚唤醒，没有 PDGO 的 SoC 退化为关中断后执行 WFI；`JumpToBootloader()` 关中断后调用 ROM API 进入 ROM ISP，外设由 ROM 自动探测，调用正常不返回，返回时复位整机。经 USB 的 ROM ISP 在 HPM5301 和 HPM5361 上未能枚举。
 
 ## 说明
 
