@@ -13,7 +13,7 @@ Take a CAN TX queue as an example: tasks and interrupt callbacks call `AddMessag
 ## Core features
 
 - Each slot carries one atomic state: free, writing, ready, or reading. Every transition is a CAS, so at any moment a slot belongs to exactly one execution context;
-- `Publish()` takes a globally increasing publish sequence, and `Take()` picks the ready slot with the smallest sequence: the dequeue order is publish-completion order, and the order inside one publisher is preserved;
+- `Publish()` takes a globally increasing publish sequence when it begins, and `Take()` picks the ready slot with the smallest sequence: the order inside one publisher is preserved;
 - `Acquire()`/`Take()` scan the whole slot array and skip slots owned by other contexts, so a slot that has not been written yet never blocks the others;
 - the release counter and the publish counter drive a bounded rescan of at most one extra pass; sequence numbers are compared with signed deltas, so wraparound is allowed;
 - the slots are allocated at construction and never at run time; the object is neither copyable nor movable;
@@ -49,7 +49,7 @@ class SlotPool
 
 - any number of producers and consumers may run concurrently; calls are allowed from tasks and normal interrupts, but not from NMI;
 - on a single core, low-priority contexts cannot change the slots while an interrupt is scanning, so the FULL/EMPTY an interrupt observes reflects the true state at that moment; a slot held by an interrupted operation counts as occupied;
-- the dequeue order is publish-completion order: the order inside one publisher is preserved, and no global cross-publisher FIFO is guaranteed;
+- the dequeue order follows the publish sequence: the order inside one publisher is preserved; a slot that is not published yet never hides other ready slots, so no global cross-publisher FIFO is guaranteed;
 - the callers of `Publish()` and `Release()` must own the slot; double publishing or releasing a slot owned by another context is a caller error.
 
 ## Example
