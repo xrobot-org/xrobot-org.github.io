@@ -8,7 +8,7 @@ sidebar_position: 11
 
 `LibXR::SlotPool<T>` 是面向任务与中断的小容量消息槽池：每个槽一个原子状态，写完的槽按发布顺序出队。
 
-以 CAN 发送队列为例：任务和发送完成中断都会调用 `AddMessage()` 入队，发送服务出队。任务在入队或出队做到一半时被中断打断，是无锁队列里最常见的场景；`MPMCQueue` 在这个场景下会返回瞬时的 FULL/EMPTY（假的满/空），`SlotPool` 保证一个被打断的操作只占住它自己的槽，中断拿到的 FULL/EMPTY 反映那一刻的真实状态。
+以 CAN 发送队列为例：任务和中断回调都会调用 `AddMessage()` 入队，发送服务在任务或发送完成中断里出队。任务在入队或出队做到一半时可能被中断打断；`MPMCQueue` 在这种情况下会返回瞬时的 FULL/EMPTY（假的满/空），`SlotPool` 保证一个被打断的操作只占住它自己的槽，中断拿到的 FULL/EMPTY 反映那一刻的真实状态。
 
 ## 核心特性
 
@@ -62,7 +62,7 @@ void AddMessage(const LibXR::CAN::ClassicPack& pack)
 {
   if (tx_pool.Put(pack) != LibXR::ErrorCode::OK)
   {
-    // 池满：稍后重试
+    // 池满：这一帧没有入队
   }
 }
 

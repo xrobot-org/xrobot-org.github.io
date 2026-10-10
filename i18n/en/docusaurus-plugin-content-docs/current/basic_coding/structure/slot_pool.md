@@ -8,7 +8,7 @@ sidebar_position: 11
 
 `LibXR::SlotPool<T>` is a small message slot pool shared between tasks and interrupts: each slot carries one atomic state, and fully written slots dequeue in publication order.
 
-Take a CAN TX queue as an example: both the task and the TX-complete interrupt call `AddMessage()` to enqueue, and the TX service dequeues. A task interrupted halfway through an enqueue or a dequeue is the most common scenario for lock-free queues; `MPMCQueue` returns a transient FULL/EMPTY (spurious full/empty) in this scenario, while `SlotPool` guarantees that an interrupted operation only occupies its own slot, so the FULL/EMPTY observed from an interrupt reflects the true state at that moment.
+Take a CAN TX queue as an example: tasks and interrupt callbacks call `AddMessage()` to enqueue, and the TX service dequeues in a task or in the TX-complete interrupt. A task may be interrupted halfway through an enqueue or a dequeue; `MPMCQueue` then returns a transient FULL/EMPTY (spurious full/empty), while `SlotPool` guarantees that an interrupted operation only occupies its own slot, so the FULL/EMPTY observed from an interrupt reflects the true state at that moment.
 
 ## Core features
 
@@ -62,7 +62,7 @@ void AddMessage(const LibXR::CAN::ClassicPack& pack)
 {
   if (tx_pool.Put(pack) != LibXR::ErrorCode::OK)
   {
-    // Pool full: retry later
+    // Pool full: this frame was not enqueued
   }
 }
 
