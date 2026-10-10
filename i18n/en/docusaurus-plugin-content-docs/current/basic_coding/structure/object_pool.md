@@ -6,96 +6,74 @@ sidebar_position: 7
 
 # ObjectPool
 
-`object_pool.hpp` provides a family of RAII slot pools built on a free-index queue. The core template is:
+`object_pool.hpp` provides a fixed-slot object pool with reference counting:
 
 ```cpp
-LibXR::BasicObjectPool<Data, FreeQueue>
+LibXR::ObjectPool<Data>
 ```
 
-and three aliases:
-
-- `LibXR::ObjectPool<Data, IndexType>`: backed by `Queue<IndexType>`
-- `LibXR::SPSCObjectPool<Data, IndexType>`: backed by `SPSCQueue<IndexType>`
-- `LibXR::MPMCObjectPool<Data, IndexType>`: backed by `MPMCQueue<IndexType>`
-
-This family is built around:
-
-- acquiring one exclusive slot through `Acquire()`
-- returning that slot automatically through a move-only `Handle`
-- modifying user objects in place inside the slot
+The number of slots is fixed at construction. One writer, shared readers: `Acquire()` yields a move-only writable `Handle`; after writing, move it into a copyable read-only `ConstHandle` to distribute the slot, and the final release returns the slot to the free stack.
 
 ---
 
 ## 1. Design points
 
-### 1.1 Minimal queue constraint: `PoolIndexQueue`
+### 1.1 Slots and payloads
 
-`BasicObjectPool` does not depend on one specific queue implementation. Instead, it requires the free-index queue to provide a minimal typed interface:
+The slot type is `ObjectPool<Data>::Slot`, made of a reference count, a free-stack link and a resident payload:
 
-- `ValueType`
-- `Push(const ValueType&)`
-- `Pop(ValueType&)`
-- `Size()`
+- payloads are constructed with the pool and destroyed with the pool; a release neither destroys nor clears the object in the slot, so the next acquirer writes its own data;
+- a pool constructed with internal slots requires `Data` to be default-constructible; with external slots the caller prepares the storage, and `Slot` also has `Slot(std::in_place, args...)` to construct a payload in place;
+- the slot storage is fixed at construction, and later acquisitions and releases allocate no memory.
 
-So the ordinary `Queue`, `SPSCQueue` and `MPMCQueue` can all serve as the free-index queue.
+### 1.2 Writable and read-only handles
 
-### 1.2 Move-only `Handle`
+`Handle` owns one slot exclusively and is move-only:
 
-On successful acquisition, the pool returns a move-only `Handle` instead of a raw pointer:
+- it releases the slot on destruction, and `Reset()` releases it early;
+- `Get()`, `operator->()` and `operator*()` access the payload, `Index()` returns the slot index and `Valid()` tells whether it owns a slot;
+- copying is disabled, so one slot cannot be held by two writable handles.
 
-- the handle returns the slot automatically on destruction
-- copying is disabled, so one slot cannot be owned by multiple handles accidentally
-- `Get()`, `operator->()`, and `operator*()` provide access to the object in the slot
-- `Index()` returns the owned slot index
-- `Reset()` returns the slot early if needed
-- `Valid()` tells whether the handle owns a slot
+`ConstHandle` shares one slot and is copyable: it is obtained by moving a `Handle` or by copying another `ConstHandle`. A copy adds a reference and destruction drops one, and the final release returns the slot to the free stack. It provides read-only access to the payload only.
+
+### 1.3 Concurrency
+
+Only one acquirer may use a pool at a time, and acquisitions must not overlap or reenter; debug builds check this, because overlapping acquisitions cause ABA on the free stack and hand one slot to two acquirers. Releases may run concurrently from any thread or ISR and cannot fail. Distinct handle objects may be used concurrently, while concurrent access to one handle object requires caller synchronization. Construction and destruction require quiescence and cannot run in an ISR; the pool and any external slot storage must outlive all handles. ISR use requires 32-bit atomic CAS on the target.
 
 ---
 
-## 2. Construction forms
+## 2. Construction
 
-`BasicObjectPool` supports four construction patterns:
+```cpp
+explicit ObjectPool(size_t slot_count);
+ObjectPool(size_t slot_count, Slot* slots);
+```
 
-1. internal queue + internal slots
-2. internal queue + external slots
-3. external queue + internal slots
-4. external queue + external slots
+- `ObjectPool(slot_count)`: the pool allocates the slot array and `Data` must be default-constructible;
+- `ObjectPool(slot_count, slots)`: the caller provides the slot array, and the pool neither constructs nor destroys its payloads; `slots` must point to at least `slot_count` slots not used by another pool.
 
-Practical meaning:
-
-- internal queue and internal slots: the pool allocates both
-- if slot storage must live in caller-controlled memory, provide external `slots`
-- to reuse or precisely control the queue, provide an external `free_queue`
-
-When an external `free_queue` is used:
-
-- the queue must be empty when passed in
-- it must be dedicated to the pool
-- its capacity must be at least `slot_count`
-
-Constructors with internal slots require `Data` to be default-constructible; `IndexType` must be an unsigned integer type.
+The pool is neither copyable nor movable.
 
 ---
 
 ## 3. Main APIs
 
-### 3.1 Acquire and return
+### 3.1 Acquire and release
 
 - `ErrorCode Acquire(Handle& handle)`
 - `void Handle::Reset()`
+- `void ConstHandle::Reset()`
 
 Behavior notes:
 
-- success returns `ErrorCode::OK`
-- when no free slot is available, the result comes from the underlying queue pop failure, commonly `ErrorCode::EMPTY`
-- the slot is also returned automatically when the handle is destroyed
-- `Acquire()` expects a handle that owns no slot (asserted in Debug builds)
-- all handles must be returned before the pool is destroyed (Debug builds assert `EmptySize() == Size()`), so the pool must outlive its handles
+- success returns `ErrorCode::OK`, and `ErrorCode::EMPTY` without waiting when no slot is free;
+- `Acquire()` expects a handle that owns no slot (asserted in Debug builds);
+- all handles must be released before the pool is destroyed (Debug builds assert `EmptySize() == Size()`).
 
 ### 3.2 Capacity queries
 
-- `size_t EmptySize() const`: number of currently acquirable free slots
-- `size_t Size() const`: total slot count
+- `size_t EmptySize() const`: the number of free slots, approximate during concurrent acquire or release and for monitoring only;
+- `size_t Size() const`: the total slot count.
 
 ### 3.3 Non-owning access
 
@@ -104,40 +82,13 @@ Behavior notes:
 
 These APIs bypass the ownership semantics of `Acquire()` / `Handle`. They are intended for debugging, external-storage inspection, or situations where the caller already knows the slot state.
 
----
+### 3.4 Reference limit
 
-## 4. The three common aliases
-
-### 4.1 `ObjectPool`
-
-```cpp
-template <typename Data, typename IndexType = uint32_t>
-using ObjectPool = BasicObjectPool<Data, Queue<IndexType>>;
-```
-
-Suitable for general-purpose object-pool usage in ordinary thread context when strict lock-free queue semantics are not the main concern.
-
-### 4.2 `SPSCObjectPool`
-
-```cpp
-template <typename Data, typename IndexType = uint32_t>
-using SPSCObjectPool = BasicObjectPool<Data, SPSCQueue<IndexType>>;
-```
-
-Suitable when free-slot acquisition and return clearly follow a single-producer / single-consumer path.
-
-### 4.3 `MPMCObjectPool`
-
-```cpp
-template <typename Data, typename IndexType = uint32_t>
-using MPMCObjectPool = BasicObjectPool<Data, MPMCQueue<IndexType>>;
-```
-
-Suitable for multi-producer / multi-consumer slot acquisition and return.
+Each slot must have at most `UINT32_MAX` references.
 
 ---
 
-## 5. Example
+## 4. Example
 
 ```cpp
 #include <libxr.hpp>
@@ -150,17 +101,27 @@ struct Packet
 
 LibXR::ObjectPool<Packet> pool(16);
 
-LibXR::ObjectPool<Packet>::Handle handle;
-if (pool.Acquire(handle) == LibXR::ErrorCode::OK)
+LibXR::ObjectPool<Packet>::Handle writer;
+if (pool.Acquire(writer) == LibXR::ErrorCode::OK)
 {
-  handle->id = 42;
-  (*handle).payload[0] = 0xAA;
+  writer->id = 42;
+  (*writer).payload[0] = 0xAA;
+
+  // After writing, move it into a read-only handle to distribute the slot; writer becomes empty
+  LibXR::ObjectPool<Packet>::ConstHandle frame = std::move(writer);
+  LibXR::ObjectPool<Packet>::ConstHandle copy = frame;
 }
-// the slot is returned automatically when handle leaves scope
+// frame and copy release their references when they leave scope; the last one returns the slot
 ```
 
-To return early:
+A reference can be released early: `Handle::Reset()` returns the slot directly, and `ConstHandle::Reset()` drops one reference.
 
 ```cpp
-handle.Reset();
+frame.Reset();
 ```
+
+---
+
+## 5. Typical scenario
+
+Separating acquisition from processing: the acquiring side (one interrupt or one thread) takes a slot with `Acquire()` and writes one frame of data, then hands the read-only handle to a processing thread. That thread can pass the same data on to several downstream readers, and the final release returns the slot to the free stack automatically. When no slot is free, `Acquire()` returns `ErrorCode::EMPTY` and the acquiring side does not wait, so the slot count is the number of frames in flight at once.

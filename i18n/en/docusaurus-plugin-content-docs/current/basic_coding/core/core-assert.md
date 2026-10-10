@@ -37,7 +37,7 @@ Accepts `LibXR::Assert::FatalCallback`, that is, `LibXR::Callback<const char*, u
 
 | Macro | Enabled when | When disabled | Purpose |
 | --- | --- | --- | --- |
-| `ASSERT(expr)` / `ASSERT_FROM_CALLBACK(expr, in_isr)` | `LIBXR_DEBUG_BUILD` defined (automatic with `CMAKE_BUILD_TYPE=Debug`) | expression still evaluated, not checked | preconditions and configuration |
+| `ASSERT(expr)` / `ASSERT_FROM_CALLBACK(expr, in_isr)` | `LIBXR_DEBUG_BUILD` defined; when not set explicitly it follows the build type (on for Debug), and `-DLIBXR_DEBUG_BUILD=ON/OFF` overrides it for any build type | expression still evaluated, not checked | preconditions and configuration |
 | `REQUIRE(expr)` / `REQUIRE_FROM_CALLBACK(expr, in_isr)` | always | — | unrecoverable runtime errors |
 | `DEV_ASSERT(expr)` / `DEV_ASSERT_FROM_CALLBACK(expr, in_isr)` | CMake option `LIBXR_DEV_ASSERT_BUILD=ON` | expression not evaluated | LibXR internal development checks |
 

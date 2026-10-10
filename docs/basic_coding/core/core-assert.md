@@ -37,7 +37,7 @@ LibXR::Assert::RegisterFatalErrorCallback(cb);
 
 | 宏 | 生效条件 | 关闭时 | 用途 |
 | --- | --- | --- | --- |
-| `ASSERT(expr)` / `ASSERT_FROM_CALLBACK(expr, in_isr)` | 定义 `LIBXR_DEBUG_BUILD`（`CMAKE_BUILD_TYPE=Debug` 时自动定义） | 表达式仍求值，不检查 | 调用前提与配置检查 |
+| `ASSERT(expr)` / `ASSERT_FROM_CALLBACK(expr, in_isr)` | 定义 `LIBXR_DEBUG_BUILD`；未显式设置时按构建类型决定（Debug 开启），`-DLIBXR_DEBUG_BUILD=ON/OFF` 可在任何构建类型下覆盖 | 表达式仍求值，不检查 | 调用前提与配置检查 |
 | `REQUIRE(expr)` / `REQUIRE_FROM_CALLBACK(expr, in_isr)` | 始终生效 | — | 不可恢复的运行错误 |
 | `DEV_ASSERT(expr)` / `DEV_ASSERT_FROM_CALLBACK(expr, in_isr)` | CMake 选项 `LIBXR_DEV_ASSERT_BUILD=ON` | 表达式不求值 | LibXR 内部开发检查 |
 
