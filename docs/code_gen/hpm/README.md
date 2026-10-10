@@ -205,7 +205,7 @@ HPM 的生成器不创建 UART 对象（LibXR 的 HPM UART 驱动还没有合入
 以下是 bsp-hpm5301evklite 首次生成的 `User/libxr_config.yaml`：
 
 ```yaml
-generator: 6.0.0
+generator: 6.0.1
 I2C:
   i2c3:
     speed: 100000

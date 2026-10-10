@@ -93,5 +93,5 @@ The image `ghcr.io/xrobot-org/docker-image-hpm:main` ships the RISC-V toolchain 
 
 ```bash
 docker run --rm -v "$PWD:/work" -w /work ghcr.io/xrobot-org/docker-image-hpm:main \
-  bash -c 'pip install xrobot==1.0.0 && xrobot setup && cmake --preset release-flash-xip && cmake --build --preset release-flash-xip'
+  bash -c 'pip install xrobot==1.0.1 && xrobot setup && cmake --preset release-flash-xip && cmake --build --preset release-flash-xip'
 ```

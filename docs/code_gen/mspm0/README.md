@@ -304,7 +304,7 @@ GPIO 引脚的 `$name` 去掉 `PIN_` 前缀后不是合法标识符时（SysConf
 以下是 bsp-mspm0g3507-mini 首次生成的 `User/libxr_config.yaml`：
 
 ```yaml
-generator: 6.0.0
+generator: 6.0.1
 terminal_source: uart0
 SPI:
   spi1:

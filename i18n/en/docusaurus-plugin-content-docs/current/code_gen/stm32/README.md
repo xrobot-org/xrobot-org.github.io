@@ -215,7 +215,7 @@ The table lists the top-level keys; `config_version` is written by the user:
 
 | Key | Default | Description |
 | --- | --- | --- |
-| `generator` | The installed version, such as `6.0.0`, written when the file is created | Pins the code generator version, see [Integrate with XRobot](../xrobot_inter.md#generator-version) |
+| `generator` | The installed version, such as `6.0.1`, written when the file is created | Pins the code generator version, see [Integrate with XRobot](../xrobot_inter.md#generator-version) |
 | `terminal_source` | `''` | Serial port of the terminal, see [UART and Terminal](./uart.md) |
 | `software_timer` | `priority: 2`, `stack_depth: 1024` | Software timer thread, see [Software Timer](./timer.md) |
 | `SPI` | `tx_buffer_size: 32`, `rx_buffer_size: 32`, `dma_section: ''`; `dma_enable_min_size: 3` as well with DMA in both directions | See [SPI](./spi.md) |

@@ -88,7 +88,7 @@ cmake --build --preset debug
 
 ```bash
 docker run --rm -v "$PWD:/work" -w /work ghcr.io/xrobot-org/docker-image-mspm0:main \
-  bash -c 'pip install xrobot==1.0.0 && xrobot setup && cmake --preset release && cmake --build --preset release'
+  bash -c 'pip install xrobot==1.0.1 && xrobot setup && cmake --preset release && cmake --build --preset release'
 ```
 
 ## 常见问题

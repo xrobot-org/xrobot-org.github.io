@@ -14,9 +14,9 @@ sidebar_position: 2
 
 ```text
 $ xrobot --version
-xrobot 1.0.0
+xrobot 1.0.1
 $ libxr --version
-libxr 6.0.0
+libxr 6.0.1
 ```
 
 BSP 使用的 xrobot 版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段中，使用 CodeGenerator 的 STM32 工程另在 `User/libxr_config.yaml` 的 `generator:` 字段中记录 libxr 的版本，安装的版本应与之一致。

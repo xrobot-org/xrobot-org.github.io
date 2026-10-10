@@ -13,7 +13,7 @@ sidebar_position: 1
 ## modules.yaml
 
 ```yaml
-xrobot: 1.0.0
+xrobot: 1.0.1
 modules:
   - xrobot-org/BlinkLED@dev
   - xrobot-org/BMI088@same-or-dev

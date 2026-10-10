@@ -304,7 +304,7 @@ The settings sections:
 The following is the `User/libxr_config.yaml` generated on bsp-mspm0g3507-mini the first time:
 
 ```yaml
-generator: 6.0.0
+generator: 6.0.1
 terminal_source: uart0
 SPI:
   spi1:

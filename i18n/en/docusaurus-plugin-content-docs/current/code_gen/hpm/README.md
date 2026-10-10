@@ -205,7 +205,7 @@ The HPM generator creates no UART (the HPM UART driver of LibXR has not been mer
 The following is the `User/libxr_config.yaml` generated on bsp-hpm5301evklite the first time:
 
 ```yaml
-generator: 6.0.0
+generator: 6.0.1
 I2C:
   i2c3:
     speed: 100000
