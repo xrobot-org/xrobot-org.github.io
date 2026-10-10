@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # 引脚布局（libxr pins）
 
-`libxr pins` 打印一个型号的封装与引脚布局：每个引脚的位置、名称和可选的信号。数据来自各厂商的引脚数据：STM32 为 ST 的 STM32_open_pin_data，MSPM0 为 TI SysConfig 的器件数据，HPM 为 HPM SDK 的 `hpm_iomux.h`、`hpm_soc_ip.h` 和 HPM5300 数据手册的引脚表。
+`libxr pins` 打印一个型号的封装与引脚布局：每个引脚的位置、名称和可选的信号。数据来自各厂商的引脚数据：STM32 为 ST 的 STM32_open_pin_data，MSPM0 为 TI SysConfig 的器件数据，HPM 为 HPM SDK 的 `hpm_iomux.h`、`hpm_soc_ip.h` 和 HPM5300 数据手册的引脚表。HPM 的数据目前只含 IO 引脚，电源、复位、晶振等引脚不在其中，因此 HPM5301 的 QFN48 显示 29 个引脚。
 
 ---
 

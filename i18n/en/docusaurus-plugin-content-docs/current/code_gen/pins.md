@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Pin Layout (libxr pins)
 
-`libxr pins` prints the package and pin layout of a model: the position, name and selectable signals of every pin. The data comes from the vendors' pin data: ST's STM32_open_pin_data for STM32, the device data of TI SysConfig for MSPM0, and the `hpm_iomux.h` and `hpm_soc_ip.h` of the HPM SDK plus the pin tables of the HPM5300 datasheet for HPM.
+`libxr pins` prints the package and pin layout of a model: the position, name and selectable signals of every pin. The data comes from the vendors' pin data: ST's STM32_open_pin_data for STM32, the device data of TI SysConfig for MSPM0, and the `hpm_iomux.h` and `hpm_soc_ip.h` of the HPM SDK plus the pin tables of the HPM5300 datasheet for HPM. The HPM data holds IO pins only for now, so pins such as the supplies, the reset and the oscillators are not in it and the QFN48 of an HPM5301 shows 29 pins.
 
 ---
 

@@ -113,6 +113,7 @@ GPIO（2 个引脚）：
 #include "libxr.hpp"
 #include "hpm_gpio.hpp"
 #include "hpm_i2c.hpp"
+#include "hpm_power.hpp"
 #include "hpm_pwm.hpp"
 #include "hpm_soc.h"
 #include "hpm_timebase.hpp"
@@ -131,6 +132,7 @@ extern "C" void app_main(void)
   // Timebase and platform
   static HPMTimebase timebase;
   PlatformInit();
+  static HPMPowerManager power_manager;
 
   // GPIO: init_bsp_pins() configured pa10 (PA10) as an output pin, pa3 (PA03) as an input
   // pin with a pull-down. The interrupt edge comes from the pinmux and every object
@@ -149,6 +151,8 @@ extern "C" void app_main(void)
                                clock_gptmr0, 1, 0, HPMPWM::Polarity::NORMAL);
 
   // Hardware registration
+  XR_REGISTER(power_manager, LibXR::PowerManager);
+
   XR_REGISTER(pa10, LibXR::GPIO);
   XR_REGISTER(pa3, LibXR::GPIO);
 
@@ -169,6 +173,8 @@ extern "C" void app_main(void)
 ## 生成的对象与命名
 
 生成的对象来自 LibXR 有驱动的配置：每个 GPIO 引脚一个对象，每个同时选了 SCL 和 SDA 的 I2C 一个对象；GPTMR 上的 PWM 见下文。其余配置（UART、SPI、MCAN、ADC、ACMP、USB、缺 SCL 或 SDA 的 I2C、只有捕获输入的 GPTMR 等）列入配置摘要的 Other，只作展示。
+
+生成结果总是包含 `static HPMPowerManager power_manager;`，位置在 `PlatformInit()` 之后；使用 XRobot 时按 `PowerManager` 注册，且排在其他对象之前。`power_manager` 是保留名，GPIO 名字与它相同会使生成报错。生成的代码需要带 `PowerManager` 的 LibXR，即 v2.0.1 或更新版本。`power reset|shutdown|bootloader` 命令由用户代码调用 `power_manager.RegisterCommand(ramfs)` 注册，生成器不生成这条调用。
 
 对象的命名：
 

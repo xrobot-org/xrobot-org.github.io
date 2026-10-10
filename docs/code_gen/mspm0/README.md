@@ -119,6 +119,7 @@ GPIO（4 个引脚）：
 #include "libxr.hpp"
 #include "mspm0_gpio.hpp"
 #include "mspm0_i2c.hpp"
+#include "mspm0_power.hpp"
 #include "mspm0_pwm.hpp"
 #include "mspm0_spi.hpp"
 #include "mspm0_timebase.hpp"
@@ -160,6 +161,7 @@ extern "C" void app_main(void)
   // Timebase and platform
   static MSPM0Timebase timebase;
   PlatformInit();
+  static MSPM0PowerManager power_manager;
 
   // GPIO: SysConfig configured LED1 (PB8), LED2 (PA16) as output pins and KEY1 (PB24),
   // KEY2 (PB20) as input pins. The interrupt edge comes from SysConfig; RegisterCallback
@@ -199,6 +201,8 @@ extern "C" void app_main(void)
   Timer::Start(terminal_task);
 
   // Hardware registration
+  XR_REGISTER(power_manager, LibXR::PowerManager);
+
   XR_REGISTER(LED1, LibXR::GPIO);
   // ...
 
@@ -252,6 +256,8 @@ static void OnKeyInterrupt(bool in_isr, std::atomic<uint32_t>* count)
 ## 生成的对象与命名
 
 生成的对象来自 LibXR 有驱动的配置：UART、控制器模式的 I2C 和 SPI、PWM；GPIO 引脚各生成一个对象。其余配置（ADC12、DAC12、MCAN、QEI、目标模式的 I2C、外设模式的 SPI 等）列入配置摘要的 Other，只作展示。
+
+生成结果总是包含 `static MSPM0PowerManager power_manager;`，位置在 `PlatformInit()` 之后；使用 XRobot 时按 `PowerManager` 注册，且排在其他对象之前。`power_manager` 是保留名，GPIO 标签与它相同会使生成报错并提示在 SysConfig 中给引脚改名。生成的代码需要带 `PowerManager` 的 LibXR，即 v2.0.1 或更新版本。终端的 `power reset|shutdown|bootloader` 命令由用户代码调用 `power_manager.RegisterCommand(ramfs)` 注册，生成器不生成这条调用。
 
 对象的命名：
 

@@ -113,6 +113,7 @@ The following is the `app_main.cpp` of that first run:
 #include "libxr.hpp"
 #include "hpm_gpio.hpp"
 #include "hpm_i2c.hpp"
+#include "hpm_power.hpp"
 #include "hpm_pwm.hpp"
 #include "hpm_soc.h"
 #include "hpm_timebase.hpp"
@@ -131,6 +132,7 @@ extern "C" void app_main(void)
   // Timebase and platform
   static HPMTimebase timebase;
   PlatformInit();
+  static HPMPowerManager power_manager;
 
   // GPIO: init_bsp_pins() configured pa10 (PA10) as an output pin, pa3 (PA03) as an input
   // pin with a pull-down. The interrupt edge comes from the pinmux and every object
@@ -149,6 +151,8 @@ extern "C" void app_main(void)
                                clock_gptmr0, 1, 0, HPMPWM::Polarity::NORMAL);
 
   // Hardware registration
+  XR_REGISTER(power_manager, LibXR::PowerManager);
+
   XR_REGISTER(pa10, LibXR::GPIO);
   XR_REGISTER(pa3, LibXR::GPIO);
 
@@ -169,6 +173,8 @@ The pins and clocks are configured by the pinmux functions `main.c` calls, and t
 ## Generated Objects and Naming
 
 Objects are generated for the configurations LibXR has drivers for: one object per GPIO pin and one per I2C that selects both SCL and SDA; PWM on a GPTMR is described below. The remaining configurations (UART, SPI, MCAN, ADC, ACMP, USB, an I2C without SCL or SDA, a GPTMR with capture inputs only and so on) are listed under Other in the summary for display only.
+
+The output always contains `static HPMPowerManager power_manager;` after `PlatformInit()`; with XRobot it is registered as `PowerManager`, ahead of the other objects. `power_manager` is a reserved name, so a GPIO that uses it makes generation fail. The generated code needs a LibXR that carries `PowerManager`, that is v2.0.1 or newer. The `power reset|shutdown|bootloader` commands are registered by user code through `power_manager.RegisterCommand(ramfs)`; the generator does not emit that call.
 
 The objects are named:
 

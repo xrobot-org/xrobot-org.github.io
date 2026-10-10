@@ -119,6 +119,7 @@ The following is an excerpt of the `app_main.cpp` of that first run, with `// ..
 #include "libxr.hpp"
 #include "mspm0_gpio.hpp"
 #include "mspm0_i2c.hpp"
+#include "mspm0_power.hpp"
 #include "mspm0_pwm.hpp"
 #include "mspm0_spi.hpp"
 #include "mspm0_timebase.hpp"
@@ -160,6 +161,7 @@ extern "C" void app_main(void)
   // Timebase and platform
   static MSPM0Timebase timebase;
   PlatformInit();
+  static MSPM0PowerManager power_manager;
 
   // GPIO: SysConfig configured LED1 (PB8), LED2 (PA16) as output pins and KEY1 (PB24),
   // KEY2 (PB20) as input pins. The interrupt edge comes from SysConfig; RegisterCallback
@@ -199,6 +201,8 @@ extern "C" void app_main(void)
   Timer::Start(terminal_task);
 
   // Hardware registration
+  XR_REGISTER(power_manager, LibXR::PowerManager);
+
   XR_REGISTER(LED1, LibXR::GPIO);
   // ...
 
@@ -252,6 +256,8 @@ static void OnKeyInterrupt(bool in_isr, std::atomic<uint32_t>* count)
 ## Generated Objects and Naming
 
 Objects are generated for the configurations LibXR has drivers for: UART, I2C and SPI in controller mode, and PWM; every GPIO pin gets an object. The remaining configurations (ADC12, DAC12, MCAN, QEI, an I2C in target mode, an SPI in peripheral mode and so on) are listed under Other in the summary for display only.
+
+The output always contains `static MSPM0PowerManager power_manager;` after `PlatformInit()`; with XRobot it is registered as `PowerManager`, ahead of the other objects. `power_manager` is a reserved name, so a GPIO label that uses it makes generation fail with a message to rename the pin in SysConfig. The generated code needs a LibXR that carries `PowerManager`, that is v2.0.1 or newer. The `power reset|shutdown|bootloader` commands of the terminal are registered by user code through `power_manager.RegisterCommand(ramfs)`; the generator does not emit that call.
 
 The objects are named:
 
