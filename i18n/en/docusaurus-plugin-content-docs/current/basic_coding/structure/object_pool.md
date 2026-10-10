@@ -38,7 +38,7 @@ The slot type is `ObjectPool<Data>::Slot`, made of a reference count, a free-sta
 
 ### 1.3 Concurrency
 
-Only one acquirer may use a pool at a time, and acquisitions must not overlap or reenter; debug builds check this, because overlapping acquisitions cause ABA on the free stack and hand one slot to two acquirers. Releases may run concurrently from any thread or ISR and cannot fail. Distinct handle objects may be used concurrently, while concurrent access to one handle object requires caller synchronization. Construction and destruction require quiescence and cannot run in an ISR; the pool and any external slot storage must outlive all handles. ISR use requires 32-bit atomic CAS on the target.
+Only one acquirer may use a pool at a time, and acquisitions must not overlap or reenter; debug builds check this, because overlapping acquisitions cause ABA on the free stack and hand one slot to two acquirers. Releases may run concurrently from any thread or ISR, and that path has no failure branch. Distinct handle objects may be used concurrently, while concurrent access to one handle object requires caller synchronization. Construction and destruction require quiescence and cannot run in an ISR; the pool and any external slot storage must outlive all handles. ISR use requires 32-bit atomic CAS on the target.
 
 ---
 

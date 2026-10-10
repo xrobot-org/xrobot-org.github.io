@@ -38,7 +38,7 @@ public:
 - `Reset()` 可用于软复位控制器、重新启动系统等；
 - `Shutdown()` 用于关机、掉电、进入睡眠等低功耗控制；
 - `JumpToBootloader()` 默认会退化为 `Reset()`，平台实现可按需改为真正的 Bootloader 跳转；
-- `RegisterCommand(ramfs)` 在 RamFS 根目录注册 `power` 命令：终端中 `power reset`、`power shutdown`、`power bootloader` 分别调用上述三个方法，不带参数或参数不认识时打印用法并返回 -1。命令文件在第一次注册时分配，之后不释放，同一个对象只注册一次；
+- `RegisterCommand(ramfs)` 在 RamFS 根目录注册 `power` 命令（见[内存文件系统](../middleware/ramfs.md)）：终端中 `power reset`、`power shutdown`、`power bootloader` 分别调用上述三个方法，不带参数或参数不认识时打印用法并返回 -1。命令文件在第一次注册时分配，之后不释放，同一个对象只注册一次；
 - `CheckBootloaderPin(pin, level)` 读一次引脚，电平等于 `level` 时调用 `JumpToBootloader()`，否则直接返回；在初始化早期调用一次，按住该引脚对应的按键再复位即可进入启动加载器，运行中该引脚仍归程序使用。引脚的输入方向和上下拉由工程配置决定，本函数不修改；悬空的引脚可能误触发；
 - 可用于平台的电源按钮、远程命令、低电量策略等情境；
 - 由具体平台实现其底层行为，接口保持一致，便于移植与抽象封装。

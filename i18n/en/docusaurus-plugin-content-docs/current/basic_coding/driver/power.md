@@ -38,7 +38,7 @@ public:
 - `Reset()` can be used to perform a soft reset, restart the system, etc.;
 - `Shutdown()` is used for power-off, entering sleep, or other low-power control;
 - `JumpToBootloader()` falls back to `Reset()` by default, and platform implementations may replace it with a real bootloader jump;
-- `RegisterCommand(ramfs)` registers the `power` command in the RamFS root: in the terminal, `power reset`, `power shutdown` and `power bootloader` call the three methods above, while a missing or unknown argument prints the usage and returns -1. The command file is allocated on the first registration and is not freed afterwards, so one object is registered once;
+- `RegisterCommand(ramfs)` registers the `power` command in the RamFS root (see [In-Memory File System](../middleware/ramfs.md)): in the terminal, `power reset`, `power shutdown` and `power bootloader` call the three methods above, while a missing or unknown argument prints the usage and returns -1. The command file is allocated on the first registration and is not freed afterwards, so one object is registered once;
 - `CheckBootloaderPin(pin, level)` reads the pin once and calls `JumpToBootloader()` when it reads `level`, otherwise it returns; called once early during initialization, it enters the bootloader when the key on that pin is held through a reset, while the pin stays with the application at run time. The input direction and pull of the pin come from the project configuration and are left unchanged; a floating pin may trigger by accident;
 - Can be applied in scenarios such as power button handling, remote commands, low battery strategies, etc.;
 - The specific behavior is implemented by the platform, while the interface remains consistent to facilitate portability and abstraction.

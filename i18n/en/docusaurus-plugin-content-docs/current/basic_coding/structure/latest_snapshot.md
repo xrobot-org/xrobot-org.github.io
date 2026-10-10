@@ -13,7 +13,7 @@ It suits data of which only the latest value matters. Taking a receive interrupt
 ## Core features
 
 - Three internal slots: a back slot owned by the producer, a front slot owned by the consumer, and a middle slot handed over through one atomic state, which carries the latest completed publication;
-- repeated `Store()` calls may overwrite a middle value the consumer has not taken, but never the value the consumer is copying;
+- repeated `Store()` calls may overwrite a middle value the consumer has not taken, while the value the consumer is copying sits in its own front slot and is not affected;
 - the three slots are constructed with the object, and `LatestSnapshot` allocates no memory itself;
 - the object is neither copyable nor movable.
 
@@ -42,7 +42,7 @@ class LatestSnapshot
 
 - `Store()` may only be called by the single producer, and `LoadLatest()` only by the single serialized consumer, one call at a time;
 - producer and consumer calls may overlap on different cores or in thread and interrupt contexts, since the handover between them uses one 32-bit atomic state;
-- the value is copied whole on publication, so a read always returns one complete value rather than a half-written one.
+- the value is copied whole on publication, so every read returns one complete value.
 
 ## Example
 
