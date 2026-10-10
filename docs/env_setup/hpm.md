@@ -43,7 +43,7 @@ HPM SDK 从环境变量 `GNURISCV_TOOLCHAIN_PATH` 读取工具链的安装目录
 * `CMakeLists.txt` 用 `find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})` 引入 HPM SDK，`BOARD_SEARCH_PATH` 指向 `boards/`，并设置 `CONFIG_DMA_MGR 1`（LibXR 的 HPM 驱动依赖 SDK 的 dma_mgr 组件）
 * `app.yaml` 声明对 `board_gpt_pin` 的依赖；`boards/<board>/` 下有唯一的 `.hpmpc` 文件（BSP 命名为 `tool_config.hpmpc`）；`libxr hpm setup` 和 VS Code 扩展按这两项识别 HPM 工程
 * `boards/<board>/pinmux.c` 由 HPM Pinmux Tool 从 `tool_config.hpmpc` 生成，提供 `init_bsp_pins()`
-* `main.c` 在工程根目录：先 `init_bsp_pins()`，再 SDK 板级的 `board_init()`，然后调用各外设的时钟函数（`init_uart3_clock()` 一类），最后进入 `app_main()`
+* `main.c` 在工程根目录：先调用板级时钟函数把 GPIO 时钟加入时钟组（bsp-hpm5301evklite 为 `init_board_clock()`，bsp-rmcs-slave-lite 为 `board_init_clock_group()`），再 `init_bsp_pins()`，然后 SDK 板级的 `board_init()` 和各外设的时钟函数（`init_uart3_clock()` 一类），最后进入 `app_main()`。GPIO 时钟加入时钟组之前，`init_bsp_pins()` 对 GPIO 方向和电平的设置不生效
 * `User/` 存放代码生成的 `app_main.cpp`；`libxr hpm setup` 会在其中生成 `libxr_config.yaml`
 * `libxr/` 是 LibXR 子模块
 
