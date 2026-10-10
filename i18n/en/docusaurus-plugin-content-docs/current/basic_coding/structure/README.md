@@ -19,6 +19,7 @@ This chapter covers the general-purpose data structures LibXR uses for task sche
 - [Queue (ordinary FIFO)](./queue.md)
 - [SPSCQueue](./spsc_queue.md)
 - [MPMCQueue](./mpmc_queue.md)
+- [SlotPool](./slot_pool.md)
 - [Stack](./stack.md)
 - [List](./list.md)
 - [LockFreeList](./lockfree_list.md)
