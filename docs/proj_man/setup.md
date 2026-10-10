@@ -13,7 +13,7 @@ sidebar_position: 1
 ## modules.yaml
 
 ```yaml
-xrobot: 1.0.0
+xrobot: 1.0.1
 modules:
   - xrobot-org/BlinkLED@dev
   - xrobot-org/BMI088@same-or-dev
@@ -44,7 +44,9 @@ xrobot module remove owner/Repo
 | `same-or-dev` | 与 BSP 当前分支同名的模块分支，不存在时用 `dev`；BSP 在标签上时要求同名标签 |
 | `same` | 必须存在同名分支或标签 |
 
-`same` / `same-or-dev` 以 BSP 仓库的当前分支为上下文。CI 等分离 HEAD 的检出用 `--context-ref refs/heads/<分支>`（或 `refs/tags/<标签>`）传入逻辑分支；请求中的 `context_ref` 为这一个模块及其依赖指定上下文，例如用 PR 的提交测试一个模块时保留其依赖的分支。
+`same` / `same-or-dev` 跟随 BSP 仓库的当前分支；CI 等分离 HEAD 的检出用 `--context-ref refs/heads/<分支>`（或 `refs/tags/<标签>`）传入逻辑分支。请求中的 `context_ref` 为这一个模块及其依赖指定上下文，例如用 PR 的提交测试一个模块时保留其依赖的分支。显式分支名的请求把它自己的分支作为下一层的上下文；`same`、`same-or-dev`、显式 tag 和提交号沿用最初的上下文，每一层各自查找同名分支、找不到退回 `dev`，中间层退回 `dev` 不改变下一层跟随的分支。同一模块沿两条依赖链解析到不同提交时，报错列出链上缺同名分支、退回 `dev` 的仓库。
+
+BSP 不在 Git 仓库中时没有可跟随的分支：不加 `--update` 时沿用 lock 中的提交；`--update` 会报错，需要用 `--context-ref refs/heads/<分支>` 给出逻辑分支，或给请求写显式的 ref。
 
 ---
 
@@ -63,11 +65,14 @@ lock 由 `xrobot setup` 写出，首行为生成说明，不应手动编辑。�
 | `xrobot setup --offline` | 不访问网络，只使用本地已有的检出和提交；需要 `xrobot.lock`，且 `modules.yaml` 与 lock 一致 |
 | `xrobot setup --context-ref REF` | 指定 `same` / `same-or-dev` 的 BSP 上下文 |
 | `xrobot setup --release-ref REF` | 拒绝对目标分支未发布的提交（见下文） |
+| `xrobot setup --leave-local MODULE...` | 把点名的模块移到 lock 解析出的提交（见下文） |
 | `xrobot setup --no-line-directives` | 重新生成头文件时不写 `#line` 指令 |
 
 `--update` 不能与 `--frozen`、`--offline` 同时使用；它还会对所有配置执行 `xrobot sync`，并打印改动。
 
 模块被检出为锁定提交的分离 HEAD。模块已在锁定的提交上时，其中未提交的修改保持不变；需要把模块移到另一个提交时，若模块有未提交的修改，或 HEAD 是不在任何远程分支或标签上的本地提交，`xrobot setup` 停止并说明原因。在 BSP 中开发模块时，保持修改未提交；准备好后推送到模块的一个分支，再运行 `xrobot setup --update <模块>`。
+
+`xrobot setup --leave-local <模块...>` 把点名的模块移到 lock 解析出的提交：模块停在未推送的本地提交上时，先打印这些提交，再检出目标提交，本地提交留在原来的分支上，HEAD 游离时可用 `git reflog` 找回。点名模块有未提交的修改时仍然拒绝；加 `-f` 时先打印将丢弃的内容，再丢弃需要移动的点名模块的已跟踪修改和未跟踪文件（子模块里的同样处理），被忽略的文件保留。`-f` 只与 `--leave-local` 一起使用，只作用于点名的模块。
 
 两个选中的模块定义了同名的全局类、依赖成环、同一模块被解析到不同提交时，setup 都会报错。
 
@@ -103,7 +108,7 @@ BSP 与官方模块使用同一套分支：`dev` 接收修改，`master` 是稳�
 | `refs/heads/master`、`refs/heads/main`、`refs/tags/...` | 模块的 `master`（或 `main`） |
 | 其他分支（如 `refs/heads/feature-x`） | 不检查 |
 
-显式请求的标签视为已发布；没有该分支线的第三方模块只能用显式提交。未合并、或以 squash / rebase 方式合并的提交不在目标分支上，此时先合并模块，再运行 `xrobot setup --update <模块> --context-ref refs/heads/<目标分支>`。
+显式请求的标签视为已发布；没有该分支线的第三方模块只能用显式提交。模块 PR 以 merge commit 合并后，锁定的提交就在目标分支上，BSP 无需刷新 lock 即可通过；以 squash / rebase 方式合并或改写历史后，锁定的提交不再在目标分支上，按报错给出的命令刷新，例如 `xrobot setup --update <模块> --context-ref refs/heads/dev`。
 
 同一规则也用于工具版本：`Modules/modules.yaml` 的 `xrobot:` 必须存在，`User/libxr_config.yaml` 中写了 `generator:` 时同样检查；写成提交号时必须在工具仓库的对应分支上，发布版本号直接通过。
 

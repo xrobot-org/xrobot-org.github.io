@@ -1,7 +1,7 @@
 ---
 id: code-gen-xrobot-inter
 title: Integrate with XRobot
-sidebar_position: 2
+sidebar_position: 5
 ---
 
 # Integrate with XRobot
@@ -90,10 +90,10 @@ The registered name is the generated C++ object name. The table gives the regist
 
 ## Generator Version
 
-`generator:` at the top level of `User/libxr_config.yaml` pins the code generator (a release version or a 40-hex commit); BSP CI installs that version. When the generator creates this file, its first line holds the installed version, e.g. `generator: 6.0.0`; regeneration keeps the key and the file's comments. When an existing file has no such key, `libxr gen` warns and generates as usual:
+`generator:` at the top level of `User/libxr_config.yaml` pins the code generator (a release version or a 40-hex commit); BSP CI installs that version. When the generator creates this file, its first line holds the installed version, e.g. `generator: 6.0.1`; regeneration keeps the key and the file's comments. When an existing file has no such key, `libxr gen` warns and generates as usual:
 
 ```text
-[WARNING] libxr_config.yaml does not pin the generator; add `generator: 6.0.0` (the BSP CI installs the pinned version)
+[WARNING] libxr_config.yaml does not pin the generator; add `generator: 6.0.1` (the BSP CI installs the pinned version)
 ```
 
 ## After Generation

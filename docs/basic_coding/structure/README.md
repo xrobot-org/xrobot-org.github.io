@@ -23,6 +23,7 @@ sidebar_position: 2
 - [List（链表）](./list.md)
 - [LockFreeList（无锁链表）](./lockfree_list.md)
 - [ObjectPool（RAII 对象池）](./object_pool.md)
+- [LatestSnapshot（最新值邮箱）](./latest_snapshot.md)
 - [RBTree（红黑树）](./rbt.md)
 - [DoubleBuffer（双缓冲区）](./double_buffer.md)
 

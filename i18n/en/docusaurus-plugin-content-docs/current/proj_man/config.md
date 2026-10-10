@@ -93,10 +93,14 @@ In the generated code `topic_name` is `"bmi088_gyro"`; the other values are as w
 
 A reference or pointer parameter without a default is a dependency. Its value is one of:
 
-- a name registered with `XR_REGISTER` in the entry source;
-- the `id` of an earlier instance;
-- `'&name'` or `name` (for a pointer parameter; both pass the object's address);
+- a name registered with `XR_REGISTER` in the entry source, or the `id` of an earlier instance;
 - `nullptr` (for a pointer parameter).
+
+For a pointer parameter, write the name itself; the generator takes its address. The quoted `'&name'` is still accepted and passes the address as written. Without quotes, `&name` is a YAML anchor with an empty value, and `xrobot` reports it and suggests the bare name:
+
+```text
+User/xrobot.yaml:5: &LED1 makes the value of - led an empty YAML anchor; write the name without &, e.g. `- led: LED1`
+```
 
 An optional dependency is declared by the Module as a pointer parameter without a default; `nullptr` leaves it unused. A wrong name is reported with the candidates of the right type:
 
@@ -127,7 +131,7 @@ Take LibXR's `PID<float>::Param`: when a Module writes the default as `{.k = 1.0
 - pid_param: '{.p = 30.0, .d = 1.0, .cycle = true}'   # designated initializer
 ```
 
-After a new Module version adds or removes fields or parameters, run `xrobot sync`: new ones are written with their source defaults, removed ones are dropped, and existing values are kept. `xrobot setup --update` does this automatically.
+After a new Module version adds or removes fields or parameters, run `xrobot sync`: new ones are written with their source defaults, removed ones are dropped, and existing values are kept. A new positional initializer default becomes a native YAML list (`gains: [0.5, 1.5]`), a designated one a native mapping (`keep: {k: 2, on: true}`), without quotes; values outside the index or that cannot round-trip stay as single-quoted strings. `xrobot setup --update` does this automatically.
 
 ### Constants
 

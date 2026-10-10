@@ -12,7 +12,7 @@ XRobot is the Module manager for LibXR. It fetches Modules, locks each one to a 
 
 ## Installation
 
-Installing the pip package `xrobot` is described in [Environment Setup](../env_setup/README.md#installation). The version a BSP uses is recorded in the `xrobot:` field of `Modules/modules.yaml`; install the same version, for example `pipx install xrobot==1.0.0`. The VS Code extension `XRobot.xrobot` shows what `xrobot describe` reports and makes every change through an `xrobot` command; see [VS Code Extension](../env_setup/README.md#vs-code-extension).
+Installing the pip package `xrobot` is described in [Environment Setup](../env_setup/README.md#installation). The version a BSP uses is recorded in the `xrobot:` field of `Modules/modules.yaml`; install the same version, for example `pipx install xrobot==1.0.1`. The VS Code extension `XRobot.xrobot` shows what `xrobot describe` reports and makes every change through an `xrobot` command; see [VS Code Extension](../env_setup/README.md#vs-code-extension).
 
 ---
 

@@ -13,7 +13,7 @@ sidebar_position: 1
 ## modules.yaml
 
 ```yaml
-xrobot: 1.0.0
+xrobot: 1.0.1
 modules:
   - xrobot-org/BlinkLED@dev
   - xrobot-org/BMI088@same-or-dev
@@ -44,7 +44,9 @@ Without `@ref`, `xrobot module add` writes `@same-or-dev`.
 | `same-or-dev` | The Module branch named like the BSP's current branch, otherwise `dev`; on a BSP tag, the identical tag |
 | `same` | The branch or tag with the same name must exist |
 
-`same` / `same-or-dev` use the BSP repository's current branch as context. A detached checkout (such as CI) passes the logical ref with `--context-ref refs/heads/<branch>` (or `refs/tags/<tag>`). `context_ref` in a request sets the context for that Module and its dependencies, for example to test a Module at a PR commit while its dependencies follow the PR's branch.
+`same` / `same-or-dev` follow the BSP repository's current branch; a detached checkout (such as CI) passes the logical ref with `--context-ref refs/heads/<branch>` (or `refs/tags/<tag>`). `context_ref` in a request sets the context for that Module and its dependencies, for example to test a Module at a PR commit while its dependencies follow the PR's branch. A request with an explicit branch name makes that branch the context of the next layer; `same`, `same-or-dev`, explicit tags and commits keep the original context: every layer looks for its own branch of that name and falls back to `dev`, and a middle layer's fallback does not change what the next layer follows. When one Module resolves to different commits along two dependency chains, the error names the repositories in the chains that lack the branch and fell back to `dev`.
+
+A BSP outside Git has no branch to follow: without `--update` the lock is kept as it is; `--update` fails and needs `--context-ref refs/heads/<branch>`, or an explicit ref in the request.
 
 ---
 
@@ -63,11 +65,14 @@ The lock is written by `xrobot setup`, says so in its first line, and is not edi
 | `xrobot setup --offline` | Uses only local checkouts and commits, without network access; needs `xrobot.lock`, and `modules.yaml` must match it |
 | `xrobot setup --context-ref REF` | Sets the BSP context for `same` / `same-or-dev` |
 | `xrobot setup --release-ref REF` | Refuses commits that are not released for the target line (see below) |
+| `xrobot setup --leave-local MODULE...` | Moves the named Modules to their resolved commits (see below) |
 | `xrobot setup --no-line-directives` | Leaves the `#line` directives out of the regenerated header |
 
 `--update` cannot be combined with `--frozen` or `--offline`. It also runs `xrobot sync` on every configuration and prints the changes.
 
 Modules are checked out at their locked commits (detached HEAD). A Module already at its locked commit keeps its uncommitted changes. When a Module has to move to another commit, `xrobot setup` stops with an explanation if the Module has uncommitted changes or its HEAD is a local commit that is on no remote branch or tag. While developing a Module inside a BSP, keep the changes uncommitted; when they are ready, push them to a branch of the Module and run `xrobot setup --update <Module>`.
+
+`xrobot setup --leave-local <Module...>` moves the named Modules to the commits the lock resolves to: at an unpushed local commit, the commits are printed first, then the target commit is checked out, and the local commits stay on the original branch or are recoverable through `git reflog` when HEAD is detached. A named Module with uncommitted changes is still refused; with `-f`, what will be discarded is printed first, then the tracked modifications and untracked files of the named Modules that have to move are discarded (submodules included), and ignored files are kept. `-f` is used only with `--leave-local` and affects only the named Modules.
 
 Setup also fails when two selected Modules define the same global Module class, when dependencies form a cycle, or when one Module resolves to different commits.
 
@@ -103,7 +108,7 @@ BSPs and official Modules share one branch model: `dev` receives changes; `maste
 | `refs/heads/master`, `refs/heads/main`, `refs/tags/...` | the Module's `master` (or `main`) |
 | any other branch (such as `refs/heads/feature-x`) | not checked |
 
-Explicitly requested tags count as released; a third-party Module without that line can only be pinned by an explicit commit. A commit that was not merged, or was merged by squash or rebase, is not on the target line: merge the Module first, then run `xrobot setup --update <Module> --context-ref refs/heads/<target>`.
+Explicitly requested tags count as released; a third-party Module without that line can only be pinned by an explicit commit. After a Module pull request is merged with a merge commit, the locked commit is on the target line and the BSP passes without refreshing the lock; after a squash or rebase merge or a history rewrite, the locked commit is no longer on the line, and the command printed by the gate refreshes it, such as `xrobot setup --update <Module> --context-ref refs/heads/dev`.
 
 The same rule applies to the tools: `xrobot:` in `Modules/modules.yaml` must be present, and `generator:` in `User/libxr_config.yaml` is checked when it is written; a commit pin must be on the tool repository's matching line, and a release version passes.
 

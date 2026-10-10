@@ -35,9 +35,12 @@ The base class for all nodes, providing:
 Created with `CreateFile()`:
 
 - `CreateFile(name, data)`: creates a read-only file when `data` is a `const` object, otherwise a read-write file;
-- `CreateFile(name, exec, arg)` or `CreateCommand(name, exec, arg)`: creates an executable file; `Run(argc, argv)` calls `exec(arg, argc, argv)`.
+- `CreateFile(name, exec, arg)` or `CreateCommand(name, exec, arg)`: creates an executable file; `Run(argc, argv)` calls `exec(arg, argc, argv)`;
+- `CreateCommand(name, exec)`: creates an executable file that needs no execution context; `exec` takes `argc` and `argv` directly.
 
 `IsReadOnly()`, `IsReadWrite()`, and `IsExecutable()` report the file kind.
+
+`Add()` takes lvalues only: RamFS stores the node address, so the node has to live for the whole run, and a temporary returned by `CreateCommand()` would leave a dangling pointer.
 
 ### Dir
 
@@ -58,18 +61,16 @@ Directory class supports adding and finding:
 ```cpp
 RamFS fs;
 
-int counter = 0;
+static int counter = 0;
 
-// Create executable file (increments counter each time it's run)
-auto exec_file = RamFS::CreateFile<int*>(
-  "runme",
-  [](int* arg, int argc, char** argv) {
+// Create an executable file that needs no execution context (increments counter on each run)
+auto exec_file = RamFS::CreateCommand("runme",
+  [](int argc, char** argv) {
     UNUSED(argc);
     UNUSED(argv);
-    (*arg)++;
+    counter++;
     return 0;
-  },
-  &counter
+  }
 );
 
 // Create read/write file
@@ -108,6 +109,7 @@ for (int i = 1; i <= 5; ++i) {
 | `FindDir(name)` | Search for a directory |
 | `FindCustom(name)` | Search for a custom node |
 | `CreateCommand(name, exec, arg)` | Create an executable file, same as `CreateFile(name, exec, arg)` |
+| `CreateCommand(name, exec)` | Create an executable file that needs no execution context |
 | `bin_` | The `bin` directory created under the root at construction |
 
 ### File Interface

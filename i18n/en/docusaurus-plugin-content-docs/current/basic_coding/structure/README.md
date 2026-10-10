@@ -23,6 +23,7 @@ This chapter covers the general-purpose data structures LibXR uses for task sche
 - [List](./list.md)
 - [LockFreeList](./lockfree_list.md)
 - [ObjectPool](./object_pool.md)
+- [LatestSnapshot](./latest_snapshot.md)
 - [RBTree](./rbt.md)
 - [DoubleBuffer](./double_buffer.md)
 

@@ -14,9 +14,9 @@ Installing the tools is described in [Environment Setup](./env_setup/README.md#i
 
 ```text
 $ xrobot --version
-xrobot 1.0.0
+xrobot 1.0.1
 $ libxr --version
-libxr 6.0.0
+libxr 6.0.1
 ```
 
 The xrobot version a BSP uses is recorded in the `xrobot:` field of `Modules/modules.yaml`, and STM32 projects that use the CodeGenerator also record the libxr version in the `generator:` field of `User/libxr_config.yaml`; the installed versions should match.

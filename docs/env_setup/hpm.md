@@ -6,116 +6,92 @@ sidebar_position: 5
 
 # HPM 环境配置
 
-本页说明 LibXR 在 HPM 平台上的接入方式。
-
-可以从模板工程开始：
-
-- [HPM5301_LibXR_Template](https://github.com/xrobot-org/HPM5301_LibXR_Template)
+HPM 工程是标准的 HPM SDK CMake 工程，用 RISC-V GCC 工具链（编译器前缀 `riscv32-unknown-elf-`）构建。BSP [bsp-hpm5301evklite](https://github.com/xrobot-org/bsp-hpm5301evklite) 和 [bsp-rmcs-slave-lite](https://github.com/xrobot-org/bsp-rmcs-slave-lite) 是可以完整构建的工程，本页以它们为例；[代码生成](../code_gen/hpm/README.md)说明 `libxr hpm setup` 如何在这样的工程里生成 LibXR 代码。
 
 ## 工具链
 
-HPM 工程使用 RISC-V GCC 工具链，编译器前缀为 `riscv32-unknown-elf-`。HPM SDK 从环境变量 `GNURISCV_TOOLCHAIN_PATH` 读取工具链的安装目录（`bin` 的上一级目录），编译器为其中的 `bin/riscv32-unknown-elf-gcc`；没有设置这个变量时，CMake 配置报错 `GNURISCV_TOOLCHAIN_PATH is not set yet`。
+HPM SDK 从环境变量 `GNURISCV_TOOLCHAIN_PATH` 读取工具链的安装目录（`bin` 的上一级目录），编译器为其中的 `bin/riscv32-unknown-elf-gcc`；没有设置这个变量时，CMake 配置报错 `GNURISCV_TOOLCHAIN_PATH is not set yet`。SDK 本体由 `HPM_SDK_BASE` 指向。
 
 工具链的来源：
 
 - Windows：HPMicro 的开发环境包 [sdk_env](https://github.com/hpmicro/sdk_env)，工具链放在其中的 `toolchains/` 目录，由 `start_cmd.cmd` 打开的命令行设置 `GNURISCV_TOOLCHAIN_PATH` 等环境变量；
 - Linux x64：[hpm-linux-gcc-release v0.1.0](https://github.com/Jiu-xiao/hpm-linux-gcc-release/releases/tag/v0.1.0) 发布的 `riscv32-unknown-elf` 工具链；
-- Docker：`ghcr.io/xrobot-org/docker-image-hpm:main` 在 `/opt/hpm-riscv32-unknown-elf` 中装有上述 Linux 工具链（GCC 15.2.0），路径记录在环境变量 `XR_HPM_TOOLCHAIN_ROOT` 中，见 [Docker 环境配置](docker.md)。
+- Docker：`ghcr.io/xrobot-org/docker-image-hpm:main` 在 `/opt/hpm-riscv32-unknown-elf` 中装有上述 Linux 工具链（GCC 15.2.0），路径同时记录在 `GNURISCV_TOOLCHAIN_PATH` 和 `XR_HPM_TOOLCHAIN_ROOT` 中，见 [Docker 环境配置](docker.md)。
 
-镜像没有设置 `GNURISCV_TOOLCHAIN_PATH`，在镜像中构建前先由 `XR_HPM_TOOLCHAIN_ROOT` 设置它，模板工程的 CI 也是这样做的：
+## 工程结构
+
+以 bsp-hpm5301evklite 为例：
+
+```text
+.
+|-- CMakeLists.txt
+|-- CMakePresets.json
+|-- app.yaml
+|-- main.c
+|-- boards/
+|   `-- hpm5301evklite/
+|       |-- tool_config.hpmpc
+|       |-- pinmux.c
+|       `-- ...
+|-- cmake/
+|   `-- LibXR.CMake
+|-- User/
+|   `-- app_main.cpp
+`-- libxr/
+```
+
+* `CMakeLists.txt` 用 `find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})` 引入 HPM SDK，`BOARD_SEARCH_PATH` 指向 `boards/`，并设置 `CONFIG_DMA_MGR 1`（LibXR 的 HPM 驱动依赖 SDK 的 dma_mgr 组件）
+* `app.yaml` 声明对 `board_gpt_pin` 的依赖；`boards/<board>/` 下有唯一的 `.hpmpc` 文件（BSP 命名为 `tool_config.hpmpc`）；`libxr hpm setup` 和 VS Code 扩展按这两项识别 HPM 工程
+* `boards/<board>/pinmux.c` 由 HPM Pinmux Tool 从 `tool_config.hpmpc` 生成，提供 `init_bsp_pins()`
+* `main.c` 在工程根目录：先调用板级时钟函数把 GPIO 时钟加入时钟组（bsp-hpm5301evklite 为 `init_board_clock()`，bsp-rmcs-slave-lite 为 `board_init_clock_group()`），再 `init_bsp_pins()`，然后 SDK 板级的 `board_init()` 和各外设的时钟函数（`init_uart3_clock()` 一类），最后进入 `app_main()`。GPIO 时钟加入时钟组之前，`init_bsp_pins()` 对 GPIO 方向和电平的设置不生效
+* `User/` 存放代码生成的 `app_main.cpp`；`libxr hpm setup` 会在其中生成 `libxr_config.yaml`
+* `libxr/` 是 LibXR 子模块
+
+## 构建
+
+`CMakePresets.json` 提供 `debug-flash-xip`、`debug-ram` 和 `release-flash-xip` 三个 preset（Ninja 生成器，`HPM_BUILD_TYPE` 对应 `flash_xip` 或 `ram`）。BSP 使用 XRobot 模块，配置前先运行一次 `xrobot setup`，它按 `xrobot.lock` 拉取模块并生成 `Modules/CMakeLists.txt`：
 
 ```bash
-export GNURISCV_TOOLCHAIN_PATH="$XR_HPM_TOOLCHAIN_ROOT"
+xrobot setup
 cmake --preset release-flash-xip
 cmake --build --preset release-flash-xip
 ```
 
-## 当前主线里已经有什么
+产物在 `build/output/` 下，如 `demo.elf`、`demo.bin`。
 
-按 `libxr master` 当前 `driver/hpm` 目录，已经存在这些驱动实现：
+## CMake 集成
 
-- `hpm_gpio.*`
-- `hpm_i2c.*`
-- `hpm_pwm.*`
-- `hpm_timebase.*`
-
-它们通过 `driver/hpm/CMakeLists.txt` 统一加入构建。
-
-## 基本集成思路
-
-以下节选自 [HPM5301_LibXR_Template](https://github.com/xrobot-org/HPM5301_LibXR_Template) 的 `cmake/LibXR.CMake`：
+`cmake/LibXR.CMake` 用三个变量选择平台，然后把 LibXR 作为子工程加入：
 
 ```cmake
-# LibXR platform/driver selection
 set(LIBXR_SYSTEM None)
 set(LIBXR_DRIVER hpm)
 set(LIBXR_NO_EIGEN True)
-
-# ...
-
-# Import LibXR as a subproject
-add_subdirectory("${LIBXR_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/libxr")
-
-# Make LibXR compile with the same HPM SDK compile options/includes.
-if(DEFINED HPM_SDK_LIB_ITF AND TARGET ${HPM_SDK_LIB_ITF})
-    target_link_libraries(xr PUBLIC ${HPM_SDK_LIB_ITF})
-endif()
-
-# Let app sources directly include LibXR headers.
-if(TARGET app)
-    target_link_libraries(app PUBLIC xr)
-endif()
-
-# Ensure LibXR object files are linked into the final ELF target.
-if(DEFINED APP_ELF_NAME AND TARGET ${APP_ELF_NAME})
-    target_link_libraries(${APP_ELF_NAME} xr)
-endif()
 ```
 
-`xr` 链接 `${HPM_SDK_LIB_ITF}`，LibXR 因此与应用使用相同的 HPM SDK 编译选项和头文件路径。
+`xr` 链接 `${HPM_SDK_LIB_ITF}`，LibXR 因此使用与 SDK 相同的编译选项和头文件路径；应用目标 `app` 和最终的 ELF 目标链接 `xr`。工具链的探测由 `find_package(hpm-sdk)` 完成。
 
-这里的前提是：
+## LibXR 的 HPM 驱动
 
-- 工程已经能用 HPM SDK 正常编译；
-- 工程已经把 HPM SDK 的头文件、启动文件、链接脚本和板级初始化接好；
-- LibXR 只是在这个基础上接入 `driver/hpm` 与通用 runtime/middleware。
+`driver/hpm` 中的驱动由该目录的 `CMakeLists.txt` 统一加入构建：
 
-## 当前文档建议的实际入口
+- `hpm_gpio.*`：GPIO
+- `hpm_i2c.*`：I2C 主机
+- `hpm_pwm.*`：PWM
+- `hpm_timebase.*`：基于 MCHTMR 的时间基准
+- `hpm_dma.*`：初始化 SDK 的 dma_mgr（只做一次），供 I2C 的 DMA 后台路径使用
 
-HPM 工程按以下顺序接入：
+驱动只调用 SDK 的驱动函数；外设的引脚复用、时钟和初始化顺序由工程负责（`init_bsp_pins()`、`board_init()` 和 `init_*_clock()`），LibXR 对象在 `app_main()` 中创建。驱动依赖 SDK 的 `dma_mgr` 组件，BSP 用 `CONFIG_DMA_MGR 1` 启用它。
 
-1. 先用 HPM SDK 或模板工程把最小工程跑通。
-2. 再检查工程里是否已经能正常 `add_subdirectory(libxr)`。
-3. 最后再按需要接入具体外设类，例如 `HPMGPIO`、`HPMI2C`、`HPMPWM`、`HPMTimebase`。
+`HPMI2C` 在 SDK 的 `hpm_i2c_drv` 之上实现 LibXR 的 I2C 主机抽象：阻塞式字节流传输和寄存器/存储器地址式传输；默认 7 位主机寻址，`SetAddressMode()` 可切换到 SDK 支持的 10 位主机寻址；POLLING、CALLBACK 等等待策略可以走 dma_mgr 的 DMA 后台路径；超时、总线忙、无响应等典型主机故障出现时，驱动按最近一次成功配置重建控制器。
 
-外设的引脚复用和时钟由工程在创建 LibXR 对象之前配置，例如调用 HPM Pinmux Tool 生成的引脚函数和时钟函数；LibXR 的 HPM 驱动只调用 SDK 驱动，不调用 `board.c` 中的板级函数：
+`HPMPWM` 的构造参数在两条代码路径下相同（外设地址、时钟、输出通道索引、比较器索引、极性）：SoC 提供标准 PWM 外设时走 SDK 的 `hpm_pwm_drv`，其余 SoC 走 GPTMR 路径。`SetDutyCycle()` 接受 0.0 到 1.0 的占空比，`SetConfig()` 配置频率。
 
-```cpp
-static LibXR::HPMI2C i2c3(HPM_I2C3, clock_i2c3, {100000});
-static LibXR::HPMPWM pwm(HPM_PWM0, clock_mot0, 0, 0, LibXR::HPMPWM::Polarity::NORMAL);
+## Docker 构建
+
+镜像 `ghcr.io/xrobot-org/docker-image-hpm:main` 内置 RISC-V 工具链（GCC 15.2.0）、CMake、Ninja 和 HPM SDK v1.13.0，并设置好了 `GNURISCV_TOOLCHAIN_PATH` 与 `HPM_SDK_BASE`：
+
+```bash
+docker run --rm -v "$PWD:/work" -w /work ghcr.io/xrobot-org/docker-image-hpm:main \
+  bash -c 'pip install xrobot==1.0.1 && xrobot setup && cmake --preset release-flash-xip && cmake --build --preset release-flash-xip'
 ```
-
-## 当前 I2C 支持情况
-
-`HPMI2C` 已不是简单的 blocking-only 包装，当前主线还覆盖了：
-
-- 7-bit / 10-bit 主机寻址模式；
-- sequence frame；
-- transfer flags；
-- 可选 DMA helper 背景路径；
-- 等待策略与恢复路径。
-
-上述能力在具体工程中能否使用，取决于：
-
-- HPM SDK 头文件是否完整；
-- 工程是否启用了 SDK 的 `dma_mgr` 组件（`CONFIG_DMA_MGR`），未启用时编译报错；
-- 引脚和时钟是否已在创建对象前配置。总线恢复使用 I2C 控制器自身产生的复位信号（9 个 SCL 脉冲）。
-
-## 当前 PWM 支持情况
-
-`HPMPWM` 当前主线支持两类路径：
-
-- 如果目标 SoC 提供标准 PWM 外设，则走 `hpm_pwm_drv`；
-- 如果不满足该条件，代码里还有 `GPTMR` fallback 路径。
-
-具体走哪条，取决于芯片和 SDK 宏条件。
