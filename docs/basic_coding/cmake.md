@@ -72,7 +72,7 @@ CMake 内部会把配置名称转换为小写。交叉编译时须设置 `LIBXR_
 | `LIBXR_SHARED_BUILD` | 构建共享库 |
 | `LIBXR_OBJECT_BUILD` | 构建对象库 |
 
-未指定库类型时默认构建静态库。Debug 构建定义 `LIBXR_DEBUG_BUILD`；`LIBXR_DEV_ASSERT_BUILD` 独立控制 `DEV_ASSERT`。
+未指定库类型时默认构建静态库。`LIBXR_DEBUG_BUILD` 默认跟随构建类型：未显式设置时，每次配置按当前构建类型重新计算（Debug 开启、其余关闭），作为普通变量不写入缓存，同一构建目录中切换构建类型后立即生效；用 `-DLIBXR_DEBUG_BUILD=ON/OFF` 显式设置后该值进入缓存，此后始终按用户的值。`LIBXR_DEV_ASSERT_BUILD` 独立控制 `DEV_ASSERT`。
 
 ## 日志与格式化
 

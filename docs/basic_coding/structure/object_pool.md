@@ -6,98 +6,74 @@ sidebar_position: 7
 
 # ObjectPool
 
-`object_pool.hpp` 提供一组基于空闲索引队列的 RAII 槽池接口，核心模板为：
+`object_pool.hpp` 提供带引用计数的固定槽对象池：
 
 ```cpp
-LibXR::BasicObjectPool<Data, FreeQueue>
+LibXR::ObjectPool<Data>
 ```
 
-以及三个别名：
-
-- `LibXR::ObjectPool<Data, IndexType>`：底层使用 `Queue<IndexType>`
-- `LibXR::SPSCObjectPool<Data, IndexType>`：底层使用 `SPSCQueue<IndexType>`
-- `LibXR::MPMCObjectPool<Data, IndexType>`：底层使用 `MPMCQueue<IndexType>`
-
-这一组对象池的特点是：
-
-- 通过 `Acquire()` 获取一个独占槽位；
-- 通过 move-only `Handle` 在析构时自动归还槽位；
-- 上层直接在槽位对象上原地构造和修改业务数据。
+槽位数量在构造时确定。写独占、读共享：`Acquire()` 得到一个只能移动的可写 `Handle`，写完数据后移动为可复制的只读 `ConstHandle` 分发出去，最后一个引用释放时槽位回到空闲栈。
 
 ---
 
 ## 1. 设计要点
 
-### 1.1 最小队列约束 `PoolIndexQueue`
+### 1.1 槽位与负载
 
-`BasicObjectPool` 不依赖某一个具体队列类型，而是要求底层空闲索引队列满足最小强类型接口：
+槽位类型是 `ObjectPool<Data>::Slot`，由引用计数、空闲栈链接和常驻负载组成：
 
-- `ValueType`
-- `Push(const ValueType&)`
-- `Pop(ValueType&)`
-- `Size()`
+- 负载随池构造、随池析构；引用释放时既不析构也不清空槽内对象，下一个申请方直接写入自己的数据；
+- 用内部槽数组构造的池要求 `Data` 可默认构造；外部槽数组由调用方准备，`Slot` 另有 `Slot(std::in_place, args...)` 用于就地构造负载；
+- 槽数组在构造时确定，其后的申请与释放不再分配内存。
 
-因此普通 `Queue`、`SPSCQueue`、`MPMCQueue` 都可以作为空闲索引队列。
+### 1.2 可写句柄与只读句柄
 
-### 1.2 Move-only `Handle`
+`Handle` 独占一个槽位，只能移动：
 
-成功获取槽位后，对象池不会直接返回裸指针，而是返回一个 move-only `Handle`：
+- 析构时释放槽位，`Reset()` 可以提前释放；
+- `Get()`、`operator->()`、`operator*()` 访问槽内负载，`Index()` 返回槽位索引，`Valid()` 判断是否持有槽位；
+- 禁止拷贝，避免同一个槽位被多个可写句柄持有。
 
-- `Handle` 析构时会自动把槽位索引归还给对象池；
-- 禁止拷贝，避免同一个槽位被多个句柄同时持有；
-- 支持 `Get()`、`operator->()`、`operator*()` 访问槽内对象；
-- 支持 `Index()` 查询当前槽位索引；
-- 支持 `Reset()` 主动提前归还；
-- 支持 `Valid()` 判断句柄是否持有槽位。
+`ConstHandle` 共享一个槽位，可以复制：由 `Handle` 移动得到，或由另一个 `ConstHandle` 复制得到。复制增加引用，析构减少引用，最后一个引用释放时槽位回到空闲栈。它只提供负载的只读访问。
 
-这也是“RAII 对象池”这个名称的来源。
+### 1.3 并发约束
+
+同一池同一时刻只能有一个申请方，申请不得重叠或重入，Debug 构建会检查；重叠申请会让空闲栈出现 ABA，把同一个槽位交给两个申请方。释放可以在任意线程或 ISR 中并发进行，这条路径没有失败分支。不同句柄对象可以并发使用，同一句柄对象的并发访问须由调用方同步。构造和析构须在静止状态下进行，不能在 ISR 中执行；池与外部槽存储必须比全部句柄活得更久。在 ISR 中使用要求目标平台提供 32 位原子 CAS。
 
 ---
 
 ## 2. 构造方式
 
-`BasicObjectPool` 支持四类构造方式：
+```cpp
+explicit ObjectPool(size_t slot_count);
+ObjectPool(size_t slot_count, Slot* slots);
+```
 
-1. 内部 queue + 内部 slots
-2. 内部 queue + 外部 slots
-3. 外部 queue + 内部 slots
-4. 外部 queue + 外部 slots
+- `ObjectPool(slot_count)`：槽数组由池分配，要求 `Data` 可默认构造；
+- `ObjectPool(slot_count, slots)`：槽数组由调用方提供，池既不构造也不析构其中的负载，`slots` 须指向至少 `slot_count` 个未被其他池使用的槽。
 
-选择含义：
-
-- 槽位和队列都由对象池分配：使用内部 queue / 内部 slots。
-- 需要把槽位放在调用方控制的存储区：使用外部 `slots`。
-- 需要复用已有队列实现或精确控制队列行为：使用外部 `free_queue`。
-
-使用外部 `free_queue` 时：
-
-- 队列在传入时必须为空；
-- 队列只供当前 pool 独占使用；
-- 队列容量至少能容纳 `slot_count` 个索引。
-
-此外，使用内部 slots 的构造要求 `Data` 可默认构造；`IndexType` 须为无符号整数类型。
+池不可拷贝、不可移动。
 
 ---
 
 ## 3. 主要接口
 
-### 3.1 获取与归还
+### 3.1 获取与释放
 
 - `ErrorCode Acquire(Handle& handle)`
 - `void Handle::Reset()`
+- `void ConstHandle::Reset()`
 
 行为要点：
 
-- 成功时返回 `ErrorCode::OK`；
-- 无空闲槽位时返回底层队列的弹出失败结果，当前常见表现为 `ErrorCode::EMPTY`；
-- `Handle` 析构时会自动归还槽位，不必手工把索引放回队列；
+- 成功时返回 `ErrorCode::OK`，没有空闲槽位时返回 `ErrorCode::EMPTY`，不等待；
 - `Acquire()` 要求传入的 `handle` 未持有槽位（Debug 构建下断言）；
-- 对象池析构前所有 `Handle` 必须已归还（Debug 构建下断言 `EmptySize() == Size()`），因此 pool 须比 handle 后析构。
+- 池析构前所有句柄必须已释放（Debug 构建下断言 `EmptySize() == Size()`）。
 
 ### 3.2 容量查询
 
-- `size_t EmptySize() const`：当前仍可获取的空闲槽位数
-- `size_t Size() const`：对象池总槽位数
+- `size_t EmptySize() const`：当前的空闲槽位数，有并发申请或释放时为近似值，只用于监控；
+- `size_t Size() const`：槽位总数。
 
 ### 3.3 非所有权访问
 
@@ -106,40 +82,13 @@ LibXR::BasicObjectPool<Data, FreeQueue>
 
 这两个接口会绕过 `Acquire()` / `Handle` 的所有权语义，只适合调试、检查外部存储区，或调用方明确知道槽位状态的场景。
 
----
+### 3.4 引用计数上限
 
-## 4. 三个常用别名
-
-### 4.1 `ObjectPool`
-
-```cpp
-template <typename Data, typename IndexType = uint32_t>
-using ObjectPool = BasicObjectPool<Data, Queue<IndexType>>;
-```
-
-适合普通线程上下文中、对锁自由度没有额外要求的通用对象池场景。
-
-### 4.2 `SPSCObjectPool`
-
-```cpp
-template <typename Data, typename IndexType = uint32_t>
-using SPSCObjectPool = BasicObjectPool<Data, SPSCQueue<IndexType>>;
-```
-
-适合明确是单生产者 / 单消费者的空闲槽位管理路径。
-
-### 4.3 `MPMCObjectPool`
-
-```cpp
-template <typename Data, typename IndexType = uint32_t>
-using MPMCObjectPool = BasicObjectPool<Data, MPMCQueue<IndexType>>;
-```
-
-适合多生产者 / 多消费者并发获取与归还槽位的场景。
+每个槽位的引用数不得超过 `UINT32_MAX`。
 
 ---
 
-## 5. 使用示例
+## 4. 使用示例
 
 ```cpp
 #include <libxr.hpp>
@@ -152,17 +101,27 @@ struct Packet
 
 LibXR::ObjectPool<Packet> pool(16);
 
-LibXR::ObjectPool<Packet>::Handle handle;
-if (pool.Acquire(handle) == LibXR::ErrorCode::OK)
+LibXR::ObjectPool<Packet>::Handle writer;
+if (pool.Acquire(writer) == LibXR::ErrorCode::OK)
 {
-  handle->id = 42;
-  (*handle).payload[0] = 0xAA;
+  writer->id = 42;
+  (*writer).payload[0] = 0xAA;
+
+  // 写完数据后移动为只读句柄分发，writer 变空
+  LibXR::ObjectPool<Packet>::ConstHandle frame = std::move(writer);
+  LibXR::ObjectPool<Packet>::ConstHandle copy = frame;
 }
-// handle 离开作用域后自动归还槽位
+// frame 与 copy 离开作用域后释放引用，最后一个引用归还槽位
 ```
 
-如果需要提前归还：
+引用可以提前释放：`Handle::Reset()` 直接归还槽位，`ConstHandle::Reset()` 减少一次引用。
 
 ```cpp
-handle.Reset();
+frame.Reset();
 ```
+
+---
+
+## 5. 典型场景
+
+采集与处理分离：采集端（一个中断或一个线程）用 `Acquire()` 取得槽位并写入一帧数据，再把只读句柄交给处理线程。处理线程可以把同一份数据再分发给多个下游，最后一个引用释放时槽位自动回到空闲栈。空闲槽位用完时 `Acquire()` 返回 `ErrorCode::EMPTY`，采集端不等待，槽位总数即同时在途的帧数上限。

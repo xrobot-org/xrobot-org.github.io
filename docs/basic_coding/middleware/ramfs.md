@@ -35,9 +35,12 @@ sidebar_position: 6
 通过 `CreateFile()` 创建：
 
 - `CreateFile(name, data)`：`data` 为 `const` 对象时创建只读文件，否则创建可读写文件；
-- `CreateFile(name, exec, arg)` 或 `CreateCommand(name, exec, arg)`：创建可执行文件，`Run(argc, argv)` 调用 `exec(arg, argc, argv)`。
+- `CreateFile(name, exec, arg)` 或 `CreateCommand(name, exec, arg)`：创建可执行文件，`Run(argc, argv)` 调用 `exec(arg, argc, argv)`；
+- `CreateCommand(name, exec)`：创建不需要执行上下文的可执行文件，`exec` 直接接收 `argc` 和 `argv`。
 
 `IsReadOnly()`、`IsReadWrite()`、`IsExecutable()` 返回文件种类。
+
+`Add()` 只接受左值：RamFS 只保存节点地址，节点须在整个运行期内有效，传入 `CreateCommand()` 返回的临时对象会留下悬空指针。
 
 ### Dir
 
@@ -58,18 +61,16 @@ sidebar_position: 6
 ```cpp
 RamFS fs;
 
-int counter = 0;
+static int counter = 0;
 
-// 创建可执行文件（每次调用将计数器 +1）
-auto exec_file = RamFS::CreateFile<int*>(
-  "runme",
-  [](int* arg, int argc, char** argv) {
+// 创建不需要执行上下文的可执行文件（每次调用将计数器 +1）
+auto exec_file = RamFS::CreateCommand("runme",
+  [](int argc, char** argv) {
     UNUSED(argc);
     UNUSED(argv);
-    (*arg)++;
+    counter++;
     return 0;
-  },
-  &counter
+  }
 );
 
 // 创建读写文件
@@ -108,6 +109,7 @@ for (int i = 1; i <= 5; ++i) {
 | `FindDir(name)` | 查找目录 |
 | `FindCustom(name)` | 查找自定义节点 |
 | `CreateCommand(name, exec, arg)` | 创建可执行文件，与 `CreateFile(name, exec, arg)` 相同 |
+| `CreateCommand(name, exec)` | 创建不需要执行上下文的可执行文件 |
 | `bin_` | 构造时创建并挂在根目录下的 `bin` 目录 |
 
 ### File 接口

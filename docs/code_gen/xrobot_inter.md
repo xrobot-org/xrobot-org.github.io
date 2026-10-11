@@ -1,7 +1,7 @@
 ---
 id: code-gen-xrobot-inter
 title: 与XRobot集成
-sidebar_position: 2
+sidebar_position: 5
 ---
 
 # 与XRobot集成
@@ -90,10 +90,10 @@ extern "C" void app_main(void)
 
 ## 生成器版本
 
-`User/libxr_config.yaml` 顶层的 `generator:` 固定代码生成器的版本（发布版本号或 40 位 commit），BSP CI 据此安装生成器。生成器新建这个文件时，在第一行写入已安装的版本，例如 `generator: 6.0.0`；重新生成时保留该键和文件中的注释。已有的文件没有这个键时，`libxr gen` 给出警告，生成照常进行：
+`User/libxr_config.yaml` 顶层的 `generator:` 固定代码生成器的版本（发布版本号或 40 位 commit），BSP CI 据此安装生成器。生成器新建这个文件时，在第一行写入已安装的版本，例如 `generator: 6.0.1`；重新生成时保留该键和文件中的注释。已有的文件没有这个键时，`libxr gen` 给出警告，生成照常进行：
 
 ```text
-[警告] libxr_config.yaml 没有固定 generator 的版本；请添加 `generator: 6.0.0`（BSP 的 CI 安装固定的版本）
+[警告] libxr_config.yaml 没有固定 generator 的版本；请添加 `generator: 6.0.1`（BSP 的 CI 安装固定的版本）
 ```
 
 ## 生成之后

@@ -12,7 +12,7 @@ sidebar_position: 6
 
 ## 模块 CI
 
-模块仓库调用共享工作流 `xrobot-org/XRobot/.github/workflows/module-ci.yml`。官方模块的 `.github/workflows/build.yml`（`dev` 与 `master` 相同），XRobot 和 LibXR 使用默认的 `master`：
+模块仓库调用共享工作流 `xrobot-org/XRobot/.github/workflows/module-ci.yml`。官方模块的 `.github/workflows/build.yml`（`dev` 与 `master` 相同）不传 ref 输入，XRobot、LibXR 和依赖按事件的默认上下文构建：
 
 ```yaml
 name: Module CI
@@ -31,11 +31,14 @@ jobs:
 
 `xrobot check-module` 像 `xrobot setup` 一样解析模块，会更新 `xrobot.lock` 和 `Modules/`；`-o FILE` 指定输出文件（默认 `module_check.cpp`），`--template-arg` 给出类模板的模板实参（每个写一次），`--offline` 只使用 `Modules/` 中已有的模块。
 
+`xrobot-ref`、`libxr-ref`、`dependency-ref` 默认为空，此时按事件决定上下文：PR 用目标分支；推送功能分支用同名分支，对方仓库没有同名分支时退回 `dev`；推送 `dev`/`master` 用 `dev`/`master`；tag 推送用 `master`；手动触发和定时用当前分支。PR 用目标分支而不是源分支：同名分支是还没有合并的代码，下游 PR 基于它通过不代表上游合并后可用；上游合并后手动重跑下游 PR，即可按合并后的代码重新构建。填入其中任何一个输入时覆盖按事件决定的值。
+
 | 输入 | 默认值 | 含义 |
 | --- | --- | --- |
-| `xrobot-ref` | `master` | 使用的 XRobot 版本 |
-| `libxr-ref` | `master` | 使用的 LibXR 版本 |
-| `dependency-ref` | `refs/heads/master` | 依赖 `same-or-dev` 的上下文 |
+| `xrobot-ref` | 空 | XRobot 的分支、tag 或提交；空时按事件决定（见上文） |
+| `libxr-ref` | 空 | LibXR 的分支、tag 或提交；空时按事件决定（见上文） |
+| `dependency-ref` | 空 | `same-or-dev` 依赖的上下文（`refs/heads/...` 或 `refs/tags/...`）；空时为事件分支的 `refs/heads/` |
+| `build-type` | `RelWithDebInfo` | CMake 构建类型，见下文 |
 | `template-args` | `'[]'` | 类模板的模板实参（JSON 列表） |
 | `sources` | 空 | 另外使用的 index URL，每行一个；与官方 index 列出同一个包时以官方为准 |
 | `image` | `ghcr.io/xrobot-org/docker-image-linux:main` | 构建容器 |
@@ -43,6 +46,8 @@ jobs:
 | `cmake-options` | 空 | 额外的 CMake 配置参数 |
 | `ctest-regex` | 空 | 非空时构建测试并运行匹配的 CTest |
 | `ctest-timeout` | `15` | 每个 CTest 测试的超时（秒） |
+
+`build-type` 的默认值 `RelWithDebInfo` 通常自带 `-DNDEBUG`，会关闭 `assert()`；工作流把该构建类型的编译选项设为 `-O2 -g`，让标准 `assert()` 和 `eigen_assert` 生效，并定义 `LIBXR_DEBUG_BUILD` 打开 LibXR 的调试构建（见 [LibXR 的构建配置](../basic_coding/cmake.md)）。填其他值时原样使用。`cmake-options` 追加在最后，可以覆盖前面的参数。
 
 ---
 

@@ -1537,5 +1537,169 @@
   },
   "home.route.port.more3": {
     "message": "About Performance"
+  },
+  "appearance.colorModeToggle": {
+    "message": "Toggle color mode",
+    "description": "The aria-label of the light/dark mode toggle button"
+  },
+  "appearance.scrollProgress.aria": {
+    "message": "Page scroll progress {n}%",
+    "description": "The aria-label of the reading progress circle; {n} is the percentage"
+  },
+  "home.hero.tags": {
+    "message": "Contact us"
+  },
+  "home.hero.tag.bilibili": {
+    "message": "Bilibili"
+  },
+  "home.hero.tag.github": {
+    "message": "GitHub"
+  },
+  "home.hero.tag.email": {
+    "message": "Email, click to copy"
+  },
+  "home.hero.tag.emailName": {
+    "message": "Email"
+  },
+  "home.hero.tag.copied": {
+    "message": "Copied ✓"
+  },
+  "qq.title": {
+    "message": "Join the community"
+  },
+  "qq.description": {
+    "message": "Join the XRobot QQ group: scan the QR code, search the group ID or join in one click, plus links to all organization repositories and docs."
+  },
+  "qq.lead": {
+    "message": "QQ group of the XRobot organization (Qingdao University embedded-software open source) and its derived projects. Questions about using them can be raised directly in the group."
+  },
+  "qq.groupCard": {
+    "message": "Group QR code"
+  },
+  "qq.groupName": {
+    "message": "XRobot Group"
+  },
+  "qq.qrAlt": {
+    "message": "QR code of the XRobot QQ group"
+  },
+  "qq.groupNumber": {
+    "message": "Group ID"
+  },
+  "qq.copy": {
+    "message": "Copy"
+  },
+  "qq.copied": {
+    "message": "Copied ✓"
+  },
+  "qq.join": {
+    "message": "Join via QQ"
+  },
+  "qq.hint": {
+    "message": "Scan the QR code with QQ on your phone, or search the group ID in QQ."
+  },
+  "qq.repos": {
+    "message": "Organization & projects"
+  },
+  "qq.repo.github": {
+    "message": "GitHub"
+  },
+  "qq.repo.gitee": {
+    "message": "Gitee"
+  },
+  "qq.repo.docs": {
+    "message": "Docs"
+  },
+  "appearance.backToTop": {
+    "message": "Back to top",
+    "description": "The aria-label and hover label of the back-to-top floating button"
+  },
+  "appearance.codeFold.expand": {
+    "message": "Show more",
+    "description": "Button label to expand a collapsed long code block"
+  },
+  "appearance.codeFold.collapse": {
+    "message": "Show less",
+    "description": "Button label to collapse a long code block again"
+  },
+  "appearance.codeFold.expanded": {
+    "message": "Code block expanded",
+    "description": "Screen-reader announcement after a code block is expanded"
+  },
+  "appearance.codeFold.collapsed": {
+    "message": "Code block collapsed",
+    "description": "Screen-reader announcement after a code block is collapsed"
+  },
+  "home.hero.tag.docs": {
+    "message": "Docs"
+  },
+  "home.hero.tag.qq": {
+    "message": "QQ Group"
+  },
+  "theme.colorToggle.ariaLabel.mode.system": {
+    "message": "system mode",
+    "description": "The name for the system color mode"
+  },
+  "theme.docs.DocCard.categoryDescription.plurals": {
+    "message": "1 item|{count} items",
+    "description": "The default description for a category card in the generated index about how many items this category includes"
+  },
+  "theme.admonition.warning": {
+    "message": "warning",
+    "description": "The default label used for the Warning admonition (:::warning)"
+  },
+  "theme.DocSidebarItem.expandCategoryAriaLabel": {
+    "message": "Expand sidebar category '{label}'",
+    "description": "The ARIA label to expand the sidebar category"
+  },
+  "theme.DocSidebarItem.collapseCategoryAriaLabel": {
+    "message": "Collapse sidebar category '{label}'",
+    "description": "The ARIA label to collapse the sidebar category"
+  },
+  "theme.IconExternalLink.ariaLabel": {
+    "message": "(opens in new tab)",
+    "description": "The ARIA label for the external link icon"
+  },
+  "theme.navbar.mobileDropdown.collapseButton.expandAriaLabel": {
+    "message": "Expand the dropdown",
+    "description": "The ARIA label of the button to expand the mobile dropdown navbar item"
+  },
+  "theme.navbar.mobileDropdown.collapseButton.collapseAriaLabel": {
+    "message": "Collapse the dropdown",
+    "description": "The ARIA label of the button to collapse the mobile dropdown navbar item"
+  },
+  "theme.blog.author.pageTitle": {
+    "message": "{authorName} - {nPosts}",
+    "description": "The title of the page for a blog author"
+  },
+  "theme.blog.authorsList.pageTitle": {
+    "message": "Authors",
+    "description": "The title of the authors page"
+  },
+  "theme.blog.authorsList.viewAll": {
+    "message": "View all authors",
+    "description": "The label of the link targeting the blog authors page"
+  },
+  "theme.blog.author.noPosts": {
+    "message": "This author has not written any posts yet.",
+    "description": "The text for authors with 0 blog post"
+  },
+  "theme.contentVisibility.unlistedBanner.title": {
+    "message": "Unlisted page",
+    "description": "The unlisted content banner title"
+  },
+  "theme.contentVisibility.unlistedBanner.message": {
+    "message": "This page is unlisted. Search engines will not index it, and only users having a direct link can access it.",
+    "description": "The unlisted content banner message"
+  },
+  "theme.contentVisibility.draftBanner.title": {
+    "message": "Draft page",
+    "description": "The draft content banner title"
+  },
+  "theme.contentVisibility.draftBanner.message": {
+    "message": "This page is a draft. It will only be visible in dev and be excluded from the production build.",
+    "description": "The draft content banner message"
+  },
+  "qq.copyFailed": {
+    "message": "Copy failed"
   }
 }

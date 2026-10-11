@@ -2,5 +2,97 @@
   "version.label": {
     "message": "Next",
     "description": "The label for version current"
+  },
+  "sidebar.docs.category.Environment Setup": {
+    "message": "Environment Setup",
+    "description": "The label for category 'Environment Setup' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Basic Programming (LibXR)": {
+    "message": "Basic Programming (LibXR)",
+    "description": "The label for category 'Basic Programming (LibXR)' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Core API": {
+    "message": "Core API",
+    "description": "The label for category 'Core API' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Data Structures": {
+    "message": "Data Structures",
+    "description": "The label for category 'Data Structures' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Middleware": {
+    "message": "Middleware",
+    "description": "The label for category 'Middleware' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.消息系统": {
+    "message": "Message System",
+    "description": "The label for category '消息系统' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Operating System": {
+    "message": "Operating System",
+    "description": "The label for category 'Operating System' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Device Drivers": {
+    "message": "Device Drivers",
+    "description": "The label for category 'Device Drivers' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Utilities and Math": {
+    "message": "Utilities and Math",
+    "description": "The label for category 'Utilities and Math' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Code Generation": {
+    "message": "Code Generation",
+    "description": "The label for category 'Code Generation' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.STM32 Code Generation": {
+    "message": "STM32 Code Generation",
+    "description": "The label for category 'STM32 Code Generation' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Project Management (XRobot)": {
+    "message": "Project Management (XRobot)",
+    "description": "The label for category 'Project Management (XRobot)' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Debug Interfaces": {
+    "message": "Debug Interfaces",
+    "description": "The label for category 'Debug Interfaces' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.SWD Debug Interface": {
+    "message": "SWD Debug Interface",
+    "description": "The label for category 'SWD Debug Interface' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.XRUSB Stack": {
+    "message": "XRUSB Stack",
+    "description": "The label for category 'XRUSB Stack' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Platform-Specific Implementations": {
+    "message": "Platform-Specific Implementations",
+    "description": "The label for category 'Platform-Specific Implementations' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Device Stack": {
+    "message": "Device Stack",
+    "description": "The label for category 'Device Stack' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Advanced Programming": {
+    "message": "Advanced Programming",
+    "description": "The label for category 'Advanced Programming' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Core Mechanisms": {
+    "message": "Core Mechanisms",
+    "description": "The label for category 'Core Mechanisms' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Middleware Internals": {
+    "message": "Middleware Internals",
+    "description": "The label for category 'Middleware Internals' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Driver Development": {
+    "message": "Driver Development",
+    "description": "The label for category 'Driver Development' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.About Performance": {
+    "message": "About Performance",
+    "description": "The label for category 'About Performance' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Contribution Guide": {
+    "message": "Contribution Guide",
+    "description": "The label for category 'Contribution Guide' in sidebar 'docs'"
   }
 }

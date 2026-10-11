@@ -15,7 +15,8 @@ Over the years, XRobot has evolved from a Keil MDK-based MCU codebase for a comb
 This list is maintained by hand and does not include bot accounts.
 
 - <img src="https://github.com/Jiu-xiao.png?size=48" width="24" height="24" style={{borderRadius: '50%', verticalAlign: 'middle'}} alt="@Jiu-xiao avatar" /> [@Jiu-xiao](https://github.com/Jiu-xiao) - framework designer, `STM32 / CH32 / Linux` drivers
-- <img src="https://github.com/molqzone.png?size=48" width="24" height="24" style={{borderRadius: '50%', verticalAlign: 'middle'}} alt="@molqzone avatar" /> [@molqzone](https://github.com/molqzone) - `MSPM0`, `DAPLink`
+- <img src="https://github.com/molqzone.png?size=48" width="24" height="24" style={{borderRadius: '50%', verticalAlign: 'middle'}} alt="@molqzone avatar" /> [@molqzone](https://github.com/molqzone) - `DAPLink`
+- <img src="https://github.com/xiaoshuaijie.png?size=48" width="24" height="24" style={{borderRadius: '50%', verticalAlign: 'middle'}} alt="@xiaoshuaijie avatar" /> [@xiaoshuaijie](https://github.com/xiaoshuaijie) - website UI, `MSPM0`
 - <img src="https://github.com/CaFeZn.png?size=48" width="24" height="24" style={{borderRadius: '50%', verticalAlign: 'middle'}} alt="@CaFeZn avatar" /> [@CaFeZn](https://github.com/CaFeZn) - `HPM` series
 - <img src="https://github.com/llLeo306.png?size=48" width="24" height="24" style={{borderRadius: '50%', verticalAlign: 'middle'}} alt="@llLeo306 avatar" /> [@llLeo306](https://github.com/llLeo306) - control and real-time systems
 

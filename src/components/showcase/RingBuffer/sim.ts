@@ -639,7 +639,7 @@ export class Sim {
   // an interrupt request: NVIC keeps one pending bit per line (a second request before the handler runs is merged)
   irq(line: string, src: string, prio: number, genFn: () => Gen<any>): Ctx {
     const pend = this.isrQ.find((c) => c.line === line && !c.started);
-    if (pend) { if (!(pend.src || '').split('+').includes(src)) { pend.src += '+' + src; pend.label = pend.src; } return pend; }
+    if (pend) { if (!(pend.src || '').split('+').includes(src)) { pend.src += '+' + src; pend.label = pend.src ?? ''; } return pend; }
     const c = this.spawn(src, 'isr', prio, genFn(), { row: 1, src });
     c.line = line; c.seq = this.heap.seq++; c.pendT = this.t; c.started = false;
     return c;

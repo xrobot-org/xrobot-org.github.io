@@ -39,6 +39,80 @@
   }
 }
 
+/* slogan + contact tags under the hero wordmark: a row of separate square tags,
+ * each filled with its own colour (--tag-color / --tag-ink, set in index.tsx) */
+.heroTagZone {
+  margin: 0 0 var(--space-8) auto;
+  text-align: right;
+}
+
+.heroSlogan {
+  margin: 0 0 var(--space-3);
+  font: 700 12px/16px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.heroTags {
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.heroTag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  width: 64px;
+  height: 56px;
+  margin: 0;
+  padding: 0;
+  border: var(--stroke) solid var(--line-strong);
+  border-radius: 0;
+  color: var(--tag-ink, var(--ink));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  background: var(--tag-color, var(--paper-raised));
+  cursor: pointer;
+  transition: background-color var(--duration-fast) linear, color var(--duration-fast) linear;
+}
+
+.heroTagIcon {
+  display: flex;
+}
+
+.heroTagIcon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.heroTagName {
+  white-space: nowrap;
+}
+
+.heroTag:hover,
+.heroTag:focus-visible {
+  color: var(--on-ink);
+  text-decoration: none;
+  background: var(--ink);
+}
+
+.heroTag:focus-visible {
+  outline: var(--stroke-strong) solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 996px) {
+  .heroTagZone {
+    display: none;
+  }
+}
+
 .heroCopy {
   min-width: 0;
 }
