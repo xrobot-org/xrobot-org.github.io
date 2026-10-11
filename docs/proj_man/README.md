@@ -12,7 +12,7 @@ XRobot 是配合 LibXR 使用的模块管理工具。它负责拉取模块、把
 
 ## 安装
 
-pip 包 `xrobot` 的安装方法见[环境配置](../env_setup/README.md#安装)。BSP 使用的版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段中，安装时应与之一致，例如 `pipx install xrobot==1.0.0`。VS Code 扩展 `XRobot.xrobot` 显示 `xrobot describe` 的结果，所有修改都通过 `xrobot` 命令完成，见 [VS Code 扩展](../env_setup/README.md#vs-code-扩展)。
+pip 包 `xrobot` 的安装方法见[环境配置](../env_setup/README.md#安装)。BSP 使用的版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段中，安装时应与之一致，例如 `pipx install xrobot==1.0.1`。VS Code 扩展 `XRobot.xrobot` 显示 `xrobot describe` 的结果，所有修改都通过 `xrobot` 命令完成，见 [VS Code 扩展](../env_setup/README.md#vs-code-扩展)。
 
 ---
 

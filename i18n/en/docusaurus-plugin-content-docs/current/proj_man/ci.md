@@ -12,7 +12,7 @@ The CI of Module repositories and STM32 BSPs calls shared workflows of the XRobo
 
 ## Module CI
 
-Module repositories call the shared workflow `xrobot-org/XRobot/.github/workflows/module-ci.yml`. The `.github/workflows/build.yml` of official Modules (the same on `dev` and `master`), which use the default `master` of XRobot and LibXR:
+Module repositories call the shared workflow `xrobot-org/XRobot/.github/workflows/module-ci.yml`. The `.github/workflows/build.yml` of official Modules (the same on `dev` and `master`) passes no ref inputs; XRobot, LibXR and the dependencies build against the default context of the event:
 
 ```yaml
 name: Module CI
@@ -31,11 +31,14 @@ In a Linux container the workflow resolves the Module's dependencies, runs `xrob
 
 `xrobot check-module` resolves Modules as `xrobot setup` does and updates `xrobot.lock` and `Modules/`; `-o FILE` names the output file (default `module_check.cpp`), `--template-arg` gives one template argument of a class template (once per argument), and `--offline` uses only the Modules already in `Modules/`.
 
+`xrobot-ref`, `libxr-ref` and `dependency-ref` default to empty, in which case the event chooses the context: a pull request builds against its target branch; a push to a feature branch uses the branch of the same name, falling back to `dev` when the other repository has no branch of that name; a push to `dev`/`master` uses `dev`/`master`; a tag push uses `master`; a manual run and a schedule use the current branch. A pull request uses its target branch rather than its source branch: a branch of the same name holds unmerged code, and a downstream PR passing against it does not mean the dependency works once the upstream is merged; after the upstream merges, re-running the downstream PR manually rebuilds against the merged code. Filling in any of the three inputs overrides the value the event would choose.
+
 | Input | Default | Meaning |
 | --- | --- | --- |
-| `xrobot-ref` | `master` | XRobot version used |
-| `libxr-ref` | `master` | LibXR version used |
-| `dependency-ref` | `refs/heads/master` | Context for `same-or-dev` dependencies |
+| `xrobot-ref` | empty | XRobot branch, tag or commit; empty follows the event (see above) |
+| `libxr-ref` | empty | LibXR branch, tag or commit; empty follows the event (see above) |
+| `dependency-ref` | empty | Context for `same-or-dev` dependencies (`refs/heads/...` or `refs/tags/...`); empty is `refs/heads/` of the event branch |
+| `build-type` | `RelWithDebInfo` | CMake build type, see below |
 | `template-args` | `'[]'` | Template arguments for a class template (JSON list) |
 | `sources` | empty | Further index URLs, one per line; the official indexes win when both list a package |
 | `image` | `ghcr.io/xrobot-org/docker-image-linux:main` | Build container |
@@ -43,6 +46,8 @@ In a Linux container the workflow resolves the Module's dependencies, runs `xrob
 | `cmake-options` | empty | Extra CMake configure options |
 | `ctest-regex` | empty | When set, build tests and run the matching CTest tests |
 | `ctest-timeout` | `15` | Per-test CTest timeout in seconds |
+
+With the default `RelWithDebInfo`, the workflow sets the compile options of this build type to `-O2 -g`: `RelWithDebInfo` normally implies `-DNDEBUG`, which turns `assert()` off, so the standard `assert()` and `eigen_assert` stay active, and `LIBXR_DEBUG_BUILD` is defined to turn on the LibXR debug build (see [the build configuration of LibXR](../basic_coding/cmake.md)). Any other value is used as it is. `cmake-options` are appended last and can override the options before them.
 
 ---
 

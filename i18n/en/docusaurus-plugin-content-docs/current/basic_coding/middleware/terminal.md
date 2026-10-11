@@ -79,7 +79,7 @@ LibXR::Timer::Start(terminal_task);
 - Input commands are buffered in `input_line_` and parsed/executed on Enter;
 - The only built-in commands are `cd` and `ls`; `ls` prints one line per entry with a type letter and the name: `d` directory, `x` executable, `f` regular file, `?` custom node;
 - Any other input treats the first argument as a RamFS file path: without `/` it is looked up in the current directory only, and a leading `/` resolves from the root; an executable file is run, a missing one prints `Command not found.`, and a non-executable one prints `Not an executable file.`;
-- Commands are usually created with `CreateCommand()` and added to `ramfs.bin_`, then called as `/bin/<name>` from the root, or after `cd bin`;
+- Commands are usually created with `CreateCommand(name, exec)` and added to `ramfs.bin_`, then called as `/bin/<name>` from the root, or after `cd bin`;
 - Supports ANSI-based cursor navigation and command history;
 - Tab completes the path in the first argument.
 

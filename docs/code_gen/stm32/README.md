@@ -213,7 +213,7 @@ FreeRTOS 的接口（Interface）推荐选择 `CMSIS_V2`。STM32Cube FW_H7 V1.13
 
 | 键 | 默认值 | 说明 |
 | --- | --- | --- |
-| `generator` | 新建文件时写入已安装的版本，如 `6.0.0` | 固定代码生成器的版本，见[与XRobot集成](../xrobot_inter.md#生成器版本) |
+| `generator` | 新建文件时写入已安装的版本，如 `6.0.1` | 固定代码生成器的版本，见[与XRobot集成](../xrobot_inter.md#生成器版本) |
 | `terminal_source` | `''` | 作为终端的串口，见[串口与终端](./uart.md) |
 | `software_timer` | `priority: 2`、`stack_depth: 1024` | 软件定时器线程，见[软件定时器](./timer.md) |
 | `SPI` | `tx_buffer_size: 32`、`rx_buffer_size: 32`、`dma_section: ''`；两个方向都开启了 DMA 时另有 `dma_enable_min_size: 3` | 见 [SPI](./spi.md) |

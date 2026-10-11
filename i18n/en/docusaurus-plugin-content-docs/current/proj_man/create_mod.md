@@ -63,7 +63,7 @@ class MySensor
 };
 ```
 
-`xrobot module show <folder, header or Module id>` prints the manifest and constructors; with `owner/Repo` or `Repo` it reads the locked Module of the current BSP.
+`xrobot module show <folder, header or Module id>` prints the manifest and constructors; with `owner/Repo` or `Repo` it reads the locked Module of the current BSP. A YAML error in the manifest names the line and column in the header file.
 
 ---
 

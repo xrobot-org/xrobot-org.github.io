@@ -72,7 +72,7 @@ Names are normalized to lowercase internally. Cross-compiling requires `LIBXR_SY
 | `LIBXR_SHARED_BUILD` | Build a shared library |
 | `LIBXR_OBJECT_BUILD` | Build an object library |
 
-The default library kind is static. Debug builds define `LIBXR_DEBUG_BUILD`; `LIBXR_DEV_ASSERT_BUILD` separately controls `DEV_ASSERT`.
+The default library kind is static. `LIBXR_DEBUG_BUILD` follows the build type by default: when it is not set explicitly, it is recomputed on every configure from the current build type (on for Debug, off otherwise) as a normal variable that is not written to the cache, so switching the build type in an existing build directory takes effect immediately; once set explicitly with `-DLIBXR_DEBUG_BUILD=ON/OFF`, the value becomes a cache entry and is kept on later reconfigures. `LIBXR_DEV_ASSERT_BUILD` separately controls `DEV_ASSERT`.
 
 ## Logging and formatting
 

@@ -6,179 +6,93 @@ sidebar_position: 3.5
 
 # MSPM0 Environment Setup
 
-The current documented baseline uses the GNU Arm Embedded Toolchain with prefix `arm-none-eabi-`. Compatibility with TI Arm Clang has not been verified in this line.
+An MSPM0 project builds on the TI MSPM0 SDK and SysConfig, with CMake, Ninja and the GNU Arm Embedded Toolchain (compiler prefix `arm-none-eabi-`). The BSPs [bsp-mspm0g3507-mini](https://github.com/xrobot-org/bsp-mspm0g3507-mini) and [bsp-mspm0g3519-mini](https://github.com/xrobot-org/bsp-mspm0g3519-mini) are fully buildable projects and serve as the examples on this page; [Code Generation](../code_gen/mspm0/README.md) describes how `libxr mspm0 setup` generates LibXR code in such a project.
 
-If you only need a quick starting point, use the MSPM0 Docker image:
+For a quick start the Docker image `ghcr.io/xrobot-org/docker-image-mspm0:main` is recommended, see [Docker Build](#docker-build) below.
 
-- `ghcr.io/xrobot-org/docker-image-mspm0:main`
+## Base Environment
 
-## CMake Configuration
+A local build installs:
 
-For an external LibXR-based MSPM0 project, the usual shape is:
+* CMake (3.20 or newer) and Ninja
+* `arm-none-eabi-gcc` ([GNU Arm Embedded Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads))
+* [TI MSPM0 SDK](https://www.ti.com/tool/MSPM0-SDK)
+* The [SysConfig](https://www.ti.com/tool/SYSCONFIG) standalone installation, whose `sysconfig_cli` is the command-line entry point
 
-```cmake
-set(LIBXR_SYSTEM None)
-set(LIBXR_DRIVER mspm0)
-set(LIBXR_NO_EIGEN True)
-set(MSPM0_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mspm0-sdk")
+The CMake project finds the SDK and SysConfig through two variables, named after the SDK's `imports.mak`; environment variables and the CMake cache (`-D`) both work:
 
-include("${CMAKE_SOURCE_DIR}/cmake/LibXR.CMake")
+* `MSPM0_SDK_INSTALL_DIR`: the MSPM0 SDK root
+* `SYSCONFIG_TOOL`: the full path of the SysConfig command line, `sysconfig_cli.bat` on Windows and `sysconfig_cli.sh` on Linux
+
+A Windows PowerShell example:
+
+```powershell
+$env:MSPM0_SDK_INSTALL_DIR = "C:\ti\mspm0_sdk_2_11_00_07"
+$env:SYSCONFIG_TOOL = "C:\ti\sysconfig_1.28.1\sysconfig_cli.bat"
 ```
 
-Meaning:
+## Project Layout
 
-- `LIBXR_SYSTEM None`: bare-metal integration
-- `LIBXR_DRIVER mspm0`: enable the LibXR MSPM0 driver directory
-- `MSPM0_SDK_DIR`: points to the TI MSPM0 SDK root
-- `cmake/LibXR.CMake`: wires LibXR and the MSPM0 SDK into the project
-
-Typical responsibility split:
-
-- the root `CMakeLists.txt` owns the final application target, user sources, link options, and post-processing
-- `cmake/LibXR.CMake` owns LibXR platform selection, SDK path checks, SysConfig output checks, and MSPM0-specific dependencies for the `xr` target
-
-## Directory Layout
-
-The template project [MSPM0G3507 LibXR Template](https://github.com/xrobot-org/MSPM0G3507_LibXR_Template) is laid out as follows:
+The BSP directory structure:
 
 ```text
 .
 |-- CMakeLists.txt
 |-- CMakePresets.json
+|-- main.c
+|-- mspm0g3507_minidb48.syscfg
 |-- cmake/
 |   |-- LibXR.CMake
+|   |-- MSPM0SysConfig.cmake
 |   `-- arm-none-eabi-gcc.cmake
-|-- Core/
 |-- User/
-|-- libxr/
-|-- mspm0-sdk/
-|-- scripts/
-|   `-- fetch-mspm0-sdk.sh
-`-- sysconfig/
+|   |-- app_main.cpp
+|   `-- libxr_config.yaml
+|-- Modules/
+`-- libxr/
 ```
 
-Where:
+* `main.c` sits in the project root, calls the SysConfig-generated `SYSCFG_DL_init()` for the clocks, pins and peripherals, and then enters `app_main()`
+* The `.syscfg` file is the SysConfig project, in the project root; it describes the device, clocks, pins and peripherals
+* `cmake/MSPM0SysConfig.cmake` runs the SysConfig command line at the CMake configure step and generates `ti_msp_dl_config.c/.h`, `device.opt`, the linker script and the rest into the build directory; CMake tracks changes to the `.syscfg` and regenerates on the next build
+* `User/` holds the generated `app_main.cpp` and `libxr_config.yaml`
+* `libxr/` is the LibXR submodule
 
-- `libxr/` is the LibXR submodule
-- `mspm0-sdk/` is the TI MSPM0 SDK submodule
-- `User/` holds the application sources (`main.c`, `app_main.cpp`)
-- `Core/` holds the syscalls stubs and the stack-reservation linker script
-- `sysconfig/` holds the SysConfig project and its generated files
-- `scripts/fetch-mspm0-sdk.sh` fetches only the SDK files the build needs
+## CMake Integration
 
-When the SDK is outside the repository, point `MSPM0_SDK_DIR` at it.
+`cmake/LibXR.CMake` brings LibXR into the project with three variables:
 
-## SysConfig Output Requirements
-
-MSPM0 projects typically depend on SysConfig-generated files. CMake is normally responsible only for finding and consuming them, not for invoking SysConfig automatically.
-
-Recommended location:
-
-```text
-sysconfig/
+```cmake
+set(LIBXR_SYSTEM None)
+set(LIBXR_DRIVER mspm0)
+set(LIBXR_NO_EIGEN True)
 ```
 
-CMake usually needs these files to exist:
+`LIBXR_SYSTEM None` is the bare-metal system and `LIBXR_DRIVER mspm0` enables the LibXR `driver/mspm0` driver directory. The link options are those of the SDK example gcc makefiles (`-nostartfiles`, `--specs=nano.specs`, `--specs=nosys.specs`), and `__dso_handle`, `_getpid` and `_kill`, which the C++ runtime then lacks, are provided as weak definitions by the LibXR `driver/mspm0/mspm0_syscalls.c`; a project can define its own.
 
-- `ti_msp*_config.c`
-- `ti_msp*_config.h`
-- `device.opt`
-- one `.lds` linker script, commonly named `device_linker.lds`
+## Build
 
-If the project uses automatic discovery, the root project does not need to hard-code names such as `ti_msp_dl_config.c`; it is enough to keep the generated files under `sysconfig/`.
+`CMakePresets.json` provides the `debug` and `release` presets (Ninja generator, toolchain file `cmake/arm-none-eabi-gcc.cmake`). The BSP uses XRobot Modules, so `xrobot setup` runs once before configuring; it fetches the Modules from `xrobot.lock` and generates `Modules/CMakeLists.txt` (installing xrobot is described in [Environment Setup](./README.md)):
 
-After the `.syscfg` file changes, regenerate these outputs before running CMake again.
-
-## Chip-Specific Items
-
-Even though this page is generic, several items must still track the actual chip or board:
-
-- startup-file path
-- `driverlib.a` location
-- SysConfig target board / target chip
-- compiler macros such as `__MSPM0xxxx__`
-
-Many MSPM0 build issues are ultimately “chip-specific files were not switched consistently.”
-
-## MSPM0 Drivers
-
-`driver/mspm0/CMakeLists.txt` builds these drivers:
-
-- `mspm0_gpio.*`
-- `mspm0_pwm.*`
-- `mspm0_timebase.*`
-- `mspm0_uart.*`
-- `mspm0_spi.*`
-- `mspm0_i2c.*`
-- `mspm0_group1_shared.cpp`
-- `mspm0_atomic_shim.c`
-
-SPI/I2C are already part of the LibXR MSPM0 build, so upper projects do not need to add those sources again. The project still supplies the matching SDK, SysConfig output, and peripheral initialization.
-
-## Toolchain Requirements
-
-Recommended tools:
-
-- `cmake`
-- `ninja`
-- `arm-none-eabi-gcc`
-- `arm-none-eabi-g++`
-- `arm-none-eabi-objcopy`
-
-A typical direct build command on the host looks like this:
-
-```powershell
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=arm-none-eabi-gcc -DCMAKE_CXX_COMPILER=arm-none-eabi-g++ -DCMAKE_ASM_COMPILER=arm-none-eabi-gcc
-cmake --build build
+```bash
+xrobot setup
+cmake --preset debug
+cmake --build --preset debug
 ```
+
+The artifacts land in `build/debug/`: `mspm0_minidb48.elf`, `.hex` and `.bin`.
 
 ## Docker Build
 
-The image `ghcr.io/xrobot-org/docker-image-mspm0:main` provides `arm-none-eabi-gcc`, CMake and Ninja. In the template project:
+The image `ghcr.io/xrobot-org/docker-image-mspm0:main` ships `arm-none-eabi-gcc`, CMake, Ninja, the MSPM0 SDK and SysConfig, with `MSPM0_SDK_INSTALL_DIR` and `SYSCONFIG_TOOL` already set:
 
 ```bash
-git submodule update --init libxr
-sh scripts/fetch-mspm0-sdk.sh
 docker run --rm -v "$PWD:/work" -w /work ghcr.io/xrobot-org/docker-image-mspm0:main \
-  bash -c 'cmake --preset release && cmake --build --preset release'
+  bash -c 'pip install xrobot==1.0.1 && xrobot setup && cmake --preset release && cmake --build --preset release'
 ```
 
-The output is `build/release/ti_mspm0_libxr_dev.elf`, `.hex` and `.bin`.
+## FAQ
 
-## Common Problems
+### CMake configuration reports the MSPM0 SDK or SysConfig missing
 
-### CMake cannot find the MSPM0 SDK
-
-Check whether:
-
-```text
-${MSPM0_SDK_DIR}/source
-```
-
-exists. If it does not, the SDK path is wrong.
-
-### CMake cannot find SysConfig-generated files
-
-Check whether `sysconfig/` already contains:
-
-- `ti_msp*_config.c`
-- `ti_msp*_config.h`
-- `device.opt`
-- `.lds`
-
-If files are missing, SysConfig output has not been generated yet, or the output directory no longer matches the CMake expectation.
-
-### Link warnings such as `_write/_read/_close`
-
-If the project uses:
-
-```text
---specs=nano.specs
---specs=nosys.specs
-```
-
-then warnings about `_write`, `_read`, `_close`, `_isatty`, `_fstat`, and similar symbols are common. As long as the final ELF is produced successfully, bare-metal runtime behavior is usually unaffected.
-
-## Example Project
-
-- [MSPM0G3507 LibXR Template](https://github.com/xrobot-org/MSPM0G3507_LibXR_Template)
+The configure step checks both variables: `MSPM0_SDK_INSTALL_DIR` should contain `.metadata/product.json`, and `SYSCONFIG_TOOL` should point at the `sysconfig_cli` script itself. A failed check ends the configuration with an error that includes the current variable value; fix the variable through the environment or `-D` as the message suggests and configure again.

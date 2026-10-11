@@ -79,7 +79,7 @@ Terminal(RamFS &ramfs,
 - 命令输入被缓存在 `input_line_` 中，按回车自动解析并执行；
 - 内建命令只有 `cd` 和 `ls`；`ls` 每行输出类型字母和名称：`d` 目录、`x` 可执行文件、`f` 普通文件、`?` 自定义节点；
 - 其他输入把第一个参数当作 RamFS 文件路径：不含 `/` 时只在当前目录查找，以 `/` 开头时从根目录解析；找到可执行文件则运行，找不到时输出 `Command not found.`，不是可执行文件时输出 `Not an executable file.`；
-- 命令通常用 `CreateCommand()` 创建后加入 `ramfs.bin_`，在根目录下以 `/bin/<name>` 调用，或先 `cd bin`；
+- 命令通常用 `CreateCommand(name, exec)` 创建后加入 `ramfs.bin_`，在根目录下以 `/bin/<name>` 调用，或先 `cd bin`；
 - 支持 ANSI 上下左右键移动与历史记录查阅；
 - Tab 键补全第一个参数的路径。
 

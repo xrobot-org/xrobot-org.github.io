@@ -63,7 +63,7 @@ class MySensor
 };
 ```
 
-`xrobot module show <目录、头文件或模块 id>` 显示模块的 manifest 和构造函数；给出 `owner/Repo` 或 `Repo` 时读取当前 BSP 中锁定的模块。
+`xrobot module show <目录、头文件或模块 id>` 显示模块的 manifest 和构造函数；给出 `owner/Repo` 或 `Repo` 时读取当前 BSP 中锁定的模块。manifest 的 YAML 写错时，报错给出头文件中的行列号。
 
 ---
 
