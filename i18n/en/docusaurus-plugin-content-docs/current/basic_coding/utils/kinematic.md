@@ -14,8 +14,6 @@ namespace LibXR::Kinematic
 
 It is mainly intended for serial joint structures and covers forward kinematics, target-state propagation, inverse-kinematics solving, inertia distribution, and center-of-mass calculation.
 
-Like [Transform](./transform.md) and [Inertia](./inertia.md), this group is gated by `LIBXR_NO_EIGEN`.
-
 ---
 
 ## 1. Core types

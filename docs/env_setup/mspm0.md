@@ -60,12 +60,11 @@ BSP 的目录结构如下：
 
 ## CMake 集成
 
-`cmake/LibXR.CMake` 用三个变量把 LibXR 接入工程：
+`cmake/LibXR.CMake` 用两个变量把 LibXR 接入工程：
 
 ```cmake
 set(LIBXR_SYSTEM None)
 set(LIBXR_DRIVER mspm0)
-set(LIBXR_NO_EIGEN True)
 ```
 
 `LIBXR_SYSTEM None` 表示裸机系统，`LIBXR_DRIVER mspm0` 启用 LibXR 的 `driver/mspm0` 驱动目录。链接选项与 SDK 例程的 gcc makefile 相同（`-nostartfiles`、`--specs=nano.specs`、`--specs=nosys.specs`），C++ 运行时因此缺少的 `__dso_handle`、`_getpid` 和 `_kill` 由 LibXR 的 `driver/mspm0/mspm0_syscalls.c` 以弱定义提供，工程需要时可以自行定义。

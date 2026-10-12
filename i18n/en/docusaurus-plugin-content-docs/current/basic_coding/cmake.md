@@ -63,7 +63,6 @@ Names are normalized to lowercase internally. Cross-compiling requires `LIBXR_SY
 
 | Option | Purpose |
 | --- | --- |
-| `LIBXR_NO_EIGEN` | Exclude Eigen-dependent geometry and kinematics |
 | `LIBXR_DEFAULT_SCALAR` | Default math scalar, `double` by default |
 | `LIBXR_SINGLE_CORE` | Single-core concurrency alignment policy |
 | `LIBXR_DEV_ASSERT_BUILD` | Enable maintainer assertions; OFF by default |

@@ -11,8 +11,6 @@ sidebar_position: 3
 - `LibXR::Inertia<Scalar>`: rigid-body inertia tensor plus mass
 - `LibXR::CenterOfMass<Scalar>`: center-of-mass position plus mass
 
-Like the types described on the [Transform](./transform.md) page, this group is also gated by `LIBXR_NO_EIGEN`.
-
 ---
 
 ## 1. `Inertia<Scalar>`
@@ -101,4 +99,3 @@ LibXR::CenterOfMass<> cog(rotated, pose);
 
 - For geometry and pose only, `Transform / Quaternion / RotationMatrix` are enough; `Inertia` is needed when mass distribution, center of mass, or inertia conversion matters.
 - `Translate()` and `Rotate()` return new inertia objects, which fits transformation-chain style calculations well.
-- When the build disables Eigen through `LIBXR_NO_EIGEN`, these types are unavailable and should not be part of public module boundaries.

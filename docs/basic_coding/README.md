@@ -10,7 +10,7 @@ sidebar_position: 4
 
 ## 本章前提
 
-各页的示例假定工程已按 [CMake 配置](./cmake.md) 链接 `xr`，并包含 `libxr.hpp`。外设驱动的头文件（如 `uart.hpp`、`gpio.hpp`）和部分工具头文件（如 `pid.hpp`、`cycle_value.hpp`、`serialized_service.hpp`）不在 `libxr.hpp` 中，使用时单独包含。开启 `LIBXR_NO_EIGEN` 时，`transform.hpp`、`kinematic.hpp` 和 `inertia.hpp` 的内容不参与编译。
+各页的示例假定工程已按 [CMake 配置](./cmake.md) 链接 `xr`，并包含 `libxr.hpp`。外设驱动的头文件（如 `uart.hpp`、`gpio.hpp`）和部分工具头文件（如 `pid.hpp`、`cycle_value.hpp`、`serialized_service.hpp`）不在 `libxr.hpp` 中，使用时单独包含。
 
 程序先调用一次 `LibXR::PlatformInit()`，再使用 LibXR 的其他功能，各后端的参数与调用顺序见[平台初始化](./system/README.md#平台初始化)。以下是 Linux 上的最小程序，运行后输出 `Hello, 42`：
 

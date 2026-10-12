@@ -8,7 +8,7 @@ sidebar_position: 6
 
 This section covers the LibXR utility and math types.
 
-`libxr.hpp` exports `Flag`, `Transform`, `Inertia`, and `Kinematic`; `SerializedService`, `PID`, `CycleValue`, `FloatEncoder`, and the CRC classes are included separately through `serialized_service.hpp`, `pid.hpp`, `cycle_value.hpp`, `float_encoder.hpp`, and `crc.hpp`, as shown on each page. `Transform`, `Inertia`, and `Kinematic` are built on Eigen; defining `LIBXR_NO_EIGEN` removes these three from the build.
+`libxr.hpp` exports `Flag`, `Transform`, `Inertia`, and `Kinematic`; `SerializedService`, `PID`, `CycleValue`, `FloatEncoder`, and the CRC classes are included separately through `serialized_service.hpp`, `pid.hpp`, `cycle_value.hpp`, `float_encoder.hpp`, and `crc.hpp`, as shown on each page. `Transform`, `Inertia`, and `Kinematic` are built on Eigen.
 
 ## Contents
 

@@ -61,12 +61,11 @@ The artifacts land in `build/output/`, for example `demo.elf` and `demo.bin`.
 
 ## CMake Integration
 
-`cmake/LibXR.CMake` selects the platform with three variables and adds LibXR as a subproject:
+`cmake/LibXR.CMake` selects the platform with two variables and adds LibXR as a subproject:
 
 ```cmake
 set(LIBXR_SYSTEM None)
 set(LIBXR_DRIVER hpm)
-set(LIBXR_NO_EIGEN True)
 ```
 
 `xr` links `${HPM_SDK_LIB_ITF}`, so LibXR compiles with the same options and include paths as the SDK; the application target `app` and the final ELF target link `xr`. Toolchain detection is handled by `find_package(hpm-sdk)`.

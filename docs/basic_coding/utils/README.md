@@ -8,7 +8,7 @@ sidebar_position: 6
 
 本节汇总 LibXR 的工具和数学类型。
 
-`libxr.hpp` 导出 `Flag`、`Transform`、`Inertia` 和 `Kinematic`；`SerializedService`、`PID`、`CycleValue`、`FloatEncoder` 和 CRC 类按各页面示例分别包含 `serialized_service.hpp`、`pid.hpp`、`cycle_value.hpp`、`float_encoder.hpp` 和 `crc.hpp`。`Transform`、`Inertia`、`Kinematic` 基于 Eigen，定义 `LIBXR_NO_EIGEN` 时这三组类型不参与编译。
+`libxr.hpp` 导出 `Flag`、`Transform`、`Inertia` 和 `Kinematic`；`SerializedService`、`PID`、`CycleValue`、`FloatEncoder` 和 CRC 类按各页面示例分别包含 `serialized_service.hpp`、`pid.hpp`、`cycle_value.hpp`、`float_encoder.hpp` 和 `crc.hpp`。`Transform`、`Inertia`、`Kinematic` 基于 Eigen。
 
 ## 目录
 

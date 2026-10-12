@@ -60,12 +60,11 @@ The BSP directory structure:
 
 ## CMake Integration
 
-`cmake/LibXR.CMake` brings LibXR into the project with three variables:
+`cmake/LibXR.CMake` brings LibXR into the project with two variables:
 
 ```cmake
 set(LIBXR_SYSTEM None)
 set(LIBXR_DRIVER mspm0)
-set(LIBXR_NO_EIGEN True)
 ```
 
 `LIBXR_SYSTEM None` is the bare-metal system and `LIBXR_DRIVER mspm0` enables the LibXR `driver/mspm0` driver directory. The link options are those of the SDK example gcc makefiles (`-nostartfiles`, `--specs=nano.specs`, `--specs=nosys.specs`), and `__dso_handle`, `_getpid` and `_kill`, which the C++ runtime then lacks, are provided as weak definitions by the LibXR `driver/mspm0/mspm0_syscalls.c`; a project can define its own.
