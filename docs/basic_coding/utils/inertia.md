@@ -11,8 +11,6 @@ sidebar_position: 3
 - `LibXR::Inertia<Scalar>`：刚体惯性张量与质量；
 - `LibXR::CenterOfMass<Scalar>`：质心位置与质量。
 
-与 [Transform](./transform.md) 页面中的类型一样，这一组接口也受 `LIBXR_NO_EIGEN` 控制。
-
 ---
 
 ## 1. `Inertia<Scalar>`
@@ -101,4 +99,3 @@ LibXR::CenterOfMass<> cog(rotated, pose);
 
 - 如果只需要“几何姿态”，使用 `Transform / Quaternion / RotationMatrix` 即可；只有在涉及质量分布、质心、惯性换算时才需要 `Inertia`。
 - `Translate()` 和 `Rotate()` 会返回新的惯性对象，适合按坐标系变换链逐步构造结果。
-- 当工程关闭 Eigen（`LIBXR_NO_EIGEN`）时，这些类型不可用，不应作为公共模块边界的一部分。

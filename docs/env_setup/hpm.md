@@ -61,12 +61,11 @@ cmake --build --preset release-flash-xip
 
 ## CMake 集成
 
-`cmake/LibXR.CMake` 用三个变量选择平台，然后把 LibXR 作为子工程加入：
+`cmake/LibXR.CMake` 用两个变量选择平台，然后把 LibXR 作为子工程加入：
 
 ```cmake
 set(LIBXR_SYSTEM None)
 set(LIBXR_DRIVER hpm)
-set(LIBXR_NO_EIGEN True)
 ```
 
 `xr` 链接 `${HPM_SDK_LIB_ITF}`，LibXR 因此使用与 SDK 相同的编译选项和头文件路径；应用目标 `app` 和最终的 ELF 目标链接 `xr`。工具链的探测由 `find_package(hpm-sdk)` 完成。

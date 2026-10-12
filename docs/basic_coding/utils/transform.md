@@ -8,11 +8,6 @@ sidebar_position: 2
 
 `transform.hpp` 提供 LibXR 的几何基础类型，包括位置、方向、欧拉角、旋转矩阵、四元数与刚体变换。
 
-这些类型受 `LIBXR_NO_EIGEN` 控制：
-
-- 未定义 `LIBXR_NO_EIGEN` 时，相关类型可用；
-- 定义 `LIBXR_NO_EIGEN` 时，整个头文件内容不会参与编译。
-
 模板参数默认使用：
 
 ```cpp
@@ -138,4 +133,3 @@ auto t_body_tool = t_body_world + t_world_tool;
 
 - 需要统一姿态表示时，优先在模块边界固定一种主表示，例如内部统一用四元数，对外按需转欧拉角。
 - 如果项目对欧拉角顺序敏感，不要只写 `ToEulerAngle()` / `ToQuaternion()`，应显式写成 `...ZYX()`、`...XYZ()` 等具体接口。
-- 若工程启用了 `LIBXR_NO_EIGEN`，则这些类型不应作为公共接口依赖。

@@ -63,7 +63,6 @@ CMake 内部会把配置名称转换为小写。交叉编译时须设置 `LIBXR_
 
 | 选项 | 作用 |
 | --- | --- |
-| `LIBXR_NO_EIGEN` | 不编译依赖 Eigen 的几何与运动学部分 |
 | `LIBXR_DEFAULT_SCALAR` | 默认数学标量类型，默认 `double` |
 | `LIBXR_SINGLE_CORE` | 单核并发对齐策略 |
 | `LIBXR_DEV_ASSERT_BUILD` | 启用维护者断言，默认关闭 |

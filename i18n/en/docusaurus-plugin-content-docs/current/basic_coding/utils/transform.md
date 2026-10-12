@@ -8,11 +8,6 @@ sidebar_position: 2
 
 `transform.hpp` provides the geometry foundation types in LibXR, including position, direction, Euler angles, rotation matrices, quaternions, and rigid transforms.
 
-These types are gated by `LIBXR_NO_EIGEN`:
-
-- when `LIBXR_NO_EIGEN` is not defined, the types are available
-- when `LIBXR_NO_EIGEN` is defined, the whole header body is excluded from compilation
-
 Their default template parameter comes from:
 
 ```cpp
@@ -138,4 +133,3 @@ auto t_body_tool = t_body_world + t_world_tool;
 
 - For one consistent attitude representation, fix a primary representation at module boundaries, for example quaternions internally and Euler angles only for UI / configuration.
 - If Euler order matters, prefer explicit calls such as `ToEulerAngleZYX()` or `ToQuaternionXYZ()` instead of the default helpers.
-- If the build uses `LIBXR_NO_EIGEN`, these types should not appear in public interfaces.

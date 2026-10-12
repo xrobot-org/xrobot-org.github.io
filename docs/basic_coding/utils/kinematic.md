@@ -14,8 +14,6 @@ namespace LibXR::Kinematic
 
 它主要面向串联关节结构的前向运动学、目标姿态传播、逆运动学求解、惯性分布与质心计算。
 
-与 [Transform](./transform.md) 和 [Inertia](./inertia.md) 一样，这一组接口受 `LIBXR_NO_EIGEN` 控制。
-
 ---
 
 ## 1. 核心类型
