@@ -101,7 +101,7 @@ html.is-theme-transitioning *::after {
 .xr-progress-circle circle {
   fill: none;
   stroke-width: 3.5;
-  stroke-linecap: round;
+  stroke-linecap: butt;
 }
 
 .xr-progress-circle__track {
@@ -147,8 +147,9 @@ html.is-theme-transitioning *::after {
   opacity: 0;
   transform: translateY(0.5rem);
   visibility: hidden;
-  transition: opacity 200ms ease, transform 200ms ease, visibility 200ms,
-    background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+  transition: opacity var(--duration-base) ease-out, transform var(--duration-base) ease-out,
+    visibility var(--duration-base), background-color var(--duration-fast) linear,
+    color var(--duration-fast) linear, border-color var(--duration-fast) linear;
 }
 
 .xr-top-btn--show {
@@ -175,12 +176,12 @@ html.is-theme-transitioning *::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 200ms ease-out, opacity 200ms ease-out;
+  transition: transform var(--duration-base) ease-out, opacity var(--duration-base) ease-out;
 }
 
 .xr-top-btn__label {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: var(--type-label-size);
   font-weight: 700;
   opacity: 0;
   transform: translateY(8px);
@@ -232,22 +233,21 @@ html.is-theme-transitioning *::after {
   opacity: 1;
 }
 
-/* Blockquote: a 3px accent bar (round-cornered) on a sunken panel. */
+/* Blockquote: a 3px ink-muted bar on a sunken panel. */
 .markdown blockquote {
   padding: var(--space-3) var(--space-4);
   background-color: color-mix(in oklch, var(--paper-sunken) 60%, transparent);
   border-left: 3px solid var(--ink-muted);
-  border-radius: 3px;
 }
 
-/* Tables: one outer frame, hairline row rules, no double borders. Infima's
- * block display + overflow:auto stays, so wide tables still scroll inside
- * the rounded frame. */
+/* Tables: one outer frame, hairline row rules, no double borders, tabular
+ * figures so the perf tables line up. Infima's block display + overflow:auto
+ * stays, so wide tables still scroll inside the frame. */
 .markdown table {
   border-collapse: separate;
   border-spacing: 0;
   border: var(--stroke) solid var(--line);
-  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .markdown table :is(th, td) {
@@ -271,7 +271,6 @@ html.is-theme-transitioning *::after {
 .markdown :not(pre) > code {
   background-color: var(--paper-sunken);
   border: var(--stroke) solid var(--line);
-  border-radius: 3px;
   padding: 0.15em 0.4em;
   font-size: 0.875em;
 }
@@ -295,21 +294,15 @@ html[data-theme='dark'] .markdown img[src*='XRobot'] {
   text-decoration-color: var(--ink);
 }
 
-/* hr fades out at both ends (Infima's border:0/height stay in charge). */
+/* hr: a plain hairline (Infima's border:0/height stay in charge). */
 .markdown hr {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--line-strong) 18%,
-    var(--line-strong) 82%,
-    transparent
-  );
+  background: var(--line);
 }
 
-/* Figures get a hairline frame and a small radius (site emoji stay bare). */
+/* Figures get a hairline frame on a raised ground (site emoji stay bare). */
 .markdown img:not(.emoji) {
   border: var(--stroke) solid var(--line);
-  border-radius: 2px;
+  background: var(--paper-raised);
 }
 
 /* Breadcrumbs and the prev/next cards pick up a quiet accent on hover. */
@@ -329,14 +322,14 @@ html[data-theme='dark'] .markdown img[src*='XRobot'] {
 
 /* ==========================================================================
    g2) Current-page indication: sidebar, TOC, breadcrumbs. The active state
-   is marked by a left indicator bar, weight and a tinted background, not by hue.
+   is marked by a left indicator bar, bold weight and a sunken background, not by hue.
    ========================================================================== */
 
 /* Exact current page: sunken background + ink bar on the left edge. */
 .theme-doc-sidebar-container .menu__link--active:not(.menu__link--sublist) {
   position: relative;
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 700;
   background: var(--paper-sunken);
 }
 
@@ -353,19 +346,19 @@ html[data-theme='dark'] .markdown img[src*='XRobot'] {
 /* Category whose section contains the current page: bold ink text. */
 .sidebar .menu__link--sublist.menu__link--active {
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 700;
 }
 
 /* Right TOC: the heading of the section on screen. */
 .table-of-contents .table-of-contents__link--active {
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 700;
 }
 
 /* Breadcrumb tail = current page. */
 .breadcrumbs__item--active .breadcrumbs__link {
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 700;
 }
 
 /* ==========================================================================
@@ -398,8 +391,8 @@ html[data-motion='off'].is-theme-transitioning *::after {
 }
 
 /* ==========================================================================
-   i) Long-code folding (>15 lines): 8 preview lines + fade gradient + a
-   toggle button at the bottom centre.
+   i) Long-code folding (>15 lines): 8 preview lines, cut by a solid band
+   with a hairline on top, and a toggle button centred in the band.
    The React CodeBlock wrapper renders:
      <div class="xr-code-fold [--collapsed]">
        <CodeBlock/> <span class="xr-fold-status"/> <button class="xr-fold-toggle"/>
@@ -421,15 +414,11 @@ html[data-motion='off'].is-theme-transitioning *::after {
   right: 1px;
   bottom: 1px;
   left: 1px;
-  height: 6.5rem;
+  height: 3.5rem;
   content: "";
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--prism-background-color, var(--paper-sunken))
-  );
+  border-top: var(--stroke) solid var(--line);
+  background: var(--prism-background-color, var(--paper-sunken));
   pointer-events: none;
-  transition: opacity 0.3s ease;
 }
 
 .xr-code-fold {
@@ -449,12 +438,13 @@ html[data-motion='off'].is-theme-transitioning *::after {
   border-radius: 0;
   background: var(--paper-raised);
   color: var(--ink);
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1.4;
+  font-size: var(--type-label-size);
+  font-weight: 700;
+  line-height: var(--type-label-line);
   cursor: pointer;
   transform: translateX(-50%);
-  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+  transition: background-color var(--duration-fast) linear, color var(--duration-fast) linear,
+    border-color var(--duration-fast) linear;
 }
 
 .xr-fold-toggle:hover {
@@ -468,7 +458,7 @@ html[data-motion='off'].is-theme-transitioning *::after {
 }
 
 .xr-fold-toggle svg {
-  transition: transform 200ms ease;
+  transition: transform var(--duration-base) ease-out;
 }
 
 /* Expanded: the toggle drops back into normal flow under the block. */
@@ -496,7 +486,6 @@ html[data-motion='off'].is-theme-transitioning *::after {
 }
 
 html[data-motion='off'] .xr-fold-toggle svg,
-html[data-motion='off'] .xr-code-fold--collapsed .theme-code-block::after,
 html[data-motion='off'] .xr-top-btn,
 html[data-motion='off'] .xr-top-btn__icon,
 html[data-motion='off'] .xr-top-btn__label {
