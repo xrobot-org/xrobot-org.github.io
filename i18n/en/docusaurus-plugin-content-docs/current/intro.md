@@ -34,4 +34,16 @@ The debug interfaces, XRUSB, advanced programming, design concepts and performan
 
 [XRobot Onboarding](https://xrobot.work/XRobot-Onboarding/) (Chinese)
 
-![XRobot Logo](/img/XRobot.png)
+import ThemedImage from '@theme/ThemedImage';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+<ThemedImage
+  className="xr-doc-logo"
+  alt="XRobot"
+  width={175}
+  height={64}
+  sources={{
+    light: useBaseUrl('/img/xrobot-wordmark.svg'),
+    dark: useBaseUrl('/img/xrobot-wordmark-paper.svg'),
+  }}
+/>

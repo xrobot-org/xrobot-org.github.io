@@ -275,12 +275,12 @@ html.is-theme-transitioning *::after {
   font-size: 0.875em;
 }
 
-/* Theme-aware images: the intro-page logo PNG is ink-on-transparent, which
- * disappears on the dark card (the md file keeps its plain image syntax; match by filename —
- * Docusaurus rewrites markdown image URLs to hashed /assets/images paths).
- * Inverting in the dark theme turns the ink strokes white (paper variant). */
-html[data-theme='dark'] .markdown img[src*='XRobot'] {
-  filter: invert(1);
+/* The intro-page wordmark (ThemedImage: ink file on light, paper file on dark)
+ * keeps its clear space instead of the figure frame below. */
+.markdown img.xr-doc-logo {
+  margin: var(--space-6) 0;
+  border: 0;
+  background: none;
 }
 
 /* Links: the underline is a half-strength accent, full strength on hover.
@@ -300,7 +300,7 @@ html[data-theme='dark'] .markdown img[src*='XRobot'] {
 }
 
 /* Figures get a hairline frame on a raised ground (site emoji stay bare). */
-.markdown img:not(.emoji) {
+.markdown img:not(.emoji, .xr-doc-logo) {
   border: var(--stroke) solid var(--line);
   background: var(--paper-raised);
 }

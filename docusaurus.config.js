@@ -6,7 +6,7 @@ module.exports = {
   trailingSlash: false,
   onBrokenLinks: 'throw',
   onDuplicateRoutes: 'warn',
-  favicon: 'img/XRobot.png',
+  favicon: 'img/favicon.svg',
 
   organizationName: 'xrobot-org',
   projectName: 'xrobot-org.github.io',
