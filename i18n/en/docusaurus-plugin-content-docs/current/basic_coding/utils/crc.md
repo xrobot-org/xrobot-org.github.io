@@ -14,13 +14,12 @@ sidebar_position: 8
 #include "crc.hpp"
 
 uint8_t packet[5]{1, 2, 3, 4, 0};
-LibXR::CRC8::GenerateTable();
 packet[4] = LibXR::CRC8::Calculate(packet, 4);
 
 bool valid = LibXR::CRC8::Verify(packet, sizeof(packet));
 ```
 
-Tables are also generated lazily on first calculation. If several contexts can race the first use of one CRC class, generate its table during initialization.
+The lookup tables are built at compile time and kept in read-only data. They need no initialization before use, and several threads or interrupts may make the first call at the same time. Each class exposes its table as `tab_`, a `std::array<uintN_t, 256>`.
 
 ## Parameters
 

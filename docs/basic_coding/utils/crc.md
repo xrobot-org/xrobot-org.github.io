@@ -14,13 +14,12 @@ sidebar_position: 8
 #include "crc.hpp"
 
 uint8_t packet[5]{1, 2, 3, 4, 0};
-LibXR::CRC8::GenerateTable();
 packet[4] = LibXR::CRC8::Calculate(packet, 4);
 
 bool valid = LibXR::CRC8::Verify(packet, sizeof(packet));
 ```
 
-查找表也可以在首次计算时生成。多个上下文可能同时首次使用同一 CRC 类时，初始化阶段先调用 `GenerateTable()`。
+查找表在编译期生成，存放在只读数据段，使用前不需要初始化，多个线程或中断同时首次调用也不会互相干扰。查找表可以通过各类的 `tab_` 读取，类型是 `std::array<uintN_t, 256>`。
 
 ## 参数
 
