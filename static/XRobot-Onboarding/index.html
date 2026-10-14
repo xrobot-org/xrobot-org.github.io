@@ -5,6 +5,22 @@
   <meta charset="UTF-8" />
   <title>学习路线引导</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    // Apply the theme before the first paint: the main site's choice ("theme", Docusaurus),
+    // then this page's earlier key, then the system setting. onboarding.js keeps them in sync.
+    (function () {
+      var theme = null;
+      try {
+        var keys = ["theme", "xrobot_onboarding_theme"];
+        for (var i = 0; i < keys.length && !theme; i++) {
+          var v = localStorage.getItem(keys[i]);
+          if (v === "light" || v === "dark") theme = v;
+        }
+      } catch (e) {}
+      if (!theme) theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
   <style>
     :root {
       color-scheme: light;
@@ -397,8 +413,8 @@
   <div id="app-error"></div>
 
   <div class="small-text">
-    ✅ 进度保存在本地浏览器（localStorage），只对当前设备生效。<br />
-    🔁 想重新选择路线，可以点击「返回起点」。
+    进度保存在本地浏览器（localStorage），只对当前设备生效。<br />
+    想重新选择路线，可以点击「返回起点」。
   </div>
   <!-- 新增：markdown 解析库 -->
   <script src="marked.min.js"></script>

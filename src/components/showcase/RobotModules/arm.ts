@@ -4,16 +4,18 @@
  *
  * drawArm() paints through the engine's `g` wrapper onto a canvas; here, as in the exporter (of which makeXR5 / Rec / makeG
  * are a port), a recording canvas collects the fills, strokes and texts, and they become SVG
- * markup with the colours of the current theme (TOKENS in armRig.js, both themes). The static file keeps the
- * same elements at the rest pose with theme variables, so the still frame and the first animated frame match.
+ * markup with the colours of the current theme, read from the page's CSS variables (xrstyle-tokens.css,
+ * xrstyle-materials.css) when each frame is drawn. The static file keeps the same elements at the rest pose with
+ * theme variables, so the still frame and the first animated frame match.
  * Only loaded in the browser (dynamic import from index.tsx); nothing here touches the DOM at module level.
  */
-import { ANCHORS, ARM_K, ARM_KEYS, TOKENS, loadArmBeat } from './armRig.js';
+import { ANCHORS, ARM_K, ARM_KEYS, loadArmBeat } from './armRig.js';
 import type { ArmPose } from './sim';
 
 export { ARM_KEYS };
 
 type Theme = 'light' | 'dark';
+type Tokens = (name: string) => string;
 type Pt = [number, number];
 type Grad = { lg: true; p0: Pt; p1: Pt; stops: Array<[number, string]>; addColorStop?: (u: number, c: string) => void };
 type El =
@@ -28,10 +30,28 @@ const depth = (p: number[]) => p[1] - p[0] + (p[2] || 0);
 const sub = (a: number[], b: number[]) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const f1 = (v: number) => (Math.round(v * 10) / 10).toString();
 
+// ------------------------------------------------------------------ theme colours from the page's CSS variables
+// The drawing shades and mixes its colours (rgb(), shade(), mixc() in armRig.js), so it needs resolved values, not
+// var() references: they are read from <html>, whose data-theme is the theme being drawn. XRobot Style has no accent
+// colour; the beat's `hero` (the active-joint marker, not drawn in the teach motion) is drawn in ink.
+const TOKEN_ALIAS: Record<string, string> = { hero: 'ink' };
+function cssTokens(): Tokens {
+  const style = getComputedStyle(document.documentElement);
+  const memo = new Map<string, string>();
+  return (name) => {
+    let v = memo.get(name);
+    if (v === undefined) {
+      v = style.getPropertyValue('--' + (TOKEN_ALIAS[name] || name)).trim();
+      if (!v) throw new Error('token ' + name);
+      memo.set(name, v);
+    }
+    return v;
+  };
+}
+
 // ------------------------------------------------------------------ XR5 stub: enough engine for the beat to load and draw
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function makeXR5(theme: { v: Theme }): any {
-  const T = () => (TOKENS as Record<Theme, Record<string, string>>)[theme.v];
+function makeXR5(theme: { v: Theme; tok: Tokens }): any {
   const noop = () => {};
   const callable = (): any =>
     new Proxy(function () {}, { get: (_t, k) => (k === Symbol.toPrimitive ? () => 0 : callable()), apply: () => callable() });
@@ -44,8 +64,8 @@ function makeXR5(theme: { v: Theme }): any {
       ease: (t: number) => t * t * (3 - 2 * t),
     },
     iso: { PJ, C, depth, add: (a: number[], b: number[]) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], mul: (a: number[], k: number) => [a[0] * k, a[1] * k, a[2] * k], sub },
-    tok: (n: string) => { const v = T()[n]; if (v === undefined) throw new Error('token ' + n); return v; },
-    mat: (m: string) => [T()['m-' + m], T()['m-' + m + '-l'], T()['m-' + m + '-f']],
+    tok: (n: string) => theme.tok(n),
+    mat: (m: string) => [theme.tok('m-' + m), theme.tok('m-' + m + '-l'), theme.tok('m-' + m + '-f')],
     theme: () => theme.v,
     anchor: (n: string) => { const a = (ANCHORS as Record<string, number[]>)[n]; if (!a) throw new Error('anchor ' + n); return a.slice(); },
     clock: { t: 0, te: 0 }, reduced: () => true,
@@ -188,12 +208,13 @@ function markup(els: El[]): string {
 export type ArmRig = { draw(pose: ArmPose, theme: Theme): string };
 
 export function createArmRig(): ArmRig {
-  const theme = { v: 'light' as Theme };
+  const theme: { v: Theme; tok: Tokens } = { v: 'light', tok: () => { throw new Error('no theme yet'); } };
   const X = loadArmBeat(makeXR5(theme), stubDocument);
   X.resetSim();
   return {
     draw(pose, th) {
       theme.v = th;
+      theme.tok = cssTokens();
       X.SIM.q = pose.q.map((d) => (d * Math.PI) / 180);
       X.SIM.grip = pose.grip;
       const g = makeG(ARM_K);

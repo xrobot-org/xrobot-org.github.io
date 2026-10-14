@@ -1,7 +1,10 @@
 // onboarding.js - profile-aware skill tree onboarding
 
 const CONFIG_URL = "config.json";
-const THEME_STORAGE_KEY = "xrobot_onboarding_theme";
+// Same key as the Docusaurus colour mode on the main site, so both pages keep one theme.
+const THEME_STORAGE_KEY = "theme";
+// Key used by earlier versions of this page; read once as a fallback.
+const LEGACY_THEME_STORAGE_KEY = "xrobot_onboarding_theme";
 const DARK_MODE_MEDIA_QUERY = "(prefers-color-scheme: dark)";
 
 let treeConfig = null;
@@ -139,9 +142,11 @@ function setSanitizedMarkdown(el, markdownText) {
 
 function getStoredThemePreference() {
   try {
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    if (savedTheme === "light" || savedTheme === "dark") {
-      return savedTheme;
+    for (const key of [THEME_STORAGE_KEY, LEGACY_THEME_STORAGE_KEY]) {
+      const savedTheme = localStorage.getItem(key);
+      if (savedTheme === "light" || savedTheme === "dark") {
+        return savedTheme;
+      }
     }
   } catch (e) {
     console.warn("读取主题偏好失败", e);
@@ -540,7 +545,7 @@ function renderChoiceNode(node) {
 
   const left = document.createElement("button");
   left.className = "nav-btn";
-  left.textContent = "🔁 重置选择";
+  left.textContent = "重置选择";
   left.onclick = () => {
     state.history = [];
     state.currentNodeId = treeConfig.root;
@@ -715,12 +720,12 @@ function renderTaskNode(nodeRaw) {
   } else if (node.next) {
     const nextBtn = document.createElement("button");
     nextBtn.className = "nav-btn";
-    nextBtn.textContent = "➡ 继续下一节点";
+    nextBtn.textContent = "继续下一节点";
     nextBtn.onclick = () => goToNode(node.next, true);
     rightBox.appendChild(nextBtn);
   } else {
     const doneText = document.createElement("span");
-    doneText.textContent = "🎉 此路线暂时到达终点";
+    doneText.textContent = "此路线暂时到达终点";
     rightBox.appendChild(doneText);
   }
 
@@ -758,7 +763,7 @@ function render() {
 
   const btnHome = document.createElement("button");
   btnHome.className = "nav-btn";
-  btnHome.textContent = "🏠 返回起点（重新选择路线）";
+  btnHome.textContent = "返回起点（重新选择路线）";
   btnHome.onclick = () => resetToRoot();
   footer.appendChild(btnHome);
 
@@ -767,7 +772,7 @@ function render() {
 
   const btnClear = document.createElement("button");
   btnClear.className = "nav-btn";
-  btnClear.textContent = "🗑 清除本地学习记录";
+  btnClear.textContent = "清除本地学习记录";
   btnClear.onclick = () => {
     if (window.confirm("确定要清除本设备上的所有学习记录吗？此操作不可恢复。")) {
       clearAllData();
