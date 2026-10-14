@@ -242,8 +242,11 @@ html.is-theme-transitioning *::after {
 
 /* Tables: one outer frame, hairline row rules, no double borders, tabular
  * figures so the perf tables line up. Infima's block display + overflow:auto
- * stays, so wide tables still scroll inside the frame. */
+ * stays, so wide tables still scroll inside the frame; fit-content keeps the
+ * frame on the columns instead of the full text width. */
 .markdown table {
+  width: fit-content;
+  max-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   border: var(--stroke) solid var(--line);
