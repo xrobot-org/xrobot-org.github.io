@@ -294,3 +294,24 @@ body {
 .token.function {
   color: var(--ink);
 }
+
+/* ---- Local notes / bookmarks ------------------------------------------- */
+
+/* Desktop TOC column, replacing the stock sticky TOC so the notes panel can
+ * live in the same scroll container below the outline. */
+.xr-doc-toc {
+  max-height: calc(100vh - (var(--ifm-navbar-height) + 2rem));
+  overflow-y: auto;
+  position: sticky;
+  top: calc(var(--ifm-navbar-height) + 1rem);
+}
+
+/* Flash used after jumping to a note (CSS Custom Highlight API). */
+::highlight(note-flash) {
+  background-color: rgba(161, 32, 111, 0.2);
+  background-color: color-mix(in srgb, var(--ch2) 22%, transparent);
+  text-decoration: underline;
+  text-decoration-color: var(--ch2);
+  text-decoration-thickness: var(--stroke-strong);
+  text-underline-offset: 3px;
+}

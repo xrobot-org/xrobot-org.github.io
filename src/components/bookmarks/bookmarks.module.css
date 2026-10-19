@@ -1,0 +1,475 @@
+/* Local bookmarks / notes UI. XRobot Style tokens only (no VitePress vars). */
+
+/* ── Right-hand "notes on this page" panel ─────────────────────────────── */
+
+.notes {
+  margin-top: var(--space-6);
+  padding-top: var(--space-3);
+  border-top: var(--stroke) solid var(--line);
+}
+
+.notesHeading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: var(--type-label-size);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink-muted);
+}
+
+.notesTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.notesCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  border: var(--stroke) solid var(--line-strong);
+  background: var(--paper-sunken);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 0;
+}
+
+.notesAll {
+  margin-left: auto;
+  color: var(--ink-muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.notesAll:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* empty-state guidance */
+.notesHint {
+  border: 1px dashed var(--line-strong);
+  background: var(--paper-sunken);
+  padding: 10px 12px;
+}
+
+.notesHintTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+.notesHintBody {
+  margin: 2px 0 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+/* note rows */
+.notesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notesItem {
+  display: flex;
+  align-items: stretch;
+  transition: background-color var(--duration-fast);
+}
+
+.notesItem:hover {
+  background: var(--paper-sunken);
+}
+
+.notesMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: none;
+  border-left: var(--stroke-strong) solid var(--ink);
+  background: none;
+  padding: 6px 4px 6px 9px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.notesQuote {
+  color: var(--ink-muted);
+  font-size: 12.5px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  transition: color var(--duration-fast);
+}
+
+.notesMain:hover .notesQuote {
+  color: var(--ink);
+}
+
+.notesTime {
+  color: var(--ink-muted);
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.notesRemove {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0 5px;
+  color: var(--ink-muted);
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--duration-fast), color var(--duration-fast);
+}
+
+.notesItem:hover .notesRemove,
+.notesRemove:focus-visible {
+  opacity: 1;
+}
+
+.notesRemove:hover {
+  color: var(--fail);
+}
+
+/* ── Floating "save as note" button ────────────────────────────────────── */
+
+.capture {
+  position: fixed;
+  z-index: 1000;
+  transform: translate(-50%, calc(-100% - 10px));
+  pointer-events: auto;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.18));
+}
+
+.captureBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: var(--stroke) solid var(--ink);
+  border-radius: 0;
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--duration-fast), color var(--duration-fast);
+}
+
+.captureBtn:hover {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.captureDone {
+  display: inline-flex;
+  padding: 6px 14px;
+  border: var(--stroke) solid var(--line-strong);
+  background: var(--paper-raised);
+  color: var(--ink-muted);
+  font-size: 13px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.captureRejected {
+  color: var(--fail);
+  border-color: var(--fail);
+}
+
+/* ── Navbar toggle ─────────────────────────────────────────────────────── */
+
+.navToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 8px;
+  padding: 0 10px;
+  height: 28px;
+  border: var(--stroke) solid var(--line);
+  border-radius: 0;
+  background: var(--paper-sunken);
+  color: var(--ink-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--duration-base), border-color var(--duration-base),
+    background-color var(--duration-base);
+}
+
+.navToggle:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.navToggleActive {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: var(--paper-raised);
+}
+
+.navMark {
+  font-size: 13px;
+  line-height: 1;
+}
+
+@media (max-width: 996px) {
+  .navToggle {
+    margin: 8px 0;
+  }
+}
+
+/* Custom navbar item rendered inside the mobile menu <ul>. */
+.mobileNavToggle {
+  width: 100%;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: var(--font-sans);
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mobileNavToggleActive {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ── Bookmarks page list ───────────────────────────────────────────────── */
+
+.list {
+  max-width: 860px;
+}
+
+.empty {
+  border: 1px dashed var(--line-strong);
+  background: var(--paper-sunken);
+  padding: 18px 20px;
+  color: var(--ink-muted);
+  line-height: 1.9;
+}
+
+.groups {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.group {
+  border: var(--stroke) solid var(--line);
+  background: var(--paper-raised);
+  overflow: hidden;
+}
+
+.groupHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-left: 4px;
+}
+
+.groupTitle {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 12px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.groupStar {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.groupName {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupTitle:hover .groupName {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.groupTime {
+  flex-shrink: 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.unstar {
+  flex-shrink: 0;
+  margin-right: 10px;
+  border: none;
+  background: none;
+  padding: 4px 6px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.unstar:hover {
+  color: var(--fail);
+  background: var(--paper-sunken);
+}
+
+.bmNotes {
+  list-style: none;
+  margin: 0;
+  padding: 6px 12px 10px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px dashed var(--line);
+}
+
+.bmNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.bmNoteQuote {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  padding: 2px 8px;
+  border-left: 3px solid var(--ink);
+  color: var(--ink-muted);
+  font-size: 13.5px;
+  line-height: 1.8;
+  text-decoration: none;
+  transition: color var(--duration-fast), border-left-color var(--duration-fast);
+}
+
+.bmNoteQuote:hover {
+  color: var(--ink);
+  border-left-color: var(--line-strong);
+}
+
+.bmNoteRemove {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--ink-muted);
+  font-size: 16px;
+  line-height: 1.8;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.bmNoteRemove:hover {
+  color: var(--fail);
+}
+
+/* ── export / import ───────────────────────────────────────────────────── */
+
+.backup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  border-top: var(--stroke) solid var(--line);
+  padding-top: 14px;
+}
+
+.backupHint {
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.backupActions {
+  display: inline-flex;
+  gap: 14px;
+}
+
+.textLink {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: var(--stroke);
+  text-underline-offset: 3px;
+}
+
+.textLink:hover {
+  text-decoration-thickness: var(--stroke-strong);
+}
+
+.fileInput {
+  display: none;
+}
+
+.backupNote {
+  flex-basis: 100%;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+@media print {
+  .capture {
+    display: none;
+  }
+
+  .notes,
+  .backup {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .notesHeading {
+    flex-wrap: wrap;
+  }
+
+  .groupHead {
+    align-items: flex-start;
+  }
+
+  .groupTitle {
+    flex-wrap: wrap;
+  }
+}
