@@ -1,6 +1,7 @@
 import React, {type ReactNode} from 'react';
 import OriginalRoot from '@theme-original/Root';
 import ReadingProgress from '@site/src/components/reading/ReadingProgress';
+import BookmarkSystem from '@site/src/components/bookmarks/BookmarkSystem';
 
 /**
  * App-level wrapper (wrapped `@theme/Root`, which Docusaurus core provides as
@@ -15,6 +16,7 @@ export default function Root({children}: {children: ReactNode}): ReactNode {
     <OriginalRoot>
       {children}
       <ReadingProgress />
+      <BookmarkSystem />
     </OriginalRoot>
   );
 }
