@@ -165,6 +165,10 @@ module.exports = {
             {
               label: '未来战队B站频道',
               href: 'https://space.bilibili.com/1309383975',
+            },
+            {
+              label: 'YouTube 频道',
+              href: 'https://www.youtube.com/@xrobot-org',
             }
           ],
         },
