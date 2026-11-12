@@ -55,6 +55,10 @@
     "message": "QDU RM Team Bilibili Channel",
     "description": "The label of footer link with label=未来战队B站频道 linking to https://space.bilibili.com/1309383975"
   },
+  "link.item.label.YouTube 频道": {
+    "message": "YouTube Channel",
+    "description": "The label of footer link with label=YouTube 频道 linking to https://www.youtube.com/@xrobot-org"
+  },
   "link.item.label.邮箱": {
     "message": "Email",
     "description": "The label of footer link with label=邮箱 linking to mailto:Cong.Liu_Xiao@outlook.com"
