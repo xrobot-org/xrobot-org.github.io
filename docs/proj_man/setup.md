@@ -24,7 +24,7 @@ modules:
 
 - `xrobot:` 固定工具版本（发布版本号或 40 位十六进制的提交号）。
 - `modules` 只写直接需要的模块；依赖由各模块头文件中的 manifest 递归给出。
-- 每项是 `owner/Repo[@ref]`，或含 `id`、`ref`、`context_ref` 的映射；`owner/Repo` 必须能在 [源](./src_man.md) 中找到。
+- 每项是 `owner/Repo[@ref]`，或含 `id`、`ref`、`context_ref` 的映射；`owner/Repo` 必须能在 [源](./src_man.md) 中找到。只在本 BSP 中使用的模块以 `path:` 请求，见[本地模块](#本地模块)。
 
 用命令编辑时不会丢失注释：
 
@@ -47,6 +47,80 @@ xrobot module remove owner/Repo
 `same` / `same-or-dev` 跟随 BSP 仓库的当前分支；CI 等分离 HEAD 的检出用 `--context-ref refs/heads/<分支>`（或 `refs/tags/<标签>`）传入逻辑分支。请求中的 `context_ref` 为这一个模块及其依赖指定上下文，例如用 PR 的提交测试一个模块时保留其依赖的分支。显式分支名的请求把它自己的分支作为下一层的上下文；`same`、`same-or-dev`、显式 tag 和提交号沿用最初的上下文，每一层各自查找同名分支、找不到退回 `dev`，中间层退回 `dev` 不改变下一层跟随的分支。同一模块沿两条依赖链解析到不同提交时，报错列出链上缺同名分支、退回 `dev` 的仓库。
 
 BSP 不在 Git 仓库中时没有可跟随的分支：不加 `--update` 时沿用 lock 中的提交；`--update` 会报错，需要用 `--context-ref refs/heads/<分支>` 给出逻辑分支，或给请求写显式的 ref。
+
+---
+
+## 本地模块
+
+只在一个 BSP 中使用的模块可以直接放在 BSP 的目录中，在 `modules.yaml` 中以 `path:` 请求（XRobot 1.0.2 起）。目录结构与普通模块相同：目录名即类名，目录中有同名的主头文件 `<目录名>.hpp`，也可以有自己的 `CMakeLists.txt`。模块 id 为 `local/<目录名>`；`local` 这个 owner 保留给本地模块，源中的包使用它时报错。
+
+```yaml
+xrobot: 1.0.2
+modules:
+  - xrobot-org/BlinkLED@same-or-dev
+  - path: Modules/local/Heartbeat
+```
+
+`path` 相对 BSP 根目录，也可以是绝对路径，推荐的位置是 `Modules/local/<目录名>`。`path` 的最后一段与目录的实际名称一致，包括大小写。路径指向 BSP 根目录、`Modules/` 或包含 BSP 的目录，含有分号或控制字符，或两个本地模块的目录名相同时，`xrobot setup` 报错。
+
+`xrobot module add --path` 写入这样一项，写入前检查目录和主头文件。相对路径先按当前目录查找，不存在时按 BSP 根目录查找，写入时换算成相对 BSP 根目录的路径。删除时写模块 id：
+
+```text
+$ xrobot module add --path Modules/local/Heartbeat
+已添加本地模块 local/Heartbeat（path: Modules/local/Heartbeat）；请运行 `xrobot setup` 更新 xrobot.lock
+$ xrobot module remove local/Heartbeat
+已删除 local/Heartbeat；请运行 `xrobot setup` 更新 xrobot.lock
+```
+
+### 提交与 .gitignore
+
+BSP 目录内的本地模块随 BSP 仓库提交，由 BSP 的提交固定。`xrobot init` 生成的 `.gitignore` 含有 `/Modules/*/`，这条规则也忽略 `Modules/local/`。`xrobot setup` 检查本地模块目录中尚未被 Git 跟踪的源文件、头文件和 CMake 文件，其中有被 `.gitignore` 忽略的文件时报错，并给出需要添加的一行：
+
+```text
+$ xrobot setup
+本地模块 local/Heartbeat（Modules/local/Heartbeat）被 BSP 的 .gitignore 忽略，Modules/local/Heartbeat/Heartbeat.hpp 不会被提交；请在 .gitignore 中忽略它的规则（.gitignore:3:/Modules/*/）之后加一行 `!/Modules/local/`
+```
+
+加上 `!/Modules/local/` 之后，`Modules/local/` 下的本地模块都随 BSP 提交。
+
+本地模块目录中有自己的 `.git` 时，BSP 仓库不跟踪其中的文件，`xrobot setup` 给出警告。BSP 目录之外的本地模块（例如 `../shared/Heartbeat` 或绝对路径）只在本机可用；`xrobot setup` 每次运行时给出警告，`--frozen` 下同样只是警告：
+
+```text
+$ xrobot setup
+警告：本地模块 local/Heartbeat 在 BSP 之外（../shared/Heartbeat）；没有提交固定它，其他检出和 CI 无法复现
+已解析 1 个模块提交和 1 个本地模块
+已检查 1 个配置；已为 User/xrobot.yaml 生成 User/xrobot_main.hpp
+```
+
+### 依赖
+
+本地模块的 manifest 与普通模块的写法相同，`xrobot setup` 直接读取工作区中的主头文件。它请求的模块与 `modules.yaml` 中的请求同等对待：`same`、`same-or-dev` 跟随 BSP 的分支，解析结果写入 lock。依赖另一个本地模块时写它的 id，例如 `local/Base`，被依赖的模块同样在 `modules.yaml` 中以 `path:` 请求。来自源的模块请求本地模块时报错。
+
+### lock 与 setup 选项
+
+lock 在 `local` 部分记录每个本地模块的路径，它是 `modules.yaml` 中 `path:` 请求的副本；没有本地模块时不写出这一部分。
+
+```yaml
+local:
+  local/Heartbeat:
+    path: Modules/local/Heartbeat
+```
+
+生成的 `Modules/CMakeLists.txt` 按路径加入本地模块，相对路径写成相对 `Modules/` 的路径：
+
+```cmake
+target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}/local/Heartbeat")
+include("${CMAKE_CURRENT_LIST_DIR}/xrobot-org/BlinkLED/CMakeLists.txt")
+```
+
+| 命令 | 对本地模块的效果 |
+| --- | --- |
+| `xrobot setup` | 本地模块的依赖变化后，保持已锁定的提交并重新解析依赖闭包；lock 的 `local` 部分与 `modules.yaml` 不一致时重写 |
+| `xrobot setup --frozen` | 本地模块的依赖或 lock 的 `local` 部分与当前不一致时失败 |
+| `xrobot setup --offline` | 本地模块的依赖变化后失败 |
+| `xrobot setup --update local/<目录名>` | 重新解析它的依赖 |
+| `xrobot setup --leave-local` | 只接受来自源的模块，点名本地模块时报错 |
+| `xrobot setup --release-ref` | 只检查来自源的模块 |
 
 ---
 
