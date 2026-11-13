@@ -10,6 +10,18 @@
 declare module '@theme/*';
 declare module '@theme-original/*';
 
+declare module '@docusaurus/plugin-content-docs/client' {
+  export function useDoc(): {
+    toc: Array<{id: string; value: string; level: number; children?: unknown[]}>;
+    frontMatter: {
+      toc_min_heading_level?: number;
+      toc_max_heading_level?: number;
+      [key: string]: unknown;
+    };
+    metadata: {title: string; [key: string]: unknown};
+  };
+}
+
 declare module '@docusaurus/Translate' {
   import type React from 'react';
   export function translate(

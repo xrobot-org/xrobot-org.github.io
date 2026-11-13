@@ -95,6 +95,14 @@ module.exports = {
           position: 'left',
         },
         {
+          type: 'custom-bookmark',
+          position: 'right',
+        },
+        {
+          type: 'custom-bookmarks-link',
+          position: 'right',
+        },
+        {
           type: 'localeDropdown',
           position: 'right',
         },
