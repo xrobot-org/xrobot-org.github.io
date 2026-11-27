@@ -12,6 +12,7 @@
 import React from 'react';
 import { useLocation } from '@docusaurus/router';
 import { translate } from '@docusaurus/Translate';
+import { useBookmarkState } from '@site/src/features/bookmarks/useBookmarks';
 
 const ariaTemplate = translate({
   id: 'appearance.scrollProgress.aria',
@@ -23,6 +24,18 @@ const backToTopLabel = translate({
   id: 'appearance.backToTop',
   message: '回到顶部',
   description: 'The aria-label and hover label of the back-to-top floating button',
+});
+
+const bookmarkAddLabel = translate({
+  id: 'appearance.bookmark.add',
+  message: '收藏本页',
+  description: 'The aria-label and tooltip of the floating bookmark toggle when inactive',
+});
+
+const bookmarkRemoveTemplate = translate({
+  id: 'appearance.bookmark.remove',
+  message: '取消收藏（已保存 {n}%）',
+  description: 'The aria-label and tooltip of the floating bookmark toggle when active',
 });
 
 function prefersInstantScroll(): boolean {
@@ -66,6 +79,11 @@ export default function ReadingProgress(): JSX.Element {
   const { pathname } = useLocation();
   // Docs routes live at /docs/... (zh) and /en/docs/... (en locale).
   const showCircle = /^\/(en\/)?docs(\/|$)/.test(pathname);
+  const { bookmark, toggle: toggleBookmark } = useBookmarkState(pathname);
+  const bookmarked = bookmark !== null;
+  const bookmarkLabel = bookmarked
+    ? bookmarkRemoveTemplate.replace('{n}', String(bookmark.scrollPercent))
+    : bookmarkAddLabel;
 
   React.useEffect(() => {
     let raf = 0;
@@ -93,6 +111,25 @@ export default function ReadingProgress(): JSX.Element {
         <div className="xr-progress-bar" />
       </div>
       <div className="xr-float-dock">
+        {showCircle ? (
+          <button
+            type="button"
+            className={`xr-bookmark-btn${bookmarked ? ' xr-bookmark-btn--active' : ''}`}
+            aria-pressed={bookmarked}
+            aria-label={bookmarkLabel}
+            title={bookmarkLabel}
+            onClick={toggleBookmark}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+              <path
+                d="M6 4h12v16l-6-4-6 4V4z"
+                fill={bookmarked ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="miter"
+              />
+            </svg>
+          </button>
+        ) : null}
         {showCircle ? (
           <div className="xr-progress-circle" role="img" aria-label={ariaTemplate.replace('{n}', '0')}>
             <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">

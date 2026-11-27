@@ -82,6 +82,44 @@ html.is-theme-transitioning *::after {
   pointer-events: auto;
 }
 
+.xr-bookmark-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: var(--stroke) solid var(--line);
+  border-radius: 0;
+  background: var(--paper-raised);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) linear,
+    background-color var(--duration-fast) linear,
+    border-color var(--duration-fast) linear;
+}
+
+.xr-bookmark-btn:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.xr-bookmark-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.xr-bookmark-btn--active {
+  border: var(--stroke-strong) solid var(--ink);
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.xr-bookmark-btn--active:hover {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
 .xr-progress-circle {
   position: relative;
   width: 3rem;
@@ -205,6 +243,7 @@ html.is-theme-transitioning *::after {
     bottom: 0.9rem;
   }
 
+  .xr-bookmark-btn,
   .xr-progress-circle,
   .xr-top-btn {
     width: 2.6rem;

@@ -7,6 +7,10 @@
     "message": "Docs",
     "description": "Navbar item with label 文档"
   },
+  "item.label.书签": {
+    "message": "Bookmarks",
+    "description": "Navbar item with label 书签"
+  },
   "item.label.GitHub": {
     "message": "GitHub",
     "description": "Navbar item with label GitHub"
