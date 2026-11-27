@@ -294,3 +294,13 @@ body {
 .token.function {
   color: var(--ink);
 }
+
+/* ---- Local bookmark restore flash (CSS Custom Highlight API) ---- */
+::highlight(xr-bookmark-flash) {
+  background-color: rgba(161, 32, 111, 0.2);
+  background-color: color-mix(in srgb, var(--ch2) 22%, transparent);
+  text-decoration: underline;
+  text-decoration-color: var(--ch2);
+  text-decoration-thickness: var(--stroke-strong);
+  text-underline-offset: 3px;
+}

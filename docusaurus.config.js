@@ -95,6 +95,11 @@ module.exports = {
           position: 'left',
         },
         {
+          to: '/bookmarks',
+          label: '书签',
+          position: 'right',
+        },
+        {
           type: 'localeDropdown',
           position: 'right',
         },
