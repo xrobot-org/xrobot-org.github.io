@@ -51,7 +51,7 @@ The transmit side of `STM32UART` and `CH32UART` is built on `DoubleBuffer`: when
 On high-speed interfaces, double buffering leans toward direct access to the underlying buffers.
 
 The double-buffer semantics of `USB::Endpoint` differ from UART. The `PendingBuffer()` seen in an
-endpoint completion callback is the packet that has just completed, not the next block to be sent.
+endpoint completion callback is the packet that has completed most recently, not the next block to be sent.
 So although both use active/pending, a USB callback reads a completed block, while the UART transmit
 path prepares the next block to send. The two meanings must not be confused.
 

@@ -47,7 +47,7 @@ itself continues.
 `Start(sem)` first publishes the waiter as `PENDING`. Completion (`TryPost(...)`) writes the result
 and posts only after it successfully changes `PENDING -> CLAIMED`. The timeout path changes an
 unclaimed `PENDING` waiter into `DETACHED`. If completion wins first, `Wait()` must finish the post
-already assigned to the current call even if its first bounded semaphore wait just expired. A late
+already assigned to the current call even if its first bounded semaphore wait has already expired. A late
 completion that sees `DETACHED` only returns the state to `IDLE` and does not post.
 
 `Cancel()` returns the state to `IDLE` without posting when the hardware fails to start.
@@ -110,7 +110,7 @@ When timeout races completion, two broad outcomes exist.
 ### Completion claims first
 
 - completion changes the waiter to `CLAIMED`;
-- the bounded semaphore wait may still have just returned timeout;
+- the bounded semaphore wait may have returned timeout right before;
 - completion ownership already belongs to this call;
 - the wait path finishes the matching post and returns the actual completion result.
 

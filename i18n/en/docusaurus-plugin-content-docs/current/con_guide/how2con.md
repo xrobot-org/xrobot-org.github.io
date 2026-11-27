@@ -45,7 +45,7 @@ A `PR` should stay on one topic. The description can be kept to four parts:
 - how it was verified
 - what is still unverified
 
-Small fixes do not need a long write-up, but they also should not be just a title.
+Small fixes do not need a long write-up, though they still require more than a bare title.
 
 ```text
 ## What

@@ -19,6 +19,14 @@ handed over between ISRs, callbacks and threads. Once a high-frequency path mixe
 critical sections or a dependence on scheduling order, the usual results are latency jitter, state
 mismatches, and interference between timeouts, resets and late completions.
 
+```mermaid
+flowchart LR
+  ISR["Hard ISR / DMA IRQ"] -->|"hardware handoff & post"| CB["FromCallback(..., in_isr)"]
+  CB -->|"disallowed when in_isr = true"| NO["No Mutex / No BLOCK Wait"]
+  CB -->|"Lock-free / PostFromCallback / ASync"| TH["Worker Thread"]
+  TH -->|"Mutex / Semaphore / BLOCK"| PROC["Protocol Parse & Business Logic"]
+```
+
 ## What an ISR is responsible for
 
 The default division is that the ISR hands over and advances, and the thread does the follow-up

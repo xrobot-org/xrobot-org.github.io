@@ -97,5 +97,5 @@ LibXR::CenterOfMass<> cog(rotated, pose);
 
 ## 4. 使用建议
 
-- 如果只需要“几何姿态”，使用 `Transform / Quaternion / RotationMatrix` 即可；只有在涉及质量分布、质心、惯性换算时才需要 `Inertia`。
+- 仅需要“几何姿态”时使用 `Transform / Quaternion / RotationMatrix`；涉及质量分布、质心、惯性换算时使用 `Inertia`。
 - `Translate()` 和 `Rotate()` 会返回新的惯性对象，适合按坐标系变换链逐步构造结果。

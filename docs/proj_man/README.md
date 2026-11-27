@@ -8,6 +8,14 @@ sidebar_position: 6
 
 XRobot 是配合 LibXR 使用的模块管理工具。它负责拉取模块、把每个模块锁定到具体的提交，再根据 `User/` 下的 YAML 配置生成主函数 `XRobotMain`。从零新建一个 BSP 并构建的完整步骤见[快速开始](../quick_start.md#新建-bsp)。
 
+```mermaid
+flowchart LR
+  REQ["Modules/modules.yaml + sources.yaml"] -->|"xrobot setup"| LOCK["xrobot.lock + Modules/ + CMakeLists.txt"]
+  LOCK --> GEN["xrobot gen"]
+  CFG["User/*.yaml + XR_REGISTER"] --> GEN
+  GEN --> MAIN["User/xrobot_main.hpp (XRobotMain)"]
+```
+
 ---
 
 ## 安装

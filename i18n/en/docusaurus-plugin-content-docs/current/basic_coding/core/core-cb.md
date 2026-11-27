@@ -57,7 +57,7 @@ LibXR::Callback<Args...> cb = LibXR::Callback<Args...>::Create(fun, bound_arg);
 - `fun`: Callback function in the form `void(bool, BoundArgType, Args...)` and **must be convertible to a function pointer** (plain functions, static member functions, capture-less lambdas, etc.).
 - `bound_arg`: The first argument bound to the callback
 
-> `Create` allocates a `CallbackBlock<BoundArgType, Args...>` with `new` and the block is never freed; call `Create()` / `CreateGuarded()` during initialization and keep the callback long-lived.
+> `Create` allocates a `CallbackBlock<BoundArgType, Args...>` with `new` and retains the block for the program lifetime; call `Create()` / `CreateGuarded()` during initialization and keep the callback long-lived.
 
 Guarded variant:
 

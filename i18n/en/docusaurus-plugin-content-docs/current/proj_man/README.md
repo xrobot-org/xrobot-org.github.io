@@ -8,6 +8,14 @@ sidebar_position: 6
 
 XRobot is the Module manager for LibXR. It fetches Modules, locks each one to a commit, and generates the main function `XRobotMain` from the YAML configurations under `User/`. The complete steps for creating and building a new BSP are in [Quick Start](../quick_start.md#creating-a-new-bsp).
 
+```mermaid
+flowchart LR
+  REQ["Modules/modules.yaml + sources.yaml"] -->|"xrobot setup"| LOCK["xrobot.lock + Modules/ + CMakeLists.txt"]
+  LOCK --> GEN["xrobot gen"]
+  CFG["User/*.yaml + XR_REGISTER"] --> GEN
+  GEN --> MAIN["User/xrobot_main.hpp (XRobotMain)"]
+```
+
 ---
 
 ## Installation
@@ -50,7 +58,7 @@ The BSP root is the nearest directory containing `Modules/modules.yaml`. Every c
 | `xrobot module add\|remove owner/Repo[@ref]` | Edit `Modules/modules.yaml` |
 | `xrobot module show MODULE` | Print a Module's manifest and constructors (folder, header or Module id) |
 | `xrobot new-module NAME` | Create a Module skeleton (header, CMake, README, CI) |
-| `xrobot check-module MODULE` | Resolve Modules as `setup` does (updates `xrobot.lock` and `Modules/`), then write the constructor call that Module CI compiles (compiled, never executed) |
+| `xrobot check-module MODULE` | Resolve Modules as `setup` does (updates `xrobot.lock` and `Modules/`), then write the constructor call that Module CI compiles (compiled only, without executing) |
 | `xrobot source ...` | Query or edit Sources |
 
 `xrobot <command> --help` lists each command's options.

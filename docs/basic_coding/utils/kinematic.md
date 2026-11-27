@@ -125,6 +125,6 @@ base.CalcTargetForward();
 
 ## 4. 使用建议
 
-- 如果只需要姿态变换，不必引入整套 `Kinematic` 工具；直接使用 `Transform / Quaternion / Position` 即可。
+- 仅需要姿态变换时直接使用 `Transform / Quaternion / Position`，不必引入整套 `Kinematic` 工具。
 - 如果运行环境严格限制动态分配，需要注意 `Joint` 构造与首次调用 `EndPoint::CalcBackward()` 会触发 `new`。
 - 逆运动学的收敛速度与稳定性和 `ik_mult`、`err_weight_`、`max_step`、`step_size` 等参数直接相关，实际工程中应按机构特性调参。

@@ -59,7 +59,7 @@ int main() {
 }
 ```
 
-On the none and webasm backends, `Create()` calls `Blink` directly in the current context; since `Blink` does not return, the code after `Create()` never runs.
+On the none and webasm backends, `Create()` calls `Blink` directly in the current context; since `Blink` does not return, the code after `Create()` does not execute.
 
 ## Platform Adaptation Overview
 

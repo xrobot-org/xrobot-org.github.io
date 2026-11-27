@@ -44,7 +44,7 @@ bsps:
 ```
 
 - A package is identified as `owner/Repo`. A GitHub URL gives the identity directly; other URLs use `namespace/<repository name>`, or an explicit `id` in a mapping.
-- `bsps` is for discovering BSP repositories only; a BSP is never a Module dependency.
+- `bsps` is for discovering BSP repositories only; a BSP cannot act as a Module dependency.
 - `status` is `community` (default), `verified` or `official` and describes maintenance and validation. The latter two require `tested_ref` and `tested_libxr`, the versions the validation applies to.
 - `mirror_of: <namespace>` marks a mirror Source. Once a mirror is listed, `xrobot setup` fetches from it whatever its `priority`; `repo` in `xrobot source get` shows the mirror, while `canonical` and `xrobot.lock` keep the original repository URL.
 

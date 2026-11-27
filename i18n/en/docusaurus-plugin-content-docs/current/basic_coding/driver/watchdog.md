@@ -63,4 +63,4 @@ Automatic feeding is done by a thread running `ThreadFun()` or by `TaskFun()` ca
 - Provides manual `Feed` function and auto-feed helpers;
 - Suitable for various embedded execution models such as RTOS threads or timer tasks;
 - Platform-independent, allowing unified usage across different hardware;
-- Easily extendable, with implementation-specific logic in derived classes.
+- Extensible with implementation-specific logic in derived classes.
