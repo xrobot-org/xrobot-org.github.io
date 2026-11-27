@@ -1556,10 +1556,10 @@
     "message": "GitHub"
   },
   "home.hero.tag.email": {
-    "message": "Email, click to copy"
-  },
-  "home.hero.tag.emailName": {
     "message": "Email"
+  },
+  "home.hero.tag.emailHint": {
+    "message": "Click to copy the email address"
   },
   "home.hero.tag.copied": {
     "message": "Copied ✓"

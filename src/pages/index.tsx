@@ -84,6 +84,7 @@ function HeroTags(): JSX.Element {
     label: string;
     icon: string;
     href?: string;
+    hint?: string;
     onClick?: () => void;
   }> = [
     {
@@ -110,6 +111,7 @@ function HeroTags(): JSX.Element {
         ? translate({ id: 'home.hero.tag.copied', message: '已复制 ✓' })
         : translate({ id: 'home.hero.tag.email', message: '邮箱' }),
       icon: MAIL_ICON,
+      hint: translate({ id: 'home.hero.tag.emailHint', message: '点击复制邮箱地址' }),
       onClick: () => void copyEmail(),
     },
     {
@@ -164,7 +166,7 @@ function HeroTags(): JSX.Element {
           }
           return (
             <button key={tag.key} role="listitem" type="button" className={styles.heroTag} style={style}
-              onClick={tag.onClick}>
+              title={tag.hint} onClick={tag.onClick}>
               {inner}
             </button>
           );
