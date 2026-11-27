@@ -12,6 +12,18 @@ sidebar_position: 1
 
 `Topic` 把同一进程内几种最常见的数据交接方式统一起来：发布者写入，订阅者按需接收，多发布者时再加保护。进程间共享内存由 `LinuxSharedTopic<T>` 提供。
 
+```mermaid
+flowchart LR
+  PUB["发布者 Publish()"] -->|"单发布者"| CAS["Block 原子 busy 状态检查"]
+  PUB -->|"multi_publisher"| MTX["Block Mutex 保护"]
+  CAS --> LIST["LockFreeList 订阅链表"]
+  MTX --> LIST
+  LIST --> S1["SyncSubscriber (Semaphore)"]
+  LIST --> S2["ASyncSubscriber (状态块)"]
+  LIST --> S3["QueuedSubscriber (SPSCQueue)"]
+  LIST --> S4["Callback / Server"]
+```
+
 ## `Block` 的角色
 
 `Topic` 的核心结构是 `Block`，里面存放 payload 类型契约、名称 CRC32 键、订阅者链表，以及并发控制状态。它默认针对单发布者优化：没有开启 `multi_publisher` 时，用原子 `busy` 状态检查发布独占，并发发布会触发断言；开启后才改用 `Mutex`。多发布者模式用于线程中的普通 `Publish()`，不能用于 `PublishFromCallback()`。常见的单发布者场景因此不需要加锁。

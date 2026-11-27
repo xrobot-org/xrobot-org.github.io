@@ -8,7 +8,7 @@ sidebar_position: 4
 
 `LibXR::Mutex` provides a lightweight, cross-platform **thread mutual exclusion** mechanism for protecting critical sections in a multitasking environment. It currently supports **POSIX pthread**, **FreeRTOS**, and **ThreadX**. In bare-metal-style `none` / `webasm` paths, the current implementation degrades into a minimal busy-wait lock around a scalar handle and periodically calls `Timer::RefreshTimerInIdle()` while waiting.
 
-> **⚠️ Note**: Mutex **must only** be used in thread context. It is **not supported** in interrupt service routines (ISRs).
+> Note: `Mutex` can only be called in thread context; locking and unlocking from an ISR is not supported.
 
 ## Design Highlights
 

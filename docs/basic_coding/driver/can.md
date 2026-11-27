@@ -537,3 +537,17 @@ protected:
 
 - 接收分发函数，由驱动在收到 FD 帧后调用。
 - 内部按订阅过滤器分发帧，触发匹配的 FD 回调（`cb.Run(in_isr, pack)`）。
+
+---
+
+## Linux SocketCAN 后端（`LibXR::LinuxCANFD`）
+
+`driver/linux/linux_can.hpp` 提供基于 Linux SocketCAN 的 `LinuxCANFD`（继承自 `LibXR::FDCAN`），同时支持经典 CAN 与 CAN FD。
+
+- **构造方式**：
+  - `LinuxCANFD(interface_name, enable_fd = true, brs = false, rx_stack_size = DEFAULT_RX_STACK_SIZE, realtime = true)`：等待外部已配置的接口置为 up 后打开 socket；
+  - `LinuxCANFD(interface_name, CAN::Configuration / FDCAN::Configuration, ...)`：等待接口出现后通过内核 rtnetlink 配置 `bittiming`、`ctrlmode`/FD 参数并拉起接口（需要 `CAP_NET_ADMIN`）。
+- **配置与并发边界**：
+  - `SetConfig()` 仅支持按 `bitrate` 与 `sample_point` 配置（完整显式位时序返回 `NOT_SUPPORT`，不完整返回 `ARG_ERR`），每次有效调用都会将接口短暂 down/up；
+  - `Open` / `Close` / 析构 / `SetConfig` 须由调用方串行执行，`Close()` 会 join 接收线程，不能在接收回调内销毁对象或调用 `Close()`；
+  - 接收线程在权限允许时使用 `SCHED_FIFO`，用户回调应保持短小非阻塞。

@@ -1,6 +1,6 @@
 ## 推荐视频
 - STM32 开发环境总览（第 0 节）：
-  【无需配置！STM32 + VS Code 最好的开发方式：XRobot 官方教程第 0 节——STM32 开发环境】
+  STM32 + VS Code 开发环境配置（XRobot 官方教程第 0 节）
   https://www.bilibili.com/video/BV1SHnAztE11
 - 使用 DAPLink + OpenOCD 调试（后续可参考，第 0.2 节）：
   【STM32 + VS Code】用 DAPLink + OpenOCD 调试 - XRobot 官方教程 0.2 节

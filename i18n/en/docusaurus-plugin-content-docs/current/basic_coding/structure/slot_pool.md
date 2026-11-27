@@ -14,9 +14,9 @@ Take a CAN TX queue as an example: tasks and interrupt callbacks call `AddMessag
 
 - Each slot carries one atomic state: free, writing, ready, or reading. Every transition is a CAS, so at any moment a slot belongs to exactly one execution context;
 - `Publish()` takes a globally increasing publish sequence when it begins, and `Take()` picks the ready slot with the smallest sequence: the order inside one publisher is preserved;
-- `Acquire()`/`Take()` scan the whole slot array and skip slots owned by other contexts, so a slot that has not been written yet never blocks the others;
+- `Acquire()`/`Take()` scan the whole slot array and skip slots owned by other contexts, so an unwritten slot leaves other slots unblocked;
 - the release counter and the publish counter drive a bounded rescan of at most one extra pass; sequence numbers are compared with signed deltas, so wraparound is allowed;
-- the slots are allocated at construction and never at run time; the object is neither copyable nor movable;
+- the slots are allocated once at construction rather than at run time; the object is neither copyable nor movable;
 - the pool targets small capacities of a few to a few dozen slots, where the O(N) scans of `Acquire()`/`Take()` are cheap.
 
 ## Common APIs
@@ -49,7 +49,7 @@ class SlotPool
 
 - any number of producers and consumers may run concurrently; calls are allowed from tasks and normal interrupts, but not from NMI;
 - on a single core, low-priority contexts cannot change the slots while an interrupt is scanning, so the FULL/EMPTY an interrupt observes reflects the true state at that moment; a slot held by an interrupted operation counts as occupied;
-- the dequeue order follows the publish sequence: the order inside one publisher is preserved; a slot that is not published yet never hides other ready slots, so no global cross-publisher FIFO is guaranteed;
+- the dequeue order follows the publish sequence: the order inside one publisher is preserved; an unpublished slot leaves other ready slots visible, and global cross-publisher FIFO ordering is not guaranteed;
 - the callers of `Publish()` and `Release()` must own the slot; double publishing or releasing a slot owned by another context is a caller error.
 
 ## Example

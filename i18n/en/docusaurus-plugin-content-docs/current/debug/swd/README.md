@@ -9,7 +9,7 @@ sidebar_position: 1
 These pages are organized into two layers:
 
 - [SWD Base Class](./swd-base.md): describes the `LibXR::Debug::Swd` abstraction, transfer policy, and DP/AP helper APIs
-- [SWD GPIO Implementation](./swd-gpio.md): describes the GPIO bit-bang `SwdGeneralGPIO` implementation, plus `loops_per_us` calibration and frequency selection
+- [SWD GPIO Implementation](./swd-gpio.md): describes the GPIO bit-bang `SwdGeneralGPIO` implementation, plus `SwdGpioTiming` calibration and frequency selection
 
 The two layers divide the work as follows:
 

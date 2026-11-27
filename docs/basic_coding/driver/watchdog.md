@@ -8,7 +8,9 @@ sidebar_position: 12
 
 `LibXR::Watchdog` 提供通用看门狗（Watchdog）抽象接口，支持配置溢出时间、自动喂狗周期等参数，并提供启动、停止和手动喂狗等控制接口，适配多线程和定时任务等不同运行环境。
 
-现有后端（`STM32Watchdog`、`ESP32Watchdog`）中，`SetConfig()` 设置溢出时间，并把 `feed_ms` 记为自动喂狗间隔 `auto_feed_interval_ms`（要求 `0 < feed_ms <= timeout_ms`，否则返回 `ARG_ERR`）；`Start()` 启动看门狗并置位 `auto_feed_`，`Stop()` 清除 `auto_feed_`。两个后端的构造函数已调用 `SetConfig()` 和 `Start()`。
+现有后端（`STM32Watchdog`、`CH32Watchdog`、`ESP32Watchdog`）中，`SetConfig()` 设置溢出时间，并把 `feed_ms` 记为自动喂狗间隔 `auto_feed_interval_ms`（要求 `0 < feed_ms <= timeout_ms`，否则返回 `ARG_ERR`）；`Start()` 启动看门狗并置位 `auto_feed_`，`Stop()` 清除 `auto_feed_`。各后端的构造函数已调用 `SetConfig()` 和 `Start()`。
+
+`CH32Watchdog`（`ch32_watchdog.hpp`）基于片上 LSI 时钟（默认 `lsi_hz = 40000`）驱动 CH32 IWDG，默认构造参数为 `timeout_ms = 1000`、`feed_ms = 250`，超时间隔向上取整到最接近的硬件计数档位；与 STM32 相同，IWDG 启动后仅能由复位停止，`Stop()` 停止自动喂狗并返回 `NOT_SUPPORT`。
 
 ## 接口概览
 

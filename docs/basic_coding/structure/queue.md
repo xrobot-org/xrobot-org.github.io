@@ -14,7 +14,7 @@ sidebar_position: 1
 - `SPSCQueue<T>`：单生产者单消费者无锁队列；
 - `MPMCQueue<T>`：多生产者多消费者有界队列。
 
-只需要单线程 FIFO 时使用 `Queue<T>`；有并发访问时按生产者和消费者数量选用 `SPSCQueue` 或 `MPMCQueue`。
+单线程 FIFO 使用 `Queue<T>`；有并发访问时按生产者和消费者数量选用 `SPSCQueue` 或 `MPMCQueue`。
 
 ## 结构分层
 

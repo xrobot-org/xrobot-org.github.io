@@ -295,6 +295,56 @@ body {
   color: var(--ink);
 }
 
+/* ---- Mermaid diagrams: XRobot Style v2 alignment ---- */
+.docusaurus-mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.docusaurus-mermaid-container .node rect,
+.docusaurus-mermaid-container .node polygon,
+.docusaurus-mermaid-container .cluster rect,
+.docusaurus-mermaid-container .label-container {
+  rx: 0 !important;
+  ry: 0 !important;
+  fill: var(--paper-raised) !important;
+  stroke: var(--line-strong) !important;
+  stroke-width: var(--stroke, 1px) !important;
+  filter: none !important;
+}
+
+.docusaurus-mermaid-container .cluster rect {
+  fill: var(--paper-sunken) !important;
+  stroke: var(--line) !important;
+}
+
+.docusaurus-mermaid-container .nodeLabel,
+.docusaurus-mermaid-container .edgeLabel,
+.docusaurus-mermaid-container .cluster-label span,
+.docusaurus-mermaid-container text {
+  color: var(--ink) !important;
+  fill: var(--ink) !important;
+}
+
+.docusaurus-mermaid-container .edgeLabel rect,
+.docusaurus-mermaid-container .edgeLabel .background {
+  fill: var(--paper) !important;
+  opacity: 1 !important;
+}
+
+.docusaurus-mermaid-container .edgePath .path,
+.docusaurus-mermaid-container .flowchart-link,
+.docusaurus-mermaid-container .transition {
+  stroke: var(--ink-muted) !important;
+  stroke-width: 1.5px !important;
+}
+
+.docusaurus-mermaid-container .marker,
+.docusaurus-mermaid-container marker path {
+  fill: var(--ink-muted) !important;
+  stroke: var(--ink-muted) !important;
+}
+
 /* ---- Local bookmark restore flash (CSS Custom Highlight API) ---- */
 ::highlight(xr-bookmark-flash) {
   background-color: rgba(161, 32, 111, 0.2);

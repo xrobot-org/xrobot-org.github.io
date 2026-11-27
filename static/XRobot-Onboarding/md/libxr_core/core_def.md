@@ -9,12 +9,12 @@
 
 ---
 
-## 1. 数学与物理常量：M_PI / M_2PI / M_1G
+## 1. 数学与物理常量：PI / TWO_PI / STANDARD_GRAVITY
 
-core-def 里放了常用的数学和物理常量，例如：
+core-def 在 `LibXR` 命名空间中提供了常用的数学和物理常量：
 
-- `M_PI`, `M_2PI`：圆周率及其两倍，用于角度 / 相位计算；
-- `M_1G`：标准重力加速度，值为 `9.80665 m/s²`。
+- `LibXR::PI`、`LibXR::TWO_PI`：圆周率及其两倍，用于角度 / 相位计算；
+- `LibXR::STANDARD_GRAVITY`：标准重力加速度，值为 `9.80665 m/s²`。
 
 一个只依赖 LibXR 的小例子：
 
@@ -22,25 +22,26 @@ core-def 里放了常用的数学和物理常量，例如：
 // 使用 core-def 中的数学 / 物理常量做简单换算
 void ExampleCoreDef_Constants()
 {
-    // 90 度转成弧度再转回角度
-    float rad = M_PI / 2.0f;
-    float deg = rad * 180.0f / M_PI;
+    // 90 度转成弧度再转回角度，以及 2π 整周弧度
+    float rad = static_cast<float>(LibXR::PI) / 2.0f;
+    float deg = rad * 180.0f / static_cast<float>(LibXR::PI);
+    float full = static_cast<float>(LibXR::TWO_PI);
 
     // 2g 加速度，对应多少 m/s^2
-    float acc_2g = 2.0f * M_1G;
+    float acc_2g = 2.0f * static_cast<float>(LibXR::STANDARD_GRAVITY);
 
-    LibXR::STDIO::Printf("core-def constants: deg=%.1f, acc_2g=%.3f m/s^2\r\n",
-                          deg, acc_2g);
+    LibXR::STDIO::Printf("core-def constants: deg=%.1f, 2pi=%.3f, acc_2g=%.3f m/s^2\r\n",
+                          deg, full, acc_2g);
 }
 ```
 
 ---
 
-## 2. 常用宏：UNUSED / OFFSET_OF / MEMBER_SIZE_OF / CONTAINER_OF / DEF2STR
+## 2. 常用宏与模板工具：UNUSED / OffsetOf / ContainerOf / DEF2STR
 
-core-def 给了一批工程里经常用到的工具宏。
+core-def 提供了一批工程里经常用到的宏和类型安全的模板工具。
 
-### 2.1 UNUSED：显式“这个参数暂时不用”
+### 2.1 UNUSED：显式标记“这个参数暂时不用”
 
 ```cpp
 // 某个回调签名固定，但当前实现暂时不需要 ctx
@@ -54,7 +55,7 @@ void ExampleCoreDef_Callback(int event, void* ctx)
 
 ---
 
-### 2.2 OFFSET_OF / MEMBER_SIZE_OF：和结构体布局打交道
+### 2.2 LibXR::OffsetOf：计算成员在结构体中的偏移
 
 ```cpp
 struct ExampleCoreDef_Node
@@ -67,8 +68,8 @@ struct ExampleCoreDef_Node
 // 打印 name 成员在结构体中的偏移和大小
 void ExampleCoreDef_StructLayout()
 {
-    size_t offset = OFFSET_OF(ExampleCoreDef_Node, name);
-    size_t size   = MEMBER_SIZE_OF(ExampleCoreDef_Node, name);
+    size_t offset = LibXR::OffsetOf(&ExampleCoreDef_Node::name);
+    size_t size   = sizeof(ExampleCoreDef_Node::name);
 
     LibXR::STDIO::Printf("ExampleCoreDef_StructLayout: name offset=%u, size=%u\r\n",
                           (unsigned)offset, (unsigned)size);
@@ -77,16 +78,16 @@ void ExampleCoreDef_StructLayout()
 
 ---
 
-### 2.3 CONTAINER_OF：从成员指针回到整个对象
+### 2.3 LibXR::ContainerOf：从成员指针回到整个对象
 
 ```cpp
 // 假设外部逻辑只拿到 name 成员指针，希望找回所属节点
 void ExampleCoreDef_ContainerOf(ExampleCoreDef_Node* node)
 {
-    char* name_ptr = node->name;
+    auto* name_ptr = &node->name;
 
     ExampleCoreDef_Node* owner =
-        CONTAINER_OF(name_ptr, ExampleCoreDef_Node, name);
+        LibXR::ContainerOf(name_ptr, &ExampleCoreDef_Node::name);
 
     LibXR::STDIO::Printf("ExampleCoreDef_ContainerOf: node=%p, owner=%p\r\n",
                           (void*)node, (void*)owner);
@@ -110,9 +111,9 @@ void ExampleCoreDef_Def2Str()
 
 ---
 
-## 3. 缓存行大小：LIBXR_CACHE_LINE_SIZE
+## 3. 缓存行大小：LibXR::HW_CACHE_LINE_SIZE
 
-core-def 根据指针位数定义了一条“合理默认”的缓存行尺寸：
+core-def 根据指针位数定义了硬件缓存行尺寸 `LibXR::HW_CACHE_LINE_SIZE`（另有兼容旧代码的别名 `LibXR::CACHE_LINE_SIZE`，以及用于多核并发对齐的 `LibXR::CONCURRENCY_ALIGNMENT`）：
 
 - 64 位平台：64 字节；
 - 32 位平台：32 字节。
@@ -124,7 +125,7 @@ core-def 根据指针位数定义了一条“合理默认”的缓存行尺寸�
 void ExampleCoreDef_CacheLine()
 {
     LibXR::STDIO::Printf("ExampleCoreDef_CacheLine: cache line size=%u bytes\r\n",
-                          (unsigned)LIBXR_CACHE_LINE_SIZE);
+                          (unsigned)LibXR::HW_CACHE_LINE_SIZE);
 }
 ```
 
@@ -188,17 +189,16 @@ void ExampleCoreDef_SizeLimit(SizeLimitMode mode, size_t limit, size_t size)
 
 ---
 
-## 6. 断言宏：ASSERT / ASSERT_FROM_CALLBACK
+## 6. 断言与约束宏：ASSERT / REQUIRE
 
-core-def 文档中提到两组断言宏：
+core-def 提供了开发检查和运行期强约束两组宏，并各自带有回调/ISR 版本：
 
-- `ASSERT(x)`：普通上下文下使用；
-- `ASSERT_FROM_CALLBACK(x, in_isr)`：在回调或中断上下文中使用，需要显示传入 `in_isr` 标志。
-
-在 `LIBXR_DEBUG_BUILD` 打开时，当表达式为假，会调用：
+- `ASSERT(x)` / `ASSERT_FROM_CALLBACK(x, in_isr)`：仅在 `LIBXR_DEBUG_BUILD` 打开时检查失败；关闭时仍求值表达式，失败调用 `libxr_fatal_error_and_print(const char* file, uint32_t line, bool in_isr)` 打印文件名与行号；
+- `REQUIRE(x)` / `REQUIRE_FROM_CALLBACK(x, in_isr)`：始终生效，失败调用 `libxr_fatal_error(nullptr, 0U, in_isr)`（不打印文件名与行号，依靠调试器查看调用栈）。
 
 ```cpp
-void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
+extern "C" void libxr_fatal_error_and_print(const char* file, uint32_t line, bool in_isr);
+extern "C" void libxr_fatal_error(const char* file, uint32_t line, bool in_isr);
 ```
 
 ### 6.1 显式触发一次断言失败（调试用）
@@ -255,11 +255,12 @@ void ExampleCoreDef_MinMax()
 
 core-def 集中放置了：
 
-- 公共常量（`M_PI / M_2PI / M_1G`）；
-- 常用工具宏（`UNUSED / OFFSET_OF / MEMBER_SIZE_OF / CONTAINER_OF / DEF2STR`）；
+- 公共常量（`LibXR::PI / LibXR::TWO_PI / LibXR::STANDARD_GRAVITY`）；
+- 常用工具宏与模板（`UNUSED / LibXR::OffsetOf / LibXR::ContainerOf / DEF2STR`）；
+- 硬件缓存行常量 `LibXR::HW_CACHE_LINE_SIZE`；
 - 统一错误码 `ErrorCode`；
 - 尺寸限制模式 `SizeLimitMode`；
-- 断言宏 `ASSERT / ASSERT_FROM_CALLBACK`；
+- 断言与强约束宏 `ASSERT / ASSERT_FROM_CALLBACK`、`REQUIRE / REQUIRE_FROM_CALLBACK` 及处理入口 `libxr_fatal_error_and_print / libxr_fatal_error`；
 - 通用 `LibXR::max / LibXR::min`。
 
 你可以在自己的测试代码里按需调用上面的这些示例函数，确认它们在当前工程中的行为。

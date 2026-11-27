@@ -12,6 +12,14 @@ sidebar_position: 2
 
 单核 MCU 同样存在并发：任务会被调度打断，ISR 会抢占线程，DMA 和外设按各自的节奏推进。`LibXR` 关注的是数据和状态如何在 ISR、回调和线程之间交接。高频路径中一旦混入等待、长临界区或对调度顺序的依赖，常见后果是时延抖动、状态错位，以及超时、复位与迟到完成之间相互干扰。
 
+```mermaid
+flowchart LR
+  ISR["硬中断 ISR / DMA IRQ"] -->|"硬件交接与投递"| CB["FromCallback(..., in_isr)"]
+  CB -->|"in_isr = true 禁止"| NO["禁止 Mutex 与 BLOCK 等待"]
+  CB -->|"无锁原语 / PostFromCallback / ASync"| TH["工作线程 Thread"]
+  TH -->|"Mutex / Semaphore / BLOCK"| PROC["协议解析与业务逻辑"]
+```
+
 ## ISR 负责什么
 
 默认分工是：ISR 负责交接和推进，线程负责后续业务。所谓交接，指的是缓冲切换、计数和时间戳更新、端点 rearm、DMA 续传、把数据推进软件队列，以及唤醒 waiter 或 worker。这些动作边界明确、耗时可估计，在 ISR 或回调中完成。不放进 ISR 的是阻塞等待、复杂协议解析、资源申请，或者任何依赖线程唤醒顺序才能正确收尾的逻辑。
@@ -26,7 +34,7 @@ ISR 与任务之间交换数据时，LibXR 默认不使用 `mutex`：ISR 不能�
 
 ## `FromCallback` 与 ISR
 
-回调上下文和 ISR 上下文是两种情况。`FromCallback` 系列接口表示调用处需要能在回调中使用的语义，是否处于硬中断由参数 `in_isr` 给出，例如 `ASSERT_FROM_CALLBACK(...)`、`PostFromCallback(in_isr)` 和 `ActiveFromCallback(..., in_isr)`。两者区分开之后，只需要回调安全的路径不必承受 ISR 的限制，只能在 ISR 中完成的动作也不会被放到普通回调里。
+回调上下文和 ISR 上下文是两种情况。`FromCallback` 系列接口表示调用处需要能在回调中使用的语义，是否处于硬中断由参数 `in_isr` 给出，例如 `ASSERT_FROM_CALLBACK(...)`、`PostFromCallback(in_isr)` 和 `ActiveFromCallback(..., in_isr)`。两者区分开之后，仅要求回调安全的路径不必承受 ISR 的限制，只能在 ISR 中完成的动作也不会被放到普通回调里。
 
 ## 为什么 `BLOCK` 不能进 ISR
 

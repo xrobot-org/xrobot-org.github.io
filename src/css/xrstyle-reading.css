@@ -9,8 +9,8 @@
    b) Theme-switch color fade
    ========================================================================== */
 
-/* The React toggle sets html.is-theme-transitioning for ~360ms and every
- * color-ish property fades in place over 320ms. We intentionally do NOT use
+/* The React toggle sets html.is-theme-transitioning and every color-ish property
+ * fades in place over --duration-base (160ms). We intentionally do NOT use
  * document.startViewTransition: its snapshot crossfade freezes the whole page
  * and stalls rendering for seconds in some environments, while this in-place
  * fade keeps the page live (rAF sampling shows no dropped frames). Colour-ish
@@ -20,7 +20,7 @@ html.is-theme-transitioning *::before,
 html.is-theme-transitioning *::after {
   transition-property: color, background-color, border-color, outline-color,
     fill, stroke, box-shadow !important;
-  transition-duration: 320ms !important;
+  transition-duration: var(--duration-base, 160ms) !important;
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 

@@ -39,4 +39,4 @@ public:
 * `ErrorCode::TIMEOUT`  Wait timed out  
 * `ErrorCode::FAILED`  The underlying wait failed (Linux, ThreadX)
 
-> **⚠️ Note**: `Wait()` **must not** be called from an ISR.
+> Note: `Wait()` cannot be called from an ISR.

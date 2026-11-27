@@ -59,7 +59,7 @@ With `starm-clang`, `picolibc` is the recommended C library. `STARM_TOOLCHAIN_CO
 
 For builds from the command line or in `CLion`, configure the environment as follows.
 
-On Windows, you usually need relevant toolchain paths in `PATH`. Installing `STM32CubeCLT` can simplify some of this.
+On Windows, relevant toolchain paths are usually required on `PATH`. Installing `STM32CubeCLT` can simplify some of this.
 
 ```powershell
 # gcc

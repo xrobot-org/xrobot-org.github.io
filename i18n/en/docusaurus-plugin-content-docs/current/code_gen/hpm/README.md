@@ -12,7 +12,7 @@ The CodeGenerator's `libxr hpm setup` command brings an HPM Pinmux Tool project 
 
 ## Project Recognition
 
-The project is a directory with an `app.yaml` at its root and exactly one `.hpmpc` file under `boards/<board>/`. The selected signals come from the `selectPins` of the `.hpmpc` and the pinmux functions that `main` in the root `main.c` calls outside preprocessor conditions; functions present in the `.hpmpc` but never called by `main` do not take part. Every signal is checked, as the macro name of `hpm_iomux.h`, against the layout of the SoC package, and a pad the package does not have, or a signal its pad cannot carry, is warned about.
+The project is a directory with an `app.yaml` at its root and exactly one `.hpmpc` file under `boards/<board>/`. The selected signals come from the `selectPins` of the `.hpmpc` and the pinmux functions that `main` in the root `main.c` calls outside preprocessor conditions; functions present in `.hpmpc` without being called by `main` do not take part. Every signal is checked, as the macro name of `hpm_iomux.h`, against the layout of the SoC package, and a pad the package does not have, or a signal its pad cannot carry, is warned about.
 
 When the gpiom settings assign a pin to a controller other than GPIO0 (`gpioController` other than 1; unset means GPIO0), no object is generated for it, one warning per pin.
 

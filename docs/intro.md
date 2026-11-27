@@ -12,7 +12,7 @@ sidebar_position: 1
 
 LibXR 是跨平台的 C++ 兼容层，包含外设驱动、数据结构、通信中间件、操作系统封装、数学工具和 USB 协议栈 XRUSB，可以单独用于裸机、RTOS 和 Linux 工程。CodeGenerator 和 XRobot 是配合 LibXR 使用的两个命令行工具。
 
-以一块 STM32 板子为例：在 STM32CubeMX 中配置好外设后，CodeGenerator 读取 `.ioc` 文件，生成外设对象和入口函数 `app_main`，并把 LibXR 接入工程的 CMake 构建；XRobot 再拉取 IMU 驱动、姿态解算等模块，把每个模块锁定到具体的提交，并根据 `User/` 下的配置生成主函数 `XRobotMain`，由它按顺序构造模块实例。只使用 LibXR 的工程不需要这两个工具；在 Linux 等不使用 STM32CubeMX 的平台上，BSP 只需要 XRobot。
+以一块 STM32 板子为例：在 STM32CubeMX 中配置好外设后，CodeGenerator 读取 `.ioc` 文件，生成外设对象和入口函数 `app_main`，并把 LibXR 接入工程的 CMake 构建；XRobot 再拉取 IMU 驱动、姿态解算等模块，把每个模块锁定到具体的提交，并根据 `User/` 下的配置生成主函数 `XRobotMain`，由它按顺序构造模块实例。只使用 LibXR 的工程跳过这两个工具；在 Linux 等非 STM32CubeMX 平台上，BSP 仅使用 XRobot。
 
 | 项目 | 作用 | 发布形式 | 命令 | 文档 |
 | --- | --- | --- | --- | --- |

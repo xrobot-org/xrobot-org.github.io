@@ -87,6 +87,21 @@ queue.Publish();
 | `CLAIMED_WITH_WAITER` | 处理方持有 `CLAIMED` 时 `BLOCK` 等待超时，超时方等待处理方交接 |
 | `BLOCK_CLAIMED` | 完成方已认领 `BLOCK` 完成；等待者读取结果后改回 `IDLE` |
 
+```mermaid
+stateDiagram-v2
+  [*] --> IDLE
+  IDLE --> CLAIMED: 提交读 / Publish / ClearQueuedData
+  CLAIMED --> IDLE: 就地完成或清理完成
+  CLAIMED --> PENDING: 数据不足，挂起请求
+  PENDING --> CLAIMED: Publish() 检查挂起请求
+  PENDING --> IDLE: BLOCK 超时撤回
+  CLAIMED --> CLAIMED_WITH_WAITER: BLOCK 超时遇到处理方
+  CLAIMED_WITH_WAITER --> IDLE: 处理方撤回并唤醒超时方
+  CLAIMED_WITH_WAITER --> BLOCK_CLAIMED: 处理方发现数据足够
+  CLAIMED --> BLOCK_CLAIMED: 认领 BLOCK 完成
+  BLOCK_CLAIMED --> IDLE: 等待者取走 block_result_
+```
+
 `EVENT_BIT` 可与任一阶段共存，表示上次观察之后有新数据发布。每次写入过数据的 `Publish()` 都会置位；该位不记录字节数，多次发布合并为一次；从 `IDLE` 或 `PENDING` 进入 `CLAIMED` 时清除。提交方在挂起请求前看到该位时重新检查队列；`Publish()` 把数据不足的请求放回 `PENDING` 时看到该位，则再处理一轮。端口处于 `CLAIMED` 期间发布的数据因此会被后续检查看到。
 
 ### 3.4 `BLOCK` 超时
@@ -176,6 +191,21 @@ size_t size = 0U;
 | `BLOCK_DETACHED` | `BLOCK` 调用已超时返回，请求仍在队列中 |
 | `BLOCK_RETIRE_WAITING` | 后续的 `BLOCK` 写在等待已超时的旧请求退出队列 |
 
+```mermaid
+stateDiagram-v2
+  [*] --> IDLE
+  IDLE --> LOCKED: 写入或 Stream 获取锁
+  LOCKED --> IDLE: 非 BLOCK 发布或 FULL 退回
+  LOCKED --> BLOCK_WAITING: BLOCK 发布等待完成
+  BLOCK_WAITING --> BLOCK_CLAIMED: 后端完成并认领
+  BLOCK_CLAIMED --> IDLE: 等待者取走 block_result_
+  BLOCK_WAITING --> BLOCK_DETACHED: BLOCK 超时返回 TIMEOUT
+  BLOCK_DETACHED --> IDLE: 旧请求迟到完成（不释放信号量）
+  BLOCK_DETACHED --> BLOCK_RETIRE_WAITING: 新 BLOCK 等待旧请求退出
+  BLOCK_RETIRE_WAITING --> BLOCK_DETACHED: 第一段等待超时
+  BLOCK_RETIRE_WAITING --> LOCKED: 旧请求退出，直接移交 LOCKED
+```
+
 阶段不为 `IDLE` 时，新的写入返回 `BUSY`（4.4 所述的 `BLOCK` 写除外）。`BLOCK` 请求从提交到退出队列期间因此独占端口的写入权。
 
 ### 4.4 `BLOCK` 超时
@@ -191,7 +221,7 @@ size_t size = 0U;
 
 ### 4.5 批量写入
 
-`WritePort::Stream` 把多次追加合并为一个请求：构造时或调用 `Acquire()` 时取得 `LOCKED`，每次 `Write()` 直接把数据追加到数据队列，`Commit()` 或析构时作为一个请求提交，提交后的完成与超时规则同上。`Acquire()` 在 `BLOCK_DETACHED` 期间直接返回 `BUSY`，不等待旧请求退出。`Stream` 只在线程中使用。
+`WritePort::Stream` 把多次追加合并为一个请求：构造时或调用 `Acquire()` 时取得 `LOCKED`，每次 `Write()` 直接把数据追加到数据队列，`operator<<` 直接委托给 `Write()`，`Commit()` 或析构时作为一个请求提交，提交后的完成与超时规则同上。`Acquire()` 在 `BLOCK_DETACHED` 期间直接返回 `BUSY`，不等待旧请求退出。`Stream` 只在线程中使用。
 
 ## 5. 迟到完成与信号量计数
 

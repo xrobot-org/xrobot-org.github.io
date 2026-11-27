@@ -53,7 +53,7 @@ jobs:
 
 ## BSP CI
 
-STM32 BSP 的 CI 调用共享工作流 `xrobot-org/XRobot/.github/workflows/bsp-stm32-ci.yml`，BSP 只需写出工程名和要构建的配置：
+STM32 BSP 的 CI 调用共享工作流 `xrobot-org/XRobot/.github/workflows/bsp-stm32-ci.yml`，BSP 在配置中写出工程名和要构建的配置：
 
 ```yaml
 name: build

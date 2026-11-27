@@ -140,6 +140,21 @@ The `ReadPort` state is one 32-bit atomic: the low bits hold the request phase a
 | `CLAIMED_WITH_WAITER` | A `BLOCK` wait timed out while a processor held `CLAIMED`; the timed-out caller waits for the processor's handoff |
 | `BLOCK_CLAIMED` | The completion side has claimed the `BLOCK` completion; the waiter returns the phase to `IDLE` after reading the result |
 
+```mermaid
+stateDiagram-v2
+  [*] --> IDLE
+  IDLE --> CLAIMED: Submit / Publish / ClearQueuedData
+  CLAIMED --> IDLE: Completed inline or cleared
+  CLAIMED --> PENDING: Short data, request parked
+  PENDING --> CLAIMED: Publish() checks request
+  PENDING --> IDLE: BLOCK timeout withdraws
+  CLAIMED --> CLAIMED_WITH_WAITER: BLOCK timeout meets processor
+  CLAIMED_WITH_WAITER --> IDLE: Processor withdraws and wakes waiter
+  CLAIMED_WITH_WAITER --> BLOCK_CLAIMED: Processor has enough data
+  CLAIMED --> BLOCK_CLAIMED: BLOCK completion claimed
+  BLOCK_CLAIMED --> IDLE: Waiter reads block_result_
+```
+
 `EVENT_BIT` coexists with any phase and means that data has been published since the last
 observation. Every `Publish()` that wrote bytes sets it; the bit counts no bytes, and several
 publishes merge into one. It is cleared on entering `CLAIMED` from `IDLE` or `PENDING`. A submitter
@@ -288,6 +303,21 @@ released earlier.
 | `BLOCK_DETACHED` | The `BLOCK` call timed out and returned; the request is still queued |
 | `BLOCK_RETIRE_WAITING` | A later `BLOCK` write is waiting for the timed-out request to leave the queue |
 
+```mermaid
+stateDiagram-v2
+  [*] --> IDLE
+  IDLE --> LOCKED: Write or Stream acquires lock
+  LOCKED --> IDLE: Non-BLOCK released or FULL
+  LOCKED --> BLOCK_WAITING: BLOCK released, waiting
+  BLOCK_WAITING --> BLOCK_CLAIMED: Backend claims completion
+  BLOCK_CLAIMED --> IDLE: Waiter reads block_result_
+  BLOCK_WAITING --> BLOCK_DETACHED: BLOCK timeout returns TIMEOUT
+  BLOCK_DETACHED --> IDLE: Late completion (no sem post)
+  BLOCK_DETACHED --> BLOCK_RETIRE_WAITING: New BLOCK waits retirement
+  BLOCK_RETIRE_WAITING --> BLOCK_DETACHED: First wait times out
+  BLOCK_RETIRE_WAITING --> LOCKED: Old request retires, hands LOCKED
+```
+
 While the phase is not `IDLE`, a new write returns `BUSY` (except the `BLOCK` write described in
 4.4). A `BLOCK` request thus holds producer access exclusively from submission until it leaves the
 queue.
@@ -315,10 +345,10 @@ handles it with sequence numbers, acknowledgements, or deduplication.
 ### 4.5 Batched writes
 
 `WritePort::Stream` merges several appends into one request: it takes `LOCKED` at construction or in
-`Acquire()`, each `Write()` appends directly to the data queue, and `Commit()` or destruction submits
-the batch as one request, with the completion and timeout rules above. During `BLOCK_DETACHED`,
-`Acquire()` returns `BUSY` at once and does not wait for the old request to retire. `Stream` is used
-only from threads.
+`Acquire()`, each `Write()` appends directly to the data queue, `operator<<` delegates directly to
+`Write()`, and `Commit()` or destruction submits the batch as one request, with the completion and
+timeout rules above. During `BLOCK_DETACHED`, `Acquire()` returns `BUSY` at once and does not wait
+for the old request to retire. `Stream` is used only from threads.
 
 ## 5. Late completion and semaphore counts
 

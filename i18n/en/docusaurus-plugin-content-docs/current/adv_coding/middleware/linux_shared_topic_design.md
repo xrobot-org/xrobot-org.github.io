@@ -52,8 +52,8 @@ subscriber is still reading the old payload.
 
 The chosen model is refcounted slot reclamation with backpressure on the publisher when slots are
 exhausted, rather than overwrite while in use. The cost is that under high pressure the publisher
-may fail because slots are exhausted. In exchange, a payload is never overwritten while a subscriber
-still holds it. This prioritizes safety over publish availability.
+may fail because slots are exhausted. In exchange, an in-use payload stays untouched while any
+subscriber still holds it. This prioritizes safety over publish availability.
 
 ## 5. What the three subscription policies trade off
 
@@ -97,7 +97,7 @@ Once the slow subscriber's queue is full, `FULL` makes further publications fail
 
 ## 7. `BALANCE_RR` semantics
 
-`BALANCE_RR` forms a separate balanced subscriber group; it is not a cursor added to the broadcast
+`BALANCE_RR` forms a separate balanced subscriber group rather than adding a cursor to the broadcast
 path.
 
 - one publish is delivered to at most one balanced subscriber;

@@ -6,189 +6,115 @@ sidebar_position: 2
 
 # SWD GPIO实现
 
-`LibXR::Debug::SwdGeneralGPIO<SwclkGpioType, SwdioGpioType, SwdIoDriveMode>` 是一个基于 GPIO 轮询（bit-bang）的 SWD 探针实现。它继承自 `LibXR::Debug::Swd`，提供 SWD 链路层能力，通常由上层（如 CMSIS-DAP 处理器或调试器）调用。
+`LibXR::Debug::SwdGeneralGPIO<SwclkGpioType, SwdioGpioType, IO_DRIVE_MODE, TimebaseType>` 是基于 GPIO 轮询（bit-bang）的 SWD 探针实现，继承自 `LibXR::Debug::Swd`，提供 SWD 链路层能力，供 CMSIS-DAP 等上层调用。
 
-重点放在使用方式和延时参数 `loops_per_us` 的选取/标定，不展开实现细节。
+## 1. 硬件连接与引脚能力
 
----
+`SwdGeneralGPIO` 使用两根 GPIO 实现 SWD：
 
-## 1. 总览
-
-`SwdGeneralGPIO` 使用两根 GPIO 完成 SWD：
-
-- SWCLK：由 `SwclkGpioType` 驱动输出时钟。
-- SWDIO：由 `SwdioGpioType` 承担双向数据，运行时在“输出驱动”和“输入采样”之间切换。
-
-时序由软件生成：通过目标时钟 `hz` 和延时标定系数 `loops_per_us` 计算“半周期应空转的循环次数”，从而逼近指定 SWCLK。
+- SWCLK：由 `SwclkGpioType` 驱动输出时钟；
+- SWDIO：由 `SwdioGpioType` 承担双向数据，运行时在输出驱动与输入采样之间切换。
 
 推荐外围电路：
-- SWCLK/SWDIO 串联 33Ω（限流/抑制振铃）
-- SWDIO 端接 10k 上拉
 
----
-
-## 2. 模板参数与 GPIO 依赖能力
+- SWCLK 与 SWDIO 各串联 33 Ω 限流电阻（抑制振铃）；
+- SWDIO 端接 10 kΩ 上拉电阻。
 
 类定义：
 
 ```cpp
 template <typename SwclkGpioType, typename SwdioGpioType,
-          SwdIoDriveMode IO_DRIVE_MODE = SwdIoDriveMode::PUSH_PULL>
+          SwdIoDriveMode IO_DRIVE_MODE = SwdIoDriveMode::PUSH_PULL,
+          typename TimebaseType = Timebase>
 class SwdGeneralGPIO final : public Swd;
 ```
 
-期望 GPIO 类型提供的最小能力（抽象描述）：
-- `SetConfig({Direction, Pull}) -> ErrorCode`
-- `Write(bool)`
-- `Read() -> bool`
+`TimebaseType` 须继承自 `LibXR::Timebase` 并提供静态函数 `BusyLoop()`；默认 `Timebase` 使用通用循环，平台时基类可提供专属实现。`SwclkGpioType` 与 `SwdioGpioType` 需支持 `SetConfig({Direction, Pull})`、`Write(bool)` 和 `Read() -> bool`：
 
-其中 SWDIO 需要支持：
-- 输入采样：`Direction::INPUT` + `Pull::UP`
-- 输出驱动由 `IO_DRIVE_MODE` 决定
-  - `SwdIoDriveMode::PUSH_PULL` -> `OUTPUT_PUSH_PULL`
-  - `SwdIoDriveMode::OPEN_DRAIN` -> `OUTPUT_OPEN_DRAIN`
+- 输入采样使用 `Direction::INPUT` 与 `Pull::UP`；
+- 输出驱动由 `IO_DRIVE_MODE` 决定：`SwdIoDriveMode::PUSH_PULL` 对应 `OUTPUT_PUSH_PULL`，`SwdIoDriveMode::OPEN_DRAIN` 对应 `OUTPUT_OPEN_DRAIN`。
 
-输出模式的一般选择：
+板上已有外部上拉时可选开漏输出，无外部上拉时使用推挽输出。在部分 MCU 上，SWDIO 切换为输出方向后需要若干个 CPU 周期才写入外设寄存器并生效，高速 bit-bang 下 `GpioType::SetConfig` 须计入这一延迟。
 
-- 板上已有明确的外部上拉时，优先考虑开漏输出；
-- 没有外部上拉时，优先考虑推挽输出。
-
-SWDIO / SWCLK 的实际电气行为还受 GPIO 驱动能力、布线长度、阻尼电阻、探头负载和目标板输入结构影响。
-
----
-
-## 3. 快速开始
-
-构造函数：
+## 2. 构造与使用
 
 ```cpp
-explicit SwdGeneralGPIO(SwclkGpioType& swclk,
-                        SwdioGpioType& swdio,
-                        uint32_t loops_per_us,
+explicit SwdGeneralGPIO(SwclkGpioType& swclk, SwdioGpioType& swdio, uint32_t cpu_hz,
+                        const SwdGpioTiming& timing,
                         uint32_t default_hz = DEFAULT_CLOCK_HZ);
 ```
 
-典型使用流程：
-1) 初始化 GPIO 对象与探针实例（先给一个“保守”的频率与已标定的 `loops_per_us`）。
-2) 对目标执行 `EnterSwd()`（不确定目标当前处于何种调试模式时建议调用）。
-3) 上层用 `Swd` 基类的“带重试”接口进行传输（处理 WAIT、插入 idle clocks 等）。
+构造时把 SWCLK 配为推挽输出高电平，SWDIO 配为驱动高电平，并调用 `SetClockHz(default_hz)`（默认 500 kHz）。使用步骤如下：
 
-示例：
+1. 用当前 CPU 主频 `cpu_hz` 和标定好的 `SwdGpioTiming` 构造探针实例；
+2. 对目标执行 `EnterSwd()`；
+3. 通过 `Swd` 基类的带重试事务接口（如 `DpReadTxn`、`ApReadTxn`）进行传输。
 
 ```cpp
 using Probe = LibXR::Debug::SwdGeneralGPIO<
-    MyGpio, MyGpio, LibXR::Debug::SwdIoDriveMode::PUSH_PULL>;
+    MyGpio, MyGpio, LibXR::Debug::SwdIoDriveMode::PUSH_PULL, MyTimebase>;
 
+constexpr LibXR::Debug::SwdGpioTiming TIMING{16.9f, 9.0f, 11.4f};
 MyGpio swclk, swdio;
 
-// loops_per_us 建议先标定；default_hz 从保守值起步（如 100k~500k）
-Probe probe(swclk, swdio, /*loops_per_us=*/calibrated, /*default_hz=*/500000);
-
+Probe probe(swclk, swdio, /*cpu_hz=*/144'000'000, TIMING, /*default_hz=*/500'000);
 probe.EnterSwd();
 
-// 读取 DP IDCODE（ReadIdCode 不重试；带重试的事务接口见 Swd 基类的 DpReadTxn 等）
 uint32_t idcode = 0;
 LibXR::Debug::SwdProtocol::Ack ack;
 probe.ReadIdCode(idcode, ack);
 ```
 
----
+## 3. 时钟控制与 `SwdGpioTiming`
 
-## 4. 时钟与延时参数（重点）
+`SetClockHz(hz)` 设置目标 SWCLK 频率：
 
-### 4.1 `hz` 的含义与行为
+- 非零 `hz` 钳制到 50 kHz～100 MHz（`MIN_HZ`～`MAX_HZ`）；
+- `hz == 0` 或 `cpu_hz == 0` 时，半周期延时循环次数 `half_period_loops_` 为 0，直接进入无延时路径，实际 SWCLK 频率由平台 GPIO 翻转速率决定。
 
-`SetClockHz(hz)` 用于设置“期望的 SWCLK 频率”。
+`SwdGpioTiming` 以 CPU 周期数为单位描述时序模型，与 CPU 主频无关：
 
-- 非零的 `hz` 钳制到 50 kHz～100 MHz（`MIN_HZ`/`MAX_HZ`）；构造时默认 500 kHz（`DEFAULT_CLOCK_HZ`）。
-- 频率是否“真的等于设定值”，取决于 `loops_per_us` 是否合理、GPIO 翻转速度、CPU 负载等。
-- `hz == 0` 会使内部进入“无延时路径”（不主动插入 BusyLoop 延时），此时 SWCLK 实际频率由 CPU 与 GPIO 翻转速度决定，通常是“尽可能快”。
+- 带延时路径（每次半周期执行 `N >= 1` 次 `TimebaseType::BusyLoop()`）：一个 SWCLK 周期耗时 `a + b·N` 个 CPU 周期；
+- 无延时路径（`N = 0`）：一个 SWCLK 周期耗时 `c` 个 CPU 周期。
 
-### 4.2 `loops_per_us` 是什么
+```cpp
+constexpr SwdGpioTiming();  // 保守默认：b = 2, a = 0, c = 1
 
-`loops_per_us` 是一个“延时标定系数”：表示 BusyLoop 大约每 1 微秒需要的循环迭代次数。
+template <std::floating_point Step, std::floating_point Intercept,
+          std::floating_point Fast>
+consteval SwdGpioTiming(Step step_cycles, Intercept intercept_cycles, Fast fast_cycles);
+```
 
-它不是通用常量，通常会随以下因素显著变化：
-- CPU 主频
-- 编译优化等级（`-O0/-O2/-Os` 等）
-- 是否开启 LTO、不同编译器版本
-- 指令/总线等待状态（某些 MCU 在不同电源/时钟域下也可能变化）
+构造函数在编译期把参数（可带小数，范围 0～100000 周期）按十分之一周期量化为整数保存，运行时全部使用整数运算。`DelayLoops(cpu_hz, hz)` 的选档规则如下：
 
-只要上述条件变化，就应重新标定 `loops_per_us`。
+- 当请求频率满足 `f >= f_cpu / c` 时返回 `0`（无延时路径不超速）；
+- 否则在 `N >= 1` 中选取每周期耗时 `a + b·N` 最接近 `f_cpu / f` 的档位；两档距离相等时取较慢的一档。
 
-### 4.3 何时会进入“无延时路径”
+由于只传入一组系数，`SwdGpioTiming` 仅对标定时所用的那个 `TimebaseType`、编译器及优化选项有效；默认构造函数 `SwdGpioTiming{}` 取保守值（`b = 2, a = 0, c = 1`），未标定平台上实际频率通常明显低于设定值。
 
-实际工作时有两种情况会进入“无延时路径”：
-- `loops_per_us` 为 0；或
-- 在某个较高的 `hz` 下，计算出来“半周期需要的循环次数 < 1”，内部会把半周期循环数置 0，从而自动走无延时路径。
+## 4. 标定方法
 
-无延时路径的意义：
-- 优点：开销更低，吞吐更高。
-- 代价：SWCLK 频率不再受 `hz` 精准约束，而是“尽可能快/尽可能稳定”，以平台极限为准。
+标定须在与目标固件相同的编译器版本、优化等级（如 `-O2`/`-Os`/`-O3`、LTO 开关）和 `TimebaseType` 下进行，因为 `BusyLoop()` 每次迭代的周期数与这些条件直接相关。
 
-工程建议：
-- 需要“可控且可复现”的 SWCLK：让 `half_period_loops_` 明确大于 0（即 `loops_per_us` 标定合理，且 `hz` 不要设得过高）。
-- 只追求“能跑、尽量快”：可以把 `loops_per_us=0`，或把 `hz` 调到足够高让系统自然进入无延时。
+1. 固定若干组延时循环次数（例如 `N = 0, 1, 2, 4, 8, 16`），用示波器或逻辑分析仪分别测出读数据相、写数据相和请求字节下的 SWCLK 频率，结合 `cpu_hz` 换算为每 SWCLK 周期的 CPU 周期数；
+2. 对 `N >= 1` 的测得值做线性拟合 `a + b·N`，得到典型斜率 `step_cycles`（`b`）与截距 `intercept_cycles`（`a`）；
+3. 取 `N = 0` 时各路径的典型值作为 `fast_cycles`（`c`）；
+4. 构造 `constexpr SwdGpioTiming{step_cycles, intercept_cycles, fast_cycles}` 传入 `SwdGeneralGPIO`。
 
----
+## 5. 频率选择与故障排查
 
-## 5. `loops_per_us` 的选择与标定方法
+初期联调可从 100 kHz～500 kHz 起步，链路稳定后再按 1 MHz、2 MHz、4 MHz 逐档上调；更高频率需确认走线长度、33 Ω 串阻、SWDIO 上拉和目标板驱动能力。
 
-下面给出两种常用标定方法。标定应在与最终固件相同的编译选项和主频下进行。
+若频繁出现 `WAIT`/`FAULT`/`NO_ACK`、读回奇偶校验错误或随线长随机失败，按以下顺序排查：
 
-### 方法 A：用硬件计时器/周期计数器标定
+1. 降低 `SetClockHz()` 频率；
+2. 检查 33 Ω 串阻、SWDIO 10 kΩ 上拉与接地质量；
+3. 用示波器观察 SWCLK/SWDIO 边沿振铃与回落时间；
+4. 若切换过编译选项或 `TimebaseType`，重新标定 `SwdGpioTiming`。
 
-思路：执行一次已知循环次数的 BusyLoop，测出耗时，再反推 `loops_per_us`。
+## 6. 关闭与安全态
 
-操作要点：
-1) 选择足够大的循环次数 N（例如 1e6 级别），保证测量时间明显大于计时器分辨率。
-2) 记录开始时间 t0，执行 BusyLoop(N)，记录结束时间 t1。
-3) 计算耗时 `dt_us`（微秒）。
-4) `loops_per_us ≈ N / dt_us`（取整即可）。
+调用 `Close()` 会将内部 SELECT 缓存置为无效，并把探针引脚恢复到安全状态：
 
-优点：不依赖 SWD 外设、也不依赖目标板状态；标定完成后频率可预期。
-
-### 方法 B：用逻辑分析仪/示波器对 SWCLK 实测回归
-
-思路：先给一个粗略的 `loops_per_us`，设置一个低到中等的 `hz`（例如 100 kHz 或 500 kHz），测 SWCLK 实际频率，再调整 `loops_per_us` 使之贴合。
-
-操作要点：
-1) 先用“可确保进入有延时路径”的配置（例如较低 `hz`）。
-2) 测量 SWCLK 频率 `f_meas`。
-3) 按比例调整：`loops_per_us_new ≈ loops_per_us_old * (f_meas / f_target)`，反复迭代 1~2 次即可收敛。
-
-优点：不需要访问计时器资源；同时把 GPIO 翻转开销一并纳入拟合。  
-已进入无延时路径（频率很高）时，调整 `loops_per_us` 不一定能回到有延时路径，此方法不适用。
-
----
-
-## 6. 频率选择建议（实践导向）
-
-建议从保守到激进逐步上调，避免一上来就把链路推到边界：
-
-- 初始 bring-up：100 kHz ~ 500 kHz（更容易排查连线/电气问题）
-- 稳定后提速：1 MHz、2 MHz、4 MHz 分档尝试
-- 如果需要更高：优先确认走线长度、阻尼电阻、地参考与目标板 SWD 引脚驱动能力；然后再上调
-
-当出现以下症状，通常意味着频率过高或信号完整性不足：
-- ACK 频繁出现 WAIT/FAULT/NO_ACK
-- 读回数据 parity 失败
-- 只在某些线长/某些板子上不稳定
-
-处理顺序建议：
-1) 先降频；
-2) 确认 33Ω 串阻与 SWDIO 上拉；
-3) 缩短线缆/改善接地；
-4) 再考虑重新标定 `loops_per_us`（尤其在改了优化选项之后）。
-
-较高 SWCLK 频率下，边沿速度、振铃、过冲/下冲和回落时间都会影响 ACK 与采样稳定性。出现低频正常、高频随机失败时，用示波器检查 SWCLK / SWDIO 边沿。
-
----
-
-## 7. 关闭与安全态
-
-调用 `Close()` 会把探针引脚恢复到更安全的状态（用于退出调试或切换复用功能时）：
-- SWCLK 置高
-- SWDIO 切到输入上拉
-
----
+- SWCLK 输出高电平；
+- SWDIO 切换为上拉输入（停止驱动）。

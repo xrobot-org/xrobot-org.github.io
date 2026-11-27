@@ -15,6 +15,18 @@ covers why the mechanism is split into these roles.
 consume it in different ways, and multi-publisher protection is added when needed. Shared memory
 across processes is provided by `LinuxSharedTopic<T>`.
 
+```mermaid
+flowchart LR
+  PUB["Publisher Publish()"] -->|"single publisher"| CAS["Block atomic busy guard"]
+  PUB -->|"multi_publisher"| MTX["Block Mutex guard"]
+  CAS --> LIST["LockFreeList Subscribers"]
+  MTX --> LIST
+  LIST --> S1["SyncSubscriber (Semaphore)"]
+  LIST --> S2["ASyncSubscriber (State Block)"]
+  LIST --> S3["QueuedSubscriber (SPSCQueue)"]
+  LIST --> S4["Callback / Server"]
+```
+
 ## The role of `Block`
 
 At the source level, `Block` is the central structure inside `Topic`. It stores the payload type

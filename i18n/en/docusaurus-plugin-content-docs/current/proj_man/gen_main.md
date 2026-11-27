@@ -129,7 +129,7 @@ When the BSP sets `XROBOT_MODULES_DIR`, LibXR's CMake:
 - prints `XRobot product: <config>` during configuration;
 - recomputes the digest of the inputs' content on every build and fails if it differs from the one the header records or an input no longer exists, naming the `xrobot gen -c <config>` command to run.
 
-The check follows content: a new file time alone (after a git checkout or a copy of the project, for example) is no change, and the entry source counts only its `XR_REGISTER` calls, so changes to its other code need no regeneration. CMake only checks; it never regenerates. Run `xrobot gen` after changing a configuration, a Module or the registrations in the entry source; run `xrobot setup` after changing `modules.yaml`.
+The check follows content: a new file time alone (after a git checkout or a copy of the project, for example) is no change, and the entry source counts only its `XR_REGISTER` calls, so changes to its other code need no regeneration. CMake only checks and leaves regeneration to `xrobot gen`. Run `xrobot gen` after changing a configuration, a Module or the registrations in the entry source; run `xrobot setup` after changing `modules.yaml`.
 
 ---
 
