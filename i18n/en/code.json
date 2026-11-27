@@ -1556,10 +1556,10 @@
     "message": "GitHub"
   },
   "home.hero.tag.email": {
-    "message": "Email, click to copy"
-  },
-  "home.hero.tag.emailName": {
     "message": "Email"
+  },
+  "home.hero.tag.emailHint": {
+    "message": "Click to copy the email address"
   },
   "home.hero.tag.copied": {
     "message": "Copied ✓"
@@ -1701,5 +1701,67 @@
   },
   "qq.copyFailed": {
     "message": "Copy failed"
+  },
+  "appearance.bookmark.add": {
+    "message": "Bookmark this page",
+    "description": "The aria-label and tooltip of the floating bookmark toggle when inactive"
+  },
+  "appearance.bookmark.remove": {
+    "message": "Remove bookmark ({n}% saved)",
+    "description": "The aria-label and tooltip of the floating bookmark toggle when active"
+  },
+  "bookmarks.title": {
+    "message": "Bookmarks"
+  },
+  "bookmarks.description": {
+    "message": "Locally saved documentation pages and reading progress, with JSON export and import."
+  },
+  "bookmarks.lead": {
+    "message": "Saved documentation pages and reading progress stored locally in this browser."
+  },
+  "bookmarks.empty": {
+    "message": "No bookmarks yet. Click the bookmark button in the bottom-right dock on any documentation page to save your position; reading progress updates automatically afterward."
+  },
+  "bookmarks.updatedAt": {
+    "message": "Updated {time}"
+  },
+  "bookmarks.remove": {
+    "message": "Remove"
+  },
+  "bookmarks.removeAria": {
+    "message": "Remove bookmark: {title}"
+  },
+  "bookmarks.removed": {
+    "message": "Removed \"{title}\"."
+  },
+  "bookmarks.backupSection": {
+    "message": "Backup and transfer"
+  },
+  "bookmarks.backupCount": {
+    "message": "{count} local bookmark(s) stored in this browser (export a backup before switching devices or clearing site data)."
+  },
+  "bookmarks.export": {
+    "message": "Export JSON"
+  },
+  "bookmarks.import": {
+    "message": "Import JSON"
+  },
+  "bookmarks.exportStarted": {
+    "message": "Backup file download started."
+  },
+  "bookmarks.exportFailed": {
+    "message": "Export failed: downloads are blocked in this browser."
+  },
+  "bookmarks.importFailedFormat": {
+    "message": "Import failed: invalid bookmark backup file format."
+  },
+  "bookmarks.importFailedRead": {
+    "message": "Import failed: unable to read the selected file."
+  },
+  "bookmarks.importDone": {
+    "message": "Imported: {merged} bookmark(s) merged (newer update wins per path)."
+  },
+  "bookmarks.importDoneWithSkipped": {
+    "message": "Imported: {merged} merged, {skipped} invalid entry(s) skipped."
   }
 }
