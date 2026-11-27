@@ -8,7 +8,9 @@ sidebar_position: 12
 
 `LibXR::Watchdog` provides a general-purpose abstract interface for watchdog functionality. It supports configuring the overflow timeout, auto-feed interval, and provides control methods like start, stop, and manual feeding. It is suitable for multi-threaded environments or timer-based task scheduling systems.
 
-In the existing backends (`STM32Watchdog`, `ESP32Watchdog`), `SetConfig()` sets the timeout and stores `feed_ms` as the auto-feed interval `auto_feed_interval_ms` (`0 < feed_ms <= timeout_ms` is required, otherwise `ARG_ERR`); `Start()` starts the watchdog and sets `auto_feed_`; `Stop()` clears `auto_feed_`. Both backend constructors already call `SetConfig()` and `Start()`.
+In the existing backends (`STM32Watchdog`, `CH32Watchdog`, `ESP32Watchdog`), `SetConfig()` sets the timeout and stores `feed_ms` as the auto-feed interval `auto_feed_interval_ms` (`0 < feed_ms <= timeout_ms` is required, otherwise `ARG_ERR`); `Start()` starts the watchdog and sets `auto_feed_`; `Stop()` clears `auto_feed_`. Each backend constructor calls `SetConfig()` and `Start()`.
+
+`CH32Watchdog` (`ch32_watchdog.hpp`) drives the CH32 IWDG from the LSI clock (default `lsi_hz = 40000`, `timeout_ms = 1000`, `feed_ms = 250`) and rounds the timeout up to the hardware step. Like the STM32 IWDG, it stops only on a reset; `Stop()` stops automatic feeding and returns `NOT_SUPPORT`.
 
 ## Interface Overview
 

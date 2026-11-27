@@ -8,7 +8,7 @@ sidebar_position: 4
 
 `LibXR::Mutex` 提供轻量级、跨平台的 **线程互斥** 机制，用于保护多任务环境中的临界区。当前支持 **POSIX pthread** 与 **FreeRTOS/ThreadX** 实现；在 `none / webasm` 这类无线程路径里，当前实现会退化为围绕标量句柄的最小 busy-wait 锁，并在等待期间周期调用 `Timer::RefreshTimerInIdle()`。
 
-> **⚠️ 注意**：互斥锁 **只能** 在任务（线程）上下文调用，**不支持** 在中断服务程序（ISR）中加/解锁。
+> 注意：互斥锁只能在任务（线程）上下文调用，不支持在中断服务程序（ISR）中加/解锁。
 
 ## 设计要点
 

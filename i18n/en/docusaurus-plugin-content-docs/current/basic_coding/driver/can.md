@@ -527,3 +527,17 @@ protected:
 
 - Called by the driver on FD frame reception.
 - Internally dispatches to matching FD filters and invokes callbacks as `cb.Run(in_isr, pack)`.
+
+---
+
+## Linux SocketCAN Backend (`LibXR::LinuxCANFD`)
+
+`driver/linux/linux_can.hpp` provides `LinuxCANFD` (derived from `LibXR::FDCAN`) over Linux SocketCAN, supporting both classic CAN and CAN FD.
+
+- **Construction modes**:
+  - `LinuxCANFD(interface_name, enable_fd = true, brs = false, rx_stack_size = DEFAULT_RX_STACK_SIZE, realtime = true)`: waits for an externally configured interface to be up and opens the socket;
+  - `LinuxCANFD(interface_name, CAN::Configuration / FDCAN::Configuration, ...)`: waits for the interface to appear, applies `bittiming` / `ctrlmode` / FD settings via kernel rtnetlink, and brings the link up (`CAP_NET_ADMIN` required).
+- **Configuration and lifecycle constraints**:
+  - `SetConfig()` supports bitrate-based timing (`bitrate` and `sample_point`); complete explicit `BitTiming` returns `NOT_SUPPORT`, incomplete timing returns `ARG_ERR`, and every valid call cycles the link down and up;
+  - `Open`, `Close`, destruction, and `SetConfig` must be serialized externally; `Close()` joins the RX thread and returns `BUSY` if called from an RX callback;
+  - The RX thread uses `SCHED_FIFO` when permitted, so callbacks must stay short and non-blocking.

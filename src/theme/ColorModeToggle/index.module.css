@@ -7,11 +7,11 @@
   height: 2.25rem;
   padding: 0;
   border: none;
-  border-radius: var(--ifm-button-border-radius);
+  border-radius: 0;
   background: transparent;
   color: inherit;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--duration-base, 160ms) ease;
 }
 
 .toggle:hover {
@@ -26,8 +26,8 @@
   opacity: 1;
   transform: rotate(0deg);
   transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
+    opacity var(--duration-base, 160ms) ease,
+    transform var(--duration-base, 160ms) ease;
 }
 
 /* light: sun visible, moon hidden (rotated away) */

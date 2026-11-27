@@ -360,7 +360,19 @@ endif()
 
 各命令的全部参数及默认值由 `libxr <命令> --help` 列出，例如 `libxr gen --help`、`libxr stm32 cubemx-gen --help`。
 
-libxr 6.0.0 之前的 `xr_*` 命令（如 `xr_cubemx_cfg`）仍可使用，参数及其含义与原来相同，运行时会提示对应的新命令，7.0.0 删除；对照表见 [CodeGenerator 的 README](https://github.com/xrobot-org/LibXR_CppCodeGenerator#旧命令--old-commands)。
+libxr 6.0.0 之前的 `xr_*` 命令仍可使用，参数及其含义与原来相同，运行时会提示对应的新命令，并在 7.0.0 中移除：
+
+| 旧命令 | 对应新命令 |
+| --- | --- |
+| `xr_parse`、`xr_parse_ioc` | `libxr parse` |
+| `xr_gen_code`、`xr_gen_code_stm32` | `libxr gen` |
+| `xr_cubemx_cfg` | `libxr stm32 setup` |
+| `xr_cubemx_generate` | `libxr stm32 cubemx-gen` |
+| `xr_stm32_cmake` | `libxr stm32 cmake` |
+| `xr_stm32_flash` | `libxr stm32 flash-info` |
+| `xr_stm32_toolchain_switch` | `libxr stm32 toolchain` |
+
+与 5.2.4 相比，旧命令有以下行为差异：`xr_gen_code` 和 `xr_gen_code_stm32` 收到 `--hw-cntr` 时报错退出（对应的 `HardwareContainer` 已从 LibXR 移除，XRobot 工程改用 `--xrobot`）；`xr_parse` 和 `xr_parse_ioc` 在含有多个 `.ioc` 文件的目录中报错退出；`xr_stm32_toolchain_switch clang` 省略 `-g`、`-n` 或 `-p` 时保持当前标准库；`xr_stm32_toolchain_switch` 在 GCC 与 ST Arm Clang 之间切换时删除 `build/` 和 `cmake-build*`，而 `xr_stm32_cmake` 保留构建目录由 CMake 在下次构建时重新配置。
 
 ## 参考
 

@@ -26,10 +26,10 @@ Whether a region can hold DMA buffers, in a simplified picture:
 
 |      | AXI RAM | SRAM1 | SRAM2 | SRAM3 | SRAM4 | ITCMRAM | DTCMRAM |
 | ---- | ------- | ----- | ----- | ----- | ----- | ------- | ------- |
-| CPU  | ✅      | ✅    | ✅    | ✅    | ✅    | ✅      | ✅      |
-| DMA1 | ✅      | ✅    | ✅    | ✅    | ✅    | ❌      | ❌      |
-| DMA2 | ✅      | ✅    | ✅    | ✅    | ✅    | ❌      | ❌      |
-| BDMA | ❌      | ❌    | ❌    | ❌    | ✅    | ❌      | ❌      |
+| CPU  | Yes     | Yes   | Yes   | Yes   | Yes   | Yes     | Yes     |
+| DMA1 | Yes     | Yes   | Yes   | Yes   | Yes   | No      | No      |
+| DMA2 | Yes     | Yes   | Yes   | Yes   | Yes   | No      | No      |
+| BDMA | No      | No    | No    | No    | Yes   | No      | No      |
 
 Notes:
 
@@ -109,7 +109,7 @@ With a `tx_buffer_size` of 100 and an empty `dma_section`, `usart1` gets `aligna
 
 ## Usage
 
-Business code usage is the same as in non-cache cases. The practical work is mainly:
+Application code keeps the same interface as on non-cached parts. The steps are:
 
 - enable cache in `CubeMX`;
 - place DMA buffers into DMA-accessible RAM regions;

@@ -39,4 +39,4 @@ public:
 * `ErrorCode::TIMEOUT` 等待超时
 * `ErrorCode::FAILED`  底层等待出错（Linux、ThreadX）
 
-> **⚠️ 注意**：`Wait()` **不能** 在 ISR 中调用。
+> 注意：`Wait()` 不能在 ISR 中调用。

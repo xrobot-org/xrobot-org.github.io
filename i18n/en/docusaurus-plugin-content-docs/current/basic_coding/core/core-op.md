@@ -6,9 +6,20 @@ sidebar_position: 11
 
 # Operation Model
 
-`operation.hpp` defines the generic `Operation<T>` template, which describes how the caller is notified when an asynchronous operation completes: callback (CALLBACK), blocking (BLOCK) or polling (POLLING).
+`operation.hpp` defines the generic `Operation<T>` template, which describes how the caller is notified when an asynchronous operation completes: callback (`CALLBACK`), blocking (`BLOCK`), polling (`POLLING`), or ignored (`NONE`).
 
 `ReadOperation` / `WriteOperation` are aliases of `Operation<ErrorCode>` and are commonly used by I/O ports to report completion status via `ErrorCode`.
+
+## Completion Dispatch
+
+```mermaid
+flowchart LR
+  U["UpdateStatus(in_isr, status)"] --> T{"OperationType"}
+  T -->|"CALLBACK"| CB["cb.Run(in_isr, status)"]
+  T -->|"BLOCK"| BL["sem.PostFromCallback(in_isr)"]
+  T -->|"POLLING"| PL["status_ = OK ? DONE : ERROR (release)"]
+  T -->|"NONE"| NO["no notification"]
+```
 
 ## Operation Modes
 

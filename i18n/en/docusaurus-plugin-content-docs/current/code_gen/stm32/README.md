@@ -362,7 +362,19 @@ After each link of the application, `cmake/LibXR.CMake` makes `<project>.hex` (I
 
 `libxr <command> --help` lists all arguments of a command with their defaults, for example `libxr gen --help` or `libxr stm32 cubemx-gen --help`.
 
-The `xr_*` commands of libxr before 6.0.0 (such as `xr_cubemx_cfg`) still work with their arguments and meanings unchanged: they name their new command when they run and are removed in 7.0.0. The [CodeGenerator README](https://github.com/xrobot-org/LibXR_CppCodeGenerator#旧命令--old-commands) lists them.
+The `xr_*` commands from libxr prior to 6.0.0 remain available with their arguments and meanings unchanged; they print the corresponding new command when run and will be removed in 7.0.0:
+
+| Old command | New command |
+| --- | --- |
+| `xr_parse`, `xr_parse_ioc` | `libxr parse` |
+| `xr_gen_code`, `xr_gen_code_stm32` | `libxr gen` |
+| `xr_cubemx_cfg` | `libxr stm32 setup` |
+| `xr_cubemx_generate` | `libxr stm32 cubemx-gen` |
+| `xr_stm32_cmake` | `libxr stm32 cmake` |
+| `xr_stm32_flash` | `libxr stm32 flash-info` |
+| `xr_stm32_toolchain_switch` | `libxr stm32 toolchain` |
+
+Compared with 5.2.4, several behaviors differ: `xr_gen_code` and `xr_gen_code_stm32` exit with an error on `--hw-cntr` (the `HardwareContainer` it generated has been removed from LibXR; XRobot projects use `--xrobot`); `xr_parse` and `xr_parse_ioc` exit with an error in directories with multiple `.ioc` files; `xr_stm32_toolchain_switch clang` without `-g`, `-n`, or `-p` keeps the current standard library; and `xr_stm32_toolchain_switch` removes `build/` and `cmake-build*` when switching between GCC and ST Arm Clang, while `xr_stm32_cmake` preserves them so CMake reconfigures on the next build.
 
 ---
 

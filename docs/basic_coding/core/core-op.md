@@ -6,9 +6,20 @@ sidebar_position: 11
 
 # Operation 操作模型
 
-`operation.hpp` 定义通用的 `Operation<T>` 模板类，描述一次异步操作完成后如何通知调用方，支持回调（CALLBACK）、阻塞（BLOCK）、轮询（POLLING）三种方式。
+`operation.hpp` 定义通用的 `Operation<T>` 模板类，描述一次异步操作完成后如何通知调用方，支持回调（`CALLBACK`）、阻塞（`BLOCK`）、轮询（`POLLING`）与忽略完成（`NONE`）四种方式。
 
 其中 `ReadOperation` / `WriteOperation` 是对 `Operation<ErrorCode>` 的别名，用于 I/O 完成时回传 `ErrorCode`。
+
+## 完成分流
+
+```mermaid
+flowchart LR
+  U["UpdateStatus(in_isr, status)"] --> T{"OperationType"}
+  T -->|"CALLBACK"| CB["cb.Run(in_isr, status)"]
+  T -->|"BLOCK"| BL["sem.PostFromCallback(in_isr)"]
+  T -->|"POLLING"| PL["status_ = OK ? DONE : ERROR (release)"]
+  T -->|"NONE"| NO["不通知"]
+```
 
 ## 操作模式
 
@@ -66,7 +77,7 @@ void MarkAsRunning();
   - BLOCK：调用信号量的 `PostFromCallback(in_isr)` 唤醒等待者；最终的 `ErrorCode` 由端口保存，并作为阻塞调用的返回值。
   - POLLING：以 release 写入，`status == ErrorCode::OK` 时置为 `DONE`，否则置为 `ERROR`，因此适用于完成值为 `ErrorCode` 的 `Operation`。
 - `MarkAsRunning()` 在 POLLING 模式下设置状态为 `RUNNING`。
-- 这两个函数由端口或驱动调用，用户只需构造对应的 `Operation` 并传入。
+- 这两个函数由端口或驱动调用，调用方构造对应的 `Operation` 传入即可。
 - `Operation` 只借用回调、信号量或轮询状态，调用方保证它们在操作结束前有效。
 - 一个信号量同时只服务一个 BLOCK 调用；BLOCK 只能在线程中调用。
 - 回调在完成读写的上下文中同步执行，可能位于 ISR 内；轮询状态读取时使用 `load(std::memory_order_acquire)`。

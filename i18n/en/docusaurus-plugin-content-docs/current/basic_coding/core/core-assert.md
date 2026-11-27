@@ -12,13 +12,17 @@ sidebar_position: 2
 
 ```cpp
 extern "C" void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
+extern "C" void libxr_fatal_error_and_print(const char *file, uint32_t line, bool in_isr);
 ```
 
-`libxr_fatal_error()` is called when an assertion fails and does not return. In thread context (`in_isr` false) it prints `"Fatal error at <file>:<line>"` when `STDIO::write_` is bound and writable, runs the registered fatal callback with `in_isr` set to false, sleeps 500 ms and repeats, so the callback runs repeatedly. With `in_isr` true it only writes to address 0 to trigger a hardware fault and does not run the callback.
+On assertion failure, execution enters one of these two C entry points, neither of which returns. In thread context (`in_isr` false), both call the registered fatal callback in a loop spaced 500 ms apart (always passing `in_isr = false`):
+
+- `libxr_fatal_error` prints nothing and is called by `REQUIRE` / `REQUIRE_FROM_CALLBACK` with `file = nullptr` and `line = 0`, so release firmware with `ASSERT` and `DEV_ASSERT` disabled omits the print path.
+- `libxr_fatal_error_and_print` prints `"Fatal error at <file>:<line>"` before each callback call when `file != nullptr` and `STDIO::write_` is bound and writable, and is called by `ASSERT` / `DEV_ASSERT` (and their `_FROM_CALLBACK` forms).
+
+With `in_isr` true, both functions write to address 0 to trigger a hardware fault without printing or running the callback. A project that defines its own `libxr_fatal_error` while enabling `ASSERT` or `DEV_ASSERT` must also define `libxr_fatal_error_and_print`.
 
 ## `LibXR::Assert` Namespace
-
-The current public surface mainly includes:
 
 - `using FatalCallback = LibXR::Callback<const char*, uint32_t>`
 - `RegisterFatalErrorCallback(cb)`
@@ -31,7 +35,7 @@ The current public surface mainly includes:
 LibXR::Assert::RegisterFatalErrorCallback(cb);
 ```
 
-Accepts `LibXR::Assert::FatalCallback`, that is, `LibXR::Callback<const char*, uint32_t>`, to handle fatal error events.
+Registers a `LibXR::Assert::FatalCallback` (`LibXR::Callback<const char*, uint32_t>`) to handle fatal errors. When triggered by `REQUIRE`, the callback receives `file = nullptr` and `line = 0`.
 
 ## Macros: Assertion Checks
 
@@ -41,7 +45,7 @@ Accepts `LibXR::Assert::FatalCallback`, that is, `LibXR::Callback<const char*, u
 | `REQUIRE(expr)` / `REQUIRE_FROM_CALLBACK(expr, in_isr)` | always | — | unrecoverable runtime errors |
 | `DEV_ASSERT(expr)` / `DEV_ASSERT_FROM_CALLBACK(expr, in_isr)` | CMake option `LIBXR_DEV_ASSERT_BUILD=ON` | expression not evaluated | LibXR internal development checks |
 
-On failure the macro calls `libxr_fatal_error(__FILE__, __LINE__, in_isr)`. The plain forms pass `in_isr = false`; the `_FROM_CALLBACK` forms are for callbacks or ISRs and pass `in_isr` through. A disabled `ASSERT` still evaluates its expression, so required operations belong outside the macro.
+`ASSERT` and `DEV_ASSERT` call `libxr_fatal_error_and_print(__FILE__, __LINE__, in_isr)` on failure; `REQUIRE` calls `libxr_fatal_error(nullptr, 0U, in_isr)`, and the failing site is located from the call stack in a debugger. The plain forms pass `in_isr = false`; the `_FROM_CALLBACK` forms are for callbacks or ISRs and pass `in_isr` through. A disabled `ASSERT` still evaluates its expression, so required operations belong outside the macro.
 
 ## Usage Example
 
@@ -52,11 +56,11 @@ Arg arg = 0;
 auto err_cb = LibXR::Assert::FatalCallback::Create(
     [](bool in_isr, Arg arg, const char *file, uint32_t line)
     {
-    (void)in_isr;
-    (void)arg;
-    (void)file;
-    (void)line;
-    // do something
+      (void)in_isr;
+      (void)arg;
+      (void)file;
+      (void)line;
+      // do something
     },
     arg);
 

@@ -1,5 +1,5 @@
 ## 推荐视频
-- 【无需配置！STM32 + VS Code 最好的开发方式：XRobot 官方教程第 0 节——STM32 开发环境】
+- STM32 + VS Code 开发环境配置（XRobot 官方教程第 0 节）
   https://www.bilibili.com/video/BV1SHnAztE11
 视频中包含 Python 包安装、VS Code 与插件安装，以及最基本的一次编译和调试流程。本任务只关注其中“安装 Python 与 libxr / xrobot”这一部分，其他步骤会在后续任务中分别展开。
 ## 参考文档

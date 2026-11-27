@@ -18,6 +18,7 @@ sidebar_position: 1
 - `DEF2STR(x)`: Converts a macro value to string.
 - `UNUSED(x)`: Suppresses compiler warnings for unused variables.
 - `LIBXR_NOINLINE`: Portability macro for disabling inlining.
+- `LIBXR_ALWAYS_INLINE`: Portability macro for forcing inlining.
 - `LIBXR_PACKED_BEGIN` / `LIBXR_PACKED_END` / `LIBXR_PACKED`: packed-layout related macros.
 
 ## Alignment and Cache-Line Definitions

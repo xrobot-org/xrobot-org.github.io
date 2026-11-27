@@ -26,7 +26,7 @@ ISR 与任务之间交换数据时，LibXR 默认不使用 `mutex`：ISR 不能�
 
 ## `FromCallback` 与 ISR
 
-回调上下文和 ISR 上下文是两种情况。`FromCallback` 系列接口表示调用处需要能在回调中使用的语义，是否处于硬中断由参数 `in_isr` 给出，例如 `ASSERT_FROM_CALLBACK(...)`、`PostFromCallback(in_isr)` 和 `ActiveFromCallback(..., in_isr)`。两者区分开之后，只需要回调安全的路径不必承受 ISR 的限制，只能在 ISR 中完成的动作也不会被放到普通回调里。
+回调上下文和 ISR 上下文是两种情况。`FromCallback` 系列接口表示调用处需要能在回调中使用的语义，是否处于硬中断由参数 `in_isr` 给出，例如 `ASSERT_FROM_CALLBACK(...)`、`PostFromCallback(in_isr)` 和 `ActiveFromCallback(..., in_isr)`。两者区分开之后，仅要求回调安全的路径不必承受 ISR 的限制，只能在 ISR 中完成的动作也不会被放到普通回调里。
 
 ## 为什么 `BLOCK` 不能进 ISR
 

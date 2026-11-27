@@ -18,7 +18,7 @@ sidebar_position: 4
   - MaxPacketSize: 512
 - Compiler optimization: `-O3`
 - Target: STM32F401RC
-- SWD clock: `SwdGeneralGPIO` uses `loops_per_us = 0` (no-delay path; SWCLK is set by GPIO toggle speed and the host Speed setting does not change it), measured about 10 MHz
+- SWD clock: `SwdGeneralGPIO` is constructed with `cpu_hz = 0` (no-delay path; SWCLK is set by GPIO toggle speed and the host Speed setting does not change it), measured about 10 MHz
 
 ![daplink-benchmark](/img/dap.png)
 
@@ -33,7 +33,8 @@ static constexpr auto USB_OTG_HS_LANG_PACK =
 using EP = LibXR::USB::Endpoint::EPNumber;
 LibXR::USB::CDCUart cdc(EP::EP3, EP::EP4, EP::EP5, 128, 128, 3);
 
-LibXR::Debug::SwdGeneralGPIO<decltype(PA0), decltype(PA4)> swd(PA0, PA4, 0);
+LibXR::Debug::SwdGeneralGPIO<decltype(PA0), decltype(PA4)> swd(
+    PA0, PA4, 0, LibXR::Debug::SwdGpioTiming{});
 
 LibXR::USB::DapLinkV2Class<decltype(swd)> dap(EP::EP1, EP::EP2, swd);
 

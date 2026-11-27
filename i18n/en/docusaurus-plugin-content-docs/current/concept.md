@@ -10,7 +10,7 @@ This page describes the design choices of `LibXR` on a few core questions: how d
 
 ## `Lock-free Data Structures and ISR-Driven Data Flow`
 
-In device drivers, the core question is how data is handed over between the `ISR`, `DMA` and threads in a timely and controlled way. Once the handover depends on long critical sections, blocking waits or scheduling order, latency jitter, inconsistent state or data loss follow easily.
+In device drivers, the core question is how data is handed over between the `ISR`, `DMA` and threads in a timely and controlled way. Once the handover depends on long critical sections, blocking waits or scheduling order, latency jitter, inconsistent state or data loss follow.
 
 On sensitive paths such as UART, USB and DMA, `LibXR` therefore prefers pre-allocated buffers, ring queues, double buffering and explicit state transitions, turning the high-frequency path into a data flow driven by hardware events: interrupts hand data over and advance the state, and threads carry out the follow-up processing. The goal is **to keep sensitive paths from depending on mutexes, blocking OS queues or long interrupt-disabled sections**, rather than to be lock-free in form.
 
@@ -36,7 +36,7 @@ The worst-case latency of high-frequency paths is easier to estimate; the respon
 
 **High-frequency runtime paths should not rely on temporary resource allocation for correctness.** `malloc` and `new` are not the problem in themselves; allocating and releasing resources on the hot path, in an ISR or in a high-frequency callback is, because it easily makes latency, failure paths and memory bounds uncontrollable.
 
-In a stable embedded system, every object that needs heap allocation should be constructed once during initialization and never destroyed. This allows memory allocation to be implemented with very simple data structures, such as a stack that only grows, or another allocator that only grows in one direction during initialization.
+In a stable embedded system, every object that needs heap allocation should be constructed once during initialization and kept alive without destruction. This allows memory allocation to use simple data structures, such as a monotonic stack or another allocator that grows in one direction during initialization.
 
 ### Common Questions
 

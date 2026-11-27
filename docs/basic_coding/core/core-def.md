@@ -18,6 +18,7 @@ sidebar_position: 1
 - `DEF2STR(x)`: 将宏值转为字符串。
 - `UNUSED(x)`: 用于消除未使用变量的编译器警告。
 - `LIBXR_NOINLINE`: 禁止内联的兼容性宏。
+- `LIBXR_ALWAYS_INLINE`: 强制内联的兼容性宏。
 - `LIBXR_PACKED_BEGIN` / `LIBXR_PACKED_END` / `LIBXR_PACKED`: 结构体紧凑布局相关宏。
 
 ## 对齐与缓存行定义

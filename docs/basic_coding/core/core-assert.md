@@ -12,13 +12,17 @@ sidebar_position: 2
 
 ```cpp
 extern "C" void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
+extern "C" void libxr_fatal_error_and_print(const char *file, uint32_t line, bool in_isr);
 ```
 
-断言失败时调用 `libxr_fatal_error()`，该函数不返回。在线程上下文（`in_isr` 为 `false`）中，若 `STDIO::write_` 已绑定且可写，先打印 `"Fatal error at <文件>:<行号>"`，再调用已注册的 fatal 回调（回调收到的 `in_isr` 为 `false`），然后休眠 500 ms 并重复，因此回调会被反复调用。`in_isr` 为 `true` 时只向地址 0 写入以触发硬件故障，不调用回调。
+断言失败时进入这两个 C 入口之一，均不返回。线程上下文（`in_isr` 为 `false`）中，两者均按 500 ms 间隔循环调用已注册的 fatal 回调（回调收到的 `in_isr` 恒为 `false`）；区别在于：
+
+- `libxr_fatal_error` 不打印位置信息，由 `REQUIRE` / `REQUIRE_FROM_CALLBACK` 调用（传入 `file = nullptr`、`line = 0`），发布固件未启用 `ASSERT` / `DEV_ASSERT` 时不带入打印代码。
+- `libxr_fatal_error_and_print` 在每次调用回调前，当 `file != nullptr` 且 `STDIO::write_` 已绑定并可写时，先打印 `"Fatal error at <文件>:<行号>"`，由 `ASSERT` / `DEV_ASSERT`（及 `_FROM_CALLBACK` 版本）调用。
+
+`in_isr` 为 `true` 时，两个入口都直接向地址 0 写入以触发硬件故障，不打印也不调用回调。工程自行定义 `libxr_fatal_error` 且启用了 `ASSERT` 或 `DEV_ASSERT` 时，需同时定义 `libxr_fatal_error_and_print`。
 
 ## `LibXR::Assert` 命名空间
-
-当前公开的核心接口包括：
 
 - `using FatalCallback = LibXR::Callback<const char*, uint32_t>`
 - `RegisterFatalErrorCallback(cb)`
@@ -31,7 +35,7 @@ extern "C" void libxr_fatal_error(const char *file, uint32_t line, bool in_isr);
 LibXR::Assert::RegisterFatalErrorCallback(cb);
 ```
 
-支持传入 `LibXR::Assert::FatalCallback`，也就是 `LibXR::Callback<const char*, uint32_t>` 类型的回调对象，用于处理致命错误事件。
+注册 `LibXR::Assert::FatalCallback`（即 `LibXR::Callback<const char*, uint32_t>`）回调对象，用于处理致命错误。`REQUIRE` 失败触发时，回调收到的 `file` 为 `nullptr`、`line` 为 `0`。
 
 ## 宏定义：断言检查
 
@@ -41,7 +45,7 @@ LibXR::Assert::RegisterFatalErrorCallback(cb);
 | `REQUIRE(expr)` / `REQUIRE_FROM_CALLBACK(expr, in_isr)` | 始终生效 | — | 不可恢复的运行错误 |
 | `DEV_ASSERT(expr)` / `DEV_ASSERT_FROM_CALLBACK(expr, in_isr)` | CMake 选项 `LIBXR_DEV_ASSERT_BUILD=ON` | 表达式不求值 | LibXR 内部开发检查 |
 
-失败时调用 `libxr_fatal_error(__FILE__, __LINE__, in_isr)`。不带 `_FROM_CALLBACK` 的版本传入 `in_isr = false`；`_FROM_CALLBACK` 版本在回调或 ISR 中使用，`in_isr` 原样传入。`ASSERT` 关闭时表达式仍会执行，必要操作应写在宏外。
+`ASSERT` 与 `DEV_ASSERT` 失败时调用 `libxr_fatal_error_and_print(__FILE__, __LINE__, in_isr)`；`REQUIRE` 失败时调用 `libxr_fatal_error(nullptr, 0U, in_isr)`，出错位置通过调试器查看调用栈定位。不带 `_FROM_CALLBACK` 的版本传入 `in_isr = false`；`_FROM_CALLBACK` 版本在回调或 ISR 中使用，`in_isr` 原样传入。`ASSERT` 关闭时表达式仍会执行，必要操作应写在宏外。
 
 ## 用例示例
 
@@ -52,11 +56,11 @@ Arg arg = 0;
 auto err_cb = LibXR::Assert::FatalCallback::Create(
     [](bool in_isr, Arg arg, const char *file, uint32_t line)
     {
-    (void)in_isr;
-    (void)arg;
-    (void)file;
-    (void)line;
-    // do something
+      (void)in_isr;
+      (void)arg;
+      (void)file;
+      (void)line;
+      // do something
     },
     arg);
 

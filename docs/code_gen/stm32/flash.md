@@ -43,7 +43,7 @@ database:
   static DatabaseRaw<STM32Flash::MIN_WRITE_SIZE> database(flash);
 ```
 
-`block_size` 决定 `DatabaseRaw` 的模板参数，即数据库的最小写入单元，单位为字节，不能小于 Flash 的最小写入单元。默认值 `auto` 生成 `STM32Flash::MIN_WRITE_SIZE`，即 LibXR 按芯片的 HAL 得出的 Flash 最小写入单元，例如 F4 为 1、F1 为 2、G4 为 8、H723 为 32；写成正整数时使用这个数，例如 `block_size: 32` 生成 `DatabaseRaw<32>`。其他值使生成停止，例如 `block_size: wide`：
+`block_size` 决定 `DatabaseRaw` 的模板参数，即数据库的最小写入单元，单位为字节，不能小于 Flash 的最小写入单元。默认值 `auto` 生成 `STM32Flash::MIN_WRITE_SIZE`，即 LibXR 按芯片的 HAL 得出的 Flash 最小写入单元，例如 F4 为 1、F1 为 2、G4 为 8、H7R/S 为 16、H723 为 32；写成正整数时使用这个数，例如 `block_size: 32` 生成 `DatabaseRaw<32>`。其他值使生成停止，例如 `block_size: wide`：
 
 ```bash
 $ libxr gen -i .config.yaml -o User/app_main.cpp
@@ -58,3 +58,28 @@ $ libxr gen -i .config.yaml -o User/app_main.cpp
 手写的 `flash` 和 `database` 对象不能与 `database.enable: true` 同时使用：这时 `app_main()` 中已经生成 `static STM32Flash flash` 和 `static DatabaseRaw<...> database`，User Code 2、3 中的同名对象与它们位于同一作用域，编译时报重复定义。
 
 User Code 中用到 `FLASH_REGIONS` 时，`app_main.cpp` 在下一次生成时才 include `flash_map.hpp`；在此之前编译，需要在 User Code 1 中写 `#include "flash_map.hpp"`。
+
+## ECC 掉电恢复 {#ecc-掉电恢复}
+
+在 G0、G4、L4、L5、WB、WL、U0、U5、WBA、H5 和 U3 系列上，编程或擦除被掉电打断后，读到未写完的单元会触发不可屏蔽中断（NMI），而 CubeMX 默认生成的 `NMI_Handler` 为死循环。使用片上 Flash 数据库时，在工程中断文件（如 `stm32xx_it.c`）的 `NMI_Handler` 用户代码区加入：
+
+```c
+/* USER CODE BEGIN Include */
+#include "stm32_flash_nmi.h"
+/* USER CODE END Include */
+
+void NMI_Handler(void)
+{
+  /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
+  if (libxr_stm32_flash_ecc_nmi())
+  {
+    return;
+  }
+  /* USER CODE END NonMaskableInt_IRQn 0 */
+  while (1)
+  {
+  }
+}
+```
+
+检测到双位 ECC 错误标志时 `libxr_stm32_flash_ecc_nmi()` 清除标志（在 H5 上同时失效指令缓存）并返回 `true`，使被打断的读操作继续返回半写入数据交由 `DatabaseRaw` 恢复；NMI 来自其他原因时返回 `false`。H7 与 H7R/S 由 `STM32Flash::Read()` 在读期间屏蔽中断并清除 `DBECCERR` / `DBECCERRF`，将出错字填充为 `0`，不走 NMI。
